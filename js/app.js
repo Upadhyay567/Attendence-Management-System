@@ -2993,6 +2993,7 @@ function renderAdminDashboard() {
   const leaveCount = onLeaveToday.length;
   const totalEmployees = users.length;
   const absentCount = totalEmployees - presentCount - leaveCount;
+  const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager').length;
 
   // Group today's checked-in employees by location for HR View
   const todayLogs = logs.filter(l => l.date === todayStr);
@@ -3068,25 +3069,35 @@ function renderAdminDashboard() {
     </div>
     <div class="content-body">
       <div class="stats-grid">
+        <!-- Total Employees -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-blue">👥</div>
           <div class="stat-info"><span class="stat-value">${totalEmployees}</span><span class="stat-label">Total Staff</span></div>
         </div>
+        <!-- Present Now -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-green">✅</div>
           <div class="stat-info"><span class="stat-value">${presentCount}</span><span class="stat-label">Present Now</span></div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon stat-icon-amber">⏰</div>
-          <div class="stat-info"><span class="stat-value">${lateCount}</span><span class="stat-label">Late Arrivals</span></div>
-        </div>
+        <!-- Absent Today -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-red">❌</div>
           <div class="stat-info"><span class="stat-value">${absentCount < 0 ? 0 : absentCount}</span><span class="stat-label">Absent Today</span></div>
         </div>
+        <!-- Late Arrivals -->
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-amber">⏰</div>
+          <div class="stat-info"><span class="stat-value">${lateCount}</span><span class="stat-label">Late Arrivals</span></div>
+        </div>
+        <!-- Approved Leave -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-cyan">📁</div>
           <div class="stat-info"><span class="stat-value">${leaveCount}</span><span class="stat-label">Approved Leave</span></div>
+        </div>
+        <!-- Pending Swaps -->
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:rgb(139,92,246)">🔄</div>
+          <div class="stat-info"><span class="stat-value">${pendingSwapsCount}</span><span class="stat-label">Pending Swaps</span></div>
         </div>
       </div>
       <div class="dashboard-split" style="grid-template-columns: 1.8fr 1fr">
