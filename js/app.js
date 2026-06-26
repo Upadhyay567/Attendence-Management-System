@@ -108,6 +108,9 @@ function setupRouter() {
     }
 
     renderAppShell();
+    if (typeof updateNotificationsUI === 'function') {
+      updateNotificationsUI();
+    }
     
     // Set Active Link in Sidebar
     document.querySelectorAll('.menu-item').forEach(li => {
@@ -981,12 +984,83 @@ function renderAppShell() {
       </div>
     </aside>
     <main class="main-content" id="main-view"></main>
+
+    <!-- Global Fixed Notification Bell (Top Right Corner) -->
+    <div id="global-notification-bar" style="position:fixed;top:20px;right:40px;z-index:1000">
+      <div class="notification-widget" style="position:relative">
+        <button id="btn-notifications-toggle" class="btn-icon" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text-primary);cursor:pointer;position:relative;padding:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(4px);width:40px;height:40px">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+          </svg>
+          <span class="notification-badge" id="notification-count" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--error);color:white;font-size:9.5px;font-weight:800;border-radius:50%;width:18px;height:18px;align-items:center;justify-content:center;box-shadow:0 0 8px rgba(239,68,68,0.5)">0</span>
+        </button>
+        
+        <!-- Dropdown container -->
+        <div id="notifications-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);z-index:1001;margin-top:8px;animation:fadeIn 0.2s ease">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:13.5px;color:var(--text-primary)">Alerts & Inbox</strong>
+            <button id="btn-clear-notifications" style="background:transparent;border:none;color:var(--primary);cursor:pointer;font-size:11px;text-decoration:underline;padding:0">Mark All Read</button>
+          </div>
+          <div id="notifications-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
   `;
 
   document.getElementById('logout-trigger').addEventListener('click', () => {
     Auth.logout();
     window.location.hash = '#login';
   });
+
+  // Bind Notifications Dropdown toggle
+  const toggleBtn = document.getElementById('btn-notifications-toggle');
+  const dropdown = document.getElementById('notifications-dropdown');
+  const clearBtn = document.getElementById('btn-clear-notifications');
+
+  if (toggleBtn && dropdown) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = dropdown.style.display === 'block';
+      dropdown.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        updateNotificationsUI();
+      }
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+
+    // Clear notifications click event
+    if (clearBtn) {
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const currentUser = Auth.getCurrentUser();
+        if (!currentUser) return;
+        
+        if (currentUser.role !== 'hr' && currentUser.role !== 'manager') {
+          const announcements = DB.getAnnouncements();
+          const readKey = `hs_read_notices_${currentUser.id}`;
+          const readIds = announcements.map(a => a.id);
+          localStorage.setItem(readKey, JSON.stringify(readIds));
+          updateNotificationsUI();
+          if (window.location.hash === '#dashboard') {
+            renderEmployeeDashboard();
+          }
+        } else {
+          alert('Action items (approvals and swaps) require review and cannot be marked as read without processing.');
+        }
+      });
+    }
+
+    // Initial render of notifications state
+    updateNotificationsUI();
+  }
 }
 
 // -------------------------------------------------------------
