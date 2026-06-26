@@ -4785,3 +4785,136 @@ function renderAdminAnnouncementsList() {
     });
   });
 }
+
+// -------------------------------------------------------------
+// GLOBAL NOTIFICATIONS CONTROLLER
+// -------------------------------------------------------------
+function updateNotificationsUI() {
+  try {
+    const user = Auth.getCurrentUser();
+    if (!user) return;
+
+    const countBadge = document.getElementById('notification-count');
+    const dropdown = document.getElementById('notifications-dropdown');
+    const listContainer = document.getElementById('notifications-list');
+    
+    if (!countBadge || !listContainer) return;
+
+    let notifications = [];
+
+    if (user.role === 'hr' || user.role === 'manager') {
+      // 1. Leave Requests pending manager approval
+      const leaves = DB.getLeaveRequests().filter(lv => lv.status === 'Pending');
+      leaves.forEach(lv => {
+        const u = DB.getUser(lv.userId);
+        notifications.push({
+          id: lv.id,
+          title: `Leave: ${u ? u.name : 'Employee'}`,
+          desc: `Requested ${lv.type} leave from ${lv.startDate} to ${lv.endDate}`,
+          link: '#admin-approvals',
+          category: 'Request'
+        });
+      });
+
+      // 2. Shift Swaps pending manager approval
+      const swaps = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager');
+      swaps.forEach(s => {
+        const sender = DB.getUser(s.senderId);
+        const receiver = DB.getUser(s.receiverId);
+        notifications.push({
+          id: s.id,
+          title: 'Shift Swap Request',
+          desc: `${sender ? sender.name : 'Employee'} requested to swap shift with ${receiver ? receiver.name : 'Employee'}`,
+          link: '#admin-approvals',
+          category: 'Swap'
+        });
+      });
+    } else {
+      // Employee Notifications: Unread Announcements
+      const announcements = DB.getAnnouncements();
+      const readKey = `hs_read_notices_${user.id}`;
+      const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+      const unread = announcements.filter(a => !readIds.includes(a.id));
+
+      unread.forEach(a => {
+        notifications.push({
+          id: a.id,
+          title: a.title,
+          desc: a.content,
+          link: '#dashboard',
+          category: 'Announcement'
+        });
+      });
+    }
+
+    // Update Badge
+    if (notifications.length > 0) {
+      countBadge.style.display = 'flex';
+      countBadge.textContent = notifications.length;
+    } else {
+      countBadge.style.display = 'none';
+    }
+
+    // Populate Dropdown List
+    if (notifications.length === 0) {
+      listContainer.innerHTML = `
+        <div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:12.5px">
+          No new notifications. Everything is up to date!
+        </div>
+      `;
+    } else {
+      listContainer.innerHTML = notifications.map(n => {
+        let badgeStyle = 'background:rgba(16,185,129,0.1);color:var(--success)';
+        if (n.category === 'Request') badgeStyle = 'background:rgba(251,191,36,0.1);color:var(--primary)';
+        if (n.category === 'Swap') badgeStyle = 'background:rgba(139,92,246,0.1);color:rgb(139,92,246)';
+
+        return `
+          <div class="notification-item-row" data-id="${n.id}" data-link="${n.link}" data-category="${n.category}" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.2s;display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;${badgeStyle}">${n.category}</span>
+              <span style="font-size:10px;color:var(--text-muted)">New</span>
+            </div>
+            <strong style="font-size:12.5px;color:var(--text-primary)">${Utils.escape(n.title)}</strong>
+            <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;margin:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:300px">${Utils.escape(n.desc)}</p>
+          </div>
+        `;
+      }).join('');
+
+      // Bind click events on notification items
+      listContainer.querySelectorAll('.notification-item-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          const id = row.getAttribute('data-id');
+          const link = row.getAttribute('data-link');
+          const category = row.getAttribute('data-category');
+
+          if (category === 'Announcement') {
+            const readKey = `hs_read_notices_${user.id}`;
+            const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+            if (!readIds.includes(id)) {
+              readIds.push(id);
+              localStorage.setItem(readKey, JSON.stringify(readIds));
+            }
+          }
+
+          if (dropdown) dropdown.style.display = 'none';
+          window.location.hash = link;
+          
+          updateNotificationsUI();
+          
+          if (link === '#dashboard' && window.location.hash === '#dashboard') {
+            renderEmployeeDashboard();
+          }
+        });
+        
+        row.addEventListener('mouseenter', () => {
+          row.style.background = 'rgba(255,255,255,0.02)';
+        });
+        row.addEventListener('mouseleave', () => {
+          row.style.background = 'transparent';
+        });
+      });
+    }
+  } catch (err) {
+    console.error("Error updating notifications UI:", err);
+  }
+}
