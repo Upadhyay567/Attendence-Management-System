@@ -228,16 +228,6 @@ function renderLoginView() {
               Track attendance, manage shifts, and streamline payroll deductions from one unified, secure workspace.
             </p>
             
-            <!-- Daily Motivation / Good Vibes Badge -->
-            <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(249, 115, 22, 0.04) 100%); border-left: 3px solid var(--primary); padding: 14px 20px; border-radius: var(--radius-sm); margin-bottom: 35px; max-width: 520px; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(4px); box-shadow: 0 4px 20px rgba(0,0,0,0.15)">
-              <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--primary);letter-spacing:1px;text-transform:uppercase">
-                <span>✨</span> DAILY INSPIRATION
-              </div>
-              <p style="color:var(--text-primary);font-size:13.5px;font-style:italic;line-height:1.5;margin:0">
-                "${randomQuote}"
-              </p>
-            </div>
-            
             <!-- Features Checklist -->
             <div class="auth-hero-features">
               <div class="auth-hero-feature-item">
@@ -486,6 +476,16 @@ function renderLoginView() {
           </div>
 
           <div id="login-alert" class="alert" style="display:none"></div>
+
+          <!-- Daily Inspiration / Good Vibes Banner -->
+          <div style="background: rgba(251, 191, 36, 0.04); border: 1px dashed rgba(251, 191, 36, 0.25); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 24px; display: flex; flex-direction: column; gap: 4px; text-align: center;">
+            <div style="font-size: 10px; font-weight: 800; color: var(--primary); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span>✨</span> Daily Inspiration <span>✨</span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 11.5px; font-style: italic; line-height: 1.45; margin: 0;">
+              "${randomQuote}"
+            </p>
+          </div>
         </div>
       </div>
     </div>
