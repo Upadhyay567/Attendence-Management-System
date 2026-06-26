@@ -1137,6 +1137,16 @@ function renderEmployeeDashboard() {
             <div class="clock-timer" style="font-size:32px;color:var(--cyan);text-align:center" id="active-work-timer">00h 00m 00s</div>
           </div>
 
+          <!-- Notice Board Card -->
+          <div class="card-panel" style="margin-bottom:20px">
+            <div class="card-panel-header">
+              <h3 class="card-panel-title">📢 Company Notice Board</h3>
+            </div>
+            <div id="employee-notices-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
+              <!-- announcements loaded dynamically -->
+            </div>
+          </div>
+
           <div class="card-panel">
             <div class="card-panel-header">
               <h3 class="card-panel-title">My Recent Activity Logs</h3>
@@ -1167,6 +1177,7 @@ function renderEmployeeDashboard() {
   startLiveClock();
   startActiveWorkTimer(todayLog);
   renderPersonalLogs(user.id);
+  renderEmployeeNotices(user.id);
 
   // Geofencing Simulation setup
   let mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
@@ -3103,6 +3114,48 @@ function renderAdminDashboard() {
           <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px"></div>
         </div>
       </div>
+
+      <!-- Announcements Manager Row -->
+      <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; margin-top:20px">
+        <!-- Publish Announcement Card -->
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <h3 class="card-panel-title">📢 Publish Company Announcement</h3>
+          </div>
+          <form id="admin-announcement-form" style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
+            <div class="form-group">
+              <label class="form-label" for="ann-title">Announcement Title</label>
+              <input class="form-input" type="text" id="ann-title" placeholder="e.g. Eid-ul-Adha Office Holiday" required style="padding:10px">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ann-category">Category</label>
+              <select class="form-input" id="ann-category" required style="padding:10px">
+                <option value="General">General News</option>
+                <option value="Holiday">Holiday Notice</option>
+                <option value="Update">System Update</option>
+                <option value="Urgent">Urgent Alert</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ann-content">Announcement Content</label>
+              <textarea class="form-input" id="ann-content" placeholder="Type announcement details here..." rows="3" required style="resize:vertical;padding:10px"></textarea>
+            </div>
+            <button class="btn btn-success" type="submit">Publish to Notice Board</button>
+          </form>
+          <div id="ann-publish-alert" style="display:none;margin-top:12px" class="alert"></div>
+        </div>
+
+        <!-- Active Announcements List Card -->
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <h3 class="card-panel-title">🗂️ Active Board Notices</h3>
+          </div>
+          <div id="admin-announcements-list" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
+            <!-- announcements list loaded dynamically -->
+          </div>
+        </div>
+      </div>
+
       ${worksitePanelHTML}
     </div>
   `;
@@ -3176,6 +3229,35 @@ function renderAdminDashboard() {
       openStaffDetailModal(userId);
     });
   });
+
+  // Announcements setup
+  renderAdminAnnouncementsList();
+
+  const annForm = document.getElementById('admin-announcement-form');
+  const annAlert = document.getElementById('ann-publish-alert');
+
+  if (annForm) {
+    annForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('ann-title').value.trim();
+      const category = document.getElementById('ann-category').value;
+      const content = document.getElementById('ann-content').value.trim();
+      const author = currentUser ? currentUser.name : 'HR Manager';
+
+      if (title && content) {
+        DB.addAnnouncement(title, content, category, author);
+        annForm.reset();
+        
+        if (annAlert) {
+          annAlert.className = 'alert alert-success';
+          annAlert.style.display = 'block';
+          annAlert.textContent = 'Announcement published successfully!';
+          setTimeout(() => { annAlert.style.display = 'none'; }, 3000);
+        }
+        renderAdminAnnouncementsList();
+      }
+    });
+  }
 }
 
 function renderAdminUsers() {
@@ -4520,4 +4602,101 @@ function showSwapAlert(msg, type) {
   }
   alert.innerText = msg;
   setTimeout(() => { alert.style.display = 'none'; }, 4000);
+}
+
+// -------------------------------------------------------------
+// ANNOUNCEMENTS RENDERING HELPER FUNCTIONS
+// -------------------------------------------------------------
+function renderEmployeeNotices(userId) {
+  const container = document.getElementById('employee-notices-container');
+  if (!container) return;
+
+  const notices = DB.getAnnouncements();
+  const readKey = `hs_read_notices_${userId}`;
+  const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+
+  if (notices.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:12px">No active announcements.</div>`;
+    return;
+  }
+
+  container.innerHTML = notices.map(a => {
+    const isRead = readIds.includes(a.id);
+    let badgeClass = 'badge-on-time';
+    if (a.category === 'General') badgeClass = 'badge-pending';
+    if (a.category === 'Update') badgeClass = 'badge-half-day';
+    if (a.category === 'Urgent') badgeClass = 'badge-late';
+
+    return `
+      <div class="notice-item" data-id="${a.id}" style="background:rgba(255,255,255,${isRead ? '0.01' : '0.03'});border:1px solid ${isRead ? 'var(--border)' : 'rgba(251,191,36,0.2)'};border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;opacity:${isRead ? '0.6' : '1'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
+          <span style="font-size:10.5px;color:var(--text-muted)">${a.date}</span>
+        </div>
+        <strong style="font-size:13px;color:var(--text-primary)">${Utils.escape(a.title)}</strong>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin:0">${Utils.escape(a.content)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid rgba(255,255,255,0.03);padding-top:6px">
+          <span style="font-size:10px;color:var(--text-muted)">By: ${Utils.escape(a.author)}</span>
+          ${isRead 
+            ? `<span style="font-size:11.5px;color:var(--cyan);display:flex;align-items:center;gap:3px;font-weight:600">✓ Read</span>` 
+            : `<button class="btn-mark-notice-read" data-id="${a.id}" style="background:transparent;border:none;color:var(--primary);cursor:pointer;font-size:11px;padding:0;text-decoration:underline">Mark as Read</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind mark as read events
+  container.querySelectorAll('.btn-mark-notice-read').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-id');
+      readIds.push(id);
+      localStorage.setItem(readKey, JSON.stringify(readIds));
+      renderEmployeeNotices(userId);
+    });
+  });
+}
+
+function renderAdminAnnouncementsList() {
+  const container = document.getElementById('admin-announcements-list');
+  if (!container) return;
+
+  const notices = DB.getAnnouncements();
+  if (notices.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">No announcements on the board.</div>`;
+    return;
+  }
+
+  container.innerHTML = notices.map(a => {
+    let badgeClass = 'badge-on-time';
+    if (a.category === 'General') badgeClass = 'badge-pending';
+    if (a.category === 'Update') badgeClass = 'badge-half-day';
+    if (a.category === 'Urgent') badgeClass = 'badge-late';
+
+    return `
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${a.date}</span>
+        </div>
+        <strong style="font-size:13px">${Utils.escape(a.title)}</strong>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.45;margin:0">${Utils.escape(a.content)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid rgba(255,255,255,0.03);padding-top:6px">
+          <span style="font-size:10px;color:var(--text-muted)">By: ${Utils.escape(a.author)}</span>
+          <button class="btn-delete-announcement" data-id="${a.id}" style="background:transparent;border:none;color:var(--error);cursor:pointer;font-size:11px;padding:0;text-decoration:underline">Delete Notice</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind delete events
+  container.querySelectorAll('.btn-delete-announcement').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-id');
+      if (confirm('Are you sure you want to delete this notice?')) {
+        DB.deleteAnnouncement(id);
+        renderAdminAnnouncementsList();
+      }
+    });
+  });
 }

@@ -383,6 +383,26 @@ export const DB = {
             }
           ];
         }
+        if (!this.data.announcements) {
+          this.data.announcements = [
+            {
+              id: 'ann_1',
+              title: 'Welcome to the New Attendance & Onboarding Portal',
+              content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.',
+              category: 'General',
+              date: '2026-06-25',
+              author: 'HR Admin Manager'
+            },
+            {
+              id: 'ann_2',
+              title: 'Upcoming Holiday Notice: Eid-ul-Adha',
+              content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!',
+              category: 'Holiday',
+              date: '2026-06-26',
+              author: 'HR Coordinator'
+            }
+          ];
+        }
         this.save();
       } catch (e) {
         console.error('Failed to parse DB, resetting to default', e);
@@ -440,6 +460,24 @@ export const DB = {
         date: '2026-06-25',
         managerComment: '',
         coworkerComment: ''
+      }
+    ];
+    this.data.announcements = [
+      {
+        id: 'ann_1',
+        title: 'Welcome to the New Attendance & Onboarding Portal',
+        content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.',
+        category: 'General',
+        date: '2026-06-25',
+        author: 'HR Admin Manager'
+      },
+      {
+        id: 'ann_2',
+        title: 'Upcoming Holiday Notice: Eid-ul-Adha',
+        content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!',
+        category: 'Holiday',
+        date: '2026-06-26',
+        author: 'HR Coordinator'
       }
     ];
     this.save();
@@ -1085,5 +1123,36 @@ export const DB = {
       return log;
     }
     return null;
+  },
+
+  // Announcements APIs
+  getAnnouncements() {
+    if (!this.data.announcements) {
+      this.data.announcements = [];
+    }
+    return this.data.announcements;
+  },
+
+  addAnnouncement(title, content, category, author) {
+    if (!this.data.announcements) {
+      this.data.announcements = [];
+    }
+    const newAnn = {
+      id: 'ann_' + Math.random().toString(36).substring(2, 9),
+      title,
+      content,
+      category,
+      date: new Date().toISOString().split('T')[0],
+      author
+    };
+    this.data.announcements.unshift(newAnn);
+    this.save();
+    return newAnn;
+  },
+
+  deleteAnnouncement(id) {
+    if (!this.data.announcements) return;
+    this.data.announcements = this.data.announcements.filter(a => a.id !== id);
+    this.save();
   }
 };
