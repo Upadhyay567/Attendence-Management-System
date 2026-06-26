@@ -1414,6 +1414,7 @@ function triggerBiometricVerification(userId, type, direction = 'in') {
 
 // Settings Panel View
 function renderSettingsView() {
+  const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
 
   main.innerHTML = `
@@ -1485,6 +1486,24 @@ function renderSettingsView() {
           
           <div id="version-check-status" style="display:none;margin-top:15px;font-size:12px;color:var(--text-secondary);align-items:center;gap:8px"></div>
         </div>
+
+        <!-- Account Session Card -->
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <h3 class="card-panel-title">Account Session</h3>
+          </div>
+          <div style="font-size:14px;margin-bottom:15px;display:flex;flex-direction:column;gap:8px">
+            <div>Logged in as: <strong>${Utils.escape(user ? user.name : 'Unknown')}</strong></div>
+            <div style="font-size:11px;color:var(--text-secondary)">Role: <span style="text-transform:uppercase;font-weight:600;color:var(--primary)">${user ? user.role : 'N/A'}</span></div>
+          </div>
+          
+          <button class="btn btn-danger" id="btn-settings-logout" style="font-size:13px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24">
+              <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+            </svg>
+            Log Out Account
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -1518,6 +1537,11 @@ function renderSettingsView() {
       verStatus.innerHTML = `✓ System is up to date. Latest version <strong>v1.3.0</strong> is active.`;
       verBtn.disabled = false;
     }, 2000);
+  });
+
+  document.getElementById('btn-settings-logout').addEventListener('click', () => {
+    Auth.logout();
+    window.location.hash = '#login';
   });
 }
 
