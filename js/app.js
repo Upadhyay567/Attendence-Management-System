@@ -2907,6 +2907,14 @@ function renderAdminVerificationView() {
                     return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
                   }
                   
+                  const isApproved = u.verificationStatuses && u.verificationStatuses[type] === 'Approved';
+                  const badgeHTML = isApproved
+                    ? `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`
+                    : `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
+                  const approveBtnHTML = isApproved
+                    ? ''
+                    : `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
+
                   if (type === 'document') {
                     if (Array.isArray(doc) && doc.length === 0) {
                       return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
@@ -2914,9 +2922,10 @@ function renderAdminVerificationView() {
                     const docObj = Array.isArray(doc) ? doc[0] : doc;
                     return `
                       <div style="display:flex; flex-direction:column; gap:4px">
-                        <span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>
+                        ${badgeHTML}
                         <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
-                        <div style="display:flex; gap:6px; margin-top:2px">
+                        <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
+                          ${approveBtnHTML}
                           <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
                         </div>
                       </div>
@@ -2925,10 +2934,11 @@ function renderAdminVerificationView() {
 
                   return `
                     <div style="display:flex; flex-direction:column; gap:4px">
-                      <span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>
+                      ${badgeHTML}
                       <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(doc.name)}">${Utils.escape(doc.name)}</div>
-                      <div style="display:flex; gap:6px; margin-top:2px">
+                      <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
                         <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">View</a>
+                        ${approveBtnHTML}
                         <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
                       </div>
                     </div>
@@ -2975,17 +2985,27 @@ function renderAdminVerificationView() {
   document.querySelectorAll('.btn-verify-view').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const userId = e.target.dataset.userid;
-      const docType = e.target.dataset.doctype;
+      const userId = e.target.closest('.btn-verify-view').dataset.userid;
+      const docType = e.target.closest('.btn-verify-view').dataset.doctype;
       showDocumentPreview(userId, docType);
+    });
+  });
+
+  document.querySelectorAll('.btn-verify-approve').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const userId = e.target.closest('.btn-verify-approve').dataset.userid;
+      const docType = e.target.closest('.btn-verify-approve').dataset.doctype;
+      DB.approveUserDocument(userId, docType);
+      renderAdminVerificationView();
     });
   });
 
   document.querySelectorAll('.btn-verify-download').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const userId = e.target.dataset.userid;
-      const docType = e.target.dataset.doctype;
+      const userId = e.target.closest('.btn-verify-download').dataset.userid;
+      const docType = e.target.closest('.btn-verify-download').dataset.doctype;
       
       if (docType === 'document') {
         const u = DB.getUser(userId);

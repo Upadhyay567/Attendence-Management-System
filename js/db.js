@@ -1194,5 +1194,16 @@ export const DB = {
     if (!this.data.announcements) return;
     this.data.announcements = this.data.announcements.filter(a => a.id !== id);
     this.save();
+  },
+
+  approveUserDocument(userId, docType) {
+    const user = this.getUser(userId);
+    if (!user) return null;
+    if (!user.verificationStatuses) {
+      user.verificationStatuses = {};
+    }
+    user.verificationStatuses[docType] = 'Approved';
+    this.save();
+    return user;
   }
 };
