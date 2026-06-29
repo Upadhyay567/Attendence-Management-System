@@ -2155,6 +2155,17 @@ function renderEmployeeVerification() {
   });
 }
 
+function getVerificationBadgeHTML(user, type) {
+  const status = user.verificationStatuses ? user.verificationStatuses[type] : null;
+  if (status === 'Approved') {
+    return `<span class="badge badge-approved" style="font-size:10.5px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2)">✅ Approved</span>`;
+  } else if (status === 'Rejected') {
+    return `<span class="badge badge-rejected" style="font-size:10.5px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(239,68,68,0.2)">❌ Rejected</span>`;
+  } else {
+    return `<span class="badge badge-pending" style="font-size:10.5px; width:fit-content; background:rgba(251,191,36,0.1); color:var(--primary); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(251,191,36,0.2)">⏳ Pending Approval</span>`;
+  }
+}
+
 function renderResumeDisplay(userId) {
   const user = DB.getUser(userId);
   const cvDisplay = document.getElementById('cv-file-display');
@@ -2179,6 +2190,7 @@ function renderResumeDisplay(userId) {
     cvDisplay.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px 0">No Resume uploaded yet.</div>`;
     return;
   }
+  const badgeHTML = getVerificationBadgeHTML(user, 'resume');
   cvDisplay.innerHTML = `
     <div class="file-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -2186,11 +2198,14 @@ function renderResumeDisplay(userId) {
         <div class="file-item-name" style="flex:1;margin-left:8px">${Utils.escape(user.resume.name)}</div>
         <div class="file-item-meta">${user.resume.size} | ${user.resume.date}</div>
       </div>
-      <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-        <button class="btn btn-secondary btn-xs" id="view-resume-btn" style="padding:4px 8px;font-size:11px">View</button>
-        <button class="btn btn-secondary btn-xs" id="download-resume-btn" style="padding:4px 8px;font-size:11px">Download</button>
-        <button class="btn btn-secondary btn-xs" id="replace-resume-btn" style="padding:4px 8px;font-size:11px">Replace</button>
-        <button class="btn btn-delete-xs" id="delete-resume-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        ${badgeHTML}
+        <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-xs" id="view-resume-btn" style="padding:4px 8px;font-size:11px">View</button>
+          <button class="btn btn-secondary btn-xs" id="download-resume-btn" style="padding:4px 8px;font-size:11px">Download</button>
+          <button class="btn btn-secondary btn-xs" id="replace-resume-btn" style="padding:4px 8px;font-size:11px">Replace</button>
+          <button class="btn btn-delete-xs" id="delete-resume-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+        </div>
       </div>
     </div>
   `;
@@ -2229,6 +2244,7 @@ function renderAadharDisplay(userId) {
     aadharDisplay.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px 0">No Aadhar Card uploaded yet.</div>`;
     return;
   }
+  const badgeHTML = getVerificationBadgeHTML(user, 'aadhar');
   aadharDisplay.innerHTML = `
     <div class="file-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -2236,11 +2252,14 @@ function renderAadharDisplay(userId) {
         <div class="file-item-name" style="flex:1;margin-left:8px">${Utils.escape(user.aadhar.name)}</div>
         <div class="file-item-meta">${user.aadhar.size} | ${user.aadhar.date}</div>
       </div>
-      <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-        <button class="btn btn-secondary btn-xs" id="view-aadhar-btn" style="padding:4px 8px;font-size:11px">View</button>
-        <button class="btn btn-secondary btn-xs" id="download-aadhar-btn" style="padding:4px 8px;font-size:11px">Download</button>
-        <button class="btn btn-secondary btn-xs" id="replace-aadhar-btn" style="padding:4px 8px;font-size:11px">Replace</button>
-        <button class="btn btn-delete-xs" id="delete-aadhar-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        ${badgeHTML}
+        <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-xs" id="view-aadhar-btn" style="padding:4px 8px;font-size:11px">View</button>
+          <button class="btn btn-secondary btn-xs" id="download-aadhar-btn" style="padding:4px 8px;font-size:11px">Download</button>
+          <button class="btn btn-secondary btn-xs" id="replace-aadhar-btn" style="padding:4px 8px;font-size:11px">Replace</button>
+          <button class="btn btn-delete-xs" id="delete-aadhar-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+        </div>
       </div>
     </div>
   `;
@@ -2280,6 +2299,7 @@ function renderBankDetailsDisplay(userId) {
     bankDisplay.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px 0">No Bank Details uploaded yet.</div>`;
     return;
   }
+  const badgeHTML = getVerificationBadgeHTML(user, 'bank');
   bankDisplay.innerHTML = `
     <div class="file-item" style="flex-direction:column;align-items:stretch;gap:8px">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -2287,11 +2307,14 @@ function renderBankDetailsDisplay(userId) {
         <div class="file-item-name" style="flex:1;margin-left:8px">${Utils.escape(user.bankDetails.name)}</div>
         <div class="file-item-meta">${user.bankDetails.size} | ${user.bankDetails.date}</div>
       </div>
-      <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
-        <button class="btn btn-secondary btn-xs" id="view-bank-btn" style="padding:4px 8px;font-size:11px">View</button>
-        <button class="btn btn-secondary btn-xs" id="download-bank-btn" style="padding:4px 8px;font-size:11px">Download</button>
-        <button class="btn btn-secondary btn-xs" id="replace-bank-btn" style="padding:4px 8px;font-size:11px">Replace</button>
-        <button class="btn btn-delete-xs" id="delete-bank-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        ${badgeHTML}
+        <div class="doc-actions-group" style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-xs" id="view-bank-btn" style="padding:4px 8px;font-size:11px">View</button>
+          <button class="btn btn-secondary btn-xs" id="download-bank-btn" style="padding:4px 8px;font-size:11px">Download</button>
+          <button class="btn btn-secondary btn-xs" id="replace-bank-btn" style="padding:4px 8px;font-size:11px">Replace</button>
+          <button class="btn btn-delete-xs" id="delete-bank-btn" style="padding:4px 8px;font-size:11px;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.2);border-radius:4px;cursor:pointer">Delete</button>
+        </div>
       </div>
     </div>
   `;
@@ -2313,14 +2336,22 @@ function renderDocumentsDisplay(userId) {
     display.innerHTML = `<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px 0">No ID documents attached.</div>`;
     return;
   }
-  display.innerHTML = user.documents.map(d => `
-    <div class="file-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--primary);flex-shrink:0"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-      <div class="file-item-name">${Utils.escape(d.name)}</div>
-      <div class="file-item-meta">${d.size} | ${d.date}</div>
-      <button class="file-item-delete btn-delete-doc" data-docid="${d.id}" title="Remove" style="font-size:11px;background:none;border:none;color:#ef4444;cursor:pointer">Delete</button>
-    </div>
-  `).join('');
+  display.innerHTML = user.documents.map(d => {
+    const badgeHTML = getVerificationBadgeHTML(user, 'document');
+    return `
+      <div class="file-item" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--primary);flex-shrink:0"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+          <div class="file-item-name" style="flex:1;margin-left:8px">${Utils.escape(d.name)}</div>
+          <div class="file-item-meta">${d.size} | ${d.date}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          ${badgeHTML}
+          <button class="file-item-delete btn-delete-doc" data-docid="${d.id}" title="Remove" style="font-size:11px;background:none;border:none;color:#ef4444;cursor:pointer;text-decoration:underline">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
   display.querySelectorAll('.btn-delete-doc').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const docId = e.currentTarget.dataset.docid;
