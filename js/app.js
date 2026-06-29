@@ -1102,6 +1102,9 @@ function renderEmployeeDashboard() {
         <h1 class="content-title">Welcome, ${Utils.escape(user.name)}</h1>
         <div class="content-subtitle">Log your hours and view daily shift metrics.</div>
       </div>
+      <div>
+        <button class="btn btn-warning" id="btn-employee-my-recap" style="width:auto;padding:10px 18px;font-size:13px">📊 My Punctuality Recap</button>
+      </div>
     </div>
     
     <div class="content-body">
@@ -1283,6 +1286,13 @@ function renderEmployeeDashboard() {
     document.getElementById('btn-regular-checkout').addEventListener('click', () => handleClockOut(user.id));
     document.getElementById('btn-face-checkout').addEventListener('click', () => triggerBiometricVerification(user.id, 'face', 'out'));
     document.getElementById('btn-finger-checkout').addEventListener('click', () => triggerBiometricVerification(user.id, 'finger', 'out'));
+  }
+  
+  const recapBtn = document.getElementById('btn-employee-my-recap');
+  if (recapBtn) {
+    recapBtn.addEventListener('click', () => {
+      openPunctualityRecapModal(user.id);
+    });
   }
 
   // Initialize GPS state
