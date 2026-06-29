@@ -3559,19 +3559,22 @@ function renderAdminUsers() {
                   profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
                 }
 
-                const actionsHTML = (user.role === 'hr' || user.role === 'manager')
-                  ? `
-                    <div style="display:flex;gap:6px;flex-wrap:wrap">
-                      ${u.profileVerificationStatus === 'Pending Approval' ? `<button class="btn btn-cyan btn-review-profile" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Review Edits</button>` : ''}
-                      <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                      <button class="btn btn-cyan btn-bioreg-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Biometric Keys</button>
-                      <button class="btn btn-warning btn-recap-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">📊 Recap</button>
-                      <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
-                    </div>
-                  `
-                  : `
-                    <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
-                  `;
+                 const actionsHTML = (user.role === 'hr' || user.role === 'manager')
+                   ? `
+                     <div style="display:flex;gap:6px;flex-wrap:wrap">
+                       ${u.profileVerificationStatus === 'Pending Approval' ? `
+                         <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
+                         <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
+                       ` : ''}
+                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
+                       <button class="btn btn-cyan btn-bioreg-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Biometric Keys</button>
+                       <button class="btn btn-warning btn-recap-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">📊 Recap</button>
+                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
+                     </div>
+                   `
+                   : `
+                     <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
+                   `;
                 
                 return `
                   <tr>
@@ -3605,7 +3608,38 @@ function renderAdminUsers() {
   document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
   document.querySelectorAll('.btn-bioreg-user').forEach(btn => btn.addEventListener('click', (e) => openBiometricsConfigModal(e.target.closest('.btn-bioreg-user').dataset.id)));
   document.querySelectorAll('.btn-recap-user').forEach(btn => btn.addEventListener('click', (e) => openPunctualityRecapModal(e.target.closest('.btn-recap-user').dataset.id)));
-  document.querySelectorAll('.btn-review-profile').forEach(btn => btn.addEventListener('click', (e) => openProfileReviewModal(e.target.closest('.btn-review-profile').dataset.id)));
+  
+  document.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => {
+    const id = e.target.closest('.btn-approve-profile-direct').dataset.id;
+    const u = DB.getUser(id);
+    if (u && u.pendingProfileEdits) {
+      Object.assign(u, u.pendingProfileEdits);
+      u.pendingProfileEdits = null;
+      u.profileVerificationStatus = 'Approved';
+      u.profileVerificationComment = '';
+      DB.save();
+      renderAdminUsers();
+    }
+  }));
+
+  document.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => {
+    const id = e.target.closest('.btn-reject-profile-direct').dataset.id;
+    const u = DB.getUser(id);
+    if (u) {
+      const comment = prompt('Please enter the profile issue details / reason for rejection:');
+      if (comment === null) return;
+      if (!comment.trim()) {
+        alert('You must provide a comment to explain the rejection.');
+        return;
+      }
+      u.profileVerificationStatus = 'Rejected';
+      u.profileVerificationComment = comment.trim();
+      u.pendingProfileEdits = null;
+      DB.save();
+      renderAdminUsers();
+    }
+  }));
+
   document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => {
     const id = e.target.closest('.btn-delete-user').dataset.id;
     const u = DB.getUser(id);
