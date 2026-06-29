@@ -1890,6 +1890,40 @@ function renderEmployeeProfile() {
   const user = DB.getUser(Auth.getCurrentUser().id);
   const main = document.getElementById('main-view');
 
+  const status = user.profileVerificationStatus || 'Approved';
+  const editCount = user.profileEditCount || 0;
+  
+  let statusBannerHTML = '';
+  if (status === 'Approved') {
+    statusBannerHTML = `
+      <div class="card-panel" style="border-left:4px solid var(--success); background:rgba(16,185,129,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
+        <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--success)">✅ Verified / Approved</strong></span>
+        <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits Used: <strong>${editCount}/3</strong></span>
+      </div>
+    `;
+  } else if (status === 'Pending Approval') {
+    statusBannerHTML = `
+      <div class="card-panel" style="border-left:4px solid var(--warning); background:rgba(251,191,36,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
+        <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--warning)">⏳ Pending Review (Direct edit limit reached)</strong></span>
+        <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
+      </div>
+    `;
+  } else if (status === 'Rejected') {
+    statusBannerHTML = `
+      <div class="card-panel" style="border-left:4px solid var(--error); background:rgba(239,68,68,0.02); margin-bottom:16px; padding:15px 20px; display:flex; flex-direction:column; gap:8px">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--error)">❌ Profile Issue Flagged</strong></span>
+          <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
+        </div>
+        ${user.profileVerificationComment ? `
+        <div style="font-size:12px; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px dashed var(--border); padding:8px 12px; border-radius:var(--radius-sm)">
+          <strong>Issue Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   main.innerHTML = `
     <div class="content-header">
       <div>
@@ -1899,6 +1933,7 @@ function renderEmployeeProfile() {
     </div>
     <div class="content-body">
       <div style="max-width: 800px; margin: 0 auto;">
+        ${statusBannerHTML}
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Personal Details</h3></div>
           <form id="profile-details-form">
@@ -2010,18 +2045,39 @@ function renderEmployeeProfile() {
     const deductionPT = Number(document.getElementById('prof-pt').value);
     const deductionTDS = Number(document.getElementById('prof-tds').value);
 
-    DB.updateUserProfile(user.id, { 
-      name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-      allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
-    });
-    
-    Auth.init(); // Refresh current session user object
-    
+    const editCount = user.profileEditCount || 0;
     const alert = document.getElementById('profile-alert');
-    alert.className = 'alert alert-success';
-    alert.textContent = 'Profile details updated successfully!';
+    
+    if (editCount < 3) {
+      DB.updateUserProfile(user.id, { 
+        name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+        allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+      });
+      const updatedUser = DB.getUser(user.id);
+      updatedUser.profileEditCount = editCount + 1;
+      updatedUser.profileVerificationStatus = 'Approved';
+      updatedUser.profileVerificationComment = '';
+      DB.save();
+      
+      Auth.init();
+      alert.className = 'alert alert-success';
+      alert.textContent = `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
+    } else {
+      const updatedUser = DB.getUser(user.id);
+      updatedUser.profileVerificationStatus = 'Pending Approval';
+      updatedUser.pendingProfileEdits = {
+        name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+        allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+      };
+      DB.save();
+      
+      Auth.init();
+      alert.className = 'alert alert-warning';
+      alert.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+    }
+    
     alert.style.display = 'flex';
-    setTimeout(() => { alert.style.display = 'none'; }, 3000);
+    setTimeout(() => { alert.style.display = 'none'; }, 4000);
     
     renderAppShell();
     renderEmployeeProfile();
@@ -3493,9 +3549,20 @@ function renderAdminUsers() {
                 const hasFace = u.biometricRegistered?.face ? '✅ Configured' : '❌ Empty';
                 const hasFinger = u.biometricRegistered?.finger ? '✅ Configured' : '❌ Empty';
                 
+                const profileStatus = u.profileVerificationStatus || 'Approved';
+                let profileBadgeHTML = '';
+                if (profileStatus === 'Pending Approval') {
+                  profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
+                } else if (profileStatus === 'Rejected') {
+                  profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
+                } else {
+                  profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
+                }
+
                 const actionsHTML = (user.role === 'hr' || user.role === 'manager')
                   ? `
                     <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      ${u.profileVerificationStatus === 'Pending Approval' ? `<button class="btn btn-cyan btn-review-profile" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Review Edits</button>` : ''}
                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
                       <button class="btn btn-cyan btn-bioreg-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Biometric Keys</button>
                       <button class="btn btn-warning btn-recap-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">📊 Recap</button>
@@ -3508,7 +3575,10 @@ function renderAdminUsers() {
                 
                 return `
                   <tr>
-                    <td style="font-weight:600">${Utils.escape(u.name)}</td>
+                    <td style="font-weight:600">
+                      ${Utils.escape(u.name)}
+                      ${profileBadgeHTML}
+                    </td>
                     <td>${Utils.escape(u.username)}</td>
                     <td><code>${Utils.escape(u.password)}</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
@@ -3535,6 +3605,7 @@ function renderAdminUsers() {
   document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
   document.querySelectorAll('.btn-bioreg-user').forEach(btn => btn.addEventListener('click', (e) => openBiometricsConfigModal(e.target.closest('.btn-bioreg-user').dataset.id)));
   document.querySelectorAll('.btn-recap-user').forEach(btn => btn.addEventListener('click', (e) => openPunctualityRecapModal(e.target.closest('.btn-recap-user').dataset.id)));
+  document.querySelectorAll('.btn-review-profile').forEach(btn => btn.addEventListener('click', (e) => openProfileReviewModal(e.target.closest('.btn-review-profile').dataset.id)));
   document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => {
     const id = e.target.closest('.btn-delete-user').dataset.id;
     const u = DB.getUser(id);
@@ -5371,6 +5442,105 @@ function openPunctualityRecapModal(userId) {
   });
   
   updateRecapView();
+}
+
+function openProfileReviewModal(userId) {
+  const u = DB.getUser(userId);
+  if (!u || !u.pendingProfileEdits) return;
+  
+  const edits = u.pendingProfileEdits;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  const diffRows = [];
+  const fields = [
+    { key: 'name', label: 'Full Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'address', label: 'Address' },
+    { key: 'city', label: 'City' },
+    { key: 'emergencyContact', label: 'Emergency Contact' },
+    { key: 'dob', label: 'DOB' },
+    { key: 'gender', label: 'Gender' }
+  ];
+  
+  fields.forEach(f => {
+    const curVal = u[f.key] || '';
+    const pendingVal = edits[f.key] || '';
+    if (curVal !== pendingVal) {
+      diffRows.push(`
+        <tr>
+          <td style="font-weight:600">${f.label}</td>
+          <td style="color:var(--text-muted); text-decoration:line-through">${Utils.escape(curVal)}</td>
+          <td style="color:var(--success); font-weight:600">${Utils.escape(pendingVal)}</td>
+        </tr>
+      `);
+    }
+  });
+  
+  if (diffRows.length === 0) {
+    diffRows.push(`<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">No visible changes in key fields.</td></tr>`);
+  }
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
+      <div class="modal-header" style="margin-bottom:15px">
+        <h3 class="modal-title">📝 Review Profile Changes</h3>
+        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:15px">
+        Employee: <strong>${Utils.escape(u.name)}</strong> (${userId})
+      </div>
+      
+      <table class="custom-table" style="font-size:12.5px; margin-bottom:20px">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Current Value</th>
+            <th>Proposed Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${diffRows.join('')}
+        </tbody>
+      </table>
+      
+      <div class="form-group" style="margin-bottom:15px">
+        <label class="form-label" for="review-issue-comment">If rejecting, add issue comment:</label>
+        <textarea class="form-input" id="review-issue-comment" placeholder="e.g. Please verify mobile number format..." rows="2" style="resize:vertical"></textarea>
+      </div>
+      
+      <div class="modal-actions" style="margin-top:20px; display:flex; justify-content:space-between; gap:10px">
+        <button class="btn btn-secondary" id="btn-rejection-profile-submit" style="background:var(--error); border-color:var(--error); color:white; width:auto; font-size:12px; padding:8px 14px">Reject & Add Issue</button>
+        <button class="btn" id="btn-approval-profile-submit" style="background:var(--success); width:auto; font-size:12px; padding:8px 14px">Approve & Save Changes</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  document.getElementById('btn-approval-profile-submit').addEventListener('click', () => {
+    Object.assign(u, edits);
+    u.pendingProfileEdits = null;
+    u.profileVerificationStatus = 'Approved';
+    u.profileVerificationComment = '';
+    DB.save();
+    overlay.remove();
+    renderAdminUsers();
+  });
+  
+  document.getElementById('btn-rejection-profile-submit').addEventListener('click', () => {
+    const comment = document.getElementById('review-issue-comment').value.trim();
+    if (!comment) {
+      alert('Please enter an issue comment to explain the rejection.');
+      return;
+    }
+    u.profileVerificationStatus = 'Rejected';
+    u.profileVerificationComment = comment;
+    u.pendingProfileEdits = null;
+    DB.save();
+    overlay.remove();
+    renderAdminUsers();
+  });
 }
 
 function openHelpGuidelinesModal() {
