@@ -1890,38 +1890,41 @@ function renderEmployeeProfile() {
   const user = DB.getUser(Auth.getCurrentUser().id);
   const main = document.getElementById('main-view');
 
+  const isSelfAdmin = user.role === 'hr' || user.role === 'manager';
   const status = user.profileVerificationStatus || 'Approved';
   const editCount = user.profileEditCount || 0;
   
   let statusBannerHTML = '';
-  if (status === 'Approved') {
-    statusBannerHTML = `
-      <div class="card-panel" style="border-left:4px solid var(--success); background:rgba(16,185,129,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
-        <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--success)">✅ Verified / Approved</strong></span>
-        <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits Used: <strong>${editCount}/3</strong></span>
-      </div>
-    `;
-  } else if (status === 'Pending Approval') {
-    statusBannerHTML = `
-      <div class="card-panel" style="border-left:4px solid var(--warning); background:rgba(251,191,36,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
-        <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--warning)">⏳ Pending Review (Direct edit limit reached)</strong></span>
-        <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
-      </div>
-    `;
-  } else if (status === 'Rejected') {
-    statusBannerHTML = `
-      <div class="card-panel" style="border-left:4px solid var(--error); background:rgba(239,68,68,0.02); margin-bottom:16px; padding:15px 20px; display:flex; flex-direction:column; gap:8px">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--error)">❌ Profile Issue Flagged</strong></span>
+  if (!isSelfAdmin) {
+    if (status === 'Approved') {
+      statusBannerHTML = `
+        <div class="card-panel" style="border-left:4px solid var(--success); background:rgba(16,185,129,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
+          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--success)">✅ Verified / Approved</strong></span>
+          <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits Used: <strong>${editCount}/3</strong></span>
+        </div>
+      `;
+    } else if (status === 'Pending Approval') {
+      statusBannerHTML = `
+        <div class="card-panel" style="border-left:4px solid var(--warning); background:rgba(251,191,36,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
+          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--warning)">⏳ Pending Review (Direct edit limit reached)</strong></span>
           <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
         </div>
-        ${user.profileVerificationComment ? `
-        <div style="font-size:12px; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px dashed var(--border); padding:8px 12px; border-radius:var(--radius-sm)">
-          <strong>Issue Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
+      `;
+    } else if (status === 'Rejected') {
+      statusBannerHTML = `
+        <div class="card-panel" style="border-left:4px solid var(--error); background:rgba(239,68,68,0.02); margin-bottom:16px; padding:15px 20px; display:flex; flex-direction:column; gap:8px">
+          <div style="display:flex; justify-content:space-between; align-items:center">
+            <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--error)">❌ Profile Issue Flagged</strong></span>
+            <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
+          </div>
+          ${user.profileVerificationComment ? `
+          <div style="font-size:12px; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px dashed var(--border); padding:8px 12px; border-radius:var(--radius-sm)">
+            <strong>Issue Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
+          </div>
+          ` : ''}
         </div>
-        ` : ''}
-      </div>
-    `;
+      `;
+    }
   }
 
   main.innerHTML = `
@@ -2047,21 +2050,26 @@ function renderEmployeeProfile() {
 
     const editCount = user.profileEditCount || 0;
     const alert = document.getElementById('profile-alert');
+    const isSelfAdmin = user.role === 'hr' || user.role === 'manager';
     
-    if (editCount < 3) {
+    if (isSelfAdmin || editCount < 3) {
       DB.updateUserProfile(user.id, { 
         name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
         allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
       });
       const updatedUser = DB.getUser(user.id);
-      updatedUser.profileEditCount = editCount + 1;
+      if (!isSelfAdmin) {
+        updatedUser.profileEditCount = editCount + 1;
+      }
       updatedUser.profileVerificationStatus = 'Approved';
       updatedUser.profileVerificationComment = '';
       DB.save();
       
       Auth.init();
       alert.className = 'alert alert-success';
-      alert.textContent = `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
+      alert.textContent = isSelfAdmin 
+        ? 'Profile details updated successfully!'
+        : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
     } else {
       const updatedUser = DB.getUser(user.id);
       updatedUser.profileVerificationStatus = 'Pending Approval';
@@ -3848,7 +3856,13 @@ function openUserModal(userId = null) {
     }
 
     if (isEdit) {
-      DB.updateUser(userId, { name, password, baseSalary, scheduleId, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS });
+      DB.updateUser(userId, { 
+        name, password, baseSalary, scheduleId, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        profileVerificationStatus: 'Approved',
+        profileVerificationComment: '',
+        pendingProfileEdits: null
+      });
     } else {
       if (DB.getUserByUsernameOrId(username)) {
         alert('Username or Employee ID is already taken.');
