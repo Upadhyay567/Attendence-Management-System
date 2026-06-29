@@ -1161,19 +1161,18 @@ function renderEmployeeDashboard() {
                 </span>
               </div>
               <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">
-                Current Coordinates: <strong id="gps-coords-display" style="color:var(--text-primary)">28.6139° N, 77.2090° E</strong>
+                Current Coordinates: <strong id="gps-coords-display" style="color:var(--text-primary)">28.6978° N, 77.1408° E</strong>
                 <br>
-                Distance from Delhi HQ: <strong id="gps-distance-display" style="color:var(--text-primary)">0 meters</strong>
+                Distance from Kohat Enclave: <strong id="gps-distance-display" style="color:var(--text-primary)">0 meters</strong>
               </div>
               
               <!-- Location Simulation Selector -->
               <div class="form-group" style="margin-bottom:0">
                 <label class="form-label" style="font-size:11px;margin-bottom:6px">Mock Current Location (To test company policy):</label>
                 <select class="form-input" id="gps-mock-selector" style="padding:8px 12px;font-size:13px;background:rgba(255,255,255,0.02)">
-                  <option value="hq">Delhi HQ Office (In Range - 0m)</option>
-                  <option value="connaught">Connaught Place Hub (Out of Range - 5.2 km)</option>
-                  <option value="noida">Noida Branch Home (Out of Range - 18.7 km)</option>
-                  <option value="remote">Remote (Outside Geofence - 24.5 km)</option>
+                  <option value="hq">Kohat Enclave, Pitampura, Delhi (In Range - 0m)</option>
+                  <option value="chandni">Chandni Chowk (Out of Range - 9.8 km)</option>
+                  <option value="omaxe">Omaxe City, Delhi (Out of Range - 14.5 km)</option>
                 </select>
               </div>
             </div>
@@ -1194,6 +1193,10 @@ function renderEmployeeDashboard() {
               <div class="shift-meta-row">
                 <span>Grace Period:</span>
                 <strong style="color:var(--warning)">${schedule.gracePeriod} minutes</strong>
+              </div>
+              <div class="shift-meta-row">
+                <span>Shift Location:</span>
+                <strong style="color:var(--text-primary)">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</strong>
               </div>
               <div class="shift-days-row">
                 ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `
@@ -1329,7 +1332,7 @@ function renderEmployeeDashboard() {
       if (radar) {
         radar.className = 'gps-radar-indicator in-range';
       }
-      if (coords) coords.textContent = '28.6139° N, 77.2090° E';
+      if (coords) coords.textContent = '28.6978° N, 77.1408° E';
       if (dist) dist.textContent = '0 meters';
       
       // Enable biometric buttons
@@ -1350,20 +1353,18 @@ function renderEmployeeDashboard() {
       justBlock.style.display = 'block';
       if (badge) {
         badge.textContent = 'Out of Range';
-        badge.className = val === 'connaught' ? 'badge badge-late' : 'badge badge-absent';
+        badge.className = val === 'chandni' ? 'badge badge-late' : 'badge badge-absent';
       }
       if (radar) {
         radar.className = 'gps-radar-indicator out-of-range';
       }
       if (coords) {
-        if (val === 'connaught') coords.textContent = '28.6289° N, 77.2189° E';
-        else if (val === 'noida') coords.textContent = '28.6273° N, 77.3725° E';
-        else coords.textContent = '28.5355° N, 77.3910° E';
+        if (val === 'chandni') coords.textContent = '28.6562° N, 77.2310° E';
+        else if (val === 'omaxe') coords.textContent = '28.8130° N, 77.0673° E';
       }
       if (dist) {
-        if (val === 'connaught') dist.textContent = '5.2 km';
-        else if (val === 'noida') dist.textContent = '18.7 km';
-        else dist.textContent = '24.5 km';
+        if (val === 'chandni') dist.textContent = '9.8 km';
+        else if (val === 'omaxe') dist.textContent = '14.5 km';
       }
       
       // Disable biometric buttons
@@ -1372,7 +1373,7 @@ function renderEmployeeDashboard() {
           btn.setAttribute('disabled', 'true');
           btn.style.opacity = '0.4';
           btn.style.cursor = 'not-allowed';
-          btn.setAttribute('title', 'Biometric logging requires Delhi HQ coordinates');
+          btn.setAttribute('title', 'Biometric logging requires Kohat Enclave coordinates');
         }
       });
 
@@ -1427,7 +1428,7 @@ function renderPersonalLogs(userId) {
         <td>${Utils.formatDate(l.date)}</td>
         <td>${l.checkIn || '--:--'}</td>
         <td>${l.checkOut || '--:--'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Kohat Enclave, Pitampura, Delhi')}</td>
         <td><span class="badge ${statusClass}">${l.status}</span></td>
       </tr>
     `;
@@ -1440,27 +1441,22 @@ function handlePinClockIn(userId) {
   const user = DB.getUser(userId);
   if (user && user.password === pass) {
     const mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
-    let locationName = 'Delhi HQ Office';
+    let locationName = 'Kohat Enclave, Pitampura, Delhi';
     let deviationFlag = false;
     let justification = '';
-    let coords = '28.6139° N, 77.2090° E';
+    let coords = '28.6978° N, 77.1408° E';
     let distance = 0;
 
-    if (mockLoc === 'connaught') {
-      locationName = 'Connaught Place Hub';
+    if (mockLoc === 'chandni') {
+      locationName = 'Chandni Chowk';
       deviationFlag = true;
-      coords = '28.6289° N, 77.2189° E';
-      distance = 5.2;
-    } else if (mockLoc === 'noida') {
-      locationName = 'Noida Branch Home';
+      coords = '28.6562° N, 77.2310° E';
+      distance = 9.8;
+    } else if (mockLoc === 'omaxe') {
+      locationName = 'Omaxe City, Delhi';
       deviationFlag = true;
-      coords = '28.6273° N, 77.3725° E';
-      distance = 18.7;
-    } else if (mockLoc === 'remote') {
-      locationName = 'Remote (Outside Geofence)';
-      deviationFlag = true;
-      coords = '28.5355° N, 77.3910° E';
-      distance = 24.5;
+      coords = '28.8130° N, 77.0673° E';
+      distance = 14.5;
     }
 
     if (deviationFlag) {
@@ -1491,7 +1487,7 @@ function handleClockOut(userId) {
 function triggerBiometricVerification(userId, type, direction = 'in') {
   const mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
   if (mockLoc !== 'hq') {
-    alert(`Biometric Geofence Error: Your current GPS coordinates are out of range for biometric mapping. Under HS Group guidelines, biometric clock-in is strictly restricted to Delhi HQ coordinates. Please switch to Delhi HQ location or check in using your Account Password.`);
+    alert(`Biometric Geofence Error: Your current GPS coordinates are out of range for biometric mapping. Under HS Group guidelines, biometric clock-in is strictly restricted to Kohat Enclave coordinates. Please switch to Kohat Enclave, Pitampura, Delhi location or check in using your Account Password.`);
     return;
   }
 
@@ -1506,7 +1502,7 @@ function triggerBiometricVerification(userId, type, direction = 'in') {
   openBiometricScanner(userId, type, (success) => {
     if (success) {
       if (direction === 'in') {
-        DB.checkIn(userId, type, 'Delhi HQ Office');
+        DB.checkIn(userId, type, 'Kohat Enclave, Pitampura, Delhi');
       } else {
         DB.checkOut(userId, type);
       }
@@ -1838,12 +1834,31 @@ function renderEmployeePayslip(userId, month, year) {
             <td style="text-align:right">-</td>
             <td style="text-align:right;color:#ef4444">₹${payroll.deductionTDSVal.toLocaleString()}</td>
           </tr>
+          ${payroll.bonus > 0 ? `
+          <tr>
+            <td>Manager Discretionary Bonus / Rewards</td>
+            <td style="text-align:right;color:var(--success);font-weight:600">₹${payroll.bonus.toLocaleString()}</td>
+            <td style="text-align:right">-</td>
+          </tr>
+          ` : ''}
+          ${payroll.adhocDeduction > 0 ? `
+          <tr>
+            <td>Manager Ad-hoc Deduction / Adjustments</td>
+            <td style="text-align:right">-</td>
+            <td style="text-align:right;color:var(--error);font-weight:600">₹${payroll.adhocDeduction.toLocaleString()}</td>
+          </tr>
+          ` : ''}
           <tr class="total-row">
             <td>Net Disbursed Take-home Salary</td>
             <td style="text-align:right" colspan="2">₹${payroll.netSalary.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>
+      ${payroll.remarks ? `
+      <div style="margin-top:20px;padding:12px;background:rgba(255,255,255,0.01);border:1px dashed var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">
+        <strong>Remarks / Notes:</strong> ${Utils.escape(payroll.remarks)}
+      </div>
+      ` : ''}
       <div style="display:flex;justify-content:space-between;margin-top:40px;font-size:11px;color:#64748b">
         <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:120px;text-align:center">HR Dept Seal</div>
         <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:120px;text-align:center">Signature of Recipient</div>
@@ -3072,16 +3087,16 @@ function renderAdminDashboard() {
   // Group today's checked-in employees by location for HR View
   const todayLogs = logs.filter(l => l.date === todayStr);
   const locationGroups = {
-    'Delhi HQ Office': [],
-    'Connaught Place Hub': [],
-    'Noida Branch Home': []
+    'Kohat Enclave, Pitampura, Delhi': [],
+    'Chandni Chowk': [],
+    'Omaxe City, Delhi': []
   };
 
   todayLogs.forEach(l => {
     if (l.checkIn) {
       const u = DB.getUser(l.userId);
       if (u) {
-        const loc = l.location || 'Delhi HQ Office';
+        const loc = l.location || 'Kohat Enclave, Pitampura, Delhi';
         if (!locationGroups[loc]) {
           locationGroups[loc] = [];
         }
@@ -3347,9 +3362,15 @@ function renderAdminDashboard() {
 
 function renderAdminUsers() {
   const main = document.getElementById('main-view');
-  const users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager');
   const user = Auth.getCurrentUser();
-  const addBtnHTML = user.role === 'hr' ? `<div><button class="btn" id="btn-add-user-modal">Add New Employee</button></div>` : '';
+  const users = DB.getUsers().filter(u => {
+    if (user.role === 'manager') {
+      return u.role === 'employee' || u.role === 'hr';
+    } else {
+      return u.role === 'employee';
+    }
+  });
+  const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `<div><button class="btn" id="btn-add-user-modal">Add New Employee</button></div>` : '';
 
   main.innerHTML = `
     <div class="content-header">
@@ -3381,7 +3402,7 @@ function renderAdminUsers() {
                 const hasFace = u.biometricRegistered?.face ? '✅ Configured' : '❌ Empty';
                 const hasFinger = u.biometricRegistered?.finger ? '✅ Configured' : '❌ Empty';
                 
-                const actionsHTML = user.role === 'hr'
+                const actionsHTML = (user.role === 'hr' || user.role === 'manager')
                   ? `
                     <div style="display:flex;gap:6px">
                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
@@ -3399,7 +3420,7 @@ function renderAdminUsers() {
                     <td>${Utils.escape(u.username)}</td>
                     <td><code>${Utils.escape(u.password)}</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Delhi HQ Office')}</td>
+                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
                     <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
                     <td style="font-size:12px;line-height:1.4">
                       Face: <strong style="color:${u.biometricRegistered?.face ? 'var(--success)' : 'var(--error)'}">${hasFace}</strong><br>
@@ -3522,9 +3543,20 @@ function openUserModal(userId = null) {
         <div class="form-group">
           <label class="form-label" for="editor-role">Portal Access Role</label>
           <select class="form-input" id="editor-role" required>
-            <option value="employee" ${isEdit && user.role === 'employee' ? 'selected' : ''}>Employee</option>
-            <option value="hr" ${isEdit && user.role === 'hr' ? 'selected' : ''}>HR Coordinator</option>
-            <option value="manager" ${isEdit && user.role === 'manager' ? 'selected' : ''}>Operations Manager</option>
+            ${(() => {
+              const currentUser = Auth.getCurrentUser();
+              if (currentUser.role === 'manager') {
+                return `
+                  <option value="employee" ${isEdit && user.role === 'employee' ? 'selected' : ''}>Employee</option>
+                  <option value="hr" ${isEdit && user.role === 'hr' ? 'selected' : ''}>HR Coordinator</option>
+                  <option value="manager" ${isEdit && user.role === 'manager' ? 'selected' : ''}>Operations Manager</option>
+                `;
+              } else {
+                return `
+                  <option value="employee" ${isEdit && user.role === 'employee' ? 'selected' : ''}>Employee</option>
+                `;
+              }
+            })()}
           </select>
         </div>
         <div class="form-group">
@@ -3536,9 +3568,9 @@ function openUserModal(userId = null) {
         <div class="form-group">
           <label class="form-label" for="editor-preferred-location">Preferred Work Location</label>
           <select class="form-input" id="editor-preferred-location" required>
-            <option value="Delhi HQ Office" ${isEdit && user.preferredLocation === 'Delhi HQ Office' ? 'selected' : ''}>Delhi HQ Office</option>
-            <option value="Connaught Place Hub" ${isEdit && user.preferredLocation === 'Connaught Place Hub' ? 'selected' : ''}>Connaught Place Hub</option>
-            <option value="Noida Branch Home" ${isEdit && user.preferredLocation === 'Noida Branch Home' ? 'selected' : ''}>Noida Branch Home</option>
+            <option value="Kohat Enclave, Pitampura, Delhi" ${isEdit && user.preferredLocation === 'Kohat Enclave, Pitampura, Delhi' ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
+            <option value="Chandni Chowk" ${isEdit && user.preferredLocation === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
+            <option value="Omaxe City, Delhi" ${isEdit && user.preferredLocation === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
           </select>
         </div>
         <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px">
@@ -3729,7 +3761,24 @@ function renderAdminSchedules() {
             </div>
             <div class="shift-meta-row"><span>Working Hours:</span><strong style="color:var(--text-primary)">${s.startTime} - ${s.endTime}</strong></div>
             <div class="shift-meta-row"><span>Grace Period:</span><strong style="color:var(--warning)">${s.gracePeriod} minutes</strong></div>
-            <div class="shift-days-row">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `<div class="day-bubble ${s.workDays.includes(i) ? 'active' : ''}">${day}</div>`).join('')}</div>
+            <div class="shift-meta-row" style="margin-top:6px; align-items:center;">
+              <span>Location Select:</span>
+              <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:4px 8px;font-size:12px;width:auto;margin-left:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="Kohat Enclave, Pitampura, Delhi" ${s.location === 'Kohat Enclave, Pitampura, Delhi' || !s.location ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
+                <option value="Chandni Chowk" ${s.location === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
+                <option value="Omaxe City, Delhi" ${s.location === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
+              </select>
+            </div>
+            <div class="shift-meta-row" style="margin-top:6px; align-items:center;">
+              <span>Location Swap:</span>
+              <select class="form-input inline-sched-swap" data-id="${s.id}" style="padding:4px 8px;font-size:12px;width:auto;margin-left:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="">-- Swap with --</option>
+                ${schedules.filter(other => other.id !== s.id).map(other => `
+                  <option value="${other.id}">${Utils.escape(other.name)}</option>
+                `).join('')}
+              </select>
+            </div>
+            <div class="shift-days-row" style="margin-top:12px">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `<div class="day-bubble ${s.workDays.includes(i) ? 'active' : ''}">${day}</div>`).join('')}</div>
           </div>
         `).join('')}
       </div>
@@ -3750,6 +3799,38 @@ function renderAdminSchedules() {
       renderAdminSchedules();
     }
   }));
+
+  // Bind inline location change
+  document.querySelectorAll('.inline-sched-location').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      const schedId = e.target.dataset.id;
+      const newLoc = e.target.value;
+      DB.updateSchedule(schedId, { location: newLoc });
+      renderAdminSchedules();
+    });
+  });
+
+  // Bind inline location swap
+  document.querySelectorAll('.inline-sched-swap').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      const schedId = e.target.dataset.id;
+      const otherId = e.target.value;
+      if (!otherId) return;
+
+      const s1 = DB.getSchedule(schedId);
+      const s2 = DB.getSchedule(otherId);
+      if (s1 && s2) {
+        const loc1 = s1.location || 'Kohat Enclave, Pitampura, Delhi';
+        const loc2 = s2.location || 'Kohat Enclave, Pitampura, Delhi';
+        
+        DB.updateSchedule(schedId, { location: loc2 });
+        DB.updateSchedule(otherId, { location: loc1 });
+        
+        alert(`Swapped locations between "${s1.name}" and "${s2.name}"!`);
+        renderAdminSchedules();
+      }
+    });
+  });
 }
 
 function openScheduleModal(schedId = null) {
@@ -3797,6 +3878,14 @@ function openScheduleModal(schedId = null) {
             `).join('')}
           </div>
         </div>
+        <div class="form-group">
+          <label class="form-label" for="sched-location">Shift Location</label>
+          <select class="form-input" id="sched-location" required>
+            <option value="Kohat Enclave, Pitampura, Delhi" ${isEdit && sched.location === 'Kohat Enclave, Pitampura, Delhi' ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
+            <option value="Chandni Chowk" ${isEdit && sched.location === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
+            <option value="Omaxe City, Delhi" ${isEdit && sched.location === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
+          </select>
+        </div>
         <div class="modal-actions">
           <button class="btn btn-secondary" type="button" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
           <button class="btn" type="submit">${isEdit ? 'Save Shift' : 'Create Shift'}</button>
@@ -3811,10 +3900,11 @@ function openScheduleModal(schedId = null) {
     const startTime = document.getElementById('sched-start').value;
     const endTime = document.getElementById('sched-end').value;
     const gracePeriod = Number(document.getElementById('sched-grace').value);
+    const location = document.getElementById('sched-location').value;
     const workDays = Array.from(document.querySelectorAll('input[name="workdays"]:checked')).map(cb => Number(cb.value));
     if (workDays.length === 0) { alert('Select working days.'); return; }
-    if (isEdit) { DB.updateSchedule(schedId, { name, startTime, endTime, gracePeriod, workDays }); }
-    else { DB.addSchedule({ name, startTime, endTime, gracePeriod, workDays }); }
+    if (isEdit) { DB.updateSchedule(schedId, { name, startTime, endTime, gracePeriod, workDays, location }); }
+    else { DB.addSchedule({ name, startTime, endTime, gracePeriod, workDays, location }); }
     overlay.remove();
     renderAdminSchedules();
   });
@@ -3884,6 +3974,9 @@ function renderAdminApprovals() {
               const receiver = DB.getUser(s.receiverId);
               const senderSched = sender ? DB.getSchedule(sender.scheduleId) : null;
               const receiverSched = receiver ? DB.getSchedule(receiver.scheduleId) : null;
+              const senderLoc = senderSched && senderSched.location ? senderSched.location : (sender ? (sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+              const receiverLoc = receiverSched && receiverSched.location ? receiverSched.location : (receiver ? (receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+              const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
               let statusClass = 'badge-pending';
               if (s.status === 'Pending Manager') statusClass = 'badge-approved';
               else if (s.status === 'Approved') statusClass = 'badge-approved';
@@ -3894,12 +3987,17 @@ function renderAdminApprovals() {
                   <td style="font-weight:600">
                     ${sender ? Utils.escape(sender.name) : 'Unknown'}
                     <br><span style="font-size:11px;color:var(--text-secondary)">Shift: ${senderSched ? Utils.escape(senderSched.name) : 'None'}</span>
+                    <br><span style="font-size:10px;color:var(--text-muted)">📍 ${Utils.escape(senderLoc)}</span>
                   </td>
                   <td style="font-weight:600">
                     ${receiver ? Utils.escape(receiver.name) : 'Unknown'}
                     <br><span style="font-size:11px;color:var(--text-secondary)">Shift: ${receiverSched ? Utils.escape(receiverSched.name) : 'None'}</span>
+                    <br><span style="font-size:10px;color:var(--text-muted)">📍 ${Utils.escape(receiverLoc)}</span>
                   </td>
-                  <td style="font-size:12px;color:var(--text-secondary)">"${Utils.escape(s.reason)}"</td>
+                  <td style="font-size:12px;color:var(--text-secondary)">
+                    <strong>Mode:</strong> ${modeLabel}<br>
+                    "${Utils.escape(s.reason)}"
+                  </td>
                   <td style="font-size:12px;color:var(--text-secondary)">"${Utils.escape(s.coworkerComment || 'No comment')}"</td>
                   <td><span class="badge ${statusClass}">${s.status}</span></td>
                   <td>
@@ -4093,7 +4191,14 @@ function renderAdminReports() {
 }
 
 function compileReports(month, year) {
-  const users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager');
+  const loggedInUser = Auth.getCurrentUser();
+  const users = DB.getUsers().filter(u => {
+    if (loggedInUser.role === 'manager') {
+      return u.role === 'employee' || u.role === 'hr';
+    } else {
+      return u.role === 'employee';
+    }
+  });
   let grandGrossSalary = 0;
   let grandDeductions = 0;
   let grandNetPayout = 0;
@@ -4140,18 +4245,23 @@ function compileReports(month, year) {
 
   document.querySelectorAll('.btn-view-payslip-admin').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const uId = e.target.dataset.id;
+      const uId = e.target.closest('.btn-view-payslip-admin').dataset.id;
       const drawer = document.getElementById('admin-payslip-preview-drawer');
       drawer.style.display = 'block';
       const p = DB.calculateMonthlyPayroll(uId, month, year);
       const uDetails = DB.getUser(uId);
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const loggedInUser = Auth.getCurrentUser();
+      const editBtnHTML = loggedInUser.role === 'manager'
+        ? `<button class="btn btn-warning" id="btn-admin-edit-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">✏️ Edit Adjustments</button>`
+        : '';
 
       drawer.innerHTML = `
         <div class="card-panel">
           <div class="card-panel-header" id="employee-payslip-tab-header">
             <h3 class="card-panel-title">Employee Payslip Preview</h3>
             <div style="display:flex;gap:10px">
+              ${editBtnHTML}
               <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
               <button class="btn btn-secondary" onclick="document.getElementById('admin-payslip-preview-drawer').style.display='none'" style="padding:6px 12px;width:auto;font-size:12px">Close</button>
             </div>
@@ -4225,16 +4335,40 @@ function compileReports(month, year) {
                   <td style="text-align:right">-</td>
                   <td style="text-align:right;color:#ef4444">₹${p.deductionTDSVal.toLocaleString()}</td>
                 </tr>
+                ${p.bonus > 0 ? `
+                <tr>
+                  <td>Manager Discretionary Bonus / Rewards</td>
+                  <td style="text-align:right;color:var(--success);font-weight:600">₹${p.bonus.toLocaleString()}</td>
+                  <td style="text-align:right">-</td>
+                </tr>
+                ` : ''}
+                ${p.adhocDeduction > 0 ? `
+                <tr>
+                  <td>Manager Ad-hoc Deduction / Adjustments</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right;color:var(--error);font-weight:600">₹${p.adhocDeduction.toLocaleString()}</td>
+                </tr>
+                ` : ''}
                 <tr class="total-row">
                   <td>Net Salary Disbursed</td>
                   <td style="text-align:right" colspan="2">₹${p.netSalary.toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
+            ${p.remarks ? `
+            <div style="margin-top:20px;padding:12px;background:rgba(255,255,255,0.01);border:1px dashed var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">
+              <strong>Remarks / Notes:</strong> ${Utils.escape(p.remarks)}
+            </div>
+            ` : ''}
           </div>
         </div>
       `;
       document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => window.print());
+      if (loggedInUser.role === 'manager') {
+        document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
+          openPayrollAdjustmentModal(uId, month, year);
+        });
+      }
       drawer.scrollIntoView({ behavior: 'smooth' });
     });
   });
@@ -4542,7 +4676,7 @@ function renderEmployeeSwapsView() {
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Request a Shift Swap</h3></div>
           <div style="background:rgba(251,191,36,0.05);border-left:4px solid var(--primary);padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;line-height:1.4">
-            <strong>My Current Shift:</strong> ${userSchedule ? Utils.escape(userSchedule.name) : 'None'} (${userSchedule ? userSchedule.startTime : ''} - ${userSchedule ? userSchedule.endTime : ''})
+            <strong>My Current Shift:</strong> ${userSchedule ? Utils.escape(userSchedule.name) : 'None'} (${userSchedule ? userSchedule.startTime : ''} - ${userSchedule ? userSchedule.endTime : ''}) at <span style="color:var(--primary);font-weight:600">${userSchedule && userSchedule.location ? Utils.escape(userSchedule.location) : 'Kohat Enclave, Pitampura, Delhi'}</span>
           </div>
           <form id="shift-swap-request-form">
             <div class="form-group">
@@ -4551,8 +4685,20 @@ function renderEmployeeSwapsView() {
                 <option value="">-- Choose Coworker --</option>
                 ${coworkers.map(c => {
                   const s = DB.getSchedule(c.scheduleId);
-                  return `<option value="${c.id}">${Utils.escape(c.name)} [${s ? Utils.escape(s.name) : 'No Shift'}]</option>`;
+                  const loc = s && s.location ? s.location : (c.preferredLocation || 'Kohat Enclave, Pitampura, Delhi');
+                  return `<option value="${c.id}">${Utils.escape(c.name)} [${s ? Utils.escape(s.name) : 'No Shift'} at ${Utils.escape(loc)}]</option>`;
                 }).join('')}
+              </select>
+            </div>
+            
+            <div id="coworker-swap-preview" style="display:none;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:16px;font-size:12.5px;line-height:1.4"></div>
+            
+            <div class="form-group">
+              <label class="form-label" for="swap-type">Select Swap Mode</label>
+              <select class="form-input" id="swap-type" required>
+                <option value="both">Swap Both Shift & Work Location</option>
+                <option value="location">Swap Work Location Only</option>
+                <option value="shift">Swap Shift Only (Keep Work Location)</option>
               </select>
             </div>
             <div class="form-group">
@@ -4591,17 +4737,42 @@ function renderEmployeeSwapsView() {
 
   renderEmployeeSwapsData(user.id);
 
+  const coworkerSelect = document.getElementById('swap-coworker');
+  const previewDiv = document.getElementById('coworker-swap-preview');
+  if (coworkerSelect && previewDiv) {
+    coworkerSelect.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      if (!selectedId) {
+        previewDiv.style.display = 'none';
+        return;
+      }
+      const coworker = DB.getUser(selectedId);
+      const s = DB.getSchedule(coworker.scheduleId);
+      const coworkerLoc = s && s.location ? s.location : (coworker.preferredLocation || 'Kohat Enclave, Pitampura, Delhi');
+      
+      previewDiv.style.display = 'block';
+      previewDiv.innerHTML = `
+        <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--cyan)">👥 Coworker Current Assignment</h4>
+        <div><strong>Name:</strong> ${Utils.escape(coworker.name)}</div>
+        <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'No Shift'} (${s ? s.startTime : ''} - ${s ? s.endTime : ''})</div>
+        <div><strong>Work Location:</strong> <span style="color:var(--primary);font-weight:600">${Utils.escape(coworkerLoc)}</span></div>
+      `;
+    });
+  }
+
   document.getElementById('shift-swap-request-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const coworkerId = document.getElementById('swap-coworker').value;
+    const swapType = document.getElementById('swap-type').value;
     const reason = document.getElementById('swap-reason').value.trim();
     if (!coworkerId) {
       showSwapAlert('Please select a coworker.', 'error');
       return;
     }
-    DB.submitShiftSwap(user.id, coworkerId, reason);
+    DB.submitShiftSwap(user.id, coworkerId, reason, swapType);
     showSwapAlert('Shift swap request submitted successfully!', 'success');
     document.getElementById('shift-swap-request-form').reset();
+    if (previewDiv) previewDiv.style.display = 'none';
     renderEmployeeSwapsData(user.id);
   });
 }
@@ -4617,6 +4788,8 @@ function renderEmployeeSwapsData(userId) {
   receivedTbody.innerHTML = received.length === 0 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No received requests.</td></tr>` : received.map(s => {
     const sender = DB.getUser(s.senderId);
     const senderSchedule = sender ? DB.getSchedule(sender.scheduleId) : null;
+    const senderLoc = senderSchedule && senderSchedule.location ? senderSchedule.location : (sender ? (sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+    const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
     let statusClass = 'badge-pending';
     if (s.status === 'Pending Manager') statusClass = 'badge-approved';
     else if (s.status === 'Approved') statusClass = 'badge-approved';
@@ -4625,8 +4798,15 @@ function renderEmployeeSwapsData(userId) {
     return `
       <tr>
         <td style="font-weight:600">${sender ? Utils.escape(sender.name) : 'Unknown'}</td>
-        <td>${senderSchedule ? Utils.escape(senderSchedule.name) : 'None'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">"${Utils.escape(s.reason)}"${s.coworkerComment ? `<br><span style="color:var(--text-secondary)"><strong>My response:</strong> ${Utils.escape(s.coworkerComment)}</span>` : ''}</td>
+        <td>
+          ${senderSchedule ? Utils.escape(senderSchedule.name) : 'None'}<br>
+          <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(senderLoc)}</span>
+        </td>
+        <td style="font-size:12px;color:var(--text-secondary)">
+          <strong>Mode:</strong> ${modeLabel}<br>
+          "${Utils.escape(s.reason)}"
+          ${s.coworkerComment ? `<br><span style="color:var(--text-secondary)"><strong>My response:</strong> ${Utils.escape(s.coworkerComment)}</span>` : ''}
+        </td>
         <td><span class="badge ${statusClass}">${s.status}</span></td>
         <td>
           ${s.status === 'Pending Coworker' ? `
@@ -4643,6 +4823,8 @@ function renderEmployeeSwapsData(userId) {
   sentTbody.innerHTML = sent.length === 0 ? `<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No sent requests.</td></tr>` : sent.map(s => {
     const receiver = DB.getUser(s.receiverId);
     const receiverSchedule = receiver ? DB.getSchedule(receiver.scheduleId) : null;
+    const receiverLoc = receiverSchedule && receiverSchedule.location ? receiverSchedule.location : (receiver ? (receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+    const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
     let statusClass = 'badge-pending';
     if (s.status === 'Pending Manager') statusClass = 'badge-approved';
     else if (s.status === 'Approved') statusClass = 'badge-approved';
@@ -4651,8 +4833,16 @@ function renderEmployeeSwapsData(userId) {
     return `
       <tr>
         <td style="font-weight:600">${receiver ? Utils.escape(receiver.name) : 'Unknown'}</td>
-        <td>${receiverSchedule ? Utils.escape(receiverSchedule.name) : 'None'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">"${Utils.escape(s.reason)}"${s.coworkerComment ? `<br><span style="color:var(--text-secondary)"><strong>Coworker:</strong> ${Utils.escape(s.coworkerComment)}</span>` : ''}${s.managerComment ? `<br><span style="color:var(--primary)"><strong>Manager:</strong> ${Utils.escape(s.managerComment)}</span>` : ''}</td>
+        <td>
+          ${receiverSchedule ? Utils.escape(receiverSchedule.name) : 'None'}<br>
+          <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(receiverLoc)}</span>
+        </td>
+        <td style="font-size:12px;color:var(--text-secondary)">
+          <strong>Mode:</strong> ${modeLabel}<br>
+          "${Utils.escape(s.reason)}"
+          ${s.coworkerComment ? `<br><span style="color:var(--text-secondary)"><strong>Coworker:</strong> ${Utils.escape(s.coworkerComment)}</span>` : ''}
+          ${s.managerComment ? `<br><span style="color:var(--primary)"><strong>Manager:</strong> ${Utils.escape(s.managerComment)}</span>` : ''}
+        </td>
         <td><span class="badge ${statusClass}">${s.status}</span></td>
       </tr>
     `;
@@ -4917,4 +5107,58 @@ function updateNotificationsUI() {
   } catch (err) {
     console.error("Error updating notifications UI:", err);
   }
+}
+
+function openPayrollAdjustmentModal(userId, month, year) {
+  const p = DB.calculateMonthlyPayroll(userId, month, year);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Payslip Adjustments</h3>
+        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <form id="payroll-adjustment-form">
+        <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:15px;line-height:1.4">
+          Employee: <strong>${Utils.escape(p.employeeName)}</strong> (${userId})
+          <br>Period: <strong>${monthNames[month]} ${year}</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adj-bonus">Discretionary Bonus (INR)</label>
+          <input class="form-input" type="number" id="adj-bonus" value="${p.bonus || 0}" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adj-deduction">Ad-hoc Deduction (INR)</label>
+          <input class="form-input" type="number" id="adj-deduction" value="${p.adhocDeduction || 0}" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="adj-remarks">Manager Remarks / Description</label>
+          <textarea class="form-input" id="adj-remarks" placeholder="Notes printed on the payslip..." rows="3" style="resize:vertical">${Utils.escape(p.remarks || '')}</textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" type="button" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn" type="submit">Save Adjustments</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('payroll-adjustment-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const bonus = Number(document.getElementById('adj-bonus').value) || 0;
+    const deduction = Number(document.getElementById('adj-deduction').value) || 0;
+    const remarks = document.getElementById('adj-remarks').value.trim();
+    
+    DB.savePayrollAdjustment(userId, month, year, bonus, deduction, remarks);
+    overlay.remove();
+    
+    // Refresh the reports sheet and re-render the preview drawer
+    compileReports(month, year);
+    
+    // Re-trigger preview drawer display
+    const inspectBtn = document.querySelector(`.btn-view-payslip-admin[data-id="${userId}"]`);
+    if (inspectBtn) inspectBtn.click();
+  });
 }

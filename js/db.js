@@ -3,9 +3,9 @@
 const DB_KEY = 'attendance_system_db';
 
 const defaultSchedules = [
-  { id: 'sch_1', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5] },
-  { id: 'sch_2', name: 'Morning Shift', startTime: '07:00', endTime: '15:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5] },
-  { id: 'sch_3', name: 'Night Shift', startTime: '22:00', endTime: '06:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5] }
+  { id: 'sch_1', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Kohat Enclave, Pitampura, Delhi' },
+  { id: 'sch_2', name: 'Morning Shift', startTime: '07:00', endTime: '15:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Chandni Chowk' },
+  { id: 'sch_3', name: 'Night Shift', startTime: '22:00', endTime: '06:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Omaxe City, Delhi' }
 ];
 
 const defaultUsers = [
@@ -258,7 +258,7 @@ function generateDemoLogs() {
           checkOut: checkOutTime,
           status,
           biometricUsed: Math.random() > 0.4 ? (Math.random() > 0.5 ? 'face' : 'fingerprint') : 'none',
-          location: 'Office Headquarters'
+          location: 'Kohat Enclave, Pitampura, Delhi'
         });
       }
     });
@@ -771,7 +771,7 @@ export const DB = {
     return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr);
   },
 
-  checkIn(userId, method = 'none', location = 'Office Headquarters', deviationFlag = false, justification = '', coords = '', distance = 0) {
+  checkIn(userId, method = 'none', location = 'Kohat Enclave, Pitampura, Delhi', deviationFlag = false, justification = '', coords = '', distance = 0) {
     const todayStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5); // HH:MM
     
@@ -950,19 +950,25 @@ export const DB = {
     let absentDays = workingDays - presentDays - approvedLeaveDays;
     if (absentDays < 0) absentDays = 0;
 
+    // Load custom payroll adjustments
+    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === userId && a.month === month && a.year === year);
+    const bonus = adj ? (adj.bonus || 0) : 0;
+    const adhocDeduction = adj ? (adj.deduction || 0) : 0;
+    const remarks = adj ? (adj.remarks || '') : '';
+
     const dailyRate = Math.round(baseSalary / workingDays);
     const absentDeduction = absentDays * dailyRate;
     const halfDayDeduction = Math.round(halfDays * 0.5 * dailyRate);
     
     const attendanceDeductions = absentDeduction + halfDayDeduction;
-    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel;
-    const taxableEarnings = grossEarnings - attendanceDeductions;
+    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + bonus;
+    const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel) - attendanceDeductions;
     const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
     const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
     const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal;
     
-    const totalDeductions = attendanceDeductions + statutoryDeductions;
-    const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions;
+    const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
+    const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;
 
     return {
       userId,
@@ -988,8 +994,32 @@ export const DB = {
       grossEarnings,
       taxableEarnings,
       totalDeductions,
+      bonus,
+      adhocDeduction,
+      remarks,
       netSalary: netSalary < 0 ? 0 : netSalary
     };
+  },
+
+  savePayrollAdjustment(userId, month, year, bonus, deduction, remarks) {
+    if (!this.data.payrollAdjustments) {
+      this.data.payrollAdjustments = [];
+    }
+    let adj = this.data.payrollAdjustments.find(a => a.userId === userId && a.month === month && a.year === year);
+    if (!adj) {
+      adj = {
+        id: 'adj_' + Math.random().toString(36).substring(2, 9),
+        userId,
+        month,
+        year
+      };
+      this.data.payrollAdjustments.push(adj);
+    }
+    adj.bonus = Number(bonus) || 0;
+    adj.deduction = Number(deduction) || 0;
+    adj.remarks = remarks || '';
+    this.save();
+    return adj;
   },
 
   // Support Tickets API
@@ -1048,7 +1078,7 @@ export const DB = {
     return this.data.shiftSwaps;
   },
 
-  submitShiftSwap(senderId, receiverId, reason) {
+  submitShiftSwap(senderId, receiverId, reason, swapType = 'both') {
     if (!this.data.shiftSwaps) {
       this.data.shiftSwaps = [];
     }
@@ -1057,6 +1087,7 @@ export const DB = {
       senderId,
       receiverId,
       reason,
+      swapType,
       status: 'Pending Coworker',
       date: new Date().toISOString().split('T')[0],
       managerComment: '',
@@ -1086,13 +1117,22 @@ export const DB = {
       swap.status = approve ? 'Approved' : 'Rejected';
       swap.managerComment = comment;
       if (approve) {
-        // Swap schedules
+        // Swap schedules / locations
         const sender = this.getUser(swap.senderId);
         const receiver = this.getUser(swap.receiverId);
         if (sender && receiver) {
-          const temp = sender.scheduleId;
-          sender.scheduleId = receiver.scheduleId;
-          receiver.scheduleId = temp;
+          const type = swap.swapType || 'both';
+          if (type === 'both' || type === 'shift') {
+            const tempSched = sender.scheduleId;
+            sender.scheduleId = receiver.scheduleId;
+            receiver.scheduleId = tempSched;
+          }
+          if (type === 'both' || type === 'location') {
+            const loc1 = sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+            const loc2 = receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+            sender.preferredLocation = loc2;
+            receiver.preferredLocation = loc1;
+          }
         }
       }
       this.save();

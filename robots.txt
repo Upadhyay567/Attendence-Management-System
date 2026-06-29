@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://upadhyay567.github.io/Attendence-Management-System/sitemap.xml
