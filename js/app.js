@@ -3404,9 +3404,10 @@ function renderAdminUsers() {
                 
                 const actionsHTML = (user.role === 'hr' || user.role === 'manager')
                   ? `
-                    <div style="display:flex;gap:6px">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
                       <button class="btn btn-cyan btn-bioreg-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Biometric Keys</button>
+                      <button class="btn btn-warning btn-recap-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">📊 Recap</button>
                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
                     </div>
                   `
@@ -3440,10 +3441,11 @@ function renderAdminUsers() {
   `;
   const addBtn = document.getElementById('btn-add-user-modal');
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
-  document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.dataset.id)));
-  document.querySelectorAll('.btn-bioreg-user').forEach(btn => btn.addEventListener('click', (e) => openBiometricsConfigModal(e.target.dataset.id)));
+  document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
+  document.querySelectorAll('.btn-bioreg-user').forEach(btn => btn.addEventListener('click', (e) => openBiometricsConfigModal(e.target.closest('.btn-bioreg-user').dataset.id)));
+  document.querySelectorAll('.btn-recap-user').forEach(btn => btn.addEventListener('click', (e) => openPunctualityRecapModal(e.target.closest('.btn-recap-user').dataset.id)));
   document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => {
-    const id = e.target.dataset.id;
+    const id = e.target.closest('.btn-delete-user').dataset.id;
     const u = DB.getUser(id);
     if (confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
       DB.deleteUser(id);
@@ -5161,4 +5163,121 @@ function openPayrollAdjustmentModal(userId, month, year) {
     const inspectBtn = document.querySelector(`.btn-view-payslip-admin[data-id="${userId}"]`);
     if (inspectBtn) inspectBtn.click();
   });
+}
+
+function openPunctualityRecapModal(userId) {
+  const user = DB.getUser(userId);
+  if (!user) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  const today = new Date();
+  let selectedMonth = today.getMonth();
+  let selectedYear = today.getFullYear();
+  
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease; padding: 24px">
+      <div class="modal-header" style="margin-bottom:15px">
+        <h3 class="modal-title">📊 Punctuality Recap</h3>
+        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div style="font-size:13px; color:var(--text-secondary); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+        <div>
+          Employee: <strong>${Utils.escape(user.name)}</strong>
+          <br><span style="font-size:11px;color:var(--text-muted)">Code: ${user.employeeId || userId}</span>
+        </div>
+        <div style="display:flex; gap:6px">
+          <select class="form-input" id="recap-month" style="width:110px; padding:6px; font-size:12px; background:rgba(255,255,255,0.02)">
+            ${monthNames.map((m, idx) => `<option value="${idx}" ${idx === selectedMonth ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+          <select class="form-input" id="recap-year" style="width:80px; padding:6px; font-size:12px; background:rgba(255,255,255,0.02)">
+            ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      
+      <div class="card-panel" style="background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:20px; display:flex; flex-direction:column; align-items:center; gap:20px">
+        <h4 style="margin:0; font-size:14px; font-weight:700; color:var(--text-primary); text-align:center">Monthly Punctuality Ratio</h4>
+        
+        <div id="recap-chart-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%">
+          <!-- Dynamic SVG and Legend rendered here -->
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  const updateRecapView = () => {
+    const logs = DB.getLogs(userId) || [];
+    
+    // Filter logs for the selected month/year
+    const monthlyLogs = logs.filter(l => {
+      const d = new Date(l.date);
+      return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+    });
+    
+    const totalPresent = monthlyLogs.length;
+    const totalLate = monthlyLogs.filter(l => l.status === 'Late' || l.status === 'Deviation Logged').length;
+    const totalOnTime = totalPresent - totalLate;
+    
+    const onTimePct = totalPresent > 0 ? Math.round((totalOnTime / totalPresent) * 100) : 100;
+    const latePct = totalPresent > 0 ? Math.round((totalLate / totalPresent) * 100) : 0;
+    
+    const container = document.getElementById('recap-chart-container');
+    if (!container) return;
+    
+    if (totalPresent === 0) {
+      container.innerHTML = `
+        <div style="padding:40px 0; text-align:center; color:var(--text-muted); font-size:13px">
+          No attendance records logged for this period.
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = `
+      <div style="position:relative; width:150px; height:150px; margin-bottom:15px">
+        <svg width="150" height="150" viewBox="0 0 36 36" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35))">
+          <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4"></circle>
+          <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" stroke-width="4" stroke-dasharray="${onTimePct} ${100 - onTimePct}" stroke-dashoffset="25"></circle>
+          <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="${latePct} ${100 - latePct}" stroke-dashoffset="${25 - onTimePct}"></circle>
+        </svg>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center">
+          <span style="font-size:20px; font-weight:700; color:var(--text-primary)">${onTimePct}%</span>
+          <br><span style="font-size:9px; color:var(--text-muted); text-transform:uppercase">On-Time</span>
+        </div>
+      </div>
+      
+      <div style="display:flex; justify-content:center; gap:20px; font-size:12px; margin-top:10px">
+        <span style="display:flex; align-items:center; gap:6px">
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--success)"></span>
+          On-Time (${onTimePct}%)
+        </span>
+        <span style="display:flex; align-items:center; gap:6px">
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--primary)"></span>
+          Late (${latePct}%)
+        </span>
+      </div>
+      
+      <div style="width:100%; border-top:1px solid rgba(255,255,255,0.03); margin-top:15px; padding-top:15px; display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11.5px; text-align:center; color:var(--text-secondary)">
+        <div>Total Logs: <strong>${totalPresent} days</strong></div>
+        <div>Late Penalties: <strong>${totalLate} times</strong></div>
+      </div>
+    `;
+  };
+  
+  document.getElementById('recap-month').addEventListener('change', (e) => {
+    selectedMonth = Number(e.target.value);
+    updateRecapView();
+  });
+  
+  document.getElementById('recap-year').addEventListener('change', (e) => {
+    selectedYear = Number(e.target.value);
+    updateRecapView();
+  });
+  
+  updateRecapView();
 }
