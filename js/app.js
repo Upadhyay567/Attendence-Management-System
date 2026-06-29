@@ -269,12 +269,13 @@ function renderLoginView() {
         <div class="auth-card" id="auth-box">
           <!-- Sign In Section -->
           <div id="signin-section">
-            <div class="auth-header">
+            <div class="auth-header" style="position:relative">
               <div class="auth-logo" style="margin-bottom: 8px; justify-content: center;">
                 <img src="surya-logo.png" alt="Surya Logo" style="height: 60px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
               </div>
               <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">House of Surya</div>
               <div class="auth-sub-desc" style="text-align: center;">Attendance & Payroll Portal</div>
+              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; transition:color 0.2s" title="Guidelines & Security Instructions">❓</button>
             </div>
 
             <!-- Role Selection Tabs -->
@@ -606,6 +607,14 @@ function renderLoginView() {
     viewGuidelinesLogin.addEventListener('click', (e) => {
       e.preventDefault();
       openGuidelinesModal();
+    });
+  }
+
+  const loginHelpIcon = document.getElementById('btn-login-help-icon');
+  if (loginHelpIcon) {
+    loginHelpIcon.addEventListener('click', (e) => {
+      e.preventDefault();
+      openHelpGuidelinesModal();
     });
   }
 
@@ -5290,4 +5299,53 @@ function openPunctualityRecapModal(userId) {
   });
   
   updateRecapView();
+}
+
+function openHelpGuidelinesModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px">
+        <h3 class="modal-title">🔐 Portal Guidelines & Security Instructions</h3>
+        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      
+      <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; display:flex; flex-direction:column; gap:16px; max-height: 60vh; overflow-y: auto; padding-right: 4px">
+        <div>
+          <strong style="color:var(--text-primary); font-size:13.5px">📅 1. Company Shift Guidelines</strong>
+          <ul style="margin:6px 0 0 15px; padding:0">
+            <li>Standard working hours are 09:00 AM to 07:00 PM (Monday to Saturday).</li>
+            <li>Maximum of 2 approved paid leaves per month. Absences beyond this are subject to salary rate deduction.</li>
+          </ul>
+        </div>
+        
+        <div>
+          <strong style="color:var(--text-primary); font-size:13.5px">📍 2. Geo-Fencing Constraints</strong>
+          <ul style="margin:6px 0 0 15px; padding:0">
+            <li>All check-ins are verified against geofence parameters.</li>
+            <li>Biometric logging is strictly limited to the HQ site. Out-of-range logins require passcode verification and mandatory written deviation justification.</li>
+          </ul>
+        </div>
+        
+        <div>
+          <strong style="color:var(--text-primary); font-size:13.5px">🛡️ 3. Security & Access Protocols</strong>
+          <ul style="margin:6px 0 0 15px; padding:0">
+            <li>Passwords must contain at least 8 characters, an uppercase letter, a number, and a special character.</li>
+            <li>Keep your biometric credentials updated. Escalations or role changes must be authorized by the Operations Manager.</li>
+            <li>Do not share your portal passcode. Unauthorized login attempts are flagged immediately.</li>
+          </ul>
+        </div>
+        
+        <div style="background:rgba(251,191,36,0.05); border:1px solid rgba(251,191,36,0.15); border-radius:var(--radius-sm); padding:10px; color:var(--primary)">
+          <strong>Important Security Warning:</strong> All sessions are audited. IP addresses and GPS coordinates are logged upon daily clock-in actions to prevent spoofing.
+        </div>
+      </div>
+      
+      <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px">
+        <button class="btn" onclick="this.closest('.modal-overlay').remove()">Understood & Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
