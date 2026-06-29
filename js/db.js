@@ -1205,5 +1205,16 @@ export const DB = {
     user.verificationStatuses[docType] = 'Approved';
     this.save();
     return user;
+  },
+
+  rejectUserDocument(userId, docType) {
+    const user = this.getUser(userId);
+    if (!user) return null;
+    if (!user.verificationStatuses) {
+      user.verificationStatuses = {};
+    }
+    user.verificationStatuses[docType] = 'Rejected';
+    this.save();
+    return user;
   }
 };

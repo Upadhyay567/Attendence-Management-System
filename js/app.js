@@ -2907,13 +2907,22 @@ function renderAdminVerificationView() {
                     return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
                   }
                   
-                  const isApproved = u.verificationStatuses && u.verificationStatuses[type] === 'Approved';
-                  const badgeHTML = isApproved
-                    ? `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`
-                    : `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
-                  const approveBtnHTML = isApproved
-                    ? ''
-                    : `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
+                  const status = u.verificationStatuses ? u.verificationStatuses[type] : null;
+                  let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
+                  if (status === 'Approved') {
+                    badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`;
+                  } else if (status === 'Rejected') {
+                    badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">❌ Rejected</span>`;
+                  }
+                  
+                  let approveBtnHTML = '';
+                  if (status !== 'Approved') {
+                    approveBtnHTML = `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
+                  }
+                  let rejectBtnHTML = '';
+                  if (status !== 'Rejected' && status !== 'Approved') {
+                    rejectBtnHTML = `<a href="#" class="btn-verify-reject" data-userid="${u.id}" data-doctype="${type}" style="color:var(--error); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Reject</a>`;
+                  }
 
                   if (type === 'document') {
                     if (Array.isArray(doc) && doc.length === 0) {
@@ -2926,6 +2935,7 @@ function renderAdminVerificationView() {
                         <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
                         <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
                           ${approveBtnHTML}
+                          ${rejectBtnHTML}
                           <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
                         </div>
                       </div>
@@ -2939,6 +2949,7 @@ function renderAdminVerificationView() {
                       <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
                         <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">View</a>
                         ${approveBtnHTML}
+                        ${rejectBtnHTML}
                         <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
                       </div>
                     </div>
@@ -2997,6 +3008,16 @@ function renderAdminVerificationView() {
       const userId = e.target.closest('.btn-verify-approve').dataset.userid;
       const docType = e.target.closest('.btn-verify-approve').dataset.doctype;
       DB.approveUserDocument(userId, docType);
+      renderAdminVerificationView();
+    });
+  });
+
+  document.querySelectorAll('.btn-verify-reject').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const userId = e.target.closest('.btn-verify-reject').dataset.userid;
+      const docType = e.target.closest('.btn-verify-reject').dataset.doctype;
+      DB.rejectUserDocument(userId, docType);
       renderAdminVerificationView();
     });
   });
