@@ -402,6 +402,7 @@ export const DB = {
               author: 'HR Coordinator'
             }
           ];
+        }
         if (!this.data.financeData) {
           this.data.financeData = {
             yearlyRevenue: 250000000,
