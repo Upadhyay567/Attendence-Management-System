@@ -94,7 +94,7 @@ function setupRouter() {
       return;
     }
 
-    const isManagementRoute = hash.startsWith('#admin-');
+    const isManagementRoute = hash.startsWith('#admin-') || hash === '#manager-finance';
     const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
     const isManagementRole = user.role === 'hr' || user.role === 'manager';
 
@@ -915,10 +915,19 @@ function renderAppShell() {
 
   let menuHTML = '';
   if (user.role === 'hr' || user.role === 'manager') {
+    const managerOnlyLinkHTML = user.role === 'manager'
+      ? `
+      <li class="menu-item" id="nav-manager-finance"><a href="#manager-finance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Finance & Analytics
+      </a></li>
+      `
+      : '';
+
     menuHTML = `
       <li class="menu-item" id="nav-admin-dashboard"><a href="#admin-dashboard">
         <svg viewBox="0 0 24 24"><path d="M10 20H5v-7H2l10-9 10 9h-3v7h-5v-6h-2v6z"/></svg> ${labels.monitor}
       </a></li>
+      ${managerOnlyLinkHTML}
       <li class="menu-item" id="nav-admin-users"><a href="#admin-users">
         <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${labels.employees}
       </a></li>
@@ -5638,4 +5647,154 @@ function openHelpGuidelinesModal() {
     </div>
   `;
   document.body.appendChild(overlay);
+}
+
+function renderManagerFinance() {
+  const main = document.getElementById('main-view');
+  const user = Auth.getCurrentUser();
+  if (!user || user.role !== 'manager') {
+    window.location.hash = '#dashboard';
+    return;
+  }
+
+  const finance = DB.getFinanceData();
+  
+  const employees = DB.getUsers();
+  const monthlySalaryCosts = employees.reduce((sum, u) => sum + (u.baseSalary || 50000), 0);
+  const annualSalaryCosts = monthlySalaryCosts * 12;
+  const totalCosts = annualSalaryCosts + finance.fixedOverhead;
+  const netProfit = finance.yearlyRevenue - totalCosts;
+  
+  const natPct = finance.nationalPct || 60;
+  const intPct = 100 - natPct;
+  const natRev = Math.round(finance.yearlyRevenue * (natPct / 100));
+  const intRev = Math.round(finance.yearlyRevenue * (intPct / 100));
+
+  main.innerHTML = `
+    <div class="content-header">
+      <div>
+        <h1 class="content-title">💼 Financial Operations & Segment Analytics</h1>
+        <div class="content-subtitle">Review yearly revenue targets, salary budgets, and national/international trade distribution.</div>
+      </div>
+    </div>
+    <div class="content-body">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px">
+        <div class="card-panel" style="padding:20px; border-left:4px solid var(--primary)">
+          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Projected Annual Revenue</div>
+          <div style="font-size:24px; font-weight:700; color:var(--text-primary); margin-top:8px">₹${finance.yearlyRevenue.toLocaleString()}</div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px">Target for Year 2026</div>
+        </div>
+        <div class="card-panel" style="padding:20px; border-left:4px solid var(--warning)">
+          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Operating Budget (Costs)</div>
+          <div style="font-size:24px; font-weight:700; color:var(--text-primary); margin-top:8px">₹${totalCosts.toLocaleString()}</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px">
+            Salaries: ₹${annualSalaryCosts.toLocaleString()} | Fixed: ₹${finance.fixedOverhead.toLocaleString()}
+          </div>
+        </div>
+        <div class="card-panel" style="padding:20px; border-left:4px solid ${netProfit >= 0 ? 'var(--success)' : 'var(--error)'}">
+          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Projected Net Profit</div>
+          <div style="font-size:24px; font-weight:700; color:${netProfit >= 0 ? 'var(--success)' : 'var(--error)'}; margin-top:8px">₹${netProfit.toLocaleString()}</div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px">
+            Margin: <strong>${finance.yearlyRevenue > 0 ? Math.round((netProfit / finance.yearlyRevenue) * 100) : 0}%</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px; margin-bottom:24px">
+        
+        <div class="card-panel" style="padding:20px">
+          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">🌐 Trade Segment Distribution</h3>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:20px">
+            
+            <div style="position:relative; width:160px; height:160px">
+              <svg width="160" height="160" viewBox="0 0 36 36" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3))">
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="${natPct} ${100 - natPct}" stroke-dashoffset="25"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" stroke-width="4" stroke-dasharray="${intPct} ${100 - intPct}" stroke-dashoffset="${25 - natPct}"></circle>
+              </svg>
+              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center">
+                <span style="font-size:22px; font-weight:700; color:var(--text-primary)">${natPct}:${intPct}</span>
+                <br><span style="font-size:9px; color:var(--text-muted); text-transform:uppercase">Nat : Int</span>
+              </div>
+            </div>
+
+            <div style="width:100%; display:flex; flex-direction:column; gap:8px; font-size:12.5px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span style="display:flex; align-items:center; gap:8px">
+                  <span style="width:10px; height:10px; border-radius:50%; background:var(--primary)"></span>
+                  National Business (${natPct}%)
+                </span>
+                <strong>₹${natRev.toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span style="display:flex; align-items:center; gap:8px">
+                  <span style="width:10px; height:10px; border-radius:50%; background:var(--warning)"></span>
+                  International Trade (${intPct}%)
+                </span>
+                <strong>₹${intRev.toLocaleString()}</strong>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card-panel" style="padding:20px">
+          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">⚙️ Adjust Financial Targets</h3>
+          
+          <form id="finance-targets-form" style="display:flex; flex-direction:column; gap:12px">
+            <div class="form-group">
+              <label class="form-label" for="fin-revenue">Annual Projected Revenue (INR)</label>
+              <input class="form-input" type="number" id="fin-revenue" value="${finance.yearlyRevenue}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fin-overhead">Annual Fixed Overhead Costs (INR)</label>
+              <input class="form-input" type="number" id="fin-overhead" value="${finance.fixedOverhead}" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fin-national-share">National Segment Share (%)</label>
+              <div style="display:flex; align-items:center; gap:10px">
+                <input class="form-input" type="number" id="fin-national-share" value="${natPct}" min="0" max="100" required style="flex:1">
+                <span style="font-size:12px; color:var(--text-muted); width:130px; text-align:right" id="lbl-int-share">International: ${intPct}%</span>
+              </div>
+            </div>
+            
+            <button class="btn" type="submit" style="margin-top:8px; background:var(--primary); color:var(--bg-app); font-weight:700">Save Financial Parameters</button>
+          </form>
+          <div id="finance-alert" style="display:none; margin-top:12px"></div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  const inputNat = document.getElementById('fin-national-share');
+  const lblInt = document.getElementById('lbl-int-share');
+  if (inputNat && lblInt) {
+    inputNat.addEventListener('input', (e) => {
+      let val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+      lblInt.textContent = `International: ${100 - val}%`;
+    });
+  }
+
+  const form = document.getElementById('finance-targets-form');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const yearlyRevenue = Number(document.getElementById('fin-revenue').value);
+      const fixedOverhead = Number(document.getElementById('fin-overhead').value);
+      const nationalPct = Number(document.getElementById('fin-national-share').value);
+
+      DB.updateFinanceData({ yearlyRevenue, fixedOverhead, nationalPct });
+      
+      const alertEl = document.getElementById('finance-alert');
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = 'Financial parameters successfully updated!';
+      alertEl.style.display = 'flex';
+      
+      setTimeout(() => {
+        alertEl.style.display = 'none';
+        renderManagerFinance();
+      }, 2000);
+    });
+  }
 }

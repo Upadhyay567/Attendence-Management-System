@@ -402,6 +402,12 @@ export const DB = {
               author: 'HR Coordinator'
             }
           ];
+        if (!this.data.financeData) {
+          this.data.financeData = {
+            yearlyRevenue: 250000000,
+            fixedOverhead: 50000000,
+            nationalPct: 60
+          };
         }
         this.save();
       } catch (e) {
@@ -480,12 +486,34 @@ export const DB = {
         author: 'HR Coordinator'
       }
     ];
+    this.data.financeData = {
+      yearlyRevenue: 250000000,
+      fixedOverhead: 50000000,
+      nationalPct: 60
+    };
     this.save();
   },
 
   // Users API
   getUsers() {
     return this.data.users;
+  },
+
+  getFinanceData() {
+    if (!this.data.financeData) {
+      this.data.financeData = {
+        yearlyRevenue: 250000000,
+        fixedOverhead: 50000000,
+        nationalPct: 60
+      };
+    }
+    return this.data.financeData;
+  },
+
+  updateFinanceData(data) {
+    this.data.financeData = { ...this.getFinanceData(), ...data };
+    this.save();
+    return this.data.financeData;
   },
   
   getUser(id) {
