@@ -289,7 +289,7 @@ function renderLoginView() {
               </div>
               <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">House of Surya</div>
               <div class="auth-sub-desc" style="text-align: center;">Attendance & Payroll Portal</div>
-              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; transition:color 0.2s" title="Guidelines & Security Instructions">ℹ️</button>
+              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s" title="Guidelines & Security Instructions" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"><span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border:2.5px solid var(--primary); border-radius:50%; font-size:13px; font-weight:900; color:var(--primary); font-family:'Plus Jakarta Sans',sans-serif; font-style:italic">i</span></button>
             </div>
 
             <!-- Role Selection Tabs -->
