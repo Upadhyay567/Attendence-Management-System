@@ -289,7 +289,7 @@ function renderLoginView() {
               </div>
               <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">House of Surya</div>
               <div class="auth-sub-desc" style="text-align: center;">Attendance & Payroll Portal</div>
-              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; transition:color 0.2s" title="Guidelines & Security Instructions">❓</button>
+              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:20px; transition:color 0.2s" title="Guidelines & Security Instructions">ℹ️</button>
             </div>
 
             <!-- Role Selection Tabs -->
