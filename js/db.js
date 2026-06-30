@@ -309,157 +309,174 @@ export const DB = {
     leaveRequests: []
   },
 
-  init() {
-    const raw = localStorage.getItem(DB_KEY);
-    if (raw) {
-      try {
-        this.data = JSON.parse(raw);
-        // Migration: migrate legacy admin role to hr role
-        this.data.users.forEach(u => {
-          if (u.role === 'admin') u.role = 'hr';
-        });
+  async init() {
+    try {
+      const res = await fetch('/api/db-state');
+      if (!res.ok) throw new Error('API server returned error');
+      this.data = await res.json();
+      console.log('Database state initialized from MongoDB backend.');
+    } catch (e) {
+      console.warn('Backend API connection failed. Falling back to local cache.', e);
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        try {
+          this.data = JSON.parse(raw);
+          // Migration: migrate legacy admin role to hr role
+          this.data.users.forEach(u => {
+            if (u.role === 'admin') u.role = 'hr';
+          });
 
-        // Migration: ensure every user has a dynamic employeeId and aadhar property
-        this.data.users.forEach((u, index) => {
-          if (!u.employeeId) {
-            const mappedIds = {
-              'admin': 'EMP100',
-              'hr': 'EMP101',
-              'manager': 'EMP102',
-              'john': 'EMP103',
-              'sarah': 'EMP104',
-              'david': 'EMP105'
-            };
-            u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
-          }
-          if (u.aadhar === undefined) {
-            if (u.username === 'john') {
-              u.aadhar = { name: 'Aadhar_Card.pdf', size: '1.4 MB', date: '2026-06-10' };
-              // Clean it from general documents array if it exists
-              u.documents = (u.documents || []).filter(d => !d.name.includes('Aadhar'));
-            } else {
-              u.aadhar = null;
+          // Migration: ensure every user has a dynamic employeeId and aadhar property
+          this.data.users.forEach((u, index) => {
+            if (!u.employeeId) {
+              const mappedIds = {
+                'admin': 'EMP100',
+                'hr': 'EMP101',
+                'manager': 'EMP102',
+                'john': 'EMP103',
+                'sarah': 'EMP104',
+                'david': 'EMP105'
+              };
+              u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
             }
-          }
-          if (u.gender === undefined) {
-            u.gender = u.username === 'sarah' || u.username === 'hr' ? 'Female' : (u.username === 'admin' ? 'Other' : 'Male');
-          }
-          if (u.department === undefined) {
-            if (u.role === 'hr') u.department = 'Human Resources';
-            else if (u.role === 'manager') u.department = 'Operations';
-            else u.department = 'Engineering';
-          }
-          if (u.designation === undefined) {
-            if (u.username === 'admin') u.designation = 'HR Admin Manager';
-            else if (u.username === 'hr') u.designation = 'HR Coordinator';
-            else if (u.username === 'manager') u.designation = 'Operations Manager';
-            else if (u.username === 'john') u.designation = 'Software Engineer';
-            else if (u.username === 'sarah') u.designation = 'QA Lead';
-            else u.designation = 'Junior Developer';
-          }
-          if (u.dateOfJoining === undefined) {
-            const mappedDoj = {
-              'admin': '2020-04-15',
-              'hr': '2022-03-20',
-              'manager': '2021-08-01',
-              'john': '2023-11-12',
-              'sarah': '2024-02-15',
-              'david': '2025-01-20'
-            };
-            u.dateOfJoining = mappedDoj[u.username] || '2024-05-10';
-          }
-          if (u.emergencyContact === undefined) {
-            u.emergencyContact = '+91 98765 4320' + (index + 1);
-          }
-          if (u.allowanceHRA === undefined) {
-            u.allowanceHRA = Math.round((u.baseSalary || 50000) * 0.15);
-          }
-          if (u.allowanceTravel === undefined) {
-            u.allowanceTravel = 3000;
-          }
-          if (u.deductionPF === undefined) {
-            u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08);
-          }
-          if (u.deductionPT === undefined) {
-            u.deductionPT = 200;
-          }
-          if (u.deductionTDS === undefined) {
-            u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5;
-          }
-        });
-        
-        // Seed default HR & Manager if not exists in local storage
-        if (!this.data.users.some(u => u.username === 'hr')) {
-           this.data.users.push(defaultUsers.find(u => u.username === 'hr'));
-         }
-         if (!this.data.users.some(u => u.username === 'manager')) {
-           this.data.users.push(defaultUsers.find(u => u.username === 'manager'));
-         }
-         if (!this.data.users.some(u => u.username === 'finance')) {
-           this.data.users.push(defaultUsers.find(u => u.username === 'finance'));
-         }
-         if (!this.data.tickets) {
-           this.data.tickets = [];
-         }
-        if (!this.data.shiftSwaps) {
-          this.data.shiftSwaps = [
-            {
-              id: 'swap_1',
-              senderId: 'usr_john',
-              receiverId: 'usr_sarah',
-              reason: 'Have a personal appointment in the morning.',
-              status: 'Pending Coworker',
-              date: '2026-06-25',
-              managerComment: '',
-              coworkerComment: ''
+            if (u.aadhar === undefined) {
+              if (u.username === 'john') {
+                u.aadhar = { name: 'Aadhar_Card.pdf', size: '1.4 MB', date: '2026-06-10' };
+                u.documents = (u.documents || []).filter(d => !d.name.includes('Aadhar'));
+              } else {
+                u.aadhar = null;
+              }
             }
-          ];
+            if (u.gender === undefined) {
+              u.gender = u.username === 'sarah' || u.username === 'hr' ? 'Female' : (u.username === 'admin' ? 'Other' : 'Male');
+            }
+            if (u.department === undefined) {
+              if (u.role === 'hr') u.department = 'Human Resources';
+              else if (u.role === 'manager') u.department = 'Operations';
+              else u.department = 'Engineering';
+            }
+            if (u.designation === undefined) {
+              if (u.username === 'admin') u.designation = 'HR Admin Manager';
+              else if (u.username === 'hr') u.designation = 'HR Coordinator';
+              else if (u.username === 'manager') u.designation = 'Operations Manager';
+              else if (u.username === 'john') u.designation = 'Software Engineer';
+              else if (u.username === 'sarah') u.designation = 'QA Lead';
+              else u.designation = 'Junior Developer';
+            }
+            if (u.dateOfJoining === undefined) {
+              const mappedDoj = {
+                'admin': '2020-04-15',
+                'hr': '2022-03-20',
+                'manager': '2021-08-01',
+                'john': '2023-11-12',
+                'sarah': '2024-02-15',
+                'david': '2025-01-20'
+              };
+              u.dateOfJoining = mappedDoj[u.username] || '2024-05-10';
+            }
+            if (u.emergencyContact === undefined) {
+              u.emergencyContact = '+91 98765 4320' + (index + 1);
+            }
+            if (u.allowanceHRA === undefined) {
+              u.allowanceHRA = Math.round((u.baseSalary || 50000) * 0.15);
+            }
+            if (u.allowanceTravel === undefined) {
+              u.allowanceTravel = 3000;
+            }
+            if (u.deductionPF === undefined) {
+              u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08);
+            }
+            if (u.deductionPT === undefined) {
+              u.deductionPT = 200;
+            }
+            if (u.deductionTDS === undefined) {
+              u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5;
+            }
+          });
+          
+          if (!this.data.users.some(u => u.username === 'hr')) {
+             this.data.users.push(defaultUsers.find(u => u.username === 'hr'));
+           }
+           if (!this.data.users.some(u => u.username === 'manager')) {
+             this.data.users.push(defaultUsers.find(u => u.username === 'manager'));
+           }
+           if (!this.data.users.some(u => u.username === 'finance')) {
+             this.data.users.push(defaultUsers.find(u => u.username === 'finance'));
+           }
+           if (!this.data.tickets) {
+             this.data.tickets = [];
+           }
+          if (!this.data.shiftSwaps) {
+            this.data.shiftSwaps = [
+              {
+                id: 'swap_1',
+                senderId: 'usr_john',
+                receiverId: 'usr_sarah',
+                reason: 'Have a personal appointment in the morning.',
+                status: 'Pending Coworker',
+                date: '2026-06-25',
+                managerComment: '',
+                coworkerComment: ''
+              }
+            ];
+          }
+          if (!this.data.announcements) {
+            this.data.announcements = [
+              {
+                id: 'ann_1',
+                title: 'Welcome to the New Attendance & Onboarding Portal',
+                content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.',
+                category: 'General',
+                date: '2026-06-25',
+                author: 'HR Admin Manager'
+              },
+              {
+                id: 'ann_2',
+                title: 'Upcoming Holiday Notice: Eid-ul-Adha',
+                content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!',
+                category: 'Holiday',
+                date: '2026-06-26',
+                author: 'HR Coordinator'
+              }
+            ];
+          }
+           if (!this.data.financeData) {
+             this.data.financeData = {
+               yearlyRevenue: 250000000,
+               fixedOverhead: 50000000,
+               nationalPct: 60
+             };
+           }
+           if (!this.data.financialRecords) {
+             this.data.financialRecords = generateDemoFinanceData();
+           }
+           if (!this.data.budgets) {
+             this.data.budgets = generateDemoBudgets();
+           }
+           this.save();
+        } catch (err) {
+          console.error('Failed to parse local storage cache, resetting to defaults.', err);
+          this.reset();
         }
-        if (!this.data.announcements) {
-          this.data.announcements = [
-            {
-              id: 'ann_1',
-              title: 'Welcome to the New Attendance & Onboarding Portal',
-              content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.',
-              category: 'General',
-              date: '2026-06-25',
-              author: 'HR Admin Manager'
-            },
-            {
-              id: 'ann_2',
-              title: 'Upcoming Holiday Notice: Eid-ul-Adha',
-              content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!',
-              category: 'Holiday',
-              date: '2026-06-26',
-              author: 'HR Coordinator'
-            }
-          ];
-        }
-         if (!this.data.financeData) {
-           this.data.financeData = {
-             yearlyRevenue: 250000000,
-             fixedOverhead: 50000000,
-             nationalPct: 60
-           };
-         }
-         if (!this.data.financialRecords) {
-           this.data.financialRecords = generateDemoFinanceData();
-         }
-         if (!this.data.budgets) {
-           this.data.budgets = generateDemoBudgets();
-         }
-         this.save();
-      } catch (e) {
-        console.error('Failed to parse DB, resetting to default', e);
+      } else {
         this.reset();
       }
-    } else {
-      this.reset();
     }
   },
 
   save() {
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+
+    // Async push mutations to MongoDB in background
+    fetch('/api/mutate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sync', data: this.data })
+    }).then(res => {
+      if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
+    }).catch(err => {
+      console.warn('Network error syncing mutations to MongoDB:', err);
+    });
   },
 
   reset() {

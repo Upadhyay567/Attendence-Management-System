@@ -57,8 +57,8 @@ let currentLang = localStorage.getItem('hs_app_lang') || 'en';
 let activeTheme = localStorage.getItem('hs_app_theme') || 'dark';
 
 // Initialize App
-window.addEventListener('DOMContentLoaded', () => {
-  DB.init();
+window.addEventListener('DOMContentLoaded', async () => {
+  await DB.init();
   Auth.init();
   applyGlobalTheme();
   setupRouter();

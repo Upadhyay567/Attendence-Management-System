@@ -1,0 +1,1200 @@
+{
+  "users": [
+    {
+      "id": "usr_admin",
+      "username": "admin",
+      "employeeId": "EMP100",
+      "name": "HR Admin Manager",
+      "password": "AdminPassword123!",
+      "role": "hr",
+      "biometricRegistered": {
+        "face": true,
+        "finger": true
+      },
+      "scheduleId": "sch_1",
+      "baseSalary": 95000,
+      "allowanceHRA": 14250,
+      "allowanceTravel": 3000,
+      "deductionPF": 7600,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543209",
+      "email": "admin@surya.group",
+      "dob": "1985-05-12",
+      "address": "12, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Other",
+      "department": "Human Resources",
+      "designation": "HR Admin Manager",
+      "dateOfJoining": "2020-04-15",
+      "emergencyContact": "+91 98765 43201",
+      "documents": [],
+      "resume": null,
+      "aadhar": null
+    },
+    {
+      "id": "usr_hr",
+      "username": "hr",
+      "employeeId": "EMP101",
+      "name": "HR Coordinator",
+      "password": "HRPassword123!",
+      "role": "hr",
+      "biometricRegistered": {
+        "face": false,
+        "finger": false
+      },
+      "scheduleId": "sch_1",
+      "baseSalary": 75000,
+      "allowanceHRA": 11250,
+      "allowanceTravel": 3000,
+      "deductionPF": 6000,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543211",
+      "email": "hr@surya.group",
+      "dob": "1988-06-15",
+      "address": "24, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Female",
+      "department": "Human Resources",
+      "designation": "HR Coordinator",
+      "dateOfJoining": "2022-03-20",
+      "emergencyContact": "+91 98765 43202",
+      "documents": [],
+      "resume": null,
+      "aadhar": null
+    },
+    {
+      "id": "usr_manager",
+      "username": "manager",
+      "employeeId": "EMP102",
+      "name": "Operations Manager",
+      "password": "ManagerPassword123!",
+      "role": "manager",
+      "biometricRegistered": {
+        "face": false,
+        "finger": false
+      },
+      "scheduleId": "sch_1",
+      "baseSalary": 80000,
+      "allowanceHRA": 12000,
+      "allowanceTravel": 3000,
+      "deductionPF": 6400,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543212",
+      "email": "manager@surya.group",
+      "dob": "1986-04-20",
+      "address": "36, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Male",
+      "department": "Operations",
+      "designation": "Operations Manager",
+      "dateOfJoining": "2021-08-01",
+      "emergencyContact": "+91 98765 43203",
+      "documents": [],
+      "resume": null,
+      "aadhar": null
+    },
+    {
+      "id": "usr_finance",
+      "username": "finance",
+      "employeeId": "EMP106",
+      "name": "Finance Manager",
+      "password": "FinancePassword123!",
+      "role": "finance_manager",
+      "biometricRegistered": {
+        "face": false,
+        "finger": false
+      },
+      "scheduleId": "sch_1",
+      "baseSalary": 78000,
+      "allowanceHRA": 11700,
+      "allowanceTravel": 3000,
+      "deductionPF": 6240,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543213",
+      "email": "finance@surya.group",
+      "dob": "1990-09-15",
+      "address": "48, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Male",
+      "department": "Finance",
+      "designation": "Finance Manager",
+      "dateOfJoining": "2023-01-10",
+      "emergencyContact": "+91 98765 43204",
+      "documents": [],
+      "resume": null,
+      "aadhar": null
+    },
+    {
+      "id": "usr_john",
+      "username": "john",
+      "employeeId": "EMP103",
+      "name": "John Doe",
+      "password": "JohnPassword123!",
+      "role": "employee",
+      "biometricRegistered": {
+        "face": true,
+        "finger": false
+      },
+      "scheduleId": "sch_1",
+      "baseSalary": 55000,
+      "allowanceHRA": 8250,
+      "allowanceTravel": 3000,
+      "deductionPF": 4400,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "phone": "+91 9999911111",
+      "email": "john.doe@surya.group",
+      "dob": "1992-08-23",
+      "address": "H.No. 45, Sector 15",
+      "city": "Noida",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Software Engineer",
+      "dateOfJoining": "2023-11-12",
+      "emergencyContact": "+91 99999 00001",
+      "documents": [],
+      "resume": {
+        "name": "John_Doe_Resume.pdf",
+        "size": "380 KB",
+        "date": "2026-06-10"
+      },
+      "aadhar": {
+        "name": "Aadhar_Card.pdf",
+        "size": "1.4 MB",
+        "date": "2026-06-10"
+      },
+      "bankDetails": {
+        "name": "Bank_Passbook.pdf",
+        "size": "512 KB",
+        "date": "2026-06-10"
+      }
+    },
+    {
+      "id": "usr_sarah",
+      "username": "sarah",
+      "employeeId": "EMP104",
+      "name": "Sarah Connor",
+      "password": "SarahPassword123!",
+      "role": "employee",
+      "biometricRegistered": {
+        "face": false,
+        "finger": true
+      },
+      "scheduleId": "sch_2",
+      "baseSalary": 62000,
+      "allowanceHRA": 9300,
+      "allowanceTravel": 3000,
+      "deductionPF": 4960,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9888822222",
+      "email": "sarah.c@surya.group",
+      "dob": "1994-11-04",
+      "address": "Plot 102, Gali No 3, Laxmi Nagar",
+      "city": "Delhi",
+      "gender": "Female",
+      "department": "Quality Assurance",
+      "designation": "QA Lead",
+      "dateOfJoining": "2024-02-15",
+      "emergencyContact": "+91 98888 00002",
+      "documents": [
+        {
+          "id": "doc_2",
+          "name": "PAN_Card.jpg",
+          "size": "820 KB",
+          "date": "2026-06-12"
+        }
+      ],
+      "resume": null,
+      "aadhar": null
+    },
+    {
+      "id": "usr_david",
+      "username": "david",
+      "employeeId": "EMP105",
+      "name": "David Lightman",
+      "password": "DavidPassword123!",
+      "role": "employee",
+      "biometricRegistered": {
+        "face": false,
+        "finger": false
+      },
+      "scheduleId": "sch_3",
+      "baseSalary": 48000,
+      "allowanceHRA": 7200,
+      "allowanceTravel": 3000,
+      "deductionPF": 3840,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "phone": "+91 9777733333",
+      "email": "david.l@surya.group",
+      "dob": "1997-03-15",
+      "address": "B-4, Block C, Rohini Sector 8",
+      "city": "Delhi",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2025-01-20",
+      "emergencyContact": "+91 97777 00003",
+      "documents": [],
+      "resume": null,
+      "aadhar": null
+    }
+  ],
+  "schedules": [
+    {
+      "id": "sch_1",
+      "name": "Standard Day Shift",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "gracePeriod": 15,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "sch_2",
+      "name": "Morning Shift",
+      "startTime": "07:00",
+      "endTime": "15:00",
+      "gracePeriod": 15,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Chandni Chowk"
+    },
+    {
+      "id": "sch_3",
+      "name": "Night Shift",
+      "startTime": "22:00",
+      "endTime": "06:00",
+      "gracePeriod": 15,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Omaxe City, Delhi"
+    }
+  ],
+  "attendanceLogs": [
+    {
+      "id": "log_usr_john_2026-06-10",
+      "userId": "usr_john",
+      "date": "2026-06-10",
+      "checkIn": "09:01",
+      "checkOut": "17:06",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-10",
+      "userId": "usr_sarah",
+      "date": "2026-06-10",
+      "checkIn": "07:08",
+      "checkOut": "15:04",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-10",
+      "userId": "usr_david",
+      "date": "2026-06-10",
+      "checkIn": "22:42",
+      "checkOut": "06:01",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-11",
+      "userId": "usr_john",
+      "date": "2026-06-11",
+      "checkIn": "09:09",
+      "checkOut": "17:01",
+      "status": "On Time",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-11",
+      "userId": "usr_sarah",
+      "date": "2026-06-11",
+      "checkIn": "06:56",
+      "checkOut": "15:00",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-11",
+      "userId": "usr_david",
+      "date": "2026-06-11",
+      "checkIn": "21:50",
+      "checkOut": "06:00",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-12",
+      "userId": "usr_john",
+      "date": "2026-06-12",
+      "checkIn": "09:38",
+      "checkOut": "17:04",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-12",
+      "userId": "usr_sarah",
+      "date": "2026-06-12",
+      "checkIn": "06:55",
+      "checkOut": "12:00",
+      "status": "Half Day",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-12",
+      "userId": "usr_david",
+      "date": "2026-06-12",
+      "checkIn": "22:45",
+      "checkOut": "06:08",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-15",
+      "userId": "usr_john",
+      "date": "2026-06-15",
+      "checkIn": "08:55",
+      "checkOut": "17:00",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-15",
+      "userId": "usr_sarah",
+      "date": "2026-06-15",
+      "checkIn": "06:55",
+      "checkOut": "11:00",
+      "status": "Half Day",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-15",
+      "userId": "usr_david",
+      "date": "2026-06-15",
+      "checkIn": "21:51",
+      "checkOut": "06:06",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-16",
+      "userId": "usr_john",
+      "date": "2026-06-16",
+      "checkIn": "09:01",
+      "checkOut": "17:03",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-16",
+      "userId": "usr_sarah",
+      "date": "2026-06-16",
+      "checkIn": "07:04",
+      "checkOut": "15:00",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-16",
+      "userId": "usr_david",
+      "date": "2026-06-16",
+      "checkIn": "22:03",
+      "checkOut": "06:08",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-17",
+      "userId": "usr_john",
+      "date": "2026-06-17",
+      "checkIn": "08:50",
+      "checkOut": "17:09",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-17",
+      "userId": "usr_sarah",
+      "date": "2026-06-17",
+      "checkIn": "06:51",
+      "checkOut": "15:01",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-17",
+      "userId": "usr_david",
+      "date": "2026-06-17",
+      "checkIn": "22:06",
+      "checkOut": "06:01",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-18",
+      "userId": "usr_sarah",
+      "date": "2026-06-18",
+      "checkIn": "06:53",
+      "checkOut": "15:00",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-18",
+      "userId": "usr_david",
+      "date": "2026-06-18",
+      "checkIn": "22:36",
+      "checkOut": "06:09",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-19",
+      "userId": "usr_john",
+      "date": "2026-06-19",
+      "checkIn": "09:36",
+      "checkOut": "17:00",
+      "status": "Late",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-19",
+      "userId": "usr_sarah",
+      "date": "2026-06-19",
+      "checkIn": "07:04",
+      "checkOut": "15:02",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-19",
+      "userId": "usr_david",
+      "date": "2026-06-19",
+      "checkIn": "22:26",
+      "checkOut": "06:05",
+      "status": "Late",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-22",
+      "userId": "usr_john",
+      "date": "2026-06-22",
+      "checkIn": "09:02",
+      "checkOut": "17:09",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-22",
+      "userId": "usr_sarah",
+      "date": "2026-06-22",
+      "checkIn": "07:09",
+      "checkOut": "15:08",
+      "status": "On Time",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-22",
+      "userId": "usr_david",
+      "date": "2026-06-22",
+      "checkIn": "22:17",
+      "checkOut": "06:01",
+      "status": "Late",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-23",
+      "userId": "usr_john",
+      "date": "2026-06-23",
+      "checkIn": "09:29",
+      "checkOut": "17:08",
+      "status": "Late",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-23",
+      "userId": "usr_sarah",
+      "date": "2026-06-23",
+      "checkIn": "06:59",
+      "checkOut": "15:06",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-24",
+      "userId": "usr_john",
+      "date": "2026-06-24",
+      "checkIn": "09:34",
+      "checkOut": "17:09",
+      "status": "Late",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-24",
+      "userId": "usr_sarah",
+      "date": "2026-06-24",
+      "checkIn": "07:02",
+      "checkOut": "15:09",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-24",
+      "userId": "usr_david",
+      "date": "2026-06-24",
+      "checkIn": "21:51",
+      "checkOut": "06:00",
+      "status": "On Time",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-25",
+      "userId": "usr_john",
+      "date": "2026-06-25",
+      "checkIn": "09:07",
+      "checkOut": "17:06",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-25",
+      "userId": "usr_sarah",
+      "date": "2026-06-25",
+      "checkIn": "06:51",
+      "checkOut": "15:03",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-25",
+      "userId": "usr_david",
+      "date": "2026-06-25",
+      "checkIn": "21:54",
+      "checkOut": "06:03",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-26",
+      "userId": "usr_john",
+      "date": "2026-06-26",
+      "checkIn": "08:50",
+      "checkOut": "17:00",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-06-26",
+      "userId": "usr_sarah",
+      "date": "2026-06-26",
+      "checkIn": "06:52",
+      "checkOut": "15:00",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-26",
+      "userId": "usr_david",
+      "date": "2026-06-26",
+      "checkIn": "21:56",
+      "checkOut": "06:07",
+      "status": "On Time",
+      "biometricUsed": "face",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_john_2026-06-29",
+      "userId": "usr_john",
+      "date": "2026-06-29",
+      "checkIn": "08:58",
+      "checkOut": "17:01",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-06-29",
+      "userId": "usr_david",
+      "date": "2026-06-29",
+      "checkIn": "22:02",
+      "checkOut": "06:07",
+      "status": "On Time",
+      "biometricUsed": "fingerprint",
+      "location": "Kohat Enclave, Pitampura, Delhi"
+    }
+  ],
+  "leaveRequests": [
+    {
+      "id": "lv_1",
+      "userId": "usr_john",
+      "type": "Annual",
+      "startDate": "2026-07-10",
+      "endDate": "2026-07-12",
+      "reason": "Family vacation trip",
+      "status": "Pending",
+      "requestDate": "2026-06-24",
+      "managerComment": ""
+    },
+    {
+      "id": "lv_2",
+      "userId": "usr_sarah",
+      "type": "Sick",
+      "startDate": "2026-06-10",
+      "endDate": "2026-06-11",
+      "reason": "Dental surgery and rest",
+      "status": "Approved",
+      "requestDate": "2026-06-08",
+      "managerComment": "Take care and recover!"
+    },
+    {
+      "id": "lv_3",
+      "userId": "usr_david",
+      "type": "Casual",
+      "startDate": "2026-06-18",
+      "endDate": "2026-06-18",
+      "reason": "Personal urgent matter",
+      "status": "Rejected",
+      "requestDate": "2026-06-17",
+      "managerComment": "High priority project deadline scheduled on that day."
+    }
+  ],
+  "tickets": [
+    {
+      "id": "tkt_1",
+      "userId": "usr_john",
+      "category": "Attendance",
+      "subject": "Missed Biometric Clock-in",
+      "message": "My biometric face clock-in failed today due to lighting. Can HR please verify my attendance log manually?",
+      "date": "2026-06-24",
+      "status": "Open",
+      "responses": []
+    },
+    {
+      "id": "tkt_2",
+      "userId": "usr_john",
+      "category": "Payroll",
+      "subject": "Tax Deduction details",
+      "message": "Could you please share the breakdown of this month’s professional tax leave deduction?",
+      "date": "2026-06-25",
+      "status": "Resolved",
+      "responses": [
+        {
+          "responder": "HR Coordinator",
+          "text": "We have updated the monthly payroll spreadsheet. You can view the full breakdown directly in the Payslips panel.",
+          "date": "2026-06-25"
+        }
+      ]
+    }
+  ],
+  "shiftSwaps": [
+    {
+      "id": "swap_1",
+      "senderId": "usr_john",
+      "receiverId": "usr_sarah",
+      "reason": "Have a personal appointment in the morning.",
+      "status": "Pending Coworker",
+      "date": "2026-06-25",
+      "managerComment": "",
+      "coworkerComment": ""
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann_1",
+      "title": "Welcome to the New Attendance & Onboarding Portal",
+      "content": "We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.",
+      "category": "General",
+      "date": "2026-06-25",
+      "author": "HR Admin Manager"
+    },
+    {
+      "id": "ann_2",
+      "title": "Upcoming Holiday Notice: Eid-ul-Adha",
+      "content": "Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!",
+      "category": "Holiday",
+      "date": "2026-06-26",
+      "author": "HR Coordinator"
+    }
+  ],
+  "financeData": {
+    "yearlyRevenue": 250000000,
+    "fixedOverhead": 50000000,
+    "nationalPct": 60
+  },
+  "financialRecords": [
+    {
+      "id": "rev_0_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 22000000,
+      "date": "2026-01-28",
+      "details": "Client billing receipts for segment 2026-01",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_0_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-01-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_0_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-01-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_0_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 500000,
+      "date": "2026-01-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_0_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-01-30",
+      "details": "Monthly salaries for 2026-01",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_0_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-01-30",
+      "details": "Monthly TDS payments for 2026-01",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "rev_1_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 23500000,
+      "date": "2026-02-28",
+      "details": "Client billing receipts for segment 2026-02",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_1_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-02-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_1_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-02-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_1_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 550000,
+      "date": "2026-02-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_1_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-02-30",
+      "details": "Monthly salaries for 2026-02",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_1_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-02-30",
+      "details": "Monthly TDS payments for 2026-02",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "rev_2_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 25000000,
+      "date": "2026-03-28",
+      "details": "Client billing receipts for segment 2026-03",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_2_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-03-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_2_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-03-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_2_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 600000,
+      "date": "2026-03-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_2_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-03-30",
+      "details": "Monthly salaries for 2026-03",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_2_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-03-30",
+      "details": "Monthly TDS payments for 2026-03",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "rev_3_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 26500000,
+      "date": "2026-04-28",
+      "details": "Client billing receipts for segment 2026-04",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_3_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-04-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_3_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-04-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_3_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 650000,
+      "date": "2026-04-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_3_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-04-30",
+      "details": "Monthly salaries for 2026-04",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_3_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-04-30",
+      "details": "Monthly TDS payments for 2026-04",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "rev_4_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 28000000,
+      "date": "2026-05-28",
+      "details": "Client billing receipts for segment 2026-05",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_4_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-05-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_4_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-05-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_4_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 700000,
+      "date": "2026-05-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_4_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-05-30",
+      "details": "Monthly salaries for 2026-05",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_4_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-05-30",
+      "details": "Monthly TDS payments for 2026-05",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "rev_5_1",
+      "type": "revenue",
+      "category": "Yearly Revenue",
+      "amount": 29500000,
+      "date": "2026-06-28",
+      "details": "Client billing receipts for segment 2026-06",
+      "department": "General",
+      "project": "Global Operations"
+    },
+    {
+      "id": "exp_5_1",
+      "type": "expense",
+      "category": "Upload Office Expenses",
+      "amount": 150000,
+      "date": "2026-06-05",
+      "details": "Office rent & supplies",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_5_2",
+      "type": "expense",
+      "category": "Upload Utility Bills",
+      "amount": 45000,
+      "date": "2026-06-10",
+      "details": "Electricity and internet bills",
+      "department": "Operations",
+      "project": "General Overhead"
+    },
+    {
+      "id": "exp_5_3",
+      "type": "expense",
+      "category": "Upload Project Expenses",
+      "amount": 750000,
+      "date": "2026-06-15",
+      "details": "Cloud computing server infrastructure usage",
+      "department": "Engineering",
+      "project": "Cloud Migrations"
+    },
+    {
+      "id": "pay_5_1",
+      "type": "payroll",
+      "category": "Upload Employee Salary",
+      "amount": 450000,
+      "date": "2026-06-30",
+      "details": "Monthly salaries for 2026-06",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "pay_5_2",
+      "type": "payroll",
+      "category": "Upload Tax Details",
+      "amount": 45000,
+      "date": "2026-06-30",
+      "details": "Monthly TDS payments for 2026-06",
+      "department": "General",
+      "project": "Internal Operations"
+    },
+    {
+      "id": "inv_1",
+      "type": "investment",
+      "category": "Upload Investments",
+      "amount": 5000000,
+      "date": "2026-02-15",
+      "details": "Mutual fund capital investments",
+      "department": "Finance",
+      "project": "Treasury"
+    },
+    {
+      "id": "ast_1",
+      "type": "investment",
+      "category": "Upload Assets",
+      "amount": 20000000,
+      "date": "2026-01-10",
+      "details": "Office real estate & computers",
+      "department": "Finance",
+      "project": "Treasury"
+    },
+    {
+      "id": "lia_1",
+      "type": "investment",
+      "category": "Upload Liabilities",
+      "amount": 4000000,
+      "date": "2026-03-20",
+      "details": "Long-term corporate credit lines",
+      "department": "Finance",
+      "project": "Treasury"
+    }
+  ],
+  "budgets": [
+    {
+      "id": "bgt_1",
+      "department": "Engineering",
+      "project": "Cloud Migrations",
+      "amount": 12000000,
+      "date": "2026-01-01"
+    },
+    {
+      "id": "bgt_2",
+      "department": "Operations",
+      "project": "General Overhead",
+      "amount": 3000000,
+      "date": "2026-01-01"
+    },
+    {
+      "id": "bgt_3",
+      "department": "Human Resources",
+      "project": "Staffing Drive",
+      "amount": 2000000,
+      "date": "2026-01-01"
+    }
+  ]
+}
