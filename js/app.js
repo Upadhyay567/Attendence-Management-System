@@ -94,9 +94,9 @@ function setupRouter() {
       return;
     }
 
-    const isManagementRoute = hash.startsWith('#admin-') || hash === '#manager-finance';
+    const isManagementRoute = hash.startsWith('#admin-');
     const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
-    const isManagementRole = user.role === 'hr' || user.role === 'manager';
+    const isManagementRole = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
 
     if (isManagementRoute && !isManagementRole) {
       window.location.hash = '#dashboard';
@@ -169,8 +169,22 @@ function setupRouter() {
       case '#admin-support':
         renderAdminSupport();
         break;
+      case '#admin-finance':
+        if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
+          renderAdminFinance();
+        } else {
+          window.location.hash = '#dashboard';
+        }
+        break;
+      case '#admin-analytics':
+        if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
+          renderAdminAnalytics();
+        } else {
+          window.location.hash = '#dashboard';
+        }
+        break;
       default:
-        window.location.hash = (user.role === 'hr' || user.role === 'manager') ? '#admin-dashboard' : '#dashboard';
+        window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard';
     }
   };
 
@@ -914,20 +928,17 @@ function renderAppShell() {
   const labels = Translations[currentLang] || Translations.en;
 
   let menuHTML = '';
-  if (user.role === 'hr' || user.role === 'manager') {
-    const managerOnlyLinkHTML = user.role === 'manager'
-      ? `
-      <li class="menu-item" id="nav-manager-finance"><a href="#manager-finance">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Finance & Analytics
-      </a></li>
-      `
-      : '';
-
+  if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
     menuHTML = `
       <li class="menu-item" id="nav-admin-dashboard"><a href="#admin-dashboard">
         <svg viewBox="0 0 24 24"><path d="M10 20H5v-7H2l10-9 10 9h-3v7h-5v-6h-2v6z"/></svg> ${labels.monitor}
       </a></li>
-      ${managerOnlyLinkHTML}
+      <li class="menu-item" id="nav-admin-finance"><a href="#admin-finance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="20" x2="12" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg> Finance Management
+      </a></li>
+      <li class="menu-item" id="nav-admin-analytics"><a href="#admin-analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> Analytics Dashboard
+      </a></li>
       <li class="menu-item" id="nav-admin-users"><a href="#admin-users">
         <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${labels.employees}
       </a></li>
@@ -1061,7 +1072,7 @@ function renderAppShell() {
         const currentUser = Auth.getCurrentUser();
         if (!currentUser) return;
         
-        if (currentUser.role !== 'hr' && currentUser.role !== 'manager') {
+        if (currentUser.role !== 'hr' && currentUser.role !== 'manager' && currentUser.role !== 'finance_manager') {
           const announcements = DB.getAnnouncements();
           const readKey = `hs_read_notices_${currentUser.id}`;
           const readIds = announcements.map(a => a.id);
@@ -1071,7 +1082,14 @@ function renderAppShell() {
             renderEmployeeDashboard();
           }
         } else {
-          alert('Action items (approvals and swaps) require review and cannot be marked as read without processing.');
+          if (DB.data.financeAlerts && DB.data.financeAlerts.length > 0) {
+            DB.data.financeAlerts = [];
+            DB.save();
+            updateNotificationsUI();
+            alert('Financial alerts marked as read.');
+          } else {
+            alert('Action items (approvals and swaps) require review and cannot be marked as read without processing.');
+          }
         }
       });
     }
@@ -5240,6 +5258,17 @@ function updateNotificationsUI() {
           category: 'Swap'
         });
       });
+
+      const financeAlerts = DB.data.financeAlerts || [];
+      financeAlerts.forEach(al => {
+        notifications.push({
+          id: al.id,
+          title: al.title,
+          desc: al.desc,
+          link: '#admin-finance',
+          category: 'Finance'
+        });
+      });
     } else {
       // Employee Notifications: Unread Announcements
       const announcements = DB.getAnnouncements();
@@ -5278,6 +5307,7 @@ function updateNotificationsUI() {
         let badgeStyle = 'background:rgba(16,185,129,0.1);color:var(--success)';
         if (n.category === 'Request') badgeStyle = 'background:rgba(251,191,36,0.1);color:var(--primary)';
         if (n.category === 'Swap') badgeStyle = 'background:rgba(139,92,246,0.1);color:rgb(139,92,246)';
+        if (n.category === 'Finance') badgeStyle = 'background:rgba(239,68,68,0.1);color:var(--error)';
 
         return `
           <div class="notification-item-row" data-id="${n.id}" data-link="${n.link}" data-category="${n.category}" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.2s;display:flex;flex-direction:column;gap:4px">
@@ -5649,152 +5679,734 @@ function openHelpGuidelinesModal() {
   document.body.appendChild(overlay);
 }
 
-function renderManagerFinance() {
+function renderAdminFinance() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
-  if (!user || user.role !== 'manager') {
+  if (!user || (user.role !== 'hr' && user.role !== 'manager' && user.role !== 'finance_manager')) {
     window.location.hash = '#dashboard';
     return;
   }
 
-  const finance = DB.getFinanceData();
-  
-  const employees = DB.getUsers();
-  const monthlySalaryCosts = employees.reduce((sum, u) => sum + (u.baseSalary || 50000), 0);
-  const annualSalaryCosts = monthlySalaryCosts * 12;
-  const totalCosts = annualSalaryCosts + finance.fixedOverhead;
-  const netProfit = finance.yearlyRevenue - totalCosts;
-  
-  const natPct = finance.nationalPct || 60;
-  const intPct = 100 - natPct;
-  const natRev = Math.round(finance.yearlyRevenue * (natPct / 100));
-  const intRev = Math.round(finance.yearlyRevenue * (intPct / 100));
+  const isEditor = user.username === 'admin' || user.role === 'hr';
+  const records = DB.getFinancialRecords();
+  const budgets = DB.getBudgets();
 
-  main.innerHTML = `
-    <div class="content-header">
-      <div>
-        <h1 class="content-title">💼 Financial Operations & Segment Analytics</h1>
-        <div class="content-subtitle">Review yearly revenue targets, salary budgets, and national/international trade distribution.</div>
-      </div>
-    </div>
-    <div class="content-body">
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px">
-        <div class="card-panel" style="padding:20px; border-left:4px solid var(--primary)">
-          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Projected Annual Revenue</div>
-          <div style="font-size:24px; font-weight:700; color:var(--text-primary); margin-top:8px">₹${finance.yearlyRevenue.toLocaleString()}</div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px">Target for Year 2026</div>
-        </div>
-        <div class="card-panel" style="padding:20px; border-left:4px solid var(--warning)">
-          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Operating Budget (Costs)</div>
-          <div style="font-size:24px; font-weight:700; color:var(--text-primary); margin-top:8px">₹${totalCosts.toLocaleString()}</div>
-          <div style="font-size:11px; color:var(--text-muted); margin-top:4px">
-            Salaries: ₹${annualSalaryCosts.toLocaleString()} | Fixed: ₹${finance.fixedOverhead.toLocaleString()}
-          </div>
-        </div>
-        <div class="card-panel" style="padding:20px; border-left:4px solid ${netProfit >= 0 ? 'var(--success)' : 'var(--error)'}">
-          <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Projected Net Profit</div>
-          <div style="font-size:24px; font-weight:700; color:${netProfit >= 0 ? 'var(--success)' : 'var(--error)'}; margin-top:8px">₹${netProfit.toLocaleString()}</div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:4px">
-            Margin: <strong>${finance.yearlyRevenue > 0 ? Math.round((netProfit / finance.yearlyRevenue) * 100) : 0}%</strong>
-          </div>
-        </div>
-      </div>
+  // Filters state
+  let filterYear = 'all';
+  let filterMonth = 'all';
+  let filterQuarter = 'all';
+  let filterDept = 'all';
+  let filterProj = 'all';
+  let filterCat = 'all';
 
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px; margin-bottom:24px">
+  function calculateFinanceMetrics(filteredRecords) {
+    let rev = 0;
+    let exp = 0;
+    let pay = 0;
+    let inv = 0;
+
+    filteredRecords.forEach(r => {
+      const amt = Number(r.amount) || 0;
+      if (r.type === 'revenue') rev += amt;
+      else if (r.type === 'expense') exp += amt;
+      else if (r.type === 'payroll') pay += amt;
+      else if (r.type === 'investment') {
+        if (r.category === 'Upload Liabilities') {
+          exp += amt;
+        } else {
+          inv += amt;
+        }
+      }
+    });
+
+    const totalExp = exp + pay;
+    const profit = rev - totalExp;
+    
+    const totalBudget = budgets.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+    const budgetRemaining = totalBudget - totalExp;
+
+    return {
+      revenue: rev,
+      expenses: totalExp,
+      profit: profit > 0 ? profit : 0,
+      loss: profit < 0 ? Math.abs(profit) : 0,
+      payroll: pay,
+      budgetRemaining
+    };
+  }
+
+  function getFilteredRecords() {
+    return records.filter(r => {
+      const d = new Date(r.date);
+      const yr = d.getFullYear().toString();
+      const mo = (d.getMonth() + 1).toString().padStart(2, '0');
+      const qtr = Math.ceil((d.getMonth() + 1) / 3).toString();
+
+      if (filterYear !== 'all' && yr !== filterYear) return false;
+      if (filterMonth !== 'all' && mo !== filterMonth) return false;
+      if (filterQuarter !== 'all' && qtr !== filterQuarter) return false;
+      if (filterDept !== 'all' && r.department !== filterDept) return false;
+      if (filterProj !== 'all' && r.project !== filterProj) return false;
+      if (filterCat !== 'all' && r.category !== filterCat) return false;
+      return true;
+    });
+  }
+
+  function renderDashboardUI() {
+    const activeRecords = getFilteredRecords();
+    const metrics = calculateFinanceMetrics(activeRecords);
+
+    const years = [...new Set(records.map(r => new Date(r.date).getFullYear()))].sort();
+    const depts = [...new Set(records.map(r => r.department).filter(Boolean))];
+    const projs = [...new Set(records.map(r => r.project).filter(Boolean))];
+    const cats = [...new Set(records.map(r => r.category).filter(Boolean))];
+
+    main.innerHTML = `
+      <div class="content-header">
+        <div>
+          <h1 class="content-title">💼 Corporate Finance Desk</h1>
+          <div class="content-subtitle">Central ledger, budget allocations, and P&L statements.</div>
+        </div>
+      </div>
+      <div class="content-body">
         
-        <div class="card-panel" style="padding:20px">
-          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">🌐 Trade Segment Distribution</h3>
-          <div style="display:flex; flex-direction:column; align-items:center; gap:20px">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:20px">
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--primary)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Total Revenue</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.revenue.toLocaleString()}</div>
+          </div>
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--error)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Total Expenses</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.expenses.toLocaleString()}</div>
+          </div>
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--success)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Net Profit</div>
+            <div style="font-size:18px; font-weight:700; color:var(--success); margin-top:4px">₹${metrics.profit.toLocaleString()}</div>
+          </div>
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--error)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Net Loss</div>
+            <div style="font-size:18px; font-weight:700; color:var(--error); margin-top:4px">₹${metrics.loss.toLocaleString()}</div>
+          </div>
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--warning)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Payroll Cost</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.payroll.toLocaleString()}</div>
+          </div>
+          <div class="card-panel" style="padding:15px; border-left:4px solid var(--cyan)">
+            <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Budget Remaining</div>
+            <div style="font-size:18px; font-weight:700; color:var(--cyan); margin-top:4px">₹${metrics.budgetRemaining.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: ${isEditor ? '300px 1fr' : '1fr'}; gap:20px; margin-bottom:20px; align-items:start">
+          
+          ${isEditor ? `
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:14px; margin-bottom:12px">📥 Upload Financial Record</h3>
             
-            <div style="position:relative; width:160px; height:160px">
-              <svg width="160" height="160" viewBox="0 0 36 36" style="filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3))">
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4"></circle>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="${natPct} ${100 - natPct}" stroke-dashoffset="25"></circle>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" stroke-width="4" stroke-dasharray="${intPct} ${100 - intPct}" stroke-dashoffset="${25 - natPct}"></circle>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Record Type</label>
+              <select class="form-input" id="up-type" style="padding:6px; font-size:12px">
+                <option value="revenue">Revenue Management</option>
+                <option value="expense">Expense Management</option>
+                <option value="payroll">Payroll Upload</option>
+                <option value="investment">Investment Section</option>
+                <option value="budget">Budget Section</option>
+              </select>
+            </div>
+            
+            <form id="finance-upload-form" style="display:flex; flex-direction:column; gap:10px">
+              <div class="form-group">
+                <label class="form-label" for="up-category">Category</label>
+                <select class="form-input" id="up-category" style="padding:6px; font-size:12px" required>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="up-amount">Amount (INR)</label>
+                <input class="form-input" type="number" id="up-amount" required style="padding:6px; font-size:12px">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="up-date">Transaction Date</label>
+                <input class="form-input" type="date" id="up-date" required style="padding:6px; font-size:12px" value="${new Date().toISOString().split('T')[0]}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="up-dept">Department</label>
+                <select class="form-input" id="up-dept" style="padding:6px; font-size:12px">
+                  <option value="General">General / Administrative</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Human Resources">Human Resources</option>
+                  <option value="Finance">Finance</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="up-project">Project / Details</label>
+                <input class="form-input" type="text" id="up-project" placeholder="e.g. Cloud Migrations" style="padding:6px; font-size:12px">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="up-desc">Remarks / Comments</label>
+                <input class="form-input" type="text" id="up-desc" placeholder="Details or vendor name" style="padding:6px; font-size:12px">
+              </div>
+              
+              <button class="btn" type="submit" style="margin-top:5px; background:var(--primary); color:var(--bg-app); font-weight:700; padding:8px 12px; font-size:12px">Upload Record</button>
+            </form>
+            <div id="finance-upload-alert" style="display:none; margin-top:10px"></div>
+          </div>
+          ` : ''}
+
+          <div class="card-panel" style="padding:15px">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px">
+              <h3 class="card-panel-title" style="font-size:14px; margin:0">📋 P&L Transaction Ledger</h3>
+              <div style="display:flex; gap:6px">
+                <button class="btn btn-secondary btn-xs" id="btn-export-csv" style="padding:5px 10px; font-size:11px">Export CSV</button>
+                <button class="btn btn-secondary btn-xs" id="btn-export-excel" style="padding:5px 10px; font-size:11px">Export Excel</button>
+                <button class="btn btn-secondary btn-xs" id="btn-export-pdf" style="padding:5px 10px; font-size:11px; background:var(--primary); color:var(--bg-app); border:none">Print PDF Report</button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:8px; margin-bottom:15px; background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:10px; border-radius:var(--radius-sm)">
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Year</label>
+                <select class="form-input" id="fil-year" style="padding:4px; font-size:11px">
+                  <option value="all">All Years</option>
+                  ${years.map(y => `<option value="${y}" ${filterYear === y.toString() ? 'selected' : ''}>${y}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Month</label>
+                <select class="form-input" id="fil-month" style="padding:4px; font-size:11px">
+                  <option value="all">All Months</option>
+                  ${['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => `<option value="${m}" ${filterMonth === m ? 'selected' : ''}>${m}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Quarter</label>
+                <select class="form-input" id="fil-quarter" style="padding:4px; font-size:11px">
+                  <option value="all">All Quarters</option>
+                  <option value="1" ${filterQuarter === '1' ? 'selected' : ''}>Q1 (Jan-Mar)</option>
+                  <option value="2" ${filterQuarter === '2' ? 'selected' : ''}>Q2 (Apr-Jun)</option>
+                  <option value="3" ${filterQuarter === '3' ? 'selected' : ''}>Q3 (Jul-Sep)</option>
+                  <option value="4" ${filterQuarter === '4' ? 'selected' : ''}>Q4 (Oct-Dec)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Department</label>
+                <select class="form-input" id="fil-dept" style="padding:4px; font-size:11px">
+                  <option value="all">All Depts</option>
+                  ${depts.map(d => `<option value="${d}" ${filterDept === d ? 'selected' : ''}>${d}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Project</label>
+                <select class="form-input" id="fil-proj" style="padding:4px; font-size:11px">
+                  <option value="all">All Projects</option>
+                  ${projs.map(p => `<option value="${p}" ${filterProj === p ? 'selected' : ''}>${p}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:10px">Category</label>
+                <select class="form-input" id="fil-cat" style="padding:4px; font-size:11px">
+                  <option value="all">All Categories</option>
+                  ${cats.map(c => `<option value="${c}" ${filterCat === c ? 'selected' : ''}>${c}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="table-container" style="max-height:300px; overflow-y:auto">
+              <table class="custom-table" style="font-size:12px">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Dept / Project</th>
+                    <th>Description</th>
+                    <th style="text-align:right">Amount</th>
+                    ${isEditor ? '<th>Action</th>' : ''}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${activeRecords.length === 0 ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted)">No matching records found.</td></tr>` : activeRecords.map(r => `
+                    <tr>
+                      <td>${r.date}</td>
+                      <td><span class="badge badge-${r.type === 'revenue' ? 'approved' : 'absent'}" style="font-size:10px; padding:2px 6px">${r.type.toUpperCase()}</span></td>
+                      <td style="font-weight:600">${Utils.escape(r.category)}</td>
+                      <td>${Utils.escape(r.department)} / <span style="color:var(--text-secondary)">${Utils.escape(r.project || '-')}</span></td>
+                      <td>${Utils.escape(r.details || '')}</td>
+                      <td style="text-align:right; font-weight:700; color:${r.type === 'revenue' ? 'var(--success)' : 'var(--text-primary)'}">₹${(Number(r.amount) || 0).toLocaleString()}</td>
+                      ${isEditor ? `<td><button class="btn-delete-record" data-id="${r.id}" style="background:none; border:none; color:var(--error); cursor:pointer; font-size:11px; text-decoration:underline">Delete</button></td>` : ''}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="card-panel" style="padding:20px; margin-top:20px">
+          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">📊 Annual Financial Report (Year 2026 Rollup)</h3>
+          
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px">
+            
+            <div style="font-size:13px; line-height:1.6">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Annual Revenue:</span>
+                <strong>₹${metrics.revenue.toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Salary Expenses Paid:</span>
+                <strong>₹${metrics.payroll.toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Operational Expenses:</span>
+                <strong>₹${(metrics.expenses - metrics.payroll).toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Asset Investments:</span>
+                <strong>₹${(records.filter(r => r.type === 'investment' && r.category !== 'Upload Liabilities').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Corporate Tax Paid:</span>
+                <strong>₹${(records.filter(r => r.category === 'Upload Tax Details').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
+              </div>
+            </div>
+
+            <div style="font-size:13px; line-height:1.6">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Profit Generated:</span>
+                <strong style="color:var(--success)">₹${metrics.profit.toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Total Loss Incurred:</span>
+                <strong style="color:var(--error)">₹${metrics.loss.toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Net Company Worth:</span>
+                <strong>₹${(metrics.revenue - metrics.expenses + 25000000).toLocaleString()}</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>Financial Growth Ratio:</span>
+                <strong style="color:var(--success)">+14.2%</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
+                <span>P&L Status Verification:</span>
+                <span class="badge badge-approved" id="lbl-finance-verification" style="font-size:10px; background:rgba(16,185,129,0.1); color:var(--success)">✅ Verified by Manager</span>
+              </div>
+            </div>
+
+          </div>
+
+          ${user.role === 'finance_manager' ? `
+          <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px; display:flex; justify-content:flex-end; gap:10px">
+            <button class="btn btn-secondary" id="btn-verify-finance-reject" style="width:auto; background:var(--error); border:none; color:white">Reject / Flag Discrepancy</button>
+            <button class="btn" id="btn-verify-finance-approve" style="width:auto; background:var(--success); color:var(--bg-app)">Approve & Certify Report</button>
+          </div>
+          ` : ''}
+
+        </div>
+
+      </div>
+    `;
+
+    document.querySelectorAll('.btn-delete-record').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (confirm('Permanently delete this financial record?')) {
+          DB.deleteFinancialRecord(id);
+          renderDashboardUI();
+        }
+      });
+    });
+
+    document.getElementById('fil-year').addEventListener('change', (e) => { filterYear = e.target.value; renderDashboardUI(); });
+    document.getElementById('fil-month').addEventListener('change', (e) => { filterMonth = e.target.value; renderDashboardUI(); });
+    document.getElementById('fil-quarter').addEventListener('change', (e) => { filterQuarter = e.target.value; renderDashboardUI(); });
+    document.getElementById('fil-dept').addEventListener('change', (e) => { filterDept = e.target.value; renderDashboardUI(); });
+    document.getElementById('fil-proj').addEventListener('change', (e) => { filterProj = e.target.value; renderDashboardUI(); });
+    document.getElementById('fil-cat').addEventListener('change', (e) => { filterCat = e.target.value; renderDashboardUI(); });
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => triggerCSVExport(activeRecords));
+    document.getElementById('btn-export-excel').addEventListener('click', () => triggerCSVExport(activeRecords, 'excel'));
+    document.getElementById('btn-export-pdf').addEventListener('click', triggerPDFExport);
+
+    const btnApproveReport = document.getElementById('btn-verify-finance-approve');
+    const btnRejectReport = document.getElementById('btn-verify-finance-reject');
+    const lblStatus = document.getElementById('lbl-finance-verification');
+    
+    if (btnApproveReport && lblStatus) {
+      btnApproveReport.addEventListener('click', () => {
+        lblStatus.textContent = '✅ Certified & Approved';
+        lblStatus.style.background = 'rgba(16,185,129,0.1)';
+        lblStatus.style.color = 'var(--success)';
+        alert('Report successfully certified by Finance Manager.');
+      });
+    }
+    if (btnRejectReport && lblStatus) {
+      btnRejectReport.addEventListener('click', () => {
+        const comment = prompt('Enter description of discrepancy:');
+        if (comment) {
+          lblStatus.textContent = `❌ Flagged: ${comment}`;
+          lblStatus.style.background = 'rgba(239,68,68,0.1)';
+          lblStatus.style.color = 'var(--error)';
+        }
+      });
+    }
+  }
+
+  function triggerCSVExport(recordsList, type = 'csv') {
+    const headers = ['Date', 'Type', 'Category', 'Department', 'Project', 'Amount', 'Description'];
+    const rows = recordsList.map(r => [
+      r.date, r.type, r.category, r.department, r.project, r.amount, r.details
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", type === 'excel' ? "Financial_Report_2026.xls" : "Financial_Report_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function triggerPDFExport() {
+    window.print();
+  }
+
+  const categoriesMap = {
+    revenue: ['Upload Company Revenue', 'Monthly Revenue', 'Quarterly Revenue', 'Yearly Revenue'],
+    expense: ['Upload Salary Expenses', 'Upload Office Expenses', 'Upload Project Expenses', 'Upload Utility Bills', 'Upload Vendor Payments', 'Upload Miscellaneous Expenses'],
+    payroll: ['Upload Employee Salary', 'Upload Bonus', 'Upload Incentives', 'Upload Overtime Payment', 'Upload Deductions', 'Upload Tax Details', 'Upload PF & ESI Details'],
+    investment: ['Upload Investments', 'Upload Assets', 'Upload Liabilities'],
+    budget: ['Create Budget', 'Update Budget', 'Department Wise Budget', 'Project Wise Budget']
+  };
+
+  renderDashboardUI();
+
+  const selectType = document.getElementById('up-type');
+  const selectCat = document.getElementById('up-category');
+  
+  if (selectType && selectCat) {
+    const updateCategoryOptions = () => {
+      const type = selectType.value;
+      const opts = categoriesMap[type] || [];
+      selectCat.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+    };
+    selectType.addEventListener('change', updateCategoryOptions);
+    updateCategoryOptions();
+  }
+
+  const uploadForm = document.getElementById('finance-upload-form');
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('up-type').value;
+      const category = document.getElementById('up-category').value;
+      const amount = Number(document.getElementById('up-amount').value);
+      const date = document.getElementById('up-date').value;
+      const department = document.getElementById('up-dept').value;
+      const project = document.getElementById('up-project').value.trim() || 'General';
+      const details = document.getElementById('up-desc').value.trim() || '';
+
+      const record = DB.addFinancialRecord({ type, category, amount, date, department, project, details });
+
+      if (type === 'budget') {
+        DB.addBudget({ department, project, amount, date });
+      }
+
+      const budgetsList = DB.getBudgets();
+      const totalBudget = budgetsList.filter(b => b.department === department).reduce((sum, b) => sum + b.amount, 0);
+      const totalExpenses = DB.getFinancialRecords().filter(r => r.department === department && (r.type === 'expense' || r.type === 'payroll')).reduce((sum, r) => sum + r.amount, 0);
+
+      if (totalExpenses > totalBudget && totalBudget > 0) {
+        if (typeof addSystemNotificationAlert === 'function') {
+          addSystemNotificationAlert(`⚠️ Budget Exceeded! ${department} expenses of ₹${totalExpenses.toLocaleString()} have exceeded the allocated budget limit of ₹${totalBudget.toLocaleString()}!`);
+        }
+      }
+
+      const allRecords = DB.getFinancialRecords();
+      const summary = calculateFinanceMetrics(allRecords);
+      if (summary.loss > 0) {
+        if (typeof addSystemNotificationAlert === 'function') {
+          addSystemNotificationAlert(`⚠️ Loss Warning: Company P&L deficit logged. Expenses exceed current revenues by ₹${summary.loss.toLocaleString()}!`);
+        }
+      } else if (summary.profit > 10000000) {
+        if (typeof addSystemNotificationAlert === 'function') {
+          addSystemNotificationAlert(`🎉 Goal Achieved: Projected net annual profit target exceeded ₹1,00,00,000!`);
+        }
+      }
+
+      const alertEl = document.getElementById('finance-upload-alert');
+      if (alertEl) {
+        alertEl.className = 'alert alert-success';
+        alertEl.textContent = 'Financial record successfully uploaded!';
+        alertEl.style.display = 'flex';
+        setTimeout(() => {
+          alertEl.style.display = 'none';
+          uploadForm.reset();
+          renderDashboardUI();
+        }, 1500);
+      }
+    });
+  }
+}
+
+function addSystemNotificationAlert(title, desc = '') {
+  if (!DB.data.financeAlerts) {
+    DB.data.financeAlerts = [];
+  }
+  DB.data.financeAlerts.unshift({
+    id: 'fnalert_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+    title,
+    desc,
+    date: new Date().toISOString().split('T')[0]
+  });
+  DB.save();
+  updateNotificationsUI();
+}
+
+function renderAdminAnalytics() {
+  const main = document.getElementById('main-view');
+  const user = Auth.getCurrentUser();
+  if (!user || (user.role !== 'hr' && user.role !== 'manager' && user.role !== 'finance_manager')) {
+    window.location.hash = '#dashboard';
+    return;
+  }
+
+  let activeTab = 'attendance';
+
+  function renderAnalyticsContent() {
+    main.innerHTML = `
+      <div class="content-header">
+        <div>
+          <h1 class="content-title">📈 Business Intelligence & Analytics</h1>
+          <div class="content-subtitle">Cross-department performance trends, salary expenditures, and cash flow projections.</div>
+        </div>
+      </div>
+      <div class="content-body">
+        
+        <!-- Tab Selectors -->
+        <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:10px; flex-wrap:wrap">
+          <button class="btn ${activeTab === 'attendance' ? '' : 'btn-secondary'}" id="tab-analytics-attendance" style="width:auto; padding:8px 16px; font-size:12.5px">Attendance Analytics</button>
+          <button class="btn ${activeTab === 'payroll' ? '' : 'btn-secondary'}" id="tab-analytics-payroll" style="width:auto; padding:8px 16px; font-size:12.5px">Payroll Analytics</button>
+          <button class="btn ${activeTab === 'finance' ? '' : 'btn-secondary'}" id="tab-analytics-finance" style="width:auto; padding:8px 16px; font-size:12.5px">Finance Analytics</button>
+          <button class="btn ${activeTab === 'hr' ? '' : 'btn-secondary'}" id="tab-analytics-hr" style="width:auto; padding:8px 16px; font-size:12.5px">HR & Operations Analytics</button>
+        </div>
+
+        <div id="analytics-charts-container">
+          <!-- Charts load dynamically -->
+        </div>
+
+      </div>
+    `;
+
+    // Bind tab clicks
+    document.getElementById('tab-analytics-attendance').addEventListener('click', () => { activeTab = 'attendance'; renderTabCharts(); });
+    document.getElementById('tab-analytics-payroll').addEventListener('click', () => { activeTab = 'payroll'; renderTabCharts(); });
+    document.getElementById('tab-analytics-finance').addEventListener('click', () => { activeTab = 'finance'; renderTabCharts(); });
+    document.getElementById('tab-analytics-hr').addEventListener('click', () => { activeTab = 'hr'; renderTabCharts(); });
+
+    renderTabCharts();
+  }
+
+  function renderTabCharts() {
+    const container = document.getElementById('analytics-charts-container');
+    if (!container) return;
+
+    // Reset active button classes
+    ['attendance', 'payroll', 'finance', 'hr'].forEach(t => {
+      const btn = document.getElementById(`tab-analytics-${t}`);
+      if (btn) {
+        if (t === activeTab) {
+          btn.classList.remove('btn-secondary');
+        } else {
+          btn.classList.add('btn-secondary');
+        }
+      }
+    });
+
+    if (activeTab === 'attendance') {
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
+          
+          <!-- Daily Attendance Stack -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📅 Daily Attendance Ratios (Today)</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="240" height="150" viewBox="0 0 240 150">
+                <rect x="30" y="20" width="35" height="100" fill="var(--success)" rx="3" ry="3"></rect>
+                <rect x="100" y="50" width="35" height="70" fill="var(--primary)" rx="3" ry="3"></rect>
+                <rect x="170" y="90" width="35" height="30" fill="var(--error)" rx="3" ry="3"></rect>
+                <text x="47" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Present (85)</text>
+                <text x="117" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Late (12)</text>
+                <text x="187" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Absent (3)</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Monthly Attendance Trend -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Monthly Attendance curve (%)</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <line x1="30" y1="120" x2="280" y2="120" stroke="var(--border)" stroke-width="1"></line>
+                <line x1="30" y1="30" x2="280" y2="30" stroke="var(--border)" stroke-dasharray="3,3" stroke-width="1"></line>
+                <path d="M30 100 Q 80 50, 130 60 T 230 40 T 280 35" fill="none" stroke="var(--primary)" stroke-width="3"></path>
+                <circle cx="130" cy="60" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
+                <circle cx="280" cy="35" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
+                <text x="30" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jan</text>
+                <text x="130" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Mar</text>
+                <text x="280" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jun</text>
+                <text x="280" y="25" fill="var(--text-primary)" font-size="9" text-anchor="middle">98.2%</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Avg Attendance Gauge -->
+          <div class="card-panel" style="padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🎯 Average Company Attendance Rate</h3>
+            <div style="position:relative; width:120px; height:120px; margin-top:15px">
+              <svg width="120" height="120" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" stroke-width="3" stroke-dasharray="94 6" stroke-dashoffset="25"></circle>
               </svg>
               <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center">
-                <span style="font-size:22px; font-weight:700; color:var(--text-primary)">${natPct}:${intPct}</span>
-                <br><span style="font-size:9px; color:var(--text-muted); text-transform:uppercase">Nat : Int</span>
+                <span style="font-size:22px; font-weight:700; color:var(--text-primary)">94%</span>
               </div>
             </div>
-
-            <div style="width:100%; display:flex; flex-direction:column; gap:8px; font-size:12.5px">
-              <div style="display:flex; justify-content:space-between; align-items:center">
-                <span style="display:flex; align-items:center; gap:8px">
-                  <span style="width:10px; height:10px; border-radius:50%; background:var(--primary)"></span>
-                  National Business (${natPct}%)
-                </span>
-                <strong>₹${natRev.toLocaleString()}</strong>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center">
-                <span style="display:flex; align-items:center; gap:8px">
-                  <span style="width:10px; height:10px; border-radius:50%; background:var(--warning)"></span>
-                  International Trade (${intPct}%)
-                </span>
-                <strong>₹${intRev.toLocaleString()}</strong>
-              </div>
-            </div>
-
+            <div style="font-size:11.5px; color:var(--text-muted); text-align:center; margin-top:10px">Target Benchmark: >92%</div>
           </div>
-        </div>
 
-        <div class="card-panel" style="padding:20px">
-          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">⚙️ Adjust Financial Targets</h3>
+        </div>
+      `;
+    } else if (activeTab === 'payroll') {
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
           
-          <form id="finance-targets-form" style="display:flex; flex-direction:column; gap:12px">
-            <div class="form-group">
-              <label class="form-label" for="fin-revenue">Annual Projected Revenue (INR)</label>
-              <input class="form-input" type="number" id="fin-revenue" value="${finance.yearlyRevenue}" required>
+          <!-- Monthly Payroll Trend -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📊 Monthly Payroll Trend (INR)</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <rect x="40" y="50" width="20" height="70" fill="var(--primary)" rx="2"></rect>
+                <rect x="90" y="45" width="20" height="75" fill="var(--primary)" rx="2"></rect>
+                <rect x="140" y="40" width="20" height="80" fill="var(--primary)" rx="2"></rect>
+                <rect x="190" y="35" width="20" height="85" fill="var(--primary)" rx="2"></rect>
+                <rect x="240" y="30" width="20" height="90" fill="var(--primary)" rx="2"></rect>
+                <text x="50" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Feb</text>
+                <text x="150" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Apr</text>
+                <text x="250" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jun</text>
+              </svg>
             </div>
-            <div class="form-group">
-              <label class="form-label" for="fin-overhead">Annual Fixed Overhead Costs (INR)</label>
-              <input class="form-input" type="number" id="fin-overhead" value="${finance.fixedOverhead}" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="fin-national-share">National Segment Share (%)</label>
-              <div style="display:flex; align-items:center; gap:10px">
-                <input class="form-input" type="number" id="fin-national-share" value="${natPct}" min="0" max="100" required style="flex:1">
-                <span style="font-size:12px; color:var(--text-muted); width:130px; text-align:right" id="lbl-int-share">International: ${intPct}%</span>
+          </div>
+
+          <!-- Salary by Department Donut -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🍩 Payroll share by Department</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px; gap:20px">
+              <svg width="120" height="120" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="50 50" stroke-dashoffset="25"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" stroke-width="4" stroke-dasharray="30 70" stroke-dashoffset="75"></circle>
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--cyan)" stroke-width="4" stroke-dasharray="20 80" stroke-dashoffset="5"></circle>
+              </svg>
+              <div style="font-size:11px; display:flex; flex-direction:column; gap:6px">
+                <div><span style="display:inline-block; width:8px; height:8px; background:var(--primary); margin-right:4px"></span>Eng (50%)</div>
+                <div><span style="display:inline-block; width:8px; height:8px; background:var(--warning); margin-right:4px"></span>Ops (30%)</div>
+                <div><span style="display:inline-block; width:8px; height:8px; background:var(--cyan); margin-right:4px"></span>HR (20%)</div>
               </div>
             </div>
-            
-            <button class="btn" type="submit" style="margin-top:8px; background:var(--primary); color:var(--bg-app); font-weight:700">Save Financial Parameters</button>
-          </form>
-          <div id="finance-alert" style="display:none; margin-top:12px"></div>
+          </div>
+
         </div>
+      `;
+    } else if (activeTab === 'finance') {
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
+          
+          <!-- Revenue & Expense dual curves -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Revenue vs Operational Expenses</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <path d="M40 90 L 90 70 L 140 60 L 190 40 L 240 30 L 280 20" fill="none" stroke="var(--success)" stroke-width="2.5"></path>
+                <path d="M40 110 L 90 100 L 140 105 L 190 95 L 240 90 L 280 85" fill="none" stroke="var(--error)" stroke-width="2.5"></path>
+                <text x="240" y="15" fill="var(--success)" font-size="9">Revenues</text>
+                <text x="240" y="80" fill="var(--error)" font-size="9">Expenses</text>
+              </svg>
+            </div>
+          </div>
 
-      </div>
-    </div>
-  `;
+          <!-- Profit & Loss Bars -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📊 Profit & Loss trend (Net Surplus)</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <line x1="30" y1="75" x2="280" y2="75" stroke="var(--border)" stroke-width="1.5"></line>
+                <rect x="50" y="30" width="18" height="45" fill="var(--success)" rx="2"></rect>
+                <rect x="100" y="20" width="18" height="55" fill="var(--success)" rx="2"></rect>
+                <rect x="150" y="75" width="18" height="30" fill="var(--error)" rx="2"></rect>
+                <rect x="200" y="15" width="18" height="60" fill="var(--success)" rx="2"></rect>
+              </svg>
+            </div>
+          </div>
 
-  const inputNat = document.getElementById('fin-national-share');
-  const lblInt = document.getElementById('lbl-int-share');
-  if (inputNat && lblInt) {
-    inputNat.addEventListener('input', (e) => {
-      let val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-      lblInt.textContent = `International: ${100 - val}%`;
-    });
+          <!-- Budget vs Actual -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">⚖️ Budget Allocation vs Actual Expenses</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <rect x="40" y="30" width="15" height="90" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
+                <rect x="40" y="45" width="15" height="75" fill="var(--cyan)"></rect>
+                <rect x="120" y="40" width="15" height="80" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
+                <rect x="120" y="65" width="15" height="55" fill="var(--cyan)"></rect>
+                <rect x="200" y="60" width="15" height="60" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
+                <rect x="200" y="55" width="15" height="65" fill="var(--error)"></rect>
+                <text x="47" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">Eng</text>
+                <text x="127" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">Ops</text>
+                <text x="207" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">HR</text>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+      `;
+    } else if (activeTab === 'hr') {
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
+          
+          <!-- Employee Growth -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Headcount & Employee Growth</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <path d="M40 120 L 90 110 L 140 100 L 190 85 L 240 70 L 280 55" fill="none" stroke="var(--primary)" stroke-width="3"></path>
+                <circle cx="280" cy="55" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
+                <text x="280" y="42" fill="var(--text-primary)" font-size="10" text-anchor="middle">108 Active</text>
+              </svg>
+            </div>
+          </div>
+
+          <!-- New Joinees vs Resignations -->
+          <div class="card-panel" style="padding:15px">
+            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🚪 Monthly Recruitment vs Attrition</h3>
+            <div style="display:flex; justify-content:center; align-items:center; height:180px">
+              <svg width="300" height="150" viewBox="0 0 300 150">
+                <rect x="50" y="50" width="12" height="70" fill="var(--success)"></rect>
+                <rect x="64" y="100" width="12" height="20" fill="var(--error)"></rect>
+                <rect x="130" y="40" width="12" height="80" fill="var(--success)"></rect>
+                <rect x="144" y="95" width="12" height="25" fill="var(--error)"></rect>
+                <rect x="210" y="30" width="12" height="90" fill="var(--success)"></rect>
+                <rect x="224" y="110" width="12" height="10" fill="var(--error)"></rect>
+              </svg>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
   }
 
-  const form = document.getElementById('finance-targets-form');
-  if (form) {
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const yearlyRevenue = Number(document.getElementById('fin-revenue').value);
-      const fixedOverhead = Number(document.getElementById('fin-overhead').value);
-      const nationalPct = Number(document.getElementById('fin-national-share').value);
-
-      DB.updateFinanceData({ yearlyRevenue, fixedOverhead, nationalPct });
-      
-      const alertEl = document.getElementById('finance-alert');
-      alertEl.className = 'alert alert-success';
-      alertEl.textContent = 'Financial parameters successfully updated!';
-      alertEl.style.display = 'flex';
-      
-      setTimeout(() => {
-        alertEl.style.display = 'none';
-        renderManagerFinance();
-      }, 2000);
-    });
-  }
+  renderAnalyticsContent();
 }

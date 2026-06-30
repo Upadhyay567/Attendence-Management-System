@@ -97,6 +97,35 @@ const defaultUsers = [
     aadhar: null
   },
   { 
+    id: 'usr_finance', 
+    username: 'finance', 
+    employeeId: 'EMP106',
+    name: 'Finance Manager', 
+    password: 'FinancePassword123!', 
+    role: 'finance_manager', 
+    biometricRegistered: { face: false, finger: false }, 
+    scheduleId: 'sch_1', 
+    baseSalary: 78000,
+    allowanceHRA: 11700,
+    allowanceTravel: 3000,
+    deductionPF: 6240,
+    deductionPT: 200,
+    deductionTDS: 10,
+    phone: '+91 9876543213',
+    email: 'finance@surya.group',
+    dob: '1990-09-15',
+    address: '48, Surya Bhavan, Connaught Place',
+    city: 'Delhi',
+    gender: 'Male',
+    department: 'Finance',
+    designation: 'Finance Manager',
+    dateOfJoining: '2023-01-10',
+    emergencyContact: '+91 98765 43204',
+    documents: [],
+    resume: null,
+    aadhar: null
+  },
+  { 
     id: 'usr_john', 
     username: 'john', 
     employeeId: 'EMP103',
@@ -361,14 +390,17 @@ export const DB = {
         
         // Seed default HR & Manager if not exists in local storage
         if (!this.data.users.some(u => u.username === 'hr')) {
-          this.data.users.push(defaultUsers.find(u => u.username === 'hr'));
-        }
-        if (!this.data.users.some(u => u.username === 'manager')) {
-          this.data.users.push(defaultUsers.find(u => u.username === 'manager'));
-        }
-        if (!this.data.tickets) {
-          this.data.tickets = [];
-        }
+           this.data.users.push(defaultUsers.find(u => u.username === 'hr'));
+         }
+         if (!this.data.users.some(u => u.username === 'manager')) {
+           this.data.users.push(defaultUsers.find(u => u.username === 'manager'));
+         }
+         if (!this.data.users.some(u => u.username === 'finance')) {
+           this.data.users.push(defaultUsers.find(u => u.username === 'finance'));
+         }
+         if (!this.data.tickets) {
+           this.data.tickets = [];
+         }
         if (!this.data.shiftSwaps) {
           this.data.shiftSwaps = [
             {
@@ -403,14 +435,20 @@ export const DB = {
             }
           ];
         }
-        if (!this.data.financeData) {
-          this.data.financeData = {
-            yearlyRevenue: 250000000,
-            fixedOverhead: 50000000,
-            nationalPct: 60
-          };
-        }
-        this.save();
+         if (!this.data.financeData) {
+           this.data.financeData = {
+             yearlyRevenue: 250000000,
+             fixedOverhead: 50000000,
+             nationalPct: 60
+           };
+         }
+         if (!this.data.financialRecords) {
+           this.data.financialRecords = generateDemoFinanceData();
+         }
+         if (!this.data.budgets) {
+           this.data.budgets = generateDemoBudgets();
+         }
+         this.save();
       } catch (e) {
         console.error('Failed to parse DB, resetting to default', e);
         this.reset();
@@ -492,6 +530,8 @@ export const DB = {
       fixedOverhead: 50000000,
       nationalPct: 60
     };
+    this.data.financialRecords = generateDemoFinanceData();
+    this.data.budgets = generateDemoBudgets();
     this.save();
   },
 
@@ -1245,5 +1285,168 @@ export const DB = {
     user.verificationStatuses[docType] = 'Rejected';
     this.save();
     return user;
+  },
+
+  getFinancialRecords() {
+    if (!this.data.financialRecords) {
+      this.data.financialRecords = [];
+    }
+    return this.data.financialRecords;
+  },
+
+  addFinancialRecord(record) {
+    if (!this.data.financialRecords) {
+      this.data.financialRecords = [];
+    }
+    const newRecord = {
+      id: 'rec_' + Math.random().toString(36).substring(2, 9),
+      ...record,
+      timestamp: new Date().toISOString()
+    };
+    this.data.financialRecords.push(newRecord);
+    this.save();
+    return newRecord;
+  },
+
+  deleteFinancialRecord(id) {
+    if (!this.data.financialRecords) return;
+    this.data.financialRecords = this.data.financialRecords.filter(r => r.id !== id);
+    this.save();
+  },
+
+  getBudgets() {
+    if (!this.data.budgets) {
+      this.data.budgets = [];
+    }
+    return this.data.budgets;
+  },
+
+  addBudget(budget) {
+    if (!this.data.budgets) {
+      this.data.budgets = [];
+    }
+    const newBudget = {
+      id: 'bgt_' + Math.random().toString(36).substring(2, 9),
+      ...budget
+    };
+    this.data.budgets.push(newBudget);
+    this.save();
+    return newBudget;
+  },
+
+  deleteBudget(id) {
+    if (!this.data.budgets) return;
+    this.data.budgets = this.data.budgets.filter(b => b.id !== id);
+    this.save();
   }
 };
+
+function generateDemoFinanceData() {
+  const records = [];
+  const months = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+  
+  months.forEach((m, idx) => {
+    records.push({
+      id: `rev_${idx}_1`,
+      type: 'revenue',
+      category: 'Yearly Revenue',
+      amount: 22000000 + (idx * 1500000),
+      date: `${m}-28`,
+      details: `Client billing receipts for segment ${m}`,
+      department: 'General',
+      project: 'Global Operations'
+    });
+    records.push({
+      id: `exp_${idx}_1`,
+      type: 'expense',
+      category: 'Upload Office Expenses',
+      amount: 150000,
+      date: `${m}-05`,
+      details: 'Office rent & supplies',
+      department: 'Operations',
+      project: 'General Overhead'
+    });
+    records.push({
+      id: `exp_${idx}_2`,
+      type: 'expense',
+      category: 'Upload Utility Bills',
+      amount: 45000,
+      date: `${m}-10`,
+      details: 'Electricity and internet bills',
+      department: 'Operations',
+      project: 'General Overhead'
+    });
+    records.push({
+      id: `exp_${idx}_3`,
+      type: 'expense',
+      category: 'Upload Project Expenses',
+      amount: 500000 + (idx * 50000),
+      date: `${m}-15`,
+      details: 'Cloud computing server infrastructure usage',
+      department: 'Engineering',
+      project: 'Cloud Migrations'
+    });
+    records.push({
+      id: `pay_${idx}_1`,
+      type: 'payroll',
+      category: 'Upload Employee Salary',
+      amount: 450000,
+      date: `${m}-30`,
+      details: `Monthly salaries for ${m}`,
+      department: 'General',
+      project: 'Internal Operations'
+    });
+    records.push({
+      id: `pay_${idx}_2`,
+      type: 'payroll',
+      category: 'Upload Tax Details',
+      amount: 45000,
+      date: `${m}-30`,
+      details: `Monthly TDS payments for ${m}`,
+      department: 'General',
+      project: 'Internal Operations'
+    });
+  });
+
+  records.push({
+    id: 'inv_1',
+    type: 'investment',
+    category: 'Upload Investments',
+    amount: 5000000,
+    date: '2026-02-15',
+    details: 'Mutual fund capital investments',
+    department: 'Finance',
+    project: 'Treasury'
+  });
+  records.push({
+    id: 'ast_1',
+    type: 'investment',
+    category: 'Upload Assets',
+    amount: 20000000,
+    date: '2026-01-10',
+    details: 'Office real estate & computers',
+    department: 'Finance',
+    project: 'Treasury'
+  });
+  records.push({
+    id: 'lia_1',
+    type: 'investment',
+    category: 'Upload Liabilities',
+    amount: 4000000,
+    date: '2026-03-20',
+    details: 'Long-term corporate credit lines',
+    department: 'Finance',
+    project: 'Treasury'
+  });
+
+  return records;
+}
+
+function generateDemoBudgets() {
+  return [
+    { id: 'bgt_1', department: 'Engineering', project: 'Cloud Migrations', amount: 12000000, date: '2026-01-01' },
+    { id: 'bgt_2', department: 'Operations', project: 'General Overhead', amount: 3000000, date: '2026-01-01' },
+    { id: 'bgt_3', department: 'Human Resources', project: 'Staffing Drive', amount: 2000000, date: '2026-01-01' }
+  ];
+}
+
