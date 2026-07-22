@@ -13,3 +13,8 @@ package.json
 package-lock.json
 node_modules/
 .env*
+
+# Scratch & build scripts
+search_*.py
+check_syntax.py
+update_db.js

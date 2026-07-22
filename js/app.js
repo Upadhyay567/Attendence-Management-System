@@ -3,9 +3,189 @@ import { DB } from './db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
 
+// Custom dialog modal manager
+const CustomDialog = {
+  alert(message) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'custom-dialog-overlay';
+      
+      const modal = document.createElement('div');
+      modal.className = 'custom-dialog-card';
+      
+      modal.innerHTML = `
+        <div class="custom-dialog-icon-wrapper">
+          <div class="custom-dialog-icon-badge custom-dialog-icon-alert">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </div>
+        </div>
+        <div class="custom-dialog-message">${message.replace(/\n/g, '<br>')}</div>
+        <div class="custom-dialog-actions" style="justify-content: center;">
+          <button class="custom-dialog-btn-primary" style="min-width: 120px;" id="btn-custom-alert-ok">OK</button>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      const close = () => {
+        overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+        modal.style.animation = 'customDialogScaleDown 0.18s ease forwards';
+        setTimeout(() => {
+          if (overlay.parentNode) document.body.removeChild(overlay);
+          resolve();
+        }, 180);
+      };
+
+      modal.querySelector('#btn-custom-alert-ok').addEventListener('click', close);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    });
+  },
+  
+  confirm(message) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'custom-dialog-overlay';
+      
+      const modal = document.createElement('div');
+      modal.className = 'custom-dialog-card';
+      
+      modal.innerHTML = `
+        <div class="custom-dialog-icon-wrapper">
+          <div class="custom-dialog-icon-badge custom-dialog-icon-confirm">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+        </div>
+        <div class="custom-dialog-message">${message.replace(/\n/g, '<br>')}</div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-secondary" id="btn-custom-confirm-cancel">Cancel</button>
+          <button class="custom-dialog-btn-primary" id="btn-custom-confirm-ok">Confirm</button>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      const close = (result) => {
+        overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+        modal.style.animation = 'customDialogScaleDown 0.18s ease forwards';
+        setTimeout(() => {
+          if (overlay.parentNode) document.body.removeChild(overlay);
+          resolve(result);
+        }, 180);
+      };
+      
+      modal.querySelector('#btn-custom-confirm-ok').addEventListener('click', () => close(true));
+      modal.querySelector('#btn-custom-confirm-cancel').addEventListener('click', () => close(false));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+    });
+  },
+  
+  prompt(message, defaultValue = '') {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'custom-dialog-overlay';
+      
+      const modal = document.createElement('div');
+      modal.className = 'custom-dialog-card';
+      
+      modal.innerHTML = `
+        <div class="custom-dialog-icon-wrapper">
+          <div class="custom-dialog-icon-badge custom-dialog-icon-prompt">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          </div>
+        </div>
+        <div class="custom-dialog-message">${message.replace(/\n/g, '<br>')}</div>
+        <div class="custom-dialog-input-group">
+          <input type="text" class="custom-dialog-input" id="input-custom-prompt" value="${defaultValue}" placeholder="Type here..." autocomplete="off">
+        </div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-secondary" id="btn-custom-prompt-cancel">Cancel</button>
+          <button class="custom-dialog-btn-primary custom-dialog-btn-prompt" id="btn-custom-prompt-ok">Submit</button>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      const input = modal.querySelector('#input-custom-prompt');
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 50);
+      
+      const close = (val) => {
+        overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+        modal.style.animation = 'customDialogScaleDown 0.18s ease forwards';
+        setTimeout(() => {
+          if (overlay.parentNode) document.body.removeChild(overlay);
+          resolve(val);
+        }, 180);
+      };
+      
+      modal.querySelector('#btn-custom-prompt-ok').addEventListener('click', () => close(input.value));
+      modal.querySelector('#btn-custom-prompt-cancel').addEventListener('click', () => close(null));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+      
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') close(input.value);
+        if (e.key === 'Escape') close(null);
+      });
+    });
+  }
+};
+
+// Global overrides of native browser dialogs to show beautiful mid-screen popup modals instead of ugly native browser bars
+window.alert = function(msg) {
+  if (msg !== undefined && msg !== null) {
+    CustomDialog.alert(String(msg));
+  }
+};
+
+// Override native confirm() — returns a Promise, so callers must use `await`
+const _nativeConfirm = window.confirm;
+window.confirm = function(msg) {
+  return CustomDialog.confirm(String(msg || ''));
+};
+
+// Override native prompt() — returns a Promise, so callers must use `await`
+const _nativePrompt = window.prompt;
+window.prompt = function(msg, defaultVal) {
+  return CustomDialog.prompt(String(msg || ''), defaultVal != null ? String(defaultVal) : '');
+};
+
 let activeTimer = null;
+const AUTH_REQUIRE_ID_MANDATORY = false; // Change to true to make ID verification mandatory
+const getInitials = (name) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+// Convert 24-hour time string (e.g. "08:00", "16:30") to 12-hour AM/PM format (e.g. "08:00 AM", "04:30 PM")
+function formatTime12h(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return timeStr || '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let h = parseInt(parts[0], 10);
+  const m = parts[1];
+  if (isNaN(h)) return timeStr;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+}
+
+// Format a time range "startTime - endTime" with AM/PM
+function formatTimeRange12h(start, end) {
+  return `${formatTime12h(start)} - ${formatTime12h(end)}`;
+}
 let currentScanner = null;
 let activeAdminApprovalsTab = 'leaves';
+window.activeGpsWatchId = null;
+
+// Global Office Coordinates mapping
+Object.defineProperty(window, 'OFFICE_COORDINATES', {
+  get() {
+    return DB.getOfficeCoordinates();
+  },
+  configurable: true
+});
 
 // Multi-language Translation dictionary
 const Translations = {
@@ -36,34 +216,126 @@ const Translations = {
     payslips: "मेरी वेतन पर्ची",
     profile: "मेरी प्रोफाइल",
     settings: "सेटिंग्स"
-  },
-  es: {
-    brand: "HS Grupo Delhi",
-    subtitle: "Casa de Surya",
-    monitor: "Monitoreo en Vivo",
-    employees: "Personal y Nómina",
-    shifts: "Horarios de Turno",
-    approvals: "Mesa de Aprobación",
-    reports: "Informes Mensuales",
-    status: "Fichar / Estado",
-    leaves: "Solicitudes de Licencia",
-    payslips: "Mis Recibos",
-    profile: "Mi Perfil",
-    settings: "Ajustes"
   }
 };
 
-let currentLang = localStorage.getItem('hs_app_lang') || 'en';
+// Centralized Validation for Profile Data
+const ValidationUtils = {
+  validateProfile: (data) => {
+    // 1. Required Fields Check
+    for (const key of Object.keys(data)) {
+      if (data[key] === undefined || data[key] === null || data[key].toString().trim() === '') {
+        return { valid: false, message: `Required Field: ${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')} cannot be empty.` };
+      }
+    }
+
+    // 2. Name Validation (A-Z and spaces only)
+    if (data.name !== undefined && !/^[A-Za-z\s]+$/.test(data.name)) {
+      return { valid: false, message: 'Invalid Details: Name can only contain letters (A-Z).' };
+    }
+
+    // 3. Data Type Validations
+    if (data.email !== undefined && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(data.email)) {
+      return { valid: false, message: 'Invalid Details: Email format is invalid.' };
+    }
+
+    // Phone validation (numbers and simple formatting like + or -)
+    if (data.phone !== undefined && (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/.test(data.phone) || data.phone.replace(/[^0-9]/g, '').length < 7)) {
+      return { valid: false, message: 'Invalid Details: Mobile Number format is invalid.' };
+    }
+
+    // Employee ID (Alphanumeric and dashes/underscores)
+    if (data.employeeId !== undefined && !/^[A-Za-z0-9_-]+$/.test(data.employeeId)) {
+      return { valid: false, message: 'Invalid Details: Employee ID can only contain letters, numbers, hyphens, or underscores.' };
+    }
+
+    // Date validations (simple check for valid date objects)
+    if (data.dob !== undefined && isNaN(new Date(data.dob).getTime())) {
+      return { valid: false, message: 'Invalid Details: Date of Birth is invalid.' };
+    }
+    if (data.dateOfJoining !== undefined && isNaN(new Date(data.dateOfJoining).getTime())) {
+      return { valid: false, message: 'Invalid Details: Date of Joining is invalid.' };
+    }
+
+    return { valid: true };
+  }
+};
+
+let currentLang = localStorage.getItem('hs_app_lang');
+if (currentLang !== 'en' && currentLang !== 'hi') {
+  currentLang = 'en';
+}
 let activeTheme = localStorage.getItem('hs_app_theme') || 'dark';
 
 // Initialize App
-window.addEventListener('DOMContentLoaded', async () => {
-  await DB.init();
-  Auth.init();
+const startApp = async () => {
+  try {
+    await DB.init();
+  } catch (e) {
+    console.warn('DB.init warning:', e);
+  }
+
+  try {
+    Auth.init();
+  } catch (e) {
+    console.warn('Auth.init warning:', e);
+  }
+  
+  // Safe helper for screenshot testing / local automation
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('autologin')) {
+    const username = params.get('autologin');
+    const user = DB.getUserByUsername(username);
+    if (user) {
+      Auth.currentUser = user;
+      sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
+    }
+  }
+
   applyGlobalTheme();
   setupRouter();
-  document.body.addEventListener('click', handleGlobalClicks);
-});
+
+  // --- Global Modal Close Handlers ---
+  document.body.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+      closeModal(e.target);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const overlays = document.querySelectorAll('.modal-overlay:not(.closing)');
+      if (overlays.length > 0) {
+        closeModal(overlays[overlays.length - 1]);
+      }
+    }
+  });
+
+  const handleLiveReRender = async () => {
+    await DB.init();
+    updateNotificationsUI();
+    const currentHash = window.location.hash || '#dashboard';
+    if (currentHash === '#dashboard') {
+      renderEmployeeDashboard();
+    } else if (currentHash === '#admin-schedules') {
+      renderAdminSchedules();
+    }
+  };
+
+  window.addEventListener('db_updated', handleLiveReRender);
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'attendance_system_db') {
+      handleLiveReRender();
+    }
+  });
+};
+
+window.bootstrapperReady = startApp;
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', startApp);
+}
+startApp();
 
 function applyGlobalTheme() {
   const body = document.body;
@@ -74,117 +346,177 @@ function applyGlobalTheme() {
   }
 }
 
+// Smooth animated modal close - used by click-outside, Esc, and close buttons
+function closeModal(overlay) {
+  if (!overlay || overlay.classList.contains('closing')) return;
+  overlay.classList.add('closing');
+  overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+  // Fallback removal if animation doesn't fire (e.g. display:none scenarios)
+  setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 300);
+}
+window.closeModal = closeModal;
+
 // Simple Router
 function setupRouter() {
   const handleRoute = () => {
-    const hash = window.location.hash || '#login';
-    const user = Auth.getCurrentUser();
+    try {
+      // Clear any active GPS watch and radar animation interval on navigation change
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {
+          console.warn("Failed to clear GPS watch:", e);
+        }
+        window.activeGpsWatchId = null;
+      }
+      if (window.radarInterval) {
+        clearInterval(window.radarInterval);
+        window.radarInterval = null;
+      }
 
-    if (hash === '#login') {
-      if (user) {
-        window.location.hash = (user.role === 'hr' || user.role === 'manager') ? '#admin-dashboard' : '#dashboard';
+      const hash = window.location.hash || '#login';
+      const user = Auth.getCurrentUser();
+
+      if (hash === '#login') {
+        if (user) {
+          window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard';
+          return;
+        }
+        renderLoginView();
         return;
       }
+
+      if (!user) {
+        window.location.hash = '#login';
+        return;
+      }
+
+      // STRICT EMPLOYEE ROLE PERMISSIONS ENFORCEMENT
+      if (user.role === 'employee') {
+        const allowedEmployeeRoutes = [
+          '#dashboard',
+          '#leaves',
+          '#employee-reports',
+          '#employee-profile',
+          '#employee-verification',
+          '#employee-swaps',
+          '#support',
+          '#settings'
+        ];
+        if (!allowedEmployeeRoutes.includes(hash)) {
+          console.warn(`Unauthorized route attempt by employee: ${hash}`);
+          window.location.hash = '#dashboard';
+          return;
+        }
+      }
+
+      const isManagementRoute = hash.startsWith('#admin-');
+      const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
+      const isManagementRole = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
+
+      if (isManagementRoute && !isManagementRole) {
+        window.location.hash = '#dashboard';
+        return;
+      }
+      if (isEmployeeRoute && isManagementRole) {
+        window.location.hash = '#admin-dashboard';
+        return;
+      }
+
+      renderAppShell();
+      if (typeof updateNotificationsUI === 'function') {
+        updateNotificationsUI();
+      }
+      
+      // Set Active Link in Sidebar
+      document.querySelectorAll('.menu-item').forEach(li => {
+        li.classList.remove('active');
+        const href = li.querySelector('a')?.getAttribute('href');
+        if (href === hash) li.classList.add('active');
+      });
+
+      // Render Content View
+      switch (hash) {
+        // Employee Routes
+        case '#dashboard':
+          renderEmployeeDashboard();
+          break;
+        case '#leaves':
+          renderEmployeeLeaves();
+          break;
+        case '#employee-reports':
+          renderEmployeeReports();
+          break;
+        case '#employee-profile':
+          renderEmployeeProfile();
+          break;
+        case '#employee-verification':
+          renderEmployeeVerification();
+          break;
+        case '#employee-swaps':
+          renderEmployeeSwapsView();
+          break;
+        case '#support':
+          renderEmployeeSupport();
+          break;
+        case '#settings':
+        case '#admin-settings':
+          renderSettingsView();
+          break;
+
+        // Admin / HR / Manager Routes
+        case '#admin-dashboard':
+          renderAdminDashboard();
+          break;
+        case '#admin-schedules':
+          renderAdminSchedules();
+          break;
+        case '#admin-attendance':
+          renderAdminAttendance();
+          break;
+        case '#admin-approvals':
+        case '#admin-leaves':
+          renderAdminApprovals();
+          break;
+        case '#admin-tickets':
+        case '#admin-support':
+          renderAdminSupport();
+          break;
+        case '#admin-announcements':
+          renderAdminAnnouncements();
+          break;
+        case '#admin-locations':
+          renderAdminLocations();
+          break;
+        case '#admin-users':
+        case '#admin-employees':
+          renderAdminUsers();
+          break;
+        case '#admin-accounts':
+          renderAccountManagementView();
+          break;
+        case '#admin-reports':
+          renderAdminReports();
+          break;
+        case '#admin-verification':
+          renderAdminVerificationView();
+          break;
+        case '#admin-profile':
+          renderAdminProfile();
+          break;
+        case '#admin-finance':
+          if (user.role === 'finance_manager') {
+            renderAdminFinance();
+          } else {
+            window.location.hash = '#admin-dashboard';
+          }
+          break;
+        default:
+          window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard';
+      }
+    } catch (routeErr) {
+      console.error("Router error caught:", routeErr);
       renderLoginView();
-      return;
-    }
-
-    if (!user) {
-      window.location.hash = '#login';
-      return;
-    }
-
-    const isManagementRoute = hash.startsWith('#admin-');
-    const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
-    const isManagementRole = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
-
-    if (isManagementRoute && !isManagementRole) {
-      window.location.hash = '#dashboard';
-      return;
-    }
-    if (isEmployeeRoute && isManagementRole) {
-      window.location.hash = '#admin-dashboard';
-      return;
-    }
-
-    renderAppShell();
-    if (typeof updateNotificationsUI === 'function') {
-      updateNotificationsUI();
-    }
-    
-    // Set Active Link in Sidebar
-    document.querySelectorAll('.menu-item').forEach(li => {
-      li.classList.remove('active');
-      const href = li.querySelector('a')?.getAttribute('href');
-      if (href === hash) li.classList.add('active');
-    });
-
-    // Render Content View
-    switch (hash) {
-      // Employee Routes
-      case '#dashboard':
-        renderEmployeeDashboard();
-        break;
-      case '#leaves':
-        renderEmployeeLeaves();
-        break;
-      case '#employee-reports':
-        renderEmployeeReports();
-        break;
-      case '#employee-profile':
-        renderEmployeeProfile();
-        break;
-      case '#employee-verification':
-        renderEmployeeVerification();
-        break;
-      case '#employee-swaps':
-        renderEmployeeSwapsView();
-        break;
-      case '#settings':
-        renderSettingsView();
-        break;
-      case '#support':
-        renderEmployeeSupport();
-        break;
-        
-      // Admin Routes
-      case '#admin-dashboard':
-        renderAdminDashboard();
-        break;
-      case '#admin-users':
-        renderAdminUsers();
-        break;
-      case '#admin-schedules':
-        renderAdminSchedules();
-        break;
-      case '#admin-approvals':
-        renderAdminApprovals();
-        break;
-      case '#admin-reports':
-        renderAdminReports();
-        break;
-      case '#admin-verification':
-        renderAdminVerificationView();
-        break;
-      case '#admin-support':
-        renderAdminSupport();
-        break;
-      case '#admin-finance':
-        if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
-          renderAdminFinance();
-        } else {
-          window.location.hash = '#dashboard';
-        }
-        break;
-      case '#admin-analytics':
-        if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
-          renderAdminAnalytics();
-        } else {
-          window.location.hash = '#dashboard';
-        }
-        break;
-      default:
-        window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard';
     }
   };
 
@@ -192,43 +524,107 @@ function setupRouter() {
   handleRoute();
 }
 
-function handleGlobalClicks(e) {
-  if (e.target.classList.contains('modal-overlay')) {
-    closeModal();
-  }
+function showCompanyPolicyModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Company Policy & Guidelines</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </div>
+      <div style="font-size: 13px; color: var(--text-primary); line-height: 1.6; display: flex; flex-direction: column; gap: 16px; margin-top: 10px; max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+        <div>
+          <h4 style="color: var(--primary); font-weight: 700; margin-bottom: 4px; font-size: 14px;">1. Geo-Fencing & Verification Rules</h4>
+          <p style="color: var(--text-secondary);">All check-in and check-out actions must be completed within 100 meters of the assigned site. Attempted check-ins outside the geo-fence boundary require mandatory manager review and approval, and will flag a "deviation log" on the system.</p>
+        </div>
+        <div>
+          <h4 style="color: var(--primary); font-weight: 700; margin-bottom: 4px; font-size: 14px;">2. Shift Timings & Grace Period</h4>
+          <p style="color: var(--text-secondary);">Each employee is mapped to a designated work shift pattern. Late entries exceeding a 15-minute grace period will result in automated fractional day deductions (TDS, PT, or salary components) based on organizational policies.</p>
+        </div>
+        <div>
+          <h4 style="color: var(--primary); font-weight: 700; margin-bottom: 4px; font-size: 14px;">3. Privacy & Location Logging</h4>
+          <p style="color: var(--text-secondary);">To respect individual privacy, GPS coordinates and locations are captured and logged ONLY at the exact moments of check-in and check-out. No continuous, background, or off-duty tracking is performed.</p>
+        </div>
+        <div>
+          <h4 style="color: var(--primary); font-weight: 700; margin-bottom: 4px; font-size: 14px;">4. Leave Management</h4>
+          <p style="color: var(--text-secondary);">Leave applications (Sick, Casual, or Earned) should be submitted through the portal prior to shift commencement. Approvals must be processed by direct managers or HR Admins. Unapproved absences will register as LOP (Loss of Pay).</p>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 24px;">
+        <button class="btn" onclick="closeModal(this.closest('.modal-overlay'))">Acknowledge & Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
-// -------------------------------------------------------------
-// RENDER SIGN IN, SIGN UP & FORGOT PASSWORD
-// -------------------------------------------------------------
 function renderLoginView() {
   if (activeTimer) clearInterval(activeTimer);
 
-  // Forgot password flow state variables
-  let resetUser = null;
-  let simulatedOTP = '';
-  let captchaAnswer = 0;
-  
-  let activeLoginRole = 'employee';
-  let activeSignupRole = 'employee';
-  
-  const quotes = [
-    "Rise, shine, and let your dedication build our legacy. Wishing you the best of luck for a highly productive day ahead!",
-    "Every day is a fresh opportunity to learn, grow, and excel. Best of luck on your shift today!",
-    "Your hard work and energy light up our workplace like the sun. Have an inspiring and successful day ahead!",
-    "Great things come to those who work for it. Let's make today count together. Best wishes for a wonderful workday!",
-    "Focus, dedication, and positive energy lead to excellence. Wishing you a great and productive day ahead!"
-  ];
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+  // Clear any geofencing state so next login starts clean
+  sessionStorage.removeItem('hs_pending_auto_checkin_time');
+  sessionStorage.removeItem('hs_mock_location');
+  sessionStorage.removeItem('hs_current_resolved_coords');
+  sessionStorage.removeItem('hs_current_resolved_distance');
+  sessionStorage.removeItem('hs_current_resolved_in_range');
+  window.lastGpsInRangeState = undefined;
 
   const root = document.getElementById('app-root');
+
+  const allUsers = DB.getUsers();
+  const hrUsers = allUsers.filter(u => u.role === 'hr');
+  const managerUsers = allUsers.filter(u => u.role === 'manager' || u.role === 'finance_manager');
+  const employeeUsers = allUsers.filter(u => u.role === 'employee');
+
+  const getInitials = (name) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+  const hrItems = hrUsers.map(u => `
+    <button class="staff-item" data-username="${Utils.escape(u.username)}">
+      <div class="staff-item-avatar">${getInitials(u.name)}</div>
+      <div class="staff-item-info">
+        <div class="staff-item-name">${Utils.escape(u.name)}</div>
+        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'HR / Admin')}</div>
+      </div>
+      <div class="staff-item-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    </button>
+  `).join('');
+
+  const managerItems = managerUsers.map(u => `
+    <button class="staff-item" data-username="${Utils.escape(u.username)}">
+      <div class="staff-item-avatar">${getInitials(u.name)}</div>
+      <div class="staff-item-info">
+        <div class="staff-item-name">${Utils.escape(u.name)}</div>
+        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'Operations Manager')}</div>
+      </div>
+      <div class="staff-item-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    </button>
+  `).join('');
+
+  const employeeItems = employeeUsers.map(u => `
+    <button class="staff-item" data-username="${Utils.escape(u.username)}">
+      <div class="staff-item-avatar">${getInitials(u.name)}</div>
+      <div class="staff-item-info">
+        <div class="staff-item-name">${Utils.escape(u.name)}</div>
+        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'Employee')}</div>
+      </div>
+      <div class="staff-item-arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    </button>
+  `).join('');
+
   root.innerHTML = `
     <div class="auth-wrapper">
-      <!-- Left Hero Column -->
       <div class="auth-hero-column">
         <div class="auth-hero-overlay"></div>
         <div class="auth-hero-content">
-          <!-- Branding -->
           <div class="auth-hero-brand">
             <img src="surya-logo.png" alt="Surya Logo" class="auth-hero-logo">
             <div class="auth-hero-brand-text">
@@ -236,22 +632,18 @@ function renderLoginView() {
               <div class="auth-hero-brand-subtitle">House of Surya</div>
             </div>
           </div>
-          
-          <!-- Hero Main Content -->
           <div class="auth-hero-main">
             <div class="auth-hero-tagline">WORKFORCE OPERATIONS, SIMPLIFIED</div>
             <h1 class="auth-hero-title">Make every workday count.</h1>
             <p class="auth-hero-desc">
               Track attendance, manage shifts, and streamline payroll deductions from one unified, secure workspace.
             </p>
-            
-            <!-- Features Checklist -->
             <div class="auth-hero-features">
               <div class="auth-hero-feature-item">
                 <span class="auth-hero-feature-num">01</span>
                 <div class="auth-hero-feature-details">
-                  <strong>Live Biometric Clocking</strong>
-                  <span>Verify and clock in/out with face and fingerprint recognition.</span>
+                  <strong>Live Geofence Check-in</strong>
+                  <span>Verify and clock in/out instantly when you arrive at your worksite.</span>
                 </div>
               </div>
               <div class="auth-hero-feature-item">
@@ -270,657 +662,314 @@ function renderLoginView() {
               </div>
             </div>
           </div>
-          
-          <!-- Hero Footer -->
           <div class="auth-hero-footer">
             Secure attendance & workforce management for growing enterprise teams.
           </div>
         </div>
       </div>
-      
-      <!-- Right Form Column -->
       <div class="auth-form-column">
-        <div class="auth-card" id="auth-box">
-          <!-- Sign In Section -->
-          <div id="signin-section">
-            <div class="auth-header" style="position:relative">
+        <div class="auth-card auth-card-wide" id="auth-box">
+          <div id="role-selector-section">
+            <div class="auth-header" style="position:relative; margin-bottom: 20px;">
               <div class="auth-logo" style="margin-bottom: 8px; justify-content: center;">
-                <img src="surya-logo.png" alt="Surya Logo" style="height: 60px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
+                <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
               </div>
-              <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">House of Surya</div>
-              <div class="auth-sub-desc" style="text-align: center;">Attendance & Payroll Portal</div>
-              <button id="btn-login-help-icon" style="position:absolute; top:0; right:0; background:transparent; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s" title="Guidelines & Security Instructions" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"><span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border:2.5px solid var(--primary); border-radius:50%; font-size:13px; font-weight:900; color:var(--primary); font-family:'Plus Jakarta Sans',sans-serif; font-style:italic">i</span></button>
+              <div class="auth-title" style="text-align: center; font-size: 20px; font-weight: 700; color: var(--primary);">House of Surya</div>
+              <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 4px;">Workforce Operations Portal</div>
+              <div class="auth-sub-desc" style="text-align: center; font-size: 13px;">Select your account to access your dashboard</div>
             </div>
-
-            <!-- Role Selection Tabs -->
-            <div class="auth-tabs" id="login-role-tabs">
-              <div class="auth-tab active" data-role="employee">Employee</div>
-              <div class="auth-tab" data-role="hr">HR Login</div>
-              <div class="auth-tab" data-role="manager">Manager</div>
-            </div>
-
-            <form id="login-form">
-              <div class="form-group">
-                <label class="form-label" for="username">Username</label>
-                <input class="form-input" type="text" id="username" placeholder="e.g. john" autocomplete="username">
-              </div>
-              <div class="form-group" id="login-empid-container">
-                <label class="form-label" for="login-empid">Employee ID (Optional)</label>
-                <input class="form-input" type="text" id="login-empid" placeholder="e.g. EMP103">
-              </div>
-              
-              <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <div class="password-wrapper">
-                  <input class="form-input" type="password" id="password" placeholder="Enter the Password" required autocomplete="current-password">
-                  <button class="password-toggle-btn" type="button" tabindex="-1" title="Show/Hide Password">
-                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                  </button>
+            <div class="staff-columns-grid">
+              <div class="staff-column">
+                <div class="staff-column-header">
+                  <div class="staff-column-icon" style="background:rgba(239, 68, 68, 0.1); color:var(--error);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  </div>
+                  <h3 class="staff-column-title">HR / Admin (${hrUsers.length})</h3>
+                </div>
+                <div class="staff-list">
+                  ${hrItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No HR registered</div>'}
                 </div>
               </div>
-
-              <div class="signup-tc-wrapper" style="margin-top: 10px; margin-bottom: 15px">
-                <input type="checkbox" id="login-agree-tc" required>
-                <label for="login-agree-tc">
-                  I accept the <a href="#" id="btn-view-guidelines-login">Company Guidelines & T&C</a>
-                </label>
-              </div>
-
-              <button class="btn" type="submit">Log In</button>
-            </form>
-
-            <div style="display:flex;justify-content:space-between;margin-top:16px;font-size:13px">
-              <a href="#" id="toggle-to-forgot" style="color:var(--text-secondary);text-decoration:none">Forgot Password?</a>
-              <span>New employee? <a href="#" id="toggle-to-signup" style="color:var(--primary);font-weight:600;text-decoration:none">Sign Up</a></span>
-            </div>
-
-            <div class="divider">OR SIGN IN WITH BIOMETRICS</div>
-
-            <div class="bio-selector-grid">
-              <button class="bio-option-btn" id="bio-fingerprint-login">
-                <svg viewBox="0 0 24 24"><path d="M12,2C10.3,2,8.7,2.7,7.5,3.8C7.1,4.2,7.1,4.9,7.5,5.3c0.4,0.4,1,0.4,1.4,0c0.9-0.8,2.1-1.3,3.3-1.3s2.4,0.5,3.3,1.3c0.4,0.4,1,0.4,1.4,0c0.4-0.4,0.4-1.1,0-1.5C15.3,2.7,13.7,2,12,2z M12,6c-2.2,0-4,1.8-4,4v4c0,0.6-0.4,1-1,1s-1-0.4-1-1v-4c0-3.3,2.7-6,6-6s6,2.7,6,6v4c0,0.6-0.4,1-1,1s-1-0.4-1-1v-4C16,7.8,14.2,6,12,6z M12,14c-1.1,0-2-0.9-2-2v-2c0-1.1,0.9-2,2-2s2,0.9,2,2v2C14,13.1,13.1,14,12,14z M17,17c-0.6,0-1-0.4-1-1v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C18,16.6,17.6,17,17,17z M7,17c-0.6,0-1-0.4-1-1v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C8,16.6,7.6,17,7,17z M12,22c-2.8,0-5-2.2-5-5v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1c0,1.7,1.3,3,3,3s3-1.3,3-3v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C17,19.8,14.8,22,12,22z"/></svg>
-                <span>Fingerprint</span>
-              </button>
-              <button class="bio-option-btn" id="bio-face-login">
-                <svg viewBox="0 0 24 24"><path d="M9 11.75a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5zm6 0a1.25 1.25 0 100-2.5 1.25 1.25 0 000 2.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-2.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                <span>Face ID</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Sign Up Section -->
-          <div id="signup-section" style="display:none">
-            <div class="auth-header">
-              <div class="auth-logo" style="margin-bottom: 8px; justify-content: center;">
-                <img src="surya-logo.png" alt="Surya Logo" style="height: 60px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
-              </div>
-              <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">Create Account</div>
-              <div class="auth-sub-desc" style="text-align: center;">Secure Password Requirements</div>
-            </div>
-
-            <!-- Signup Role Tabs -->
-            <div class="auth-tabs" id="signup-role-tabs">
-              <div class="auth-tab active" data-role="employee">Employee</div>
-              <div class="auth-tab" data-role="hr">Join as HR</div>
-              <div class="auth-tab" data-role="manager">Join as Manager</div>
-            </div>
-
-            <form id="signup-form-elem">
-              <div class="form-group">
-                <label class="form-label" for="signup-name">Full Name</label>
-                <input class="form-input" type="text" id="signup-name" placeholder="e.g. Surya Singh" required>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="signup-username">Username</label>
-                <input class="form-input" type="text" id="signup-username" placeholder="e.g. surya" required autocomplete="username">
-              </div>
-
-              <div class="form-group" id="signup-empid-container">
-                <label class="form-label" for="signup-empid">Employee ID (Optional)</label>
-                <input class="form-input" type="text" id="signup-empid" placeholder="e.g. EMP103">
-              </div>
-              
-              <div class="form-group" style="margin-bottom:12px">
-                <label class="form-label" for="signup-password">Secure Password</label>
-                <div class="password-wrapper">
-                  <input class="form-input" type="password" id="signup-password" placeholder="Enter the Password" required autocomplete="new-password">
-                  <button class="password-toggle-btn" type="button" tabindex="-1" title="Show/Hide Password">
-                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                  </button>
+              <div class="staff-column">
+                <div class="staff-column-header">
+                  <div class="staff-column-icon" style="background:rgba(16, 185, 129, 0.1); color:var(--success);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                  </div>
+                  <h3 class="staff-column-title">Managers (${managerUsers.length})</h3>
+                </div>
+                <div class="staff-list">
+                  ${managerItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No Managers registered</div>'}
                 </div>
               </div>
-              
-              <div class="signup-tc-wrapper">
-                <input type="checkbox" id="signup-agree-tc" required>
-                <label for="signup-agree-tc">
-                  I agree to the <a href="#" id="btn-view-guidelines">Company Guidelines & T&C</a> of HS Group Delhi
-                </label>
-              </div>
-
-              <div class="pass-checklist" style="margin-bottom:20px">
-                <div class="checklist-item invalid" id="rule-len">❌ Minimum 6 characters</div>
-                <div class="checklist-item invalid" id="rule-upper">❌ At least one uppercase letter</div>
-                <div class="checklist-item invalid" id="rule-special">❌ At least one special symbol (@#$!%*)</div>
-                <div class="checklist-item invalid" id="rule-number">❌ Contains non-numbers</div>
-              </div>
-
-              <button class="btn btn-success" type="submit" id="signup-submit-btn" disabled style="opacity:0.6;cursor:not-allowed">Register & Log In</button>
-              <div class="signup-policy-notice" style="font-size: 11px; color: var(--text-muted); margin-top: 15px; text-align: center; line-height: 1.4;">
-                By continuing, you agree to your organization’s security policies.
-              </div>
-            </form>
-
-            <div style="text-align:center;margin-top:16px;font-size:13px">
-              Already have an account? <a href="#" id="toggle-to-signin" style="color:var(--primary);font-weight:600;text-decoration:none">Log In</a>
-            </div>
-          </div>
-
-          <!-- Forgot Password Section (With OTP and Captcha Wizard) -->
-          <div id="forgot-section" style="display:none">
-            <div class="auth-header">
-              <div class="auth-logo" style="margin-bottom: 8px; justify-content: center;">
-                <img src="surya-logo.png" alt="Surya Logo" style="height: 60px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
-              </div>
-              <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 6px;">Forgot Password</div>
-              <div class="auth-sub-desc" style="text-align: center;">SMS / Email OTP Verification</div>
-            </div>
-
-            <!-- Forgot Step 1: Input username and request OTP -->
-            <div id="forgot-step-1">
-              <div class="form-group">
-                <label class="form-label" for="forgot-username">Enter Username</label>
-                <input class="form-input" type="text" id="forgot-username" placeholder="e.g. sarah">
-              </div>
-              <div class="form-group" id="forgot-empid-container">
-                <label class="form-label" for="forgot-empid">Enter Employee ID (Optional)</label>
-                <input class="form-input" type="text" id="forgot-empid" placeholder="e.g. EMP104">
-              </div>
-              <button class="btn btn-cyan" id="btn-request-otp">Send Verification OTP</button>
-            </div>
-
-            <!-- Forgot Step 2: Verification (OTP & Math Captcha) -->
-            <div id="forgot-step-2" style="display:none">
-              <div class="form-group">
-                <label class="form-label" for="forgot-otp-input">Enter 6-Digit OTP</label>
-                <input class="form-input" type="text" id="forgot-otp-input" placeholder="••••••" maxlength="6">
-              </div>
-
-              <label class="form-label">Security CAPTCHA</label>
-              <div class="captcha-container">
-                <div class="captcha-question" id="captcha-question-text">8 + 6 = ?</div>
-                <input class="form-input" type="number" id="forgot-captcha-input" placeholder="Answer" style="flex:1;padding:8px 12px">
-              </div>
-
-              <button class="btn btn-cyan" id="btn-verify-otp-captcha">Verify Verification Keys</button>
-            </div>
-
-            <!-- Forgot Step 3: Enter new strong password -->
-            <div id="forgot-step-3" style="display:none">
-              <div class="form-group">
-                <label class="form-label" for="forgot-new-pass">New Password</label>
-                <div class="password-wrapper">
-                  <input class="form-input" type="password" id="forgot-new-pass" placeholder="Enter the Password" required>
-                  <button class="password-toggle-btn" type="button" tabindex="-1" title="Show/Hide Password">
-                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                  </button>
+              <div class="staff-column">
+                <div class="staff-column-header">
+                  <div class="staff-column-icon" style="background:rgba(6, 182, 212, 0.1); color:var(--cyan);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </div>
+                  <h3 class="staff-column-title">Employees (${employeeUsers.length})</h3>
+                </div>
+                <div class="staff-list">
+                  ${employeeItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No Employees registered</div>'}
                 </div>
               </div>
-
-              <div class="form-group" style="margin-bottom:12px">
-                <label class="form-label" for="forgot-confirm-pass">Confirm Password</label>
-                <div class="password-wrapper">
-                  <input class="form-input" type="password" id="forgot-confirm-pass" placeholder="Enter the Password" required>
-                  <button class="password-toggle-btn" type="button" tabindex="-1" title="Show/Hide Password">
-                    <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                  </button>
-                </div>
-              </div>
-
-              <div class="pass-checklist" style="margin-bottom:20px">
-                <div class="checklist-item invalid" id="f-rule-len">❌ Minimum 6 characters</div>
-                <div class="checklist-item invalid" id="f-rule-upper">❌ At least one uppercase letter</div>
-                <div class="checklist-item invalid" id="f-rule-special">❌ At least one special symbol (@#$!%*)</div>
-                <div class="checklist-item invalid" id="f-rule-number">❌ Contains non-numbers</div>
-                <div class="checklist-item invalid" id="f-rule-match">❌ Passwords match</div>
-              </div>
-
-              <button class="btn btn-success" id="btn-reset-password" disabled style="opacity:0.6;cursor:not-allowed">Reset Password</button>
             </div>
-
-            <div style="text-align:center;margin-top:20px;font-size:13px">
-              Return to <a href="#" id="forgot-back-to-signin" style="color:var(--primary);font-weight:600;text-decoration:none">Sign In</a>
+            <div class="auth-policy-footer" style="margin-top: 24px; text-align: center; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px;">
+              By logging in, you agree to the <a href="#" id="btn-show-policy" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy & Guidelines</a>.
             </div>
-          </div>
-
-          <div id="login-alert" class="alert" style="display:none"></div>
-
-          <!-- Daily Inspiration / Good Vibes Banner -->
-          <div style="background: rgba(251, 191, 36, 0.04); border: 1px dashed rgba(251, 191, 36, 0.25); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 24px; display: flex; flex-direction: column; gap: 4px; text-align: center;">
-            <div style="font-size: 10px; font-weight: 800; color: var(--primary); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px;">
-              <span>✨</span> Daily Inspiration <span>✨</span>
-            </div>
-            <p style="color: var(--text-secondary); font-size: 11.5px; font-style: italic; line-height: 1.45; margin: 0;">
-              "${randomQuote}"
-            </p>
           </div>
         </div>
       </div>
     </div>
   `;
 
-  const signinSec = document.getElementById('signin-section');
-  const signupSec = document.getElementById('signup-section');
-  const forgotSec = document.getElementById('forgot-section');
-  const alertBox = document.getElementById('login-alert');
+  const showVerificationScreen = (selectedUser) => {
+    const authBox = document.getElementById('auth-box');
+    if (!authBox) return;
 
-  // Handle Login Role Tabs click
-  const loginTabs = document.getElementById('login-role-tabs');
-  loginTabs.addEventListener('click', (e) => {
-    const tab = e.target.closest('.auth-tab');
-    if (!tab) return;
-    loginTabs.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    activeLoginRole = tab.dataset.role;
-    
-    // Show/hide biometric grid based on selection (only employees support biometric clock-in/out for direct daily attendance logs)
-    const bioGrid = document.querySelector('.bio-selector-grid');
-    const bioDiv = document.querySelector('.divider');
-    const empidContainer = document.getElementById('login-empid-container');
-    if (activeLoginRole !== 'employee') {
-      bioGrid.style.display = 'none';
-      if (bioDiv) bioDiv.style.display = 'none';
-      if (empidContainer) empidContainer.style.display = 'none';
-    } else {
-      bioGrid.style.display = 'grid';
-      if (bioDiv) bioDiv.style.display = 'flex';
-      if (empidContainer) empidContainer.style.display = 'block';
+    authBox.classList.remove('auth-card-wide');
+
+    let idLabelText = 'Employee ID';
+    let placeholderText = 'e.g. EMP100';
+
+    if (selectedUser.role === 'hr') {
+      idLabelText = 'HR ID';
+      placeholderText = 'e.g. HR100';
+    } else if (selectedUser.role === 'manager' || selectedUser.role === 'finance_manager') {
+      idLabelText = 'Manager ID';
+      placeholderText = 'e.g. MGR100';
     }
-  });
 
-  // Handle Signup Role Tabs click
-  const signupTabs = document.getElementById('signup-role-tabs');
-  signupTabs.addEventListener('click', (e) => {
-    const tab = e.target.closest('.auth-tab');
-    if (!tab) return;
-    signupTabs.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    activeSignupRole = tab.dataset.role;
+    const isHrOrManager = selectedUser && (selectedUser.role === 'hr' || selectedUser.role === 'manager' || selectedUser.role === 'finance_manager');
 
-    const signupEmpidContainer = document.getElementById('signup-empid-container');
-    if (signupEmpidContainer) {
-      if (activeSignupRole === 'employee') {
-        signupEmpidContainer.style.display = 'block';
-      } else {
-        signupEmpidContainer.style.display = 'none';
-      }
+    const createAccButtonHTML = isHrOrManager
+      ? `<button class="btn" id="btn-verify-id-create-acc" style="flex: 1; font-weight: 700; font-size: 12px; background: #ffffff; border: 1.5px solid #b91c1c; color: #1e293b; padding: 10px 0; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease;">
+           <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+           Create Account
+         </button>`
+      : '';
+
+    const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
+      ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
+      : '';
+
+    authBox.innerHTML = `
+      <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
+        <div class="auth-header" style="margin-bottom: 24px; text-align: center; position: relative;">
+          <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
+            <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
+          </div>
+          <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
+          <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
+          
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; margin-top: 10px;">
+            <div class="staff-item-avatar" style="width: 24px; height: 24px; font-size: 10px; margin: 0;">${getInitials(selectedUser.name)}</div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); text-align: left;">
+              ${Utils.escape(selectedUser.name)} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(${selectedUser.role.toUpperCase()})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
+          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
+        </div>
+
+        ${isHrOrManager ? `
+        <div class="form-group" style="margin-bottom: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <label class="form-label" for="auth-pwd-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0; display: block;">Password *</label>
+            <button type="button" id="btn-forgot-password-trigger" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline">Forgot Password?</button>
+          </div>
+          <div style="position:relative">
+            <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
+            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px">👁️</button>
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- Warning Box -->
+        <div id="auth-verify-warning" style="display: none; padding: 10px 14px; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); background: rgba(239,68,68,0.05); color: var(--error); font-size: 11.5px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${isHrOrManager ? `
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <button class="btn" id="btn-verify-id-submit" style="flex: 1; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
+            ${createAccButtonHTML}
+          </div>
+          ` : `
+          <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
+          ${skipButtonHTML}
+          `}
+          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
+        </div>
+        <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
+          By logging in, you agree to the <a href="#" id="btn-show-policy-verify" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy</a>.
+        </div>
+      </div>
+    `;
+
+    const inputEl = authBox.querySelector('#auth-id-input');
+    const pwdEl = authBox.querySelector('#auth-pwd-input');
+    const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
+    const warningEl = authBox.querySelector('#auth-verify-warning');
+    const submitBtn = authBox.querySelector('#btn-verify-id-submit');
+    const skipBtn = authBox.querySelector('#btn-verify-id-skip');
+    const backBtn = authBox.querySelector('#btn-verify-id-back');
+    const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
+    const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
+
+    if (forgotPwdBtn) {
+      forgotPwdBtn.addEventListener('click', () => {
+        const prefilledId = inputEl ? inputEl.value.trim() : (selectedUser ? selectedUser.employeeId : '');
+        showForgotPasswordModal(prefilledId);
+      });
     }
-  });
 
-  // Switch sections toggles
-  document.getElementById('toggle-to-signup').addEventListener('click', (e) => {
-    e.preventDefault();
-    alertBox.style.display = 'none';
-    signinSec.style.display = 'none';
-    forgotSec.style.display = 'none';
-    signupSec.style.display = 'block';
-  });
+    if (toggleAuthPwdBtn && pwdEl) {
+      toggleAuthPwdBtn.addEventListener('click', () => {
+        if (pwdEl.type === 'password') {
+          pwdEl.type = 'text';
+          toggleAuthPwdBtn.textContent = '🔒';
+        } else {
+          pwdEl.type = 'password';
+          toggleAuthPwdBtn.textContent = '👁️';
+        }
+      });
+    }
 
-  document.getElementById('toggle-to-signin').addEventListener('click', (e) => {
-    e.preventDefault();
-    alertBox.style.display = 'none';
-    signupSec.style.display = 'none';
-    forgotSec.style.display = 'none';
-    signinSec.style.display = 'block';
-  });
+    if (createAccBtn) {
+      createAccBtn.addEventListener('click', () => {
+        showAccountModal();
+      });
+    }
 
-  document.getElementById('toggle-to-forgot').addEventListener('click', (e) => {
-    e.preventDefault();
-    alertBox.style.display = 'none';
-    signinSec.style.display = 'none';
-    signupSec.style.display = 'none';
-    forgotSec.style.display = 'block';
-    
-    // Reset forgot wizard views
-    document.getElementById('forgot-step-1').style.display = 'block';
-    document.getElementById('forgot-step-2').style.display = 'none';
-    document.getElementById('forgot-step-3').style.display = 'none';
-  });
+    const handleVerification = () => {
+      const enteredId = inputEl.value.trim();
+      const enteredPwd = pwdEl ? pwdEl.value : '';
 
-  document.getElementById('forgot-back-to-signin').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('toggle-to-signin').click();
-  });
-
-  // Password Visibility Toggle Click Handler
-  document.querySelectorAll('.password-toggle-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const input = btn.previousElementSibling;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.82l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.74-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`;
-      } else {
-        input.type = 'password';
-        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+      if (!enteredId) {
+        warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
+        warningEl.style.display = 'block';
+        return;
       }
-    });
-  });
 
-  // View Company Guidelines Handler
-  const viewGuidelines = document.getElementById('btn-view-guidelines');
-  if (viewGuidelines) {
-    viewGuidelines.addEventListener('click', (e) => {
-      e.preventDefault();
-      openGuidelinesModal();
-    });
-  }
+      const allUsers = DB.getUsers();
+      const matchedUser = allUsers.find(u => 
+        (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
+        (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
+        (u.email && u.email.toLowerCase() === enteredId.toLowerCase())
+      );
 
-  const viewGuidelinesLogin = document.getElementById('btn-view-guidelines-login');
-  if (viewGuidelinesLogin) {
-    viewGuidelinesLogin.addEventListener('click', (e) => {
-      e.preventDefault();
-      openGuidelinesModal();
-    });
-  }
-
-  const loginHelpIcon = document.getElementById('btn-login-help-icon');
-  if (loginHelpIcon) {
-    loginHelpIcon.addEventListener('click', (e) => {
-      e.preventDefault();
-      openHelpGuidelinesModal();
-    });
-  }
-
-  // Sign Up strength check
-  const signupPass = document.getElementById('signup-password');
-  const submitBtn = document.getElementById('signup-submit-btn');
-  const rLen = document.getElementById('rule-len');
-  const rUpper = document.getElementById('rule-upper');
-  const rSpecial = document.getElementById('rule-special');
-  const rNumber = document.getElementById('rule-number');
-
-  signupPass.addEventListener('input', () => {
-    const val = signupPass.value;
-    const rules = Auth.validatePassword(val);
-
-    const toggleRule = (elem, isValid) => {
-      if (isValid) {
-        elem.classList.remove('invalid');
-        elem.classList.add('valid');
-        elem.innerHTML = `✓ ${elem.innerHTML.substring(2)}`;
-      } else {
-        elem.classList.remove('valid');
-        elem.classList.add('invalid');
-        elem.innerHTML = `❌ ${elem.innerHTML.substring(2)}`;
+      if (!matchedUser) {
+        warningEl.textContent = `⚠️ Invalid ${idLabelText}. No matching account found.`;
+        warningEl.style.display = 'block';
+        return;
       }
+
+      // Check role mismatch
+      const expectedRole = selectedUser.role;
+      let isRoleValid = false;
+      if (expectedRole === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
+      if ((expectedRole === 'manager' || expectedRole === 'finance_manager') && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
+      if (expectedRole === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
+
+      if (!isRoleValid) {
+        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
+        warningEl.style.display = 'block';
+        return;
+      }
+
+      if (matchedUser.status === 'Inactive') {
+        warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
+        warningEl.style.display = 'block';
+        return;
+      }
+
+      if (matchedUser.password || isHrOrManager) {
+        if (!enteredPwd) {
+          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
+          warningEl.style.display = 'block';
+          return;
+        }
+        if (matchedUser.password) {
+          const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
+          if (!isValidPwd) {
+            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
+            warningEl.style.display = 'block';
+            return;
+          }
+        }
+      }
+
+      proceedLogin(matchedUser);
     };
 
-    toggleRule(rLen, rules.isLongEnough);
-    toggleRule(rUpper, rules.hasUpper);
-    toggleRule(rSpecial, rules.hasSpecial);
-    toggleRule(rNumber, rules.isNotJustNumbers);
-
-    if (rules.valid) {
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.style.cursor = 'pointer';
-    } else {
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.6';
-      submitBtn.style.cursor = 'not-allowed';
-    }
-  });
-
-  // Forgot password strength check
-  const fNewPass = document.getElementById('forgot-new-pass');
-  const fConfirmPass = document.getElementById('forgot-confirm-pass');
-  const fResetBtn = document.getElementById('btn-reset-password');
-  const fLen = document.getElementById('f-rule-len');
-  const fUpper = document.getElementById('f-rule-upper');
-  const fSpecial = document.getElementById('f-rule-special');
-  const fNumber = document.getElementById('f-rule-number');
-  const fMatch = document.getElementById('f-rule-match');
-
-  const checkForgotPassStrength = () => {
-    const p1 = fNewPass.value;
-    const p2 = fConfirmPass.value;
-    const rules = Auth.validatePassword(p1);
-    const matches = p1 === p2 && p1.length > 0;
-
-    const toggleRule = (elem, isValid) => {
-      if (isValid) {
-        elem.classList.remove('invalid');
-        elem.classList.add('valid');
-        elem.innerHTML = `✓ ${elem.innerHTML.substring(2)}`;
-      } else {
-        elem.classList.remove('valid');
-        elem.classList.add('invalid');
-        elem.innerHTML = `❌ ${elem.innerHTML.substring(2)}`;
+    submitBtn.addEventListener('click', handleVerification);
+    inputEl.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleVerification();
       }
-    };
+    });
+    if (pwdEl) {
+      pwdEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleVerification();
+        }
+      });
+    }
 
-    toggleRule(fLen, rules.isLongEnough);
-    toggleRule(fUpper, rules.hasUpper);
-    toggleRule(fSpecial, rules.hasSpecial);
-    toggleRule(fNumber, rules.isNotJustNumbers);
-    toggleRule(fMatch, matches);
+    if (skipBtn) {
+      skipBtn.addEventListener('click', () => {
+        proceedLogin(selectedUser);
+      });
+    }
 
-    if (rules.valid && matches) {
-      fResetBtn.disabled = false;
-      fResetBtn.style.opacity = '1';
-      fResetBtn.style.cursor = 'pointer';
-    } else {
-      fResetBtn.disabled = true;
-      fResetBtn.style.opacity = '0.6';
-      fResetBtn.style.cursor = 'not-allowed';
+    backBtn.addEventListener('click', () => {
+      renderLoginView();
+    });
+
+    const policyLinkVerify = authBox.querySelector('#btn-show-policy-verify');
+    if (policyLinkVerify) {
+      policyLinkVerify.addEventListener('click', (e) => {
+        e.preventDefault();
+        showCompanyPolicyModal();
+      });
     }
   };
 
-  fNewPass.addEventListener('input', checkForgotPassStrength);
-  fConfirmPass.addEventListener('input', checkForgotPassStrength);
-
-  // Forms Submits
-  document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const employeeId = document.getElementById('login-empid').value.trim();
-    const password = document.getElementById('password').value;
-    
-    if (activeLoginRole === 'employee' && !username && !employeeId) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Please enter either Username or Employee ID.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-    if (activeLoginRole !== 'employee' && !username) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Please enter your Username.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    let userExists = null;
-    if (activeLoginRole !== 'employee') {
-      userExists = DB.getUserByUsername(username);
+  const proceedLogin = (user) => {
+    Auth.currentUser = user;
+    sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
+    if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
+      window.location.hash = '#admin-dashboard';
     } else {
-      if (username && employeeId) {
-        const u = DB.getUserByUsername(username);
-        if (u && u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase()) {
-          userExists = u;
-        }
-      } else if (username) {
-        userExists = DB.getUserByUsername(username);
-      } else if (employeeId) {
-        userExists = DB.getUsers().find(u => u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase());
+      window.location.hash = '#dashboard';
+    }
+  };
+
+  document.querySelectorAll('.staff-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const username = btn.getAttribute('data-username');
+      const user = DB.getUserByUsername(username);
+      if (user) {
+        showVerificationScreen(user);
       }
-    }
-
-    if (!userExists) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Invalid credentials or user does not exist.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    // Role Match Check
-    if (userExists.role !== activeLoginRole) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = `This account is registered as a ${userExists.role.toUpperCase()}. Please select the correct tab above.`;
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    const res = Auth.login(username, employeeId, password);
-    if (res.success) {
-      const isManagement = res.user.role === 'hr' || res.user.role === 'manager';
-      window.location.hash = isManagement ? '#admin-dashboard' : '#dashboard';
-    } else {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = res.message;
-      alertBox.style.display = 'flex';
-    }
+    });
   });
 
-  document.getElementById('signup-form-elem').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('signup-name').value.trim();
-    const username = document.getElementById('signup-username').value.trim();
-    const password = signupPass.value;
-
-    const rules = Auth.validatePassword(password);
-    if (!rules.valid) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Please meet all password strength rules.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    const employeeIdVal = (activeSignupRole === 'employee') ? document.getElementById('signup-empid').value.trim() : null;
-    const employeeId = employeeIdVal || null;
-
-    const newUser = DB.registerUser(username, name, password, activeSignupRole, employeeId);
-    if (newUser) {
-      Auth.login(username, newUser.employeeId, password);
-      sessionStorage.setItem('hs_fresh_signup', 'true');
-      const isManagement = newUser.role === 'hr' || newUser.role === 'manager';
-      window.location.hash = isManagement ? '#admin-dashboard' : '#dashboard';
-    } else {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = employeeId ? 'Username or Employee ID is already taken.' : 'Username is already taken.';
-      alertBox.style.display = 'flex';
-    }
-  });
-
-  // Forgot password step 1 (Validate User & Trigger OTP)
-  document.getElementById('btn-request-otp').addEventListener('click', () => {
-    const username = document.getElementById('forgot-username').value.trim();
-    const employeeId = document.getElementById('forgot-empid').value.trim();
-
-    if (!username && !employeeId) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Please enter either Username or Employee ID.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    let user = null;
-    if (username && employeeId) {
-      const u = DB.getUserByUsername(username);
-      if (u && u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase()) {
-        user = u;
-      }
-    } else if (username) {
-      user = DB.getUserByUsername(username);
-    } else if (employeeId) {
-      user = DB.getUsers().find(u => u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase());
-    }
-
-    if (!user) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'User account not found in system.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    resetUser = user;
-    alertBox.style.display = 'none';
-
-    // Dispatch simulated OTP
-    simulatedOTP = String(Math.floor(100000 + Math.random() * 900000));
-    
-    // Math Captcha setup
-    const n1 = Math.floor(Math.random() * 10) + 1;
-    const n2 = Math.floor(Math.random() * 10) + 1;
-    captchaAnswer = n1 + n2;
-    document.getElementById('captcha-question-text').textContent = `${n1} + ${n2} = ?`;
-
-    // Swap view
-    document.getElementById('forgot-step-1').style.display = 'none';
-    document.getElementById('forgot-step-2').style.display = 'block';
-
-    // Flash OTP Notification banner
-    alertBox.className = 'alert alert-success';
-    alertBox.innerHTML = `🔑 OTP Code sent via SMS/Email to ${user.name}. Code: <strong>${simulatedOTP}</strong> (simulated)`;
-    alertBox.style.display = 'flex';
-  });
-
-  // Forgot password step 2 (Verify OTP & Math Captcha)
-  document.getElementById('btn-verify-otp-captcha').addEventListener('click', () => {
-    const enteredOTP = document.getElementById('forgot-otp-input').value.trim();
-    const enteredCaptcha = Number(document.getElementById('forgot-captcha-input').value);
-
-    if (enteredOTP !== simulatedOTP) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Incorrect OTP code entered. Please try again.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    if (enteredCaptcha !== captchaAnswer) {
-      alertBox.className = 'alert alert-error';
-      alertBox.textContent = 'Incorrect security CAPTCHA answer.';
-      alertBox.style.display = 'flex';
-      return;
-    }
-
-    alertBox.style.display = 'none';
-    document.getElementById('forgot-step-2').style.display = 'none';
-    document.getElementById('forgot-step-3').style.display = 'block';
-  });
-
-  // Forgot password step 3 (Reset password submission)
-  document.getElementById('btn-reset-password').addEventListener('click', () => {
-    const newPass = fNewPass.value;
-    
-    if (resetUser) {
-      DB.resetUserPassword(resetUser.username, newPass);
-      alertBox.className = 'alert alert-success';
-      alertBox.textContent = 'Password reset successfully! Log in using your new credentials.';
-      alertBox.style.display = 'flex';
-      
-      // Clear forms
-      document.getElementById('forgot-username').value = '';
-      if (document.getElementById('forgot-empid')) document.getElementById('forgot-empid').value = '';
-      document.getElementById('forgot-otp-input').value = '';
-      document.getElementById('forgot-captcha-input').value = '';
-      fNewPass.value = '';
-      fConfirmPass.value = '';
-
-      // Direct back to sign in
-      setTimeout(() => {
-        document.getElementById('toggle-to-signin').click();
-      }, 1500);
-    }
-  });
-
-  document.getElementById('bio-fingerprint-login').addEventListener('click', () => triggerBiometricAuth('finger'));
-  document.getElementById('bio-face-login').addEventListener('click', () => triggerBiometricAuth('face'));
+  const policyBtn = document.getElementById('btn-show-policy');
+  if (policyBtn) {
+    policyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      showCompanyPolicyModal();
+    });
+  }
 }
 
-// -------------------------------------------------------------
-// RENDER APP SHELL
-// -------------------------------------------------------------
+
+
 function renderAppShell() {
   const root = document.getElementById('app-root');
   const user = Auth.getCurrentUser();
@@ -933,17 +982,19 @@ function renderAppShell() {
       <li class="menu-item" id="nav-admin-dashboard"><a href="#admin-dashboard">
         <svg viewBox="0 0 24 24"><path d="M10 20H5v-7H2l10-9 10 9h-3v7h-5v-6h-2v6z"/></svg> ${labels.monitor}
       </a></li>
+      ${user.role === 'finance_manager' ? `
       <li class="menu-item" id="nav-admin-finance"><a href="#admin-finance">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="20" x2="12" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg> Finance Management
       </a></li>
-      <li class="menu-item" id="nav-admin-analytics"><a href="#admin-analytics">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> Analytics Dashboard
-      </a></li>
+      ` : ''}
       <li class="menu-item" id="nav-admin-users"><a href="#admin-users">
         <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> ${labels.employees}
       </a></li>
       <li class="menu-item" id="nav-admin-schedules"><a href="#admin-schedules">
         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg> ${labels.shifts}
+      </a></li>
+      <li class="menu-item" id="nav-admin-locations"><a href="#admin-locations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Worksite Locations
       </a></li>
       <li class="menu-item" id="nav-admin-approvals"><a href="#admin-approvals">
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> ${labels.approvals}
@@ -953,6 +1004,9 @@ function renderAppShell() {
       </a></li>
       <li class="menu-item" id="nav-admin-verification"><a href="#admin-verification">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Verification Docs
+      </a></li>
+      <li class="menu-item" id="nav-admin-profile"><a href="#admin-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> My Profile
       </a></li>
       <li class="menu-item" id="nav-admin-support"><a href="#admin-support">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Support Tickets
@@ -991,10 +1045,15 @@ function renderAppShell() {
   }
 
   root.innerHTML = `
-    <aside class="sidebar">
-      <div class="sidebar-brand" style="display:flex;flex-direction:column;align-items:center;padding:15px;border-bottom:1px solid var(--border);margin-bottom:10px">
-        <img src="surya-logo.png" alt="Surya Logo" style="height:45px;object-fit:contain;margin-bottom:4px;filter:drop-shadow(0 0 8px rgba(251,191,36,0.15))">
-        <div class="auth-subtitle" style="font-size:11px;text-align:center;margin-top:2px;color:var(--text-secondary)">${labels.subtitle}</div>
+    <div class="sidebar-overlay" id="sidebar-overlay-el"></div>
+    <aside class="sidebar" id="sidebar-aside-el">
+      <div class="sidebar-brand">
+        <a href="#dashboard" class="sidebar-brand-logo" title="House of Surya">
+          <img src="assets/surya_logo_hd.png" alt="House of Surya Logo" class="surya-brand-img" />
+        </a>
+        <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="Toggle Navigation">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </button>
       </div>
       <ul class="sidebar-menu">
         ${menuHTML}
@@ -1012,41 +1071,215 @@ function renderAppShell() {
         </button>
       </div>
     </aside>
-    <main class="main-content" id="main-view"></main>
-
-    <!-- Global Fixed Notification Bell (Top Right Corner) -->
-    <div id="global-notification-bar" style="position:fixed;top:20px;right:40px;z-index:1000">
-      <div class="notification-widget" style="position:relative">
-        <button id="btn-notifications-toggle" class="btn-icon" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--text-primary);cursor:pointer;position:relative;padding:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(4px);width:40px;height:40px">
-          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-          </svg>
-          <span class="notification-badge" id="notification-count" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--error);color:white;font-size:9.5px;font-weight:800;border-radius:50%;width:18px;height:18px;align-items:center;justify-content:center;box-shadow:0 0 8px rgba(239,68,68,0.5)">0</span>
-        </button>
-        
-        <!-- Dropdown container -->
-        <div id="notifications-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);z-index:1001;margin-top:8px;animation:fadeIn 0.2s ease">
-          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-            <strong style="font-size:13.5px;color:var(--text-primary)">Alerts & Inbox</strong>
-            <button id="btn-clear-notifications" style="background:transparent;border:none;color:var(--primary);cursor:pointer;font-size:11px;text-decoration:underline;padding:0">Mark All Read</button>
-          </div>
-          <div id="notifications-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
-            <!-- populated dynamically -->
-          </div>
+    <main class="main-content">
+      <!-- Top Dark Header Navigation Bar -->
+      <header class="top-nav-bar">
+        <div class="top-nav-search">
+          <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" placeholder="Search..." id="global-header-search">
         </div>
-      </div>
-    </div>
+        <div class="top-nav-right">
+          <button class="top-nav-icon-btn" title="Messages">
+            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          </button>
+          
+          <div class="notification-widget" style="position:relative">
+            <button id="btn-notifications-toggle" class="top-nav-icon-btn" title="Notifications">
+              <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </svg>
+              <span class="top-nav-badge" id="notification-count" style="display:none">6</span>
+            </button>
+            
+            <div id="notifications-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);z-index:1001;margin-top:10px;animation:fadeIn 0.2s ease">
+              <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+                <strong style="font-size:13.5px;color:#0f172a">Alerts & Notifications</strong>
+                <button id="btn-delete-all-dropdown" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:11px;text-decoration:underline;padding:0">Delete All</button>
+              </div>
+              <div id="notifications-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
+                <!-- populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <div style="position:relative" id="user-profile-menu-wrapper">
+            <div class="top-nav-user" style="display:flex; align-items:center; gap:8px">
+              <div id="top-user-profile-click-target" title="View Profile" style="cursor:pointer; display:flex; align-items:center; gap:8px">
+                <div class="top-nav-user-avatar">${avatarText}</div>
+                <div class="top-nav-user-info">
+                  <span class="top-nav-user-name">${Utils.escape(user.name)}</span>
+                  <span class="top-nav-user-role">${user.role === 'hr' ? 'HR Admin Manager' : (user.role === 'manager' ? 'Operations Manager' : 'Employee')}</span>
+                </div>
+              </div>
+              <button class="top-nav-dropdown-btn" id="btn-user-dropdown-toggle" title="Open Menu" style="background:transparent;border:none;color:#fca5a5;cursor:pointer;display:flex;align-items:center;padding:4px;border-radius:6px;margin-left:2px">
+                <svg style="width:16px;height:16px;fill:currentColor;transition:transform 0.2s ease" id="user-dropdown-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+              </button>
+            </div>
+            
+            <div id="top-user-dropdown-menu" class="user-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 10px); right:0; width:210px; background:#3d0d0a; border:1px solid rgba(137, 32, 27, 0.4); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); z-index:1002; padding:6px">
+              <div style="padding:10px 12px; border-bottom:1px solid rgba(137, 32, 27, 0.3); margin-bottom:4px">
+                <div style="font-size:13px; font-weight:700; color:#ffffff">${Utils.escape(user.name)}</div>
+                <div style="font-size:11px; color:#fca5a5">${user.role === 'hr' ? 'HR Admin Manager' : (user.role === 'manager' ? 'Operations Manager' : 'Employee')}</div>
+              </div>
+              <a href="${(user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-profile' : '#employee-profile'}" class="user-dropdown-item" id="menu-item-profile">
+                <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>My Profile</span>
+              </a>
+              <a href="${(user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-settings' : '#settings'}" class="user-dropdown-item" id="menu-item-settings">
+                <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <span>Settings</span>
+              </a>
+              <button class="user-dropdown-item logout" id="menu-item-logout">
+                <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                <span>Logout</span>
+              </button>
+            </div>
+        </div>
+      </header>
+      <div id="main-view" style="flex-grow:1; display:flex; flex-direction:column; overflow-y:auto"></div>
+    </main>
   `;
 
-  document.getElementById('logout-trigger').addEventListener('click', () => {
-    Auth.logout();
-    window.location.hash = '#login';
+  const sidebarOverlay = document.getElementById('sidebar-overlay-el');
+  const sidebarAside = document.getElementById('sidebar-aside-el');
+  const mobileToggle = document.getElementById('mobile-sidebar-toggle');
+
+  const closeSidebar = () => {
+    if (sidebarAside) sidebarAside.classList.remove('active');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+  };
+
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebarAside.classList.add('active');
+      sidebarOverlay.classList.add('active');
+    });
+  }
+
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', closeSidebar);
+  }
+
+  const sidebarItems = root.querySelectorAll('.sidebar-menu a, .logout-btn');
+  sidebarItems.forEach(item => {
+    item.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    });
   });
+
+  const handleLogout = () => {
+    Auth.logout();
+    sessionStorage.removeItem('hs_pending_auto_checkin_time');
+    sessionStorage.removeItem('hs_mock_location');
+    sessionStorage.removeItem('hs_current_resolved_coords');
+    sessionStorage.removeItem('hs_current_resolved_distance');
+    sessionStorage.removeItem('hs_current_resolved_in_range');
+    window.location.hash = '#login';
+  };
+
+  const logoutBtn1 = document.getElementById('logout-trigger');
+  const logoutBtn2 = document.getElementById('menu-item-logout');
+
+  if (logoutBtn1) logoutBtn1.addEventListener('click', handleLogout);
+  if (logoutBtn2) logoutBtn2.addEventListener('click', handleLogout);
+
+  // Bind User Profile click and Dropdown Menu Toggle
+  const profileClickTarget = document.getElementById('top-user-profile-click-target');
+  const dropdownToggleBtn = document.getElementById('btn-user-dropdown-toggle');
+  const userDropdownMenu = document.getElementById('top-user-dropdown-menu');
+  const userChevron = document.getElementById('user-dropdown-chevron');
+  const profileItem = document.getElementById('menu-item-profile');
+  const settingsItem = document.getElementById('menu-item-settings');
+
+  if (profileClickTarget) {
+    profileClickTarget.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-profile' : '#employee-profile';
+    });
+  }
+
+  if (dropdownToggleBtn && userDropdownMenu) {
+    dropdownToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = userDropdownMenu.style.display === 'none';
+      userDropdownMenu.style.display = isHidden ? 'block' : 'none';
+      if (userChevron) {
+        userChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    });
+
+    if (profileItem) {
+      profileItem.addEventListener('click', () => {
+        userDropdownMenu.style.display = 'none';
+        if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+      });
+    }
+
+    if (settingsItem) {
+      settingsItem.addEventListener('click', () => {
+        userDropdownMenu.style.display = 'none';
+        if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('user-profile-menu-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        userDropdownMenu.style.display = 'none';
+        if (userChevron) userChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+  }
 
   // Bind Notifications Dropdown toggle
   const toggleBtn = document.getElementById('btn-notifications-toggle');
   const dropdown = document.getElementById('notifications-dropdown');
-  const clearBtn = document.getElementById('btn-clear-notifications');
+  const clearBtn = document.getElementById('btn-delete-all-dropdown');
+
+  // Bind Global Real-Time Header Search
+  const globalSearchInput = document.getElementById('global-header-search');
+  if (globalSearchInput) {
+    globalSearchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      const tableRows = document.querySelectorAll('main.main-content table.custom-table tbody tr');
+      const cards = document.querySelectorAll('main.main-content .card-panel');
+      const paginationInfo = document.querySelector('.equify-pagination-info');
+
+      if (tableRows.length > 0) {
+        let matchCount = 0;
+        tableRows.forEach(row => {
+          // Skip empty state notification rows
+          if (row.children.length === 1 && row.textContent.includes('No matching')) return;
+
+          const text = row.textContent.toLowerCase();
+          if (!query || text.includes(query)) {
+            row.style.display = '';
+            matchCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        if (paginationInfo) {
+          paginationInfo.textContent = query 
+            ? `Search results: ${matchCount} matching` 
+            : `Total: ${tableRows.length} showing all items`;
+        }
+      } else if (cards.length > 0) {
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          if (!query || text.includes(query)) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+    });
+  }
 
   if (toggleBtn && dropdown) {
     toggleBtn.addEventListener('click', (e) => {
@@ -1065,30 +1298,39 @@ function renderAppShell() {
       }
     });
 
-    // Clear notifications click event
+    // Delete all notifications click event
     if (clearBtn) {
-      clearBtn.addEventListener('click', (e) => {
+      clearBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const currentUser = Auth.getCurrentUser();
         if (!currentUser) return;
         
-        if (currentUser.role !== 'hr' && currentUser.role !== 'manager' && currentUser.role !== 'finance_manager') {
-          const announcements = DB.getAnnouncements();
-          const readKey = `hs_read_notices_${currentUser.id}`;
-          const readIds = announcements.map(a => a.id);
-          localStorage.setItem(readKey, JSON.stringify(readIds));
-          updateNotificationsUI();
-          if (window.location.hash === '#dashboard') {
-            renderEmployeeDashboard();
-          }
-        } else {
-          if (DB.data.financeAlerts && DB.data.financeAlerts.length > 0) {
-            DB.data.financeAlerts = [];
-            DB.save();
-            updateNotificationsUI();
-            alert('Financial alerts marked as read.');
+        if (await CustomDialog.confirm('Are you sure you want to delete all notifications?')) {
+          if (currentUser.role === 'finance_manager') {
+            if (DB.data.financeAlerts && DB.data.financeAlerts.length > 0) {
+              DB.data.financeAlerts = [];
+              DB.save();
+              updateNotificationsUI();
+              await CustomDialog.alert('Financial alerts deleted.');
+            } else {
+              await CustomDialog.alert('No financial alerts to delete.');
+            }
+          } else if (currentUser.role === 'hr' || currentUser.role === 'manager') {
+            await CustomDialog.alert('Action items (approvals and swaps) require review and cannot be deleted without processing.');
           } else {
-            alert('Action items (approvals and swaps) require review and cannot be marked as read without processing.');
+            const announcements = DB.getAnnouncements();
+            const delKey = `hs_del_notices_${currentUser.id}`;
+            const delIds = JSON.parse(localStorage.getItem(delKey) || '[]');
+            
+            announcements.forEach(a => {
+              if (!delIds.includes(a.id)) delIds.push(a.id);
+            });
+            localStorage.setItem(delKey, JSON.stringify(delIds));
+            
+            updateNotificationsUI();
+            if (window.location.hash === '#dashboard') {
+              renderEmployeeDashboard();
+            }
           }
         }
       });
@@ -1106,31 +1348,31 @@ function renderEmployeeDashboard() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
   const todayLog = DB.getTodayLog(user.id);
-  const schedule = DB.getSchedule(user.scheduleId);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const resolved = DB.resolveUserShiftForDate(user, todayStr);
+  let schedule = DB.getSchedule(resolved.scheduleId);
+  if (!schedule) {
+    schedule = {
+      id: 'sch_1',
+      name: 'Standard Day Shift',
+      startTime: '09:00',
+      endTime: '17:00',
+      gracePeriod: 15,
+      workDays: [1, 2, 3, 4, 5],
+      location: 'Kohat Enclave, Pitampura, Delhi'
+    };
+  }
+  const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
 
-  // Biometric setup enrollment checker banner
-  const needsBiometrics = !user.biometricRegistered?.face && !user.biometricRegistered?.finger;
-  const isFreshSignup = sessionStorage.getItem('hs_fresh_signup') === 'true';
+  // Dynamic GPS Mock Selector options
+  let optionsHTML = '';
+  optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
+  Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
+    const isPreferred = locName === (schedule.location || 'Kohat Enclave, Pitampura, Delhi');
+    optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
+  });
 
   let alertBannerHTML = '';
-  if (needsBiometrics) {
-    alertBannerHTML = `
-      <div class="card-panel" style="border-left: 4px solid var(--primary);background:rgba(251,191,36,0.05);margin-bottom:24px" id="biometric-wizard-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-          <div>
-            <h4 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:var(--primary);font-weight:700">🧬 Complete Biometric Enrollment</h4>
-            <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">
-              ${isFreshSignup ? 'Registration successful! ' : ''}Enable Face ID or Fingerprint scanner to activate zero-credential check-ins/outs.
-            </div>
-          </div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-cyan" id="wizard-face-reg" style="width:auto;padding:8px 16px;font-size:12px">Setup Face ID</button>
-            <button class="btn btn-cyan" id="wizard-finger-reg" style="width:auto;padding:8px 16px;font-size:12px">Setup Fingerprint</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
 
   main.innerHTML = `
     <div class="content-header">
@@ -1138,9 +1380,7 @@ function renderEmployeeDashboard() {
         <h1 class="content-title">Welcome, ${Utils.escape(user.name)}</h1>
         <div class="content-subtitle">Log your hours and view daily shift metrics.</div>
       </div>
-      <div>
-        <button class="btn btn-warning" id="btn-employee-my-recap" style="width:auto;padding:10px 18px;font-size:13px">📊 My Punctuality Recap</button>
-      </div>
+      <div></div>
     </div>
     
     <div class="content-body">
@@ -1159,26 +1399,16 @@ function renderEmployeeDashboard() {
                 <span id="clock-status-text">${todayLog ? (todayLog.checkOut ? 'Clocked Out' : 'Clocked In') : 'Clocked Out'}</span>
               </div>
 
-              <!-- Fixed clock actions row supporting biometric checkout -->
+              <!-- Fixed clock actions row -->
               <div class="clock-actions-row">
-                ${!todayLog 
+                ${!todayLog || todayLog.status === 'Pending Verification'
                   ? `
-                    <button class="btn btn-success" id="btn-regular-checkin">Clock In (Password)</button>
-                    <div class="divider" style="margin: 12px 0">OR BIOMETRIC CLOCK IN</div>
-                    <div class="clock-biometric-triggers">
-                      <button class="btn btn-cyan btn-secondary" id="btn-face-checkin">Face Clock-In</button>
-                      <button class="btn btn-cyan btn-secondary" id="btn-finger-checkin">Fingerprint Clock-In</button>
-                    </div>
+                    <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
                   ` 
                   : (todayLog.checkOut 
                       ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
                       : `
-                        <button class="btn btn-danger" id="btn-regular-checkout">Clock Out (Password)</button>
-                        <div class="divider" style="margin: 12px 0">OR BIOMETRIC CLOCK OUT</div>
-                        <div class="clock-biometric-triggers">
-                          <button class="btn btn-danger btn-secondary" id="btn-face-checkout" style="color:var(--error);border-color:rgba(239,68,68,0.2)">Face Clock-Out</button>
-                          <button class="btn btn-danger btn-secondary" id="btn-finger-checkout" style="color:var(--error);border-color:rgba(239,68,68,0.2)">Fingerprint Clock-Out</button>
-                        </div>
+                        <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
                       `
                     )
                 }
@@ -1189,30 +1419,78 @@ function renderEmployeeDashboard() {
           <!-- GPS Geofence Card -->
           <div class="card-panel gps-sim-card">
             <div class="card-panel-header">
-              <h3 class="card-panel-title">📍 Simulated GPS Geofence</h3>
+              <h3 class="card-panel-title">🛰️ Attendance Geofence Validation</h3>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;align-items:center;justify-content:space-between">
-                <span style="font-size:13px;color:var(--text-secondary)">GPS Status:</span>
-                <span style="display:flex;align-items:center">
+              
+              <!-- Map Radar Canvas -->
+              <div style="position:relative; width:100%; border-radius:var(--radius-sm); overflow:hidden">
+                <canvas id="gps-canvas-map" style="width:100%; height:150px; background:#0f172a; display:block"></canvas>
+              </div>
+
+              <!-- Geolocation Error Display -->
+              <div id="gps-error-container" style="display:none; margin-bottom:4px"></div>
+
+              <!-- Side-by-side location verification -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
+                <div>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Fixed Worksite Location</span>
+                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</div>
+                  <div style="color:var(--text-secondary); font-size:11px" id="gps-worksite-coords-display">--</div>
+                </div>
+                <div style="border-left:1px solid var(--border); padding-left:10px">
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📱 Live GPS Location</span>
+                  <div style="font-weight:600; color:var(--text-primary); margin-top:2px" id="gps-coords-display">Acquiring...</div>
+                  <div style="color:var(--text-secondary); font-size:11px" id="gps-status-sub-display">--</div>
+                </div>
+              </div>
+
+              <!-- GPS Real-Time Details (Address & Timestamp) -->
+              <div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
+                <div>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📍 Current Address</span>
+                  <div id="gps-address-display" style="font-weight:500; color:var(--text-primary); margin-top:2px">Acquiring address...</div>
+                </div>
+                <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px">
+                  <div>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Last Updated</span>
+                    <div id="gps-timestamp-display" style="font-weight:500; color:var(--text-primary); margin-top:1px">--</div>
+                  </div>
+                  <div>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🎯 Accuracy</span>
+                    <div id="gps-accuracy-display" style="font-weight:500; color:var(--text-primary); margin-top:1px; text-align:right">--</div>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- Status & Distance Info -->
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0">
+                <span style="font-size:13px; color:var(--text-secondary)">Geofence Status:</span>
+                <span style="display:flex; align-items:center; gap:8px">
+                  <span id="gps-distance-display" style="font-size:12px; font-weight:600; color:var(--text-primary)">--</span>
                   <span id="gps-radar" class="gps-radar-indicator in-range"></span>
                   <span id="gps-status-badge" class="badge badge-on-time">In Range</span>
                 </span>
               </div>
-              <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">
-                Current Coordinates: <strong id="gps-coords-display" style="color:var(--text-primary)">28.6978° N, 77.1408° E</strong>
-                <br>
-                Distance from Kohat Enclave: <strong id="gps-distance-display" style="color:var(--text-primary)">0 meters</strong>
-              </div>
               
               <!-- Location Simulation Selector -->
               <div class="form-group" style="margin-bottom:0">
-                <label class="form-label" style="font-size:11px;margin-bottom:6px">Mock Current Location (To test company policy):</label>
-                <select class="form-input" id="gps-mock-selector" style="padding:8px 12px;font-size:13px;background:rgba(255,255,255,0.02)">
-                  <option value="hq">Kohat Enclave, Pitampura, Delhi (In Range - 0m)</option>
-                  <option value="chandni">Chandni Chowk (Out of Range - 9.8 km)</option>
-                  <option value="omaxe">Omaxe City, Delhi (Out of Range - 14.5 km)</option>
+                <label class="form-label" style="font-size:11px; margin-bottom:6px">Location Tracking Mode:</label>
+                <select class="form-input" id="gps-mock-selector" style="padding:8px 12px; font-size:13px; background:rgba(255,255,255,0.02)">
+                  ${optionsHTML}
                 </select>
+              </div>
+
+              <!-- Direct Geofence Card Actions -->
+              <div class="geofence-direct-actions" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px" id="geofence-btn-group">
+                  <button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600">Check In</button>
+                  <button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600">Check Out</button>
+                </div>
+                <div id="geofence-checked-out-msg" style="display:none; background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
+                  Checked Out Today
+                </div>
               </div>
             </div>
           </div>
@@ -1227,7 +1505,7 @@ function renderEmployeeDashboard() {
               </div>
               <div class="shift-meta-row">
                 <span>Working Hours:</span>
-                <strong style="color:var(--text-primary)">${schedule.startTime} - ${schedule.endTime}</strong>
+                <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(schedule.endTime)}</strong>
               </div>
               <div class="shift-meta-row">
                 <span>Grace Period:</span>
@@ -1254,34 +1532,53 @@ function renderEmployeeDashboard() {
           </div>
 
           <!-- Notice Board Card -->
-          <div class="card-panel" style="margin-bottom:20px">
-            <div class="card-panel-header">
-              <h3 class="card-panel-title">📢 Company Notice Board</h3>
+          <div class="card-panel" style="margin-bottom:20px; min-height:220px; display:flex; flex-direction:column">
+            <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 class="card-panel-title">📢 Notifications</h3>
+              <button id="btn-delete-all-notices" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;text-decoration:underline;display:none;">Delete All</button>
             </div>
-            <div id="employee-notices-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
+            <div id="employee-notices-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;flex-grow:1;max-height:320px;overflow-y:auto;padding-right:4px">
               <!-- announcements loaded dynamically -->
             </div>
           </div>
 
-          <div class="card-panel">
-            <div class="card-panel-header">
-              <h3 class="card-panel-title">My Recent Activity Logs</h3>
+          <!-- Schedule & Attendance Calendar Card -->
+          <div class="card-panel" style="margin-bottom:0; display:flex; flex-direction:column; gap:16px">
+            <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+              <h3 class="card-panel-title">🗓️ Schedule & Attendance Calendar</h3>
+              <!-- Schedule Quick Tabs -->
+              <div class="calendar-tabs" style="display:flex; gap:6px; background:rgba(255,255,255,0.03); padding:4px; border-radius:var(--radius-sm); border:1px solid var(--border)">
+                <button class="cal-tab-btn active" data-tab="today" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Today</button>
+                <button class="cal-tab-btn" data-tab="next" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Next Day</button>
+                <button class="cal-tab-btn" data-tab="last" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Last Day</button>
+                <button class="cal-tab-btn" data-tab="weekly" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Weekly</button>
+              </div>
             </div>
-            <div class="table-container">
-              <table class="custom-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>In</th>
-                    <th>Out</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="employee-logs-table-body">
-                  <!-- Loaded dynamically -->
-                </tbody>
-              </table>
+
+            <!-- Tab Content (Schedule Card) -->
+            <div id="calendar-schedule-card" style="padding:14px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12.5px; display:flex; flex-direction:column; gap:10px">
+              <!-- Dynamically populated based on active tab -->
+            </div>
+
+            <!-- Calendar Monthly Grid Header & Grid -->
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span id="calendar-month-year" style="font-weight:700; color:var(--text-primary); font-size:13.5px">July 2026</span>
+                <div style="display:flex; gap:6px">
+                  <button id="btn-calendar-prev" class="btn btn-secondary" style="width:auto; padding:4px 8px; font-size:11px">&lt;</button>
+                  <button id="btn-calendar-next" class="btn btn-secondary" style="width:auto; padding:4px 8px; font-size:11px">&gt;</button>
+                </div>
+              </div>
+              
+              <!-- Month Grid -->
+              <div class="calendar-grid-container" style="display:flex; flex-direction:column; gap:4px">
+                <!-- Day Names -->
+                <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:4px">
+                  <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                </div>
+                <!-- Day Grid Cells -->
+                <div id="calendar-days-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px">
+              </div>
             </div>
           </div>
         </div>
@@ -1292,11 +1589,45 @@ function renderEmployeeDashboard() {
   // Live updates tick
   startLiveClock();
   startActiveWorkTimer(todayLog);
-  renderPersonalLogs(user.id);
+  // Calendar Initialisation
+  let currentCalDate = new Date();
+  
+  const tabBtns = document.querySelectorAll('.cal-tab-btn');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      const activeTab = e.target.getAttribute('data-tab');
+      renderCalendarScheduleTab(user.id, activeTab);
+    });
+  });
+
+  // Render initial schedule today tab
+  renderCalendarScheduleTab(user.id, 'today');
+
+  const refreshCalendarView = () => {
+    renderCalendarGrid(user.id, currentCalDate.getFullYear(), currentCalDate.getMonth());
+  };
+  refreshCalendarView();
+
+  const btnPrev = document.getElementById('btn-calendar-prev');
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+      refreshCalendarView();
+    });
+  }
+  const btnNext = document.getElementById('btn-calendar-next');
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+      refreshCalendarView();
+    });
+  }
   renderEmployeeNotices(user.id);
 
   // Geofencing Simulation setup
-  let mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
+  let mockLoc = sessionStorage.getItem('hs_mock_location') || 'real';
   const gpsSelect = document.getElementById('gps-mock-selector');
   if (gpsSelect) {
     gpsSelect.value = mockLoc;
@@ -1307,27 +1638,55 @@ function renderEmployeeDashboard() {
     });
   }
 
-  // Biometrics setup wizards
-  if (needsBiometrics) {
-    document.getElementById('wizard-face-reg').addEventListener('click', () => openBiometricsSetupFlow(user.id, 'face'));
-    document.getElementById('wizard-finger-reg').addEventListener('click', () => openBiometricsSetupFlow(user.id, 'finger'));
+  // Dashboard Check-in actions
+  if (!todayLog || todayLog.status === 'Pending Verification') {
+    const regIn = document.getElementById('btn-regular-checkin');
+    if (regIn) regIn.addEventListener('click', () => handlePinClockIn(user.id));
+  } else if (!todayLog.checkOut) {
+    const regOut = document.getElementById('btn-regular-checkout');
+    if (regOut) regOut.addEventListener('click', () => handleClockOut(user.id));
   }
 
-  // Dashboard Check-in actions
-  if (!todayLog) {
-    document.getElementById('btn-regular-checkin').addEventListener('click', () => handlePinClockIn(user.id));
-    document.getElementById('btn-face-checkin').addEventListener('click', () => triggerBiometricVerification(user.id, 'face', 'in'));
-    document.getElementById('btn-finger-checkin').addEventListener('click', () => triggerBiometricVerification(user.id, 'finger', 'in'));
-  } else if (!todayLog.checkOut) {
-    document.getElementById('btn-regular-checkout').addEventListener('click', () => handleClockOut(user.id));
-    document.getElementById('btn-face-checkout').addEventListener('click', () => triggerBiometricVerification(user.id, 'face', 'out'));
-    document.getElementById('btn-finger-checkout').addEventListener('click', () => triggerBiometricVerification(user.id, 'finger', 'out'));
+  // Bind Geofence Card Actions (Direct Check-In without passwords/prompts)
+  const geoCheckIn = document.getElementById('btn-geofence-checkin');
+  if (geoCheckIn) {
+    geoCheckIn.addEventListener('click', () => {
+      const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
+      const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
+      const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+      
+      if (!inRange) {
+        alert('❌ Check-in Rejected! You are out of range.');
+        return;
+      }
+
+      const pendingTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
+      let timeOverride = null;
+      if (pendingTime) {
+        const date = new Date(pendingTime);
+        timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      }
+      
+      DB.checkIn(user.id, 'none', officeName, false, '', resolvedCoords, resolvedDistance, null, timeOverride);
+      sessionStorage.removeItem('hs_pending_auto_checkin_time');
+      requestsPushDBState();
+      renderEmployeeDashboard();
+    });
   }
-  
-  const recapBtn = document.getElementById('btn-employee-my-recap');
-  if (recapBtn) {
-    recapBtn.addEventListener('click', () => {
-      openPunctualityRecapModal(user.id);
+
+  // Bind Geofence Card Actions (Direct Check-Out without confirmation/passwords/prompts)
+  const geoCheckOut = document.getElementById('btn-geofence-checkout');
+  if (geoCheckOut) {
+    geoCheckOut.addEventListener('click', () => {
+      const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+      if (!inRange) {
+        alert('❌ Check-out Rejected! You are out of range.');
+        return;
+      }
+      
+      DB.checkOut(user.id);
+      requestsPushDBState();
+      renderEmployeeDashboard();
     });
   }
 
@@ -1336,17 +1695,133 @@ function renderEmployeeDashboard() {
     updateGpsUI(mockLoc);
   }
 
+  let lastAddressFetchTime = 0;
+  let lastAddressLat = 0;
+  let lastAddressLng = 0;
+  let lastAddressVal = "";
+
+  function updateAddressDisplay(lat, lng, element) {
+    if (!element) return;
+    
+    // First, check if it's close to any registered worksite
+    function localDist(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    if (window.OFFICE_COORDINATES) {
+      for (const [name, coords] of Object.entries(window.OFFICE_COORDINATES)) {
+        if (localDist(lat, lng, coords.lat, coords.lng) <= 150) {
+          element.textContent = name;
+          return;
+        }
+      }
+    }
+
+    // Throttle checks to once every 4 seconds to avoid spamming Nominatim
+    const now = Date.now();
+    const roundedLat = parseFloat(lat.toFixed(4));
+    const roundedLng = parseFloat(lng.toFixed(4));
+    
+    if (lastAddressLat === roundedLat && lastAddressLng === roundedLng && lastAddressVal) {
+      element.textContent = lastAddressVal;
+      return;
+    }
+
+    if (now - lastAddressFetchTime < 4000) {
+      element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+      return;
+    }
+
+    lastAddressFetchTime = now;
+    lastAddressLat = roundedLat;
+    lastAddressLng = roundedLng;
+    element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
+      headers: {
+        'Accept-Language': 'en'
+      }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.display_name) {
+          lastAddressVal = data.display_name;
+          element.textContent = lastAddressVal;
+        } else {
+          lastAddressVal = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
+          element.textContent = lastAddressVal;
+        }
+      })
+      .catch(e => {
+        lastAddressVal = getMockAddress(lat, lng);
+        element.textContent = lastAddressVal;
+      });
+  }
+
+  function getMockAddress(lat, lng) {
+    function localDist(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    const distKohat = localDist(lat, lng, 28.6978, 77.1408);
+    if (distKohat <= 150) {
+      return "Metro Station Rd, Kohat Enclave, Pitampura, New Delhi, Delhi 110034";
+    }
+    const distCC = localDist(lat, lng, 28.6562, 77.2310);
+    if (distCC <= 150) {
+      return "Chandni Chowk Rd, Near Red Fort, Old Delhi, Delhi 110006";
+    }
+    const distOmaxe = localDist(lat, lng, 28.8130, 77.0673);
+    if (distOmaxe <= 150) {
+      return "Sector 15, Omaxe City Industrial Area, Delhi NCR, Haryana 131001";
+    }
+    
+    if (lat > 28.7) {
+      return `Sector ${Math.floor(lat * 100) % 24 + 1}, Rohini, North Delhi, Delhi 110085`;
+    } else if (lng < 77.15) {
+      return "Dwarka Sector 9, West Delhi, Delhi 110077";
+    } else {
+      return "Connaught Place, Central Delhi, New Delhi, Delhi 110001";
+    }
+  }
+
   function updateGpsUI(val) {
     const badge = document.getElementById('gps-status-badge');
     const radar = document.getElementById('gps-radar');
-    const coords = document.getElementById('gps-coords-display');
-    const dist = document.getElementById('gps-distance-display');
+    const coordsDisplay = document.getElementById('gps-coords-display');
+    const distDisplay = document.getElementById('gps-distance-display');
     
-    const faceIn = document.getElementById('btn-face-checkin');
-    const fingerIn = document.getElementById('btn-finger-checkin');
-    const faceOut = document.getElementById('btn-face-checkout');
-    const fingerOut = document.getElementById('btn-finger-checkout');
     const regularIn = document.getElementById('btn-regular-checkin');
+    const regularOut = document.getElementById('btn-regular-checkout');
+
+    // Geofence action buttons references
+    const geoCheckIn = document.getElementById('btn-geofence-checkin');
+    const geoCheckOut = document.getElementById('btn-geofence-checkout');
+
+    const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
+    const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
+    const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
 
     let justBlock = document.getElementById('gps-justification-block');
     if (!justBlock) {
@@ -1354,208 +1829,1701 @@ function renderEmployeeDashboard() {
       justBlock.id = 'gps-justification-block';
       justBlock.style.marginTop = '12px';
       justBlock.style.transition = 'all 0.3s ease';
+      justBlock.style.display = 'none'; // Hidden by default until range check confirms out-of-range
       justBlock.innerHTML = `
-        <label class="form-label" style="font-size:11px;margin-bottom:6px;color:var(--error);display:flex;align-items:center;gap:4px">
-          ⚠️ Out of Geofence Deviation: Enter remote justification *
-        </label>
-        <textarea class="form-input" id="gps-justification-input" placeholder="Enter justification for remote check-in..." rows="2" style="font-size:12px;background:rgba(255,255,255,0.02);border-color:var(--error)"></textarea>
+        <div style="font-size:12px; font-weight:600; color:var(--error); background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
+          ❌ Check-in Rejected! You are out of geofence range. Under company policy, you must be within 100m of your assigned work location (${officeName}) to clock in.
+          <button class="btn btn-warning btn-sm" id="btn-gps-use-worksite" style="margin-top:8px; display:block; width:100%; padding:6px; font-size:11px; font-weight:700">📍 Switch to Assigned Worksite Location</button>
+        </div>
       `;
       const selectEl = document.getElementById('gps-mock-selector');
       if (selectEl) {
         selectEl.parentNode.parentNode.appendChild(justBlock);
       }
+
+      const btnUseWorksite = justBlock.querySelector('#btn-gps-use-worksite');
+      if (btnUseWorksite) {
+        btnUseWorksite.addEventListener('click', (e) => {
+          e.preventDefault();
+          const sel = document.getElementById('gps-mock-selector');
+          if (sel) {
+            sel.value = officeName;
+            sessionStorage.setItem('hs_mock_location', officeName);
+          }
+          updateGpsUI(officeName);
+        });
+      }
     }
 
-    const justInput = document.getElementById('gps-justification-input');
+    // Helper to calculate distance (Haversine Formula)
+    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // Earth radius in meters
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // in meters
+    }
 
-    if (val === 'hq') {
-      justBlock.style.display = 'none';
-      if (justInput) justInput.value = '';
+    function applyLocationState(currentLat, currentLng, coordsStr) {
+      const distance = calculateHaversineDistance(currentLat, currentLng, targetCoords.lat, targetCoords.lng);
+      const inRange = distance <= 100; // 100 meters geofence radius
+      const resolvedDistance = (distance / 1000).toFixed(2); // in km
+
+      // Transition notification checks
+      const prevInRange = window.lastGpsInRangeState;
+      if (prevInRange !== undefined && prevInRange !== inRange) {
+        if (inRange) {
+          showToastNotification(`📍 Geofence Alert: You are now IN RANGE of your worksite location. Check-in unlocked!`, 'success');
+        } else {
+          showToastNotification(`⚠️ Geofence Alert: You are OUT OF RANGE of your worksite location. Check-in locked.`, 'warning');
+        }
+      } else if (prevInRange === undefined) {
+        if (inRange) {
+          showToastNotification(`📍 Geofence Active: Located at assigned worksite (${officeName}). Check-in unlocked!`, 'success');
+        } else {
+          showToastNotification(`⚠️ Geofence Active: Outside of worksite range. Check-in locked.`, 'warning');
+        }
+      }
+      window.lastGpsInRangeState = inRange;
+
+      // Save resolved coords and distance to sessionStorage for actual submit
+      sessionStorage.setItem('hs_current_resolved_coords', coordsStr);
+      sessionStorage.setItem('hs_current_resolved_distance', resolvedDistance);
+      sessionStorage.setItem('hs_current_resolved_in_range', inRange ? 'true' : 'false');
+
+      if (coordsDisplay) coordsDisplay.textContent = coordsStr;
+      if (distDisplay) {
+        distDisplay.textContent = distance < 1000 ? `${Math.round(distance)} meters` : `${(distance/1000).toFixed(2)} km`;
+      }
+      
+      // Set target worksite and status detail displays
+      const worksiteCoordsDisplay = document.getElementById('gps-worksite-coords-display');
+      if (worksiteCoordsDisplay) {
+        worksiteCoordsDisplay.textContent = `${targetCoords.lat.toFixed(6)}° N, ${targetCoords.lng.toFixed(6)}° E`;
+      }
+      const worksiteNameDisplay = document.getElementById('gps-worksite-name-display');
+      if (worksiteNameDisplay) {
+        worksiteNameDisplay.textContent = officeName;
+      }
+      const statusSubDisplay = document.getElementById('gps-status-sub-display');
+      if (statusSubDisplay) {
+        statusSubDisplay.textContent = inRange ? '✅ In geofence range' : '❌ Out of range';
+      }
+
+      // Draw custom canvas radar map
+      drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, currentLat, currentLng, distance, inRange, officeName);
+      
+      // Trigger Auto check-in time start if inRange (no popup shown when in range)
+      if (inRange && (!todayLog || todayLog.status === 'Pending Verification')) {
+        const activePendingLog = DB.getTodayLog(user.id);
+        if (!activePendingLog) {
+          const newLog = DB.addPendingCheckIn(user.id, officeName, coordsStr, resolvedDistance);
+          const pendingTime = new Date();
+          const [h, m] = newLog.checkIn.split(':').map(Number);
+          pendingTime.setHours(h, m, 0, 0);
+          sessionStorage.setItem('hs_pending_auto_checkin_time', pendingTime.toISOString());
+          
+          startActiveWorkTimer(null);
+          showAutoCheckinBanner(false);
+          requestsPushDBState();
+        } else if (activePendingLog.status === 'Pending Verification') {
+          const pendingTime = new Date();
+          const [h, m] = activePendingLog.checkIn.split(':').map(Number);
+          pendingTime.setHours(h, m, 0, 0);
+          sessionStorage.setItem('hs_pending_auto_checkin_time', pendingTime.toISOString());
+          
+          startActiveWorkTimer(activePendingLog);
+          showAutoCheckinBanner(false);
+        }
+      } else {
+        if (!inRange) {
+          // Always clean session state and reset UI timer if currently out of range
+          sessionStorage.removeItem('hs_pending_auto_checkin_time');
+          const timerEl = document.getElementById('active-work-timer');
+          if (timerEl) {
+            timerEl.textContent = '00h 00m 00s';
+            timerEl.style.color = 'var(--cyan)';
+          }
+          showAutoCheckinBanner(false);
+
+          const activePendingLog = DB.getTodayLog(user.id);
+          if (activePendingLog && activePendingLog.status === 'Pending Verification') {
+            DB.removePendingCheckIn(user.id);
+            requestsPushDBState();
+          }
+        }
+      }
+
+      // Start sweeping animation loop (only redraws canvas, does NOT re-evaluate location state)
+      if (window.radarInterval) clearInterval(window.radarInterval);
+      window.radarInterval = setInterval(() => {
+        const canvas = document.getElementById('gps-canvas-map');
+        if (!canvas) {
+          clearInterval(window.radarInterval);
+          window.radarInterval = null;
+          return;
+        }
+        drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, currentLat, currentLng, distance, inRange, officeName);
+      }, 150);
+
+
+
+      if (inRange) {
+        justBlock.style.display = 'none';
+        if (badge) {
+          badge.textContent = 'In Range';
+          badge.className = 'badge badge-on-time';
+        }
+        if (radar) {
+          radar.className = 'gps-radar-indicator in-range';
+        }
+        // Enable regular check-in/out + geofence direct action buttons
+        [regularIn, regularOut, geoCheckIn, geoCheckOut].forEach(btn => {
+          if (btn) {
+            btn.removeAttribute('disabled');
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.setAttribute('title', 'Geofence validated');
+          }
+        });
+      } else {
+        justBlock.style.display = 'block';
+        if (badge) {
+          badge.textContent = 'Out of Range';
+          badge.className = 'badge badge-late';
+        }
+        if (radar) {
+          radar.className = 'gps-radar-indicator out-of-range';
+        }
+        // Disable regular check-in/out + geofence direct action buttons
+        [regularIn, regularOut, geoCheckIn, geoCheckOut].forEach(btn => {
+          if (btn) {
+            btn.setAttribute('disabled', 'true');
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
+            btn.setAttribute('title', `Action requires being within 100m of ${officeName}`);
+          }
+        });
+      }
+
+      // Adjust visibility/layout of geofence action buttons dynamically based on range and status
+      const currentTodayLog = DB.getTodayLog(user.id);
+      const btnGroup = document.getElementById('geofence-btn-group');
+      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
+      
+      if (checkedOutMsg) {
+        if (currentTodayLog && currentTodayLog.checkOut) {
+          if (btnGroup) btnGroup.style.display = 'none';
+          checkedOutMsg.style.display = 'block';
+        } else {
+          if (btnGroup) btnGroup.style.display = 'grid';
+          checkedOutMsg.style.display = 'none';
+
+          if (inRange) {
+            if (currentTodayLog && currentTodayLog.status !== 'Pending Verification') {
+              // Active clocked in state: Hide Check In, Show only Check Out (span full width)
+              if (geoCheckIn) geoCheckIn.style.display = 'none';
+              if (geoCheckOut) geoCheckOut.style.display = 'block';
+              if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+            } else {
+              // Not clocked in: Show both buttons side-by-side
+              if (geoCheckIn) geoCheckIn.style.display = 'block';
+              if (geoCheckOut) geoCheckOut.style.display = 'block';
+              if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+            }
+          } else {
+            // Out of range: Show both buttons side-by-side (disabled)
+            if (geoCheckIn) geoCheckIn.style.display = 'block';
+            if (geoCheckOut) geoCheckOut.style.display = 'block';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+          }
+        }
+      }
+    }
+
+    if (val === 'real') {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation API is not available on this device/browser. Automatically falling back to assigned worksite location.");
+        const selectEl = document.getElementById('gps-mock-selector');
+        if (selectEl) {
+          selectEl.value = officeName;
+          sessionStorage.setItem('hs_mock_location', officeName);
+        }
+        
+        const errContainer = document.getElementById('gps-error-container');
+        if (errContainer) {
+          errContainer.style.display = 'block';
+          errContainer.innerHTML = `
+            <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
+              ⚠️ Mobile Device GPS problem (Insecure HTTP/No GPS). Automatically fixed location at your assigned worksite: <strong>\${officeName}</strong>.
+            </div>
+          `;
+        }
+        setTimeout(() => {
+          updateGpsUI(officeName);
+        }, 100);
+        return;
+      }
+
+      // Clear any previous watch
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+
+      if (coordsDisplay) coordsDisplay.textContent = 'Acquiring GPS Signal...';
+      if (distDisplay) distDisplay.textContent = 'Calculating...';
       if (badge) {
-        badge.textContent = 'In Range';
+        badge.textContent = 'Locating...';
         badge.className = 'badge badge-on-time';
       }
       if (radar) {
         radar.className = 'gps-radar-indicator in-range';
       }
-      if (coords) coords.textContent = '28.6978° N, 77.1408° E';
-      if (dist) dist.textContent = '0 meters';
       
-      // Enable biometric buttons
-      [faceIn, fingerIn, faceOut, fingerOut].forEach(btn => {
-        if (btn) {
-          btn.removeAttribute('disabled');
-          btn.style.opacity = '1';
-          btn.style.cursor = 'pointer';
-          btn.setAttribute('title', 'Biometric verification');
-        }
-      });
-      if (regularIn) {
-        regularIn.removeAttribute('disabled');
-        regularIn.style.opacity = '1';
-        regularIn.style.cursor = 'pointer';
-      }
-    } else {
-      justBlock.style.display = 'block';
-      if (badge) {
-        badge.textContent = 'Out of Range';
-        badge.className = val === 'chandni' ? 'badge badge-late' : 'badge badge-absent';
-      }
-      if (radar) {
-        radar.className = 'gps-radar-indicator out-of-range';
-      }
-      if (coords) {
-        if (val === 'chandni') coords.textContent = '28.6562° N, 77.2310° E';
-        else if (val === 'omaxe') coords.textContent = '28.8130° N, 77.0673° E';
-      }
-      if (dist) {
-        if (val === 'chandni') dist.textContent = '9.8 km';
-        else if (val === 'omaxe') dist.textContent = '14.5 km';
-      }
-      
-      // Disable biometric buttons
-      [faceIn, fingerIn, faceOut, fingerOut].forEach(btn => {
-        if (btn) {
-          btn.setAttribute('disabled', 'true');
-          btn.style.opacity = '0.4';
-          btn.style.cursor = 'not-allowed';
-          btn.setAttribute('title', 'Biometric logging requires Kohat Enclave coordinates');
-        }
-      });
+      const errContainer = document.getElementById('gps-error-container');
+      if (errContainer) errContainer.style.display = 'none';
 
-      const validateJustification = () => {
-        if (regularIn) {
-          if (justInput && justInput.value.trim().length > 0) {
-            regularIn.removeAttribute('disabled');
-            regularIn.style.opacity = '1';
-            regularIn.style.cursor = 'pointer';
-          } else {
-            regularIn.setAttribute('disabled', 'true');
-            regularIn.style.opacity = '0.4';
-            regularIn.style.cursor = 'not-allowed';
+      let triedHighAccuracy = true;
+
+      function startWatching(highAccuracy) {
+        if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+          try {
+            navigator.geolocation.clearWatch(window.activeGpsWatchId);
+          } catch (e) {}
+          window.activeGpsWatchId = null;
+        }
+
+        window.activeGpsWatchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const errContainer = document.getElementById('gps-error-container');
+            if (errContainer) errContainer.style.display = 'none';
+
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const accuracy = pos.coords.accuracy || 10;
+            const timestamp = new Date(pos.timestamp || Date.now()).toLocaleTimeString();
+
+            // Display accuracy
+            const accuracyDisplay = document.getElementById('gps-accuracy-display');
+            if (accuracyDisplay) {
+              accuracyDisplay.textContent = `±${Math.round(accuracy)}m (${highAccuracy ? 'GPS' : 'Network'})`;
+            }
+
+            // Display timestamp
+            const timestampDisplay = document.getElementById('gps-timestamp-display');
+            if (timestampDisplay) {
+              timestampDisplay.textContent = timestamp;
+            }
+
+            // Display address
+            const addressDisplay = document.getElementById('gps-address-display');
+            if (addressDisplay) {
+              updateAddressDisplay(lat, lng, addressDisplay);
+            }
+
+            applyLocationState(lat, lng, `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`);
+          },
+          (err) => {
+            console.error("GPS Watch error:", err, "High Accuracy:", highAccuracy);
+
+            // Automatic network location fallback
+            if (highAccuracy && triedHighAccuracy) {
+              console.warn("High accuracy GPS timed out/failed. Falling back to low accuracy network location...");
+              triedHighAccuracy = false;
+              startWatching(false);
+              return;
+            }
+
+            console.warn("GPS failed. Automatically falling back to assigned worksite location:", officeName);
+            const selectEl = document.getElementById('gps-mock-selector');
+            if (selectEl) {
+              selectEl.value = officeName;
+              sessionStorage.setItem('hs_mock_location', officeName);
+            }
+            
+            const errContainer = document.getElementById('gps-error-container');
+            if (errContainer) {
+              errContainer.style.display = 'block';
+              errContainer.innerHTML = `
+                <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
+                  ⚠️ Mobile Device GPS problem (Permission Denied/Unavailable). Automatically fixed location at your assigned worksite: <strong>${officeName}</strong>.
+                </div>
+              `;
+            }
+
+            if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+              try {
+                navigator.geolocation.clearWatch(window.activeGpsWatchId);
+              } catch (e) {}
+              window.activeGpsWatchId = null;
+            }
+            setTimeout(() => {
+              updateGpsUI(officeName);
+            }, 100);
+          },
+          { 
+            enableHighAccuracy: highAccuracy, 
+            timeout: highAccuracy ? 8000 : 15000, 
+            maximumAge: 3000 
           }
-        }
-      };
-
-      validateJustification();
-      if (justInput) {
-        justInput.removeEventListener('input', validateJustification);
-        justInput.addEventListener('input', validateJustification);
+        );
       }
+
+      startWatching(true);
+    } else {
+      // Switching to mock — clear any active GPS watch
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+      
+      const errContainer = document.getElementById('gps-error-container');
+      if (errContainer) errContainer.style.display = 'none';
+
+      // Update mock accuracy display
+      const accuracyDisplay = document.getElementById('gps-accuracy-display');
+      if (accuracyDisplay) {
+        accuracyDisplay.textContent = 'Perfect (Mock)';
+      }
+      
+      // Update mock timestamp display
+      const timestampDisplay = document.getElementById('gps-timestamp-display');
+      if (timestampDisplay) {
+        timestampDisplay.textContent = new Date().toLocaleTimeString();
+      }
+
+      let selectedCoords = null;
+      let resolvedMockName = val; // Track the resolved location name for display
+      if (window.OFFICE_COORDINATES[val]) {
+        selectedCoords = window.OFFICE_COORDINATES[val];
+        resolvedMockName = val;
+      } else {
+        const foundKey = Object.keys(window.OFFICE_COORDINATES).find(k => k.toLowerCase() === val.toLowerCase() || k.toLowerCase().includes(val.toLowerCase()));
+        if (foundKey) {
+          selectedCoords = window.OFFICE_COORDINATES[foundKey];
+          resolvedMockName = foundKey;
+        } else {
+          selectedCoords = { lat: 28.6978, lng: 77.1408 };
+          resolvedMockName = 'Kohat Enclave, Pitampura, Delhi';
+        }
+      }
+
+      // Update mock address display
+      const addressDisplay = document.getElementById('gps-address-display');
+      if (addressDisplay) {
+        updateAddressDisplay(selectedCoords.lat, selectedCoords.lng, addressDisplay);
+      }
+
+      // Update GPS sub-status to show it's a simulation
+      const statusSubDisplay = document.getElementById('gps-status-sub-display');
+      if (statusSubDisplay) {
+        statusSubDisplay.textContent = `📍 Simulating: ${resolvedMockName}`;
+      }
+
+      applyLocationState(selectedCoords.lat, selectedCoords.lng, `${selectedCoords.lat.toFixed(6)}° N, ${selectedCoords.lng.toFixed(6)}° E`);
+    }
+  }
+
+
+}
+
+// ============================
+// ADD LOCATION HELPER FUNCTIONS
+// ============================
+
+// Dialog for shift schedule cards (inline Add Location button)
+async function openAddLocationDialog(schedId) {
+  const choice = await CustomDialog.prompt(
+    'Add New Location to Shift Schedule:\n\n' +
+    'Type 1 for: 📍 Fetch Nearby Location (uses GPS)\n' +
+    'Type 2 for: ✏️ Enter Any Location (manual entry)\n\n' +
+    'Enter 1 or 2:'
+  );
+  
+  if (choice === '1') {
+    await fetchNearbyAndRegister((newLocName) => {
+      const sel = document.querySelector(`.inline-sched-location[data-id="${schedId}"]`);
+      if (sel) {
+        DB.updateSchedule(schedId, { location: newLocName });
+      }
+      renderAdminSchedules();
+    });
+  } else if (choice === '2') {
+    await enterCustomAndRegister((newLocName) => {
+      const sel = document.querySelector(`.inline-sched-location[data-id="${schedId}"]`);
+      if (sel) {
+        DB.updateSchedule(schedId, { location: newLocName });
+      }
+      renderAdminSchedules();
+    });
+  }
+}
+
+// Fetch Nearby for modal select dropdowns
+async function fetchNearbyAndAddLocation(selectElement) {
+  await fetchNearbyAndRegister((newLocName) => {
+    rebuildLocationDropdown(selectElement, newLocName);
+  });
+}
+
+// Enter Custom for modal select dropdowns
+async function enterCustomLocation(selectElement) {
+  await enterCustomAndRegister((newLocName) => {
+    rebuildLocationDropdown(selectElement, newLocName);
+  });
+}
+
+// Core: Fetch GPS nearby and register
+async function fetchNearbyAndRegister(callback) {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by this browser. Using fallback coordinates.");
+    const lat = 28.6985, lng = 77.1384;
+    const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    if (name && name.trim()) {
+      registerNewLocation(name.trim(), lat, lng);
+      if (callback) callback(name.trim());
+    }
+    return;
+  }
+
+  alert('📡 Acquiring GPS signal... Please allow location access when prompted.');
+  
+  const position = await new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: true });
+  }).catch((error) => {
+    console.warn("Geolocation failed, using fallback:", error);
+    return null;
+  });
+
+  if (position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    if (name && name.trim()) {
+      registerNewLocation(name.trim(), lat, lng);
+      if (callback) callback(name.trim());
+    }
+  } else {
+    const lat = 28.6985, lng = 77.1384;
+    const defaultName = `Worksite Delhi (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    const name = await prompt('⚠️ GPS unavailable — using fallback coordinates.\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    if (name && name.trim()) {
+      registerNewLocation(name.trim(), lat, lng);
+      if (callback) callback(name.trim());
     }
   }
 }
 
-// Biometric Enrollment Wizard
-function openBiometricsSetupFlow(userId, type) {
-  openBiometricScanner(userId, type, (success) => {
-    if (success) {
-      Auth.registerBiometric(userId, type);
-      sessionStorage.removeItem('hs_fresh_signup');
-      alert(`Success! Your ${type === 'face' ? 'Face ID' : 'Fingerprint'} is now enrolled.`);
-      renderEmployeeDashboard();
+// Core: Enter custom location name + coordinates manually
+async function enterCustomAndRegister(callback) {
+  const name = await prompt('✏️ Enter Location Name:\n\n(e.g. "Sector 62, Noida" or "CP Office, Delhi")');
+  if (!name || !name.trim()) return;
+  
+  const coordStr = await prompt('Enter GPS Coordinates (optional):\n\nFormat: latitude, longitude\n(e.g. 28.6139, 77.2090)\n\nLeave blank to use default Delhi coordinates:');
+  
+  let lat = 28.6139, lng = 77.2090; // default Delhi center
+  if (coordStr && coordStr.trim()) {
+    const parts = coordStr.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      lat = parts[0];
+      lng = parts[1];
+    } else {
+      alert('Invalid coordinates format. Using default Delhi coordinates.');
+    }
+  }
+  
+  registerNewLocation(name.trim(), lat, lng);
+  if (callback) callback(name.trim());
+}
+
+// =========================================================================
+// FORGOT PASSWORD MODAL (HR & MANAGER MOBILE NUMBER AUTHENTICATION)
+// =========================================================================
+function showForgotPasswordModal(initialId = '') {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background: rgba(10, 15, 29, 0.85); backdrop-filter: blur(12px);
+    display:flex; justify-content:center; align-items:center; z-index:10000;
+    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content card-panel';
+  modal.style.cssText = `
+    max-width: 460px; width: 92%; padding: 28px;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+    border: 1px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+  `;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <div style="width:36px; height:36px; border-radius:10px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:18px">
+          🔑
+        </div>
+        <div>
+          <h3 style="font-size:17px; font-weight:800; color:#f8fafc; margin:0">Forgot Password</h3>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px">Mobile Number Authentication</div>
+        </div>
+      </div>
+      <button id="btn-close-forgot-modal" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); width:30px; height:30px; border-radius:50%; font-size:16px; color:#cbd5e1; cursor:pointer; display:flex; align-items:center; justify-content:center">&times;</button>
+    </div>
+
+    <!-- Step 1: Mobile Auth Form -->
+    <form id="forgot-pwd-step1" style="display:flex; flex-direction:column; gap:16px">
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">HR / MANAGER ID OR USERNAME *</label>
+        <input type="text" id="forgot-input-id" class="form-control" placeholder="e.g. EMP107 or admin" value="${Utils.escape(initialId)}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+      </div>
+
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">REGISTERED MOBILE NUMBER *</label>
+        <input type="tel" id="forgot-input-mobile" class="form-control" placeholder="e.g. +91 98765 43210" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        <div style="font-size:11px; color:#64748b; margin-top:4px">Enter the mobile number registered with your HR / Manager profile.</div>
+      </div>
+
+      <div id="forgot-error-msg" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
+        <button type="button" id="btn-cancel-forgot-modal" style="padding:9px 18px; font-size:12.5px; font-weight:700; border-radius:10px; background:#ffffff; border:1.5px solid #b91c1c; color:#1e293b; cursor:pointer">Cancel</button>
+        <button type="submit" style="padding:9px 20px; font-size:12.5px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Verify Mobile</button>
+      </div>
+    </form>
+
+    <!-- Step 2: New Password Form (Initially hidden) -->
+    <form id="forgot-pwd-step2" style="display:none; flex-direction:column; gap:16px">
+      <div style="padding:10px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:10px; color:#6ee7b7; font-size:12px; font-weight:600">
+        ✅ Mobile Number Authenticated! Enter your new password below:
+      </div>
+
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">NEW PASSWORD *</label>
+        <input type="password" id="forgot-input-newpwd" class="form-control" placeholder="Minimum 6 chars (Upper + Special)" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+      </div>
+
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">CONFIRM NEW PASSWORD *</label>
+        <input type="password" id="forgot-input-confirmpwd" class="form-control" placeholder="Re-enter new password" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+      </div>
+
+      <div id="forgot-step2-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
+        <button type="submit" style="padding:10px 22px; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Update Password</button>
+      </div>
+    </form>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeModal = () => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  };
+  modal.querySelector('#btn-close-forgot-modal').addEventListener('click', closeModal);
+  modal.querySelector('#btn-cancel-forgot-modal').addEventListener('click', closeModal);
+
+  let verifiedUser = null;
+
+  modal.querySelector('#forgot-pwd-step1').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const errorMsg = modal.querySelector('#forgot-error-msg');
+    errorMsg.style.display = 'none';
+
+    const loginKey = modal.querySelector('#forgot-input-id').value.trim();
+    const mobileEntered = modal.querySelector('#forgot-input-mobile').value.trim();
+
+    if (!loginKey || !mobileEntered) {
+      errorMsg.textContent = '⚠️ Please enter both your ID and Mobile Number.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    const targetUser = DB.getUserByUsernameOrId(loginKey);
+    if (!targetUser) {
+      errorMsg.textContent = '⚠️ Account record not found for the specified ID.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    // Strip non-digits to compare mobile numbers flexibly
+    const cleanEntered = mobileEntered.replace(/\D/g, '');
+    const cleanUserPhone = (targetUser.phone || targetUser.mobile || targetUser.emergencyContact || '').replace(/\D/g, '');
+
+    const isPhoneMatch = cleanUserPhone && cleanEntered.length >= 7 && (cleanEntered.endsWith(cleanUserPhone) || cleanUserPhone.endsWith(cleanEntered) || cleanEntered === cleanUserPhone);
+
+    if (!isPhoneMatch) {
+      errorMsg.textContent = '⚠️ Mobile number verification failed! The entered number does not match registered HR/Manager records.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    verifiedUser = targetUser;
+    modal.querySelector('#forgot-pwd-step1').style.display = 'none';
+    modal.querySelector('#forgot-pwd-step2').style.display = 'flex';
+  });
+
+  modal.querySelector('#forgot-pwd-step2').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const errorMsg = modal.querySelector('#forgot-step2-error');
+    errorMsg.style.display = 'none';
+
+    const newPwd = modal.querySelector('#forgot-input-newpwd').value;
+    const confirmPwd = modal.querySelector('#forgot-input-confirmpwd').value;
+
+    if (newPwd.length < 6) {
+      errorMsg.textContent = '⚠️ Password must be at least 6 characters long.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    if (!/[A-Z]/.test(newPwd) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPwd)) {
+      errorMsg.textContent = '⚠️ Password must contain at least 1 uppercase letter and 1 special character.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      errorMsg.textContent = '⚠️ Passwords do not match.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+
+    const hashed = Utils.hashPassword(newPwd);
+    DB.updateUser(verifiedUser.id, { password: hashed });
+
+    closeModal();
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('✅ Password updated successfully! Please log in with your new password.', 'success');
+    }
+    const loginPwdInput = document.getElementById('auth-pwd-input');
+    if (loginPwdInput) {
+      loginPwdInput.value = newPwd;
+      loginPwdInput.focus();
     }
   });
 }
 
-function renderPersonalLogs(userId) {
-  const logs = DB.getLogs(userId).slice(0, 7);
-  const tbody = document.getElementById('employee-logs-table-body');
-  if (logs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No logs recorded yet.</td></tr>`;
+
+
+// =========================================================================
+// ACCOUNT MANAGEMENT MODULE (HR & Manager Only)
+// =========================================================================
+function renderAccountManagementView() {
+  const root = document.getElementById('main-content');
+  if (!root) return;
+
+  const currentUser = Auth.getCurrentUser();
+  if (!currentUser || (currentUser.role !== 'hr' && currentUser.role !== 'manager')) {
+    window.location.hash = '#dashboard';
     return;
   }
-  tbody.innerHTML = logs.map(l => {
-    let statusClass = 'badge-on-time';
-    if (l.status === 'Late') statusClass = 'badge-late';
-    if (l.status === 'Half Day') statusClass = 'badge-half-day';
-    return `
-      <tr>
-        <td>${Utils.formatDate(l.date)}</td>
-        <td>${l.checkIn || '--:--'}</td>
-        <td>${l.checkOut || '--:--'}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Kohat Enclave, Pitampura, Delhi')}</td>
-        <td><span class="badge ${statusClass}">${l.status}</span></td>
-      </tr>
-    `;
-  }).join('');
-}
 
-function handlePinClockIn(userId) {
-  const pass = prompt('Enter your Account Password to Clock In:');
-  if (pass === null) return;
-  const user = DB.getUser(userId);
-  if (user && user.password === pass) {
-    const mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
-    let locationName = 'Kohat Enclave, Pitampura, Delhi';
-    let deviationFlag = false;
-    let justification = '';
-    let coords = '28.6978° N, 77.1408° E';
-    let distance = 0;
+  let searchQuery = '';
+  let roleFilter = 'all';
+  let statusFilter = 'all';
 
-    if (mockLoc === 'chandni') {
-      locationName = 'Chandni Chowk';
-      deviationFlag = true;
-      coords = '28.6562° N, 77.2310° E';
-      distance = 9.8;
-    } else if (mockLoc === 'omaxe') {
-      locationName = 'Omaxe City, Delhi';
-      deviationFlag = true;
-      coords = '28.8130° N, 77.0673° E';
-      distance = 14.5;
+  const renderTableContent = () => {
+    const allUsers = DB.getUsers();
+    let filtered = allUsers.filter(u => u.role === 'hr' || u.role === 'manager');
+
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(u => u.role === roleFilter);
     }
 
-    if (deviationFlag) {
-      const justInput = document.getElementById('gps-justification-input');
-      justification = justInput ? justInput.value.trim() : '';
-      if (!justification) {
-        alert('Out of Geofence Check-In requires a justification.');
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(u => (u.status || 'Active') === statusFilter);
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(u => 
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.employeeId && u.employeeId.toLowerCase().includes(q))
+      );
+    }
+
+    const tbody = document.getElementById('accounts-table-body');
+    if (!tbody) return;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding: 36px; color: var(--text-secondary);">
+            <div style="font-size: 32px; margin-bottom: 8px;">👤</div>
+            <div style="font-weight: 600; font-size: 15px;">No Accounts Found</div>
+            <div style="font-size: 12.5px; margin-top: 4px;">Try adjusting your search query or filters.</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(u => {
+      const isHR = u.role === 'hr';
+      const status = u.status || 'Active';
+      const isActive = status === 'Active';
+      const initials = u.name ? u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'US';
+      const canManage = currentUser.role === 'hr' || (currentUser.role === 'manager' && u.id === currentUser.id);
+
+      let actionButtons = '<span style="font-size:11px; color:var(--text-muted); font-style:italic">View Only</span>';
+      if (canManage) {
+        const deleteBtn = (currentUser.role === 'hr' && u.id !== currentUser.id)
+          ? `<button class="btn btn-sm btn-danger btn-delete-account" data-id="${u.id}" title="Delete Account" style="padding:5px 10px; font-size:12px">🗑️ Delete</button>`
+          : '';
+        actionButtons = `
+          <button class="btn btn-sm btn-secondary btn-toggle-status" data-id="${u.id}" title="${isActive ? 'Deactivate Account' : 'Activate Account'}" style="padding:5px 10px; font-size:12px">
+            ${isActive ? '🔴 Disable' : '🟢 Enable'}
+          </button>
+          <button class="btn btn-sm btn-outline btn-edit-account" data-id="${u.id}" title="Edit Account Details" style="padding:5px 10px; font-size:12px">
+            ✏️ Edit
+          </button>
+          ${deleteBtn}
+        `;
+      }
+
+      return `
+        <tr data-user-id="${u.id}">
+          <td>
+            <div style="display:flex; align-items:center; gap:12px">
+              <div style="width:38px; height:38px; border-radius:50%; background:${isHR ? 'rgba(251,191,36,0.15)' : 'rgba(6,182,212,0.15)'}; color:${isHR ? 'var(--primary)' : 'var(--cyan)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid ${isHR ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.3)'}">
+                ${initials}
+              </div>
+              <div>
+                <div style="font-weight:700; color:var(--text-primary); font-size:14px">${Utils.escape(u.name)}</div>
+                <div style="font-size:11.5px; color:var(--text-secondary)">ID: ${Utils.escape(u.employeeId || '-')}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="font-weight:600; color:var(--text-primary); font-size:13px">@${Utils.escape(u.username)}</div>
+            <div style="font-size:11.5px; color:var(--text-secondary)">${Utils.escape(u.email || 'No email registered')}</div>
+          </td>
+          <td>
+            <span class="badge ${isHR ? 'badge-warning' : 'badge-info'}" style="font-size:11px; padding:4px 10px; font-weight:700">
+              ${isHR ? 'HR Manager' : 'Operations Manager'}
+            </span>
+          </td>
+          <td>
+            <span class="badge ${isActive ? 'badge-success' : 'badge-danger'}" style="font-size:11px; padding:4px 10px; font-weight:700; display:inline-flex; align-items:center; gap:5px">
+              <span style="width:6px; height:6px; border-radius:50%; background:currentColor"></span>
+              ${status}
+            </span>
+          </td>
+          <td style="font-size:12.5px; color:var(--text-secondary)">
+            ${Utils.formatDate(u.dateOfJoining || u.createdAt || new Date())}
+          </td>
+          <td>
+            <div style="display:flex; gap:8px; justify-content:flex-end">
+              ${actionButtons}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-toggle-status').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const targetUser = DB.getUser(id);
+        if (!targetUser) return;
+        const newStatus = (targetUser.status || 'Active') === 'Active' ? 'Inactive' : 'Active';
+        
+        const confirmMsg = `Are you sure you want to change account status for ${targetUser.name} to ${newStatus}?`;
+        const confirmed = await CustomDialog.confirm(confirmMsg);
+        if (confirmed) {
+          DB.updateUser(id, { status: newStatus });
+          await CustomDialog.alert(`Account status for ${targetUser.name} updated to ${newStatus}.`);
+          renderAccountStats();
+          renderTableContent();
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-edit-account').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const targetUser = DB.getUser(id);
+        if (targetUser) {
+          showAccountModal(targetUser);
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-delete-account').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const targetUser = DB.getUser(id);
+        if (!targetUser) return;
+
+        const confirmMsg = `Are you sure you want to permanently delete the account for ${targetUser.name} (@${targetUser.username})?\n\nThis action cannot be undone.`;
+        const confirmed = await CustomDialog.confirm(confirmMsg);
+        if (confirmed) {
+          DB.deleteUser(id);
+          await CustomDialog.alert(`Account for ${targetUser.name} deleted successfully.`);
+          renderAccountStats();
+          renderTableContent();
+        }
+      });
+    });
+  };
+
+  const renderAccountStats = () => {
+    const users = DB.getUsers().filter(u => u.role === 'hr' || u.role === 'manager');
+    const total = users.length;
+    const active = users.filter(u => (u.status || 'Active') === 'Active').length;
+    const inactive = total - active;
+    const hrCount = users.filter(u => u.role === 'hr').length;
+    const managerCount = users.filter(u => u.role === 'manager').length;
+
+    const statsContainer = document.getElementById('account-stats-container');
+    if (statsContainer) {
+      statsContainer.innerHTML = `
+        <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(251,191,36,0.12); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:22px">👥</div>
+          <div>
+            <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Total Accounts</div>
+            <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-top:2px">${total}</div>
+          </div>
+        </div>
+        <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(16,185,129,0.12); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:22px">🟢</div>
+          <div>
+            <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Active Accounts</div>
+            <div style="font-size:22px; font-weight:800; color:var(--success); margin-top:2px">${active}</div>
+          </div>
+        </div>
+        <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(239,68,68,0.12); color:var(--error); display:flex; align-items:center; justify-content:center; font-size:22px">🔴</div>
+          <div>
+            <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Inactive Accounts</div>
+            <div style="font-size:22px; font-weight:800; color:var(--error); margin-top:2px">${inactive}</div>
+          </div>
+        </div>
+        <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(6,182,212,0.12); color:var(--cyan); display:flex; align-items:center; justify-content:center; font-size:22px">🛡️</div>
+          <div>
+            <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">HR / Managers</div>
+            <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-top:2px">${hrCount} HR / ${managerCount} Mgr</div>
+          </div>
+        </div>
+      `;
+    }
+  };
+
+  root.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:24px">
+      <!-- Top Title Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px">
+        <div>
+          <h2 style="font-size:22px; font-weight:800; color:var(--text-primary); margin:0">Account Management</h2>
+          <p style="font-size:13px; color:var(--text-secondary); margin:4px 0 0 0">Create, manage, and configure role-based access for HR Administrators and Managers.</p>
+        </div>
+        <div>
+          <button class="btn" id="btn-create-account" style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:12px; box-shadow:0 4px 14px rgba(220,38,38,0.4); cursor:pointer; transition:transform 0.15s ease">
+            <svg style="width:18px; height:18px; fill:currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Create New Account
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Bar Grid -->
+      <div id="account-stats-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px">
+      </div>
+
+      <!-- Controls & Search Toolbar -->
+      <div class="card-panel" style="padding:16px 20px">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px">
+          <div style="flex:1; min-width:260px">
+            <input type="text" id="acct-search-input" class="form-control" placeholder="🔍 Search name, username, email, or employee ID..." style="padding:10px 14px">
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap">
+            <select id="acct-role-filter" class="form-control" style="width:auto; min-width:140px">
+              <option value="all">All Roles</option>
+              <option value="hr">HR Administrator</option>
+              <option value="manager">Operations Manager</option>
+            </select>
+            <select id="acct-status-filter" class="form-control" style="width:auto; min-width:140px">
+              <option value="all">All Statuses</option>
+              <option value="Active">Active Only</option>
+              <option value="Inactive">Inactive Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accounts Table -->
+      <div class="card-panel" style="padding:0; overflow:hidden">
+        <div class="table-responsive">
+          <table class="data-table" style="width:100%">
+            <thead>
+              <tr>
+                <th>Account Holder</th>
+                <th>Username & Email</th>
+                <th>Assigned Role</th>
+                <th>Status</th>
+                <th>Joined Date</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-table-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderAccountStats();
+  renderTableContent();
+
+  document.getElementById('acct-search-input').addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    renderTableContent();
+  });
+
+  document.getElementById('acct-role-filter').addEventListener('change', (e) => {
+    roleFilter = e.target.value;
+    renderTableContent();
+  });
+
+  document.getElementById('acct-status-filter').addEventListener('change', (e) => {
+    statusFilter = e.target.value;
+    renderTableContent();
+  });
+
+  document.getElementById('btn-create-account').addEventListener('click', () => {
+    showAccountModal();
+  });
+}
+
+function showAccountModal(editUser = null) {
+  const isEdit = !!editUser;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background: rgba(10, 15, 29, 0.82); backdrop-filter: blur(12px);
+    display:flex; justify-content:center; align-items:center; z-index:10000;
+    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+
+  const initialRole = isEdit ? editUser.role : 'hr';
+  const initialIdLabel = (initialRole === 'hr') ? 'HR ID *' : 'Manager ID *';
+  const initialPlaceholder = (initialRole === 'hr') ? 'e.g. EMP100 or Tanya' : 'e.g. EMP102 or Manager1';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content card-panel';
+  modal.style.cssText = `
+    max-width: 520px; width: 92%; padding: 32px;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+    border: 1px solid rgba(251, 191, 36, 0.3) !important;
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(251, 191, 36, 0.12);
+  `;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px">
+      <div style="display:flex; align-items:center; gap:12px">
+        <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, rgba(251,191,36,0.2), rgba(6,182,212,0.2)); border:1px solid rgba(251,191,36,0.3); display:flex; align-items:center; justify-content:center; font-size:18px">
+          ${isEdit ? '✏️' : '👤'}
+        </div>
+        <div>
+          <h3 style="font-size:18px; font-weight:800; color:#f8fafc; margin:0; letter-spacing:-0.01em">
+            ${isEdit ? 'Edit Account' : 'Create Account'}
+          </h3>
+          <div style="font-size:11.5px; color:#94a3b8; margin-top:2px">Configure credentials and role permissions</div>
+        </div>
+      </div>
+      <button class="close-modal-btn" id="btn-close-acct-modal" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); width:32px; height:32px; border-radius:50%; font-size:18px; color:#cbd5e1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease">&times;</button>
+    </div>
+
+    <form id="acct-form" style="display:flex; flex-direction:column; gap:18px">
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">FULL NAME *</label>
+        <input type="text" id="acct-input-name" class="form-control" placeholder="e.g. Ananya Sharma" value="${isEdit ? Utils.escape(editUser.name) : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+        <div>
+          <label id="lbl-acct-id-type" style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">${initialIdLabel}</label>
+          <input type="text" id="acct-input-username" class="form-control" placeholder="${initialPlaceholder}" value="${isEdit ? Utils.escape(editUser.username || editUser.employeeId || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        </div>
+        <div>
+          <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">EMAIL ADDRESS *</label>
+          <input type="email" id="acct-input-email" class="form-control" placeholder="e.g. alex@gmail.com or name@surya.group" value="${isEdit ? Utils.escape(editUser.email || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; transition:border-color 0.2s ease">
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">
+          PASSWORD ${isEdit ? '(Leave blank to keep existing)' : '*'}
+        </label>
+        <div style="position:relative">
+          <input type="password" id="acct-input-password" class="form-control" placeholder="${isEdit ? '••••••••' : 'Minimum 6 chars (Upper + Special)'}" ${isEdit ? '' : 'required'} style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 42px 10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-pwd-vis" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div style="font-size:11px; color:#64748b; margin-top:5px">Must contain uppercase letter & special character. Password will be securely hashed.</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px">
+            <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; letter-spacing:0.02em; margin:0">ROLE *</label>
+            <button type="button" id="btn-add-custom-role" title="Add New Custom Department / Role" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; height:22px; padding:0 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:3px; transition:all 0.2s ease">+ Role</button>
+          </div>
+          <select id="acct-input-role" class="form-control" required style="background:#0f172a; border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; cursor:pointer">
+            <option value="hr" ${isEdit && editUser.role === 'hr' ? 'selected' : ''} style="background:#0f172a; color:#f8fafc">HR Administrator</option>
+            <option value="manager" ${isEdit && (editUser.role === 'manager' || editUser.role === 'finance_manager') ? 'selected' : ''} style="background:#0f172a; color:#f8fafc">Operations Manager</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">MOBILE NUMBER *</label>
+          <input type="tel" id="acct-input-mobile" class="form-control" placeholder="e.g. +91 98765 43210" value="${isEdit ? Utils.escape(editUser.phone || editUser.mobile || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        </div>
+      </div>
+
+      <div id="acct-form-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px">
+        <button type="button" class="btn" id="btn-cancel-acct-modal" style="padding:10px 22px; font-size:13px; font-weight:700; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; cursor:pointer; transition:all 0.2s ease">Cancel</button>
+        <button type="submit" class="btn" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4); transition:all 0.2s ease">${isEdit ? 'Save Changes' : 'Create Account'}</button>
+      </div>
+    </form>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const pwdInput = modal.querySelector('#acct-input-password');
+  const togglePwdBtn = modal.querySelector('#btn-toggle-pwd-vis');
+  const roleSelect = modal.querySelector('#acct-input-role');
+  const idLabelEl = modal.querySelector('#lbl-acct-id-type');
+  const usernameInput = modal.querySelector('#acct-input-username');
+  const emailInput = modal.querySelector('#acct-input-email');
+  const addRoleBtn = modal.querySelector('#btn-add-custom-role');
+
+  const emailStrictRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  if (emailInput) {
+    emailInput.addEventListener('input', () => {
+      const val = emailInput.value.trim();
+      if (!val) {
+        emailInput.style.borderColor = 'rgba(255,255,255,0.12)';
+      } else if (emailStrictRegex.test(val)) {
+        emailInput.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+      } else {
+        emailInput.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+      }
+    });
+  }
+
+  const updateRoleLabels = () => {
+    const val = roleSelect.value;
+    let currentVal = usernameInput ? usernameInput.value.trim() : '';
+    const numMatch = currentVal.match(/\d+/);
+    const numPart = numMatch ? numMatch[0] : '100';
+
+    if (val === 'hr') {
+      if (idLabelEl) idLabelEl.textContent = 'HR ID *';
+      if (usernameInput) {
+        if (!isEdit || !usernameInput.value) usernameInput.value = `HR${numPart}`;
+        usernameInput.placeholder = 'e.g. HR100';
+      }
+    } else if (val === 'manager' || val === 'finance_manager') {
+      if (idLabelEl) idLabelEl.textContent = 'Manager ID *';
+      if (usernameInput) {
+        if (!isEdit || !usernameInput.value) usernameInput.value = `MGR${numPart}`;
+        usernameInput.placeholder = 'e.g. MGR100';
+      }
+    } else {
+      if (idLabelEl) idLabelEl.textContent = 'Employee ID *';
+      if (usernameInput) {
+        if (!isEdit || !usernameInput.value) usernameInput.value = `EMP${numPart}`;
+        usernameInput.placeholder = 'e.g. EMP100';
+      }
+    }
+  };
+
+  if (roleSelect) {
+    roleSelect.addEventListener('change', updateRoleLabels);
+  }
+
+  if (addRoleBtn) {
+    addRoleBtn.addEventListener('click', async () => {
+      const newRoleTitle = await prompt("Enter new custom Department / Role title:\n(e.g. Senior Operations Manager, IT Head, HR Executive)");
+      if (newRoleTitle && newRoleTitle.trim()) {
+        const cleanTitle = newRoleTitle.trim();
+        const cleanVal = cleanTitle.toLowerCase().replace(/\s+/g, '_');
+        const option = document.createElement('option');
+        option.value = cleanVal;
+        option.textContent = cleanTitle;
+        option.dataset.customName = cleanTitle;
+        option.style.background = '#0f172a';
+        option.style.color = '#f8fafc';
+        roleSelect.appendChild(option);
+        roleSelect.value = cleanVal;
+        updateRoleLabels();
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`Added custom department/role "${cleanTitle}"`, "success");
+        }
+      }
+    });
+  }
+
+  const svgEyeOpen = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const svgEyeClosed = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
+  togglePwdBtn.addEventListener('click', () => {
+    if (pwdInput.type === 'password') {
+      pwdInput.type = 'text';
+      togglePwdBtn.innerHTML = svgEyeClosed;
+      togglePwdBtn.style.color = '#dc2626';
+      togglePwdBtn.style.background = '#fef2f2';
+      togglePwdBtn.style.borderColor = '#dc2626';
+    } else {
+      pwdInput.type = 'password';
+      togglePwdBtn.innerHTML = svgEyeOpen;
+      togglePwdBtn.style.color = '#b91c1c';
+      togglePwdBtn.style.background = '#ffffff';
+      togglePwdBtn.style.borderColor = '#b91c1c';
+    }
+  });
+
+  const closeModal = () => {
+    document.body.removeChild(overlay);
+  };
+
+  modal.querySelector('#btn-close-acct-modal').addEventListener('click', closeModal);
+  modal.querySelector('#btn-cancel-acct-modal').addEventListener('click', closeModal);
+
+  modal.querySelector('#acct-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = modal.querySelector('#acct-form-error');
+    errorEl.style.display = 'none';
+
+    const name = modal.querySelector('#acct-input-name').value.trim();
+    const username = modal.querySelector('#acct-input-username').value.trim();
+    const email = modal.querySelector('#acct-input-email').value.trim();
+    const mobile = modal.querySelector('#acct-input-mobile').value.trim();
+    const password = pwdInput.value;
+    const role = modal.querySelector('#acct-input-role').value;
+    const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+    const customRoleName = selectedOption ? (selectedOption.dataset.customName || selectedOption.text) : role;
+
+    if (!name || !username || !email || !mobile || (!isEdit && !password)) {
+      errorEl.textContent = '⚠️ Please fill out all required fields.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!emailStrictRegex.test(email)) {
+      errorEl.textContent = '⚠️ Invalid Email Format! Please enter a valid email address (e.g. alex@gmail.com or name@surya.group).';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!/^[0-9+\s\-()]{7,15}$/.test(mobile)) {
+      errorEl.textContent = '⚠️ Please enter a valid Mobile Number (7-15 digits).';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!/^[A-Za-z\s]+$/.test(name)) {
+      errorEl.textContent = '⚠️ Full Name can only contain letters (A-Z) and spaces.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+      errorEl.textContent = '⚠️ Please enter a valid email address (e.g. name@company.com).';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+      errorEl.textContent = '⚠️ Username can only contain letters, numbers, underscores, dots, or hyphens.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const existingUserByUsername = DB.getUserByUsername(username);
+    if (existingUserByUsername && (!isEdit || existingUserByUsername.id !== editUser.id)) {
+      errorEl.textContent = `⚠️ Username '@${username}' is already taken. Please choose another username.`;
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const existingUserByEmail = DB.getUserByEmail(email);
+    if (existingUserByEmail && (!isEdit || existingUserByEmail.id !== editUser.id)) {
+      errorEl.textContent = `⚠️ Email '${email}' is already registered to another account.`;
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    if (password) {
+      const pwdVal = Auth.validatePassword(password);
+      if (!pwdVal.valid) {
+        errorEl.textContent = '⚠️ Password must be at least 6 characters long and include an uppercase letter and a special character (!@#$%^&*).';
+        errorEl.style.display = 'block';
         return;
       }
     }
 
-    DB.checkIn(userId, 'none', locationName, deviationFlag, justification, coords, distance);
+    const payload = {
+      name,
+      username,
+      employeeId: username.toUpperCase(),
+      email,
+      phone: mobile,
+      mobile: mobile,
+      role,
+      status: isEdit ? (editUser.status || 'Active') : 'Active',
+      department: customRoleName || (role === 'hr' ? 'Human Resources' : 'Operations'),
+      designation: customRoleName || (role === 'hr' ? 'HR Coordinator' : 'Operations Manager')
+    };
+
+    if (password) {
+      payload.password = Utils.hashPassword(password);
+    }
+
+    if (isEdit) {
+      DB.updateUser(editUser.id, payload);
+      closeModal();
+      await CustomDialog.alert(`Account for ${name} (${username}) updated successfully.`);
+    } else {
+      DB.addUser(payload);
+      closeModal();
+
+      const credModal = document.createElement('div');
+      credModal.style.cssText = `
+        position: fixed; top:0; left:0; width:100vw; height:100vh;
+        background: rgba(12,3,4,0.85); backdrop-filter: blur(8px);
+        display:flex; justify-content:center; align-items:center; z-index:10001;
+        animation: fadeIn 0.2s ease forwards;
+      `;
+      credModal.innerHTML = `
+        <div class="card-panel" style="max-width: 440px; width: 90%; padding: 26px; background: var(--bg-surface); border: 1px solid var(--primary); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
+          <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
+          <h3 style="font-size: 19px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">Account Created Successfully!</h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px;">Here are the credentials for the newly created account:</p>
+          
+          <div style="background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 16px; text-align: left; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
+              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Full Name:</span>
+              <strong style="color:var(--text-primary); font-size:13px">${Utils.escape(name)}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
+              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">HR / Employee ID:</span>
+              <strong style="color:var(--cyan); font-size:14px; font-family:monospace; background:rgba(6,182,212,0.15); padding:3px 10px; border-radius:6px">${Utils.escape(username.toUpperCase())}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
+              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Email Address:</span>
+              <strong style="color:var(--text-primary); font-size:13px">${Utils.escape(email)}</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center">
+              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Password:</span>
+              <strong style="color:#f59e0b; font-size:14px; font-family:monospace; background:rgba(245,158,11,0.15); padding:3px 10px; border-radius:6px">${Utils.escape(password)}</strong>
+            </div>
+          </div>
+
+          <button id="btn-close-cred-modal" class="btn btn-primary" style="width: 100%; padding: 11px; font-weight: 700; font-size: 13.5px; border-radius: 8px;">Got It & Continue</button>
+        </div>
+      `;
+      document.body.appendChild(credModal);
+      credModal.querySelector('#btn-close-cred-modal').addEventListener('click', () => {
+        document.body.removeChild(credModal);
+        showVerificationScreen(payload);
+      });
+    }
+
+    renderAccountManagementView();
+  });
+}
+
+// Register a new location globally
+function registerNewLocation(name, lat, lng) {
+  DB.saveOfficeCoordinate(name, lat, lng);
+  
+  // Also create a matching schedule for it
+  DB.addSchedule({
+    name: name + ' Shift',
+    startTime: '09:00',
+    endTime: '17:00',
+    gracePeriod: 15,
+    workDays: [1, 2, 3, 4, 5],
+    location: name
+  });
+  
+  alert('✅ Location "' + name + '" registered successfully!\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E');
+}
+
+// Rebuild a select dropdown with all current locations
+function rebuildLocationDropdown(selectElement, selectValue) {
+  let html = '';
+  Object.keys(window.OFFICE_COORDINATES).forEach(loc => {
+    html += '<option value="' + loc + '"' + (loc === selectValue ? ' selected' : '') + '>' + loc + '</option>';
+  });
+  selectElement.innerHTML = html;
+  selectElement.value = selectValue;
+}
+
+
+function getAttendanceStatusForDate(userId, dateStr) {
+  const date = new Date(dateStr);
+  const dayOfWeek = date.getDay();
+  const user = DB.getUser(userId);
+  const resolved = DB.resolveUserShiftForDate(user, dateStr);
+  const schedule = DB.getSchedule(resolved.scheduleId) || {
+    name: 'Standard Day Shift',
+    startTime: '09:00',
+    endTime: '17:00',
+    gracePeriod: 15,
+    workDays: [1, 2, 3, 4, 5],
+    location: 'Kohat Enclave, Pitampura, Delhi'
+  };
+
+  // 1. Check for Leave
+  const leaves = DB.data.leaveRequests || [];
+  const hasLeave = leaves.some(lv => 
+    lv.userId === userId && 
+    lv.status === 'Approved' && 
+    dateStr >= lv.startDate && 
+    dateStr <= lv.endDate
+  );
+  if (hasLeave) {
+    return { status: 'Leave', color: 'var(--primary)', log: null, schedule };
+  }
+
+  // 2. Check for Holiday / Weekend
+  const isWorkDay = schedule.workDays.includes(dayOfWeek);
+  
+  // Look up log
+  const log = (DB.data.attendanceLogs || []).find(l => l.userId === userId && l.date === dateStr);
+
+  if (log) {
+    let status = log.status || 'Present';
+    let color = 'var(--success)';
+    if (status === 'Late') color = 'var(--warning)';
+    if (status === 'Half Day') color = 'var(--accent)';
+    return { status, color, log, schedule };
+  }
+
+  if (!isWorkDay) {
+    return { status: 'Holiday', color: 'var(--text-muted)', log: null, schedule };
+  }
+
+  // If workday but in the past with no log, it's Absent
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (dateStr < todayStr) {
+    return { status: 'Absent', color: 'var(--error)', log: null, schedule };
+  }
+
+  return { status: 'Scheduled', color: 'var(--cyan)', log: null, schedule };
+}
+
+function renderCalendarGrid(userId, year, month) {
+  const container = document.getElementById('calendar-days-grid');
+  const monthYearLabel = document.getElementById('calendar-month-year');
+  if (!container || !monthYearLabel) return;
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  container.innerHTML = '';
+
+  // Padding cells for previous month
+  for (let i = 0; i < firstDay; i++) {
+    const pad = document.createElement('div');
+    pad.style.opacity = '0';
+    container.appendChild(pad);
+  }
+
+  // Real days
+  const todayStr = new Date().toISOString().split('T')[0];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const { status, color, log, schedule } = getAttendanceStatusForDate(userId, dStr);
+
+    const cell = document.createElement('div');
+    cell.className = 'calendar-day-cell';
+    cell.dataset.date = dStr;
+    cell.style.cssText = `
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 700;
+      position: relative;
+      background: ${dStr === todayStr ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.01)'};
+      border-color: ${dStr === todayStr ? 'var(--primary)' : 'var(--border)'};
+      transition: all 0.2s ease;
+    `;
+
+    cell.innerHTML = `
+      <span>${day}</span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: ${color}; position: absolute; bottom: 4px"></span>
+    `;
+
+    cell.addEventListener('click', () => {
+      openDateDetailsModal(userId, dStr, status, color, log, schedule);
+    });
+
+    container.appendChild(cell);
+  }
+}
+
+function renderCalendarScheduleTab(userId, activeTab) {
+  const container = document.getElementById('calendar-schedule-card');
+  if (!container) return;
+
+  const now = new Date();
+  let targetDate = new Date();
+
+  if (activeTab === 'today') {
+    // current date
+  } else if (activeTab === 'next') {
+    targetDate.setDate(now.getDate() + 1);
+  } else if (activeTab === 'last') {
+    targetDate.setDate(now.getDate() - 1);
+  }
+
+  const dStr = targetDate.toISOString().split('T')[0];
+
+  if (activeTab === 'weekly') {
+    const user = DB.getUser(userId);
+    const resolved = DB.resolveUserShiftForDate(user, dStr);
+    const schedule = DB.getSchedule(resolved.scheduleId) || {
+      name: 'Standard Day Shift',
+      startTime: '09:00',
+      endTime: '17:00',
+      workDays: [1, 2, 3, 4, 5],
+      location: 'Kohat Enclave, Pitampura, Delhi'
+    };
+
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <strong style="color:var(--primary); font-size:13px">Assigned Weekly Schedule</strong>
+        <div style="display:flex; flex-direction:column; gap:4px">
+          ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, idx) => {
+            const isWork = schedule.workDays.includes(idx);
+            return `
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding: 4px 6px; background: ${now.getDay() === idx ? 'rgba(255,255,255,0.04)' : 'transparent'}; border-radius: 4px">
+                <span style="font-weight:600; color: ${now.getDay() === idx ? 'var(--primary)' : 'var(--text-secondary)'}">${dayName}</span>
+                <span style="color: ${isWork ? 'var(--text-primary)' : 'var(--text-muted)'}">
+                  ${isWork ? `${schedule.name} (${formatTimeRange12h(schedule.startTime, schedule.endTime)})` : 'Weekly Off (Holiday)'}
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const { status, color, log, schedule } = getAttendanceStatusForDate(userId, dStr);
+
+  let checkInTime = '--:--';
+  let checkOutTime = '--:--';
+  let workDuration = '00h 00m';
+
+  if (log) {
+    checkInTime = log.checkIn || '--:--';
+    checkOutTime = log.checkOut || '--:--';
+    if (log.checkIn && log.checkOut) {
+      const [inH, inM] = log.checkIn.split(':').map(Number);
+      const [outH, outM] = log.checkOut.split(':').map(Number);
+      const mins = (outH * 60 + outM) - (inH * 60 + inM);
+      if (mins > 0) {
+        workDuration = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+      }
+    } else if (log.checkIn) {
+      workDuration = 'Active Session';
+    }
+  }
+
+  const isWorkDay = schedule.workDays.includes(targetDate.getDay());
+  const showShiftInfo = isWorkDay && status !== 'Leave';
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <strong style="color:var(--text-primary); font-size:13.5px">${activeTab === 'today' ? 'Today' : (activeTab === 'next' ? 'Tomorrow' : 'Yesterday')} - ${Utils.formatDate(dStr)}</strong>
+      <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:11px">${status}</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px">
+      <div>
+        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
+        ${showShiftInfo ? `
+          <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${Utils.escape(schedule.name)}</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</div>
+        ` : `
+          <div style="font-weight:600; color:var(--text-muted); margin-top:2px">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">No active shift scheduled</div>
+        `}
+      </div>
+      <div>
+        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+        <div style="font-weight:600; color:var(--text-primary); margin-top:2px">In: ${checkInTime} | Out: ${checkOutTime}</div>
+        <div style="color:var(--cyan); font-size:11px; margin-top:1px">Duration: ${workDuration}</div>
+      </div>
+    </div>
+  `;
+}
+
+function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  let checkInTime = '--:--';
+  let checkOutTime = '--:--';
+  let workDuration = '00h 00m';
+  let checkInLoc = 'N/A';
+  let checkOutLoc = 'N/A';
+
+  if (log) {
+    checkInTime = log.checkIn || '--:--';
+    checkOutTime = log.checkOut || '--:--';
+    checkInLoc = log.location || 'Kohat Enclave, Pitampura, Delhi';
+    checkOutLoc = log.checkOutLocation || log.location || 'Kohat Enclave, Pitampura, Delhi';
+    
+    if (log.checkIn && log.checkOut) {
+      const [inH, inM] = log.checkIn.split(':').map(Number);
+      const [outH, outM] = log.checkOut.split(':').map(Number);
+      const mins = (outH * 60 + outM) - (inH * 60 + inM);
+      if (mins > 0) {
+        workDuration = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+      }
+    } else if (log.checkIn) {
+      workDuration = 'Active Session';
+    }
+  }
+
+  const date = new Date(dateStr);
+  const isWorkDay = schedule.workDays.includes(date.getDay());
+  const showShiftInfo = isWorkDay && status !== 'Leave';
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:14px">
+      <div class="modal-header" style="margin-bottom: 2px">
+        <h3 class="modal-title">📅 Date Attendance Summary</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+      
+      <div style="font-size: 15px; font-weight: 700; color: var(--text-primary)">
+        ${Utils.formatDate(dateStr)}
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm)">
+        <span style="font-size: 12.5px; color: var(--text-secondary)">Status:</span>
+        <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:12px; padding: 4px 10px">${status}</span>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px">
+        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Pattern</h4>
+        ${showShiftInfo ? `
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-primary)">${Utils.escape(schedule.name)}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-primary)">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</strong></div>
+        ` : `
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-muted)">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
+        `}
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; border-top: 1px solid var(--border); padding-top: 12px">
+        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">🕒 Clock Activity</h4>
+        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Time:</span><strong style="color:var(--text-primary)">${checkInTime}</strong></div>
+        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkInLoc)}</strong></div>
+        <div style="display:flex; justify-content:space-between; margin-top:4px"><span style="color:var(--text-secondary)">Check-out Time:</span><strong style="color:var(--text-primary)">${checkOutTime}</strong></div>
+        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-out Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkOutLoc)}</strong></div>
+        <div style="display:flex; justify-content:space-between; margin-top:4px; border-top:1px dashed var(--border); padding-top:6px"><span style="color:var(--text-secondary)">Total Work Duration:</span><strong style="color:var(--cyan)">${workDuration}</strong></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+async function handlePinClockIn(userId) {
+  const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
+  const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
+  const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+
+  const user = DB.getUser(userId);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const resolved = DB.resolveUserShiftForDate(user, todayStr);
+  const schedule = DB.getSchedule(resolved.scheduleId);
+  const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+
+  if (!inRange) {
+    alert(`❌ Check-in Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock in.`);
+    return;
+  }
+
+  const pass = await prompt('Enter your Account Password to Clock In:');
+  if (pass === null) return;
+  if (user && user.password === pass) {
+    const pendingTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
+    let timeOverride = null;
+    if (pendingTime) {
+      const date = new Date(pendingTime);
+      timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+    DB.checkIn(userId, 'none', officeName, false, '', resolvedCoords, resolvedDistance, null, timeOverride);
+    sessionStorage.removeItem('hs_pending_auto_checkin_time');
     renderEmployeeDashboard();
   } else {
     alert('Invalid Password credentials.');
   }
 }
 
-function handleClockOut(userId) {
-  if (confirm('Clock Out?')) {
+async function handleClockOut(userId) {
+  const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+  const user = DB.getUser(userId);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const resolved = DB.resolveUserShiftForDate(user, todayStr);
+  const schedule = DB.getSchedule(resolved.scheduleId);
+  const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+
+  if (!inRange) {
+    alert(`❌ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);
+    return;
+  }
+
+  if (await confirm('Clock Out?')) {
     DB.checkOut(userId);
     renderEmployeeDashboard();
   }
 }
 
 
-// Biometric validation for check-ins/outs
-function triggerBiometricVerification(userId, type, direction = 'in') {
-  const mockLoc = sessionStorage.getItem('hs_mock_location') || 'hq';
-  if (mockLoc !== 'hq') {
-    alert(`Biometric Geofence Error: Your current GPS coordinates are out of range for biometric mapping. Under HS Group guidelines, biometric clock-in is strictly restricted to Kohat Enclave coordinates. Please switch to Kohat Enclave, Pitampura, Delhi location or check in using your Account Password.`);
-    return;
-  }
-
-  const user = DB.getUser(userId);
-  if (!user.biometricRegistered || !user.biometricRegistered[type]) {
-    alert(`Please register your ${type === 'face' ? 'Face ID' : 'Fingerprint'} first. Falling back to PIN/Password...`);
-    if (direction === 'in') handlePinClockIn(userId);
-    else handleClockOut(userId);
-    return;
-  }
-
-  openBiometricScanner(userId, type, (success) => {
-    if (success) {
-      if (direction === 'in') {
-        DB.checkIn(userId, type, 'Kohat Enclave, Pitampura, Delhi');
-      } else {
-        DB.checkOut(userId, type);
-      }
-      renderEmployeeDashboard();
-    }
-  });
-}
 
 // Settings Panel View
 function renderSettingsView() {
@@ -1611,7 +3579,6 @@ function renderSettingsView() {
             <select class="form-input" id="settings-lang-select" style="padding:12px">
               <option value="en" ${currentLang === 'en' ? 'selected' : ''}>English (US)</option>
               <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>Hindi (हिन्दी)</option>
-              <option value="es" ${currentLang === 'es' ? 'selected' : ''}>Spanish (Español)</option>
             </select>
           </div>
           <button class="btn btn-secondary" id="btn-save-lang" style="font-size:13px">Change Language</button>
@@ -1667,7 +3634,7 @@ function renderSettingsView() {
     localStorage.setItem('hs_app_lang', currentLang);
     renderAppShell();
     renderSettingsView();
-    alert('Language updated successfully / भाषा सफलतापूर्वक अपडेट की गई / Idioma actualizado con éxito');
+    alert('Language updated successfully / भाषा सफलतापूर्वक अपडेट की गई');
   });
 
   const verBtn = document.getElementById('btn-check-version');
@@ -1686,6 +3653,11 @@ function renderSettingsView() {
 
   document.getElementById('btn-settings-logout').addEventListener('click', () => {
     Auth.logout();
+    sessionStorage.removeItem('hs_pending_auto_checkin_time');
+    sessionStorage.removeItem('hs_mock_location');
+    sessionStorage.removeItem('hs_current_resolved_coords');
+    sessionStorage.removeItem('hs_current_resolved_distance');
+    sessionStorage.removeItem('hs_current_resolved_in_range');
     window.location.hash = '#login';
   });
 }
@@ -1696,6 +3668,29 @@ function renderSettingsView() {
 function renderEmployeeLeaves() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
+
+  // Calculate today's date in YYYY-MM-DD local format
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  // Automatically determine the Approval Head based on department
+  const getApprovalHeadForDepartment = (dept) => {
+    const department = (dept || '').toLowerCase();
+    if (department.includes('engineering') || department.includes('quality assurance') || department.includes('qa')) {
+      return 'Operations Manager';
+    } else if (department.includes('finance')) {
+      return 'Finance Manager';
+    } else if (department.includes('operations')) {
+      return 'HR Admin Manager';
+    } else if (department.includes('resources') || department.includes('hr')) {
+      return 'HR Admin Manager';
+    } else {
+      return 'HR Admin Manager';
+    }
+  };
+
+  const approverName = getApprovalHeadForDepartment(user.department);
+
   main.innerHTML = `
     <div class="content-header">
       <div>
@@ -1704,7 +3699,7 @@ function renderEmployeeLeaves() {
       </div>
     </div>
     <div class="content-body">
-      <div class="dashboard-split">
+      <div class="dashboard-split reverse">
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Apply for New Leave</h3></div>
           <form id="leave-request-form">
@@ -1716,19 +3711,34 @@ function renderEmployeeLeaves() {
                 <option value="Annual">Annual Leave</option>
               </select>
             </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="leave-approver">Approval Head</label>
+              <select class="form-input" id="leave-approver" required>
+                <option value="HR Admin Manager" ${approverName === 'HR Admin Manager' ? 'selected' : ''}>HR Admin Manager</option>
+                <option value="Operations Manager" ${approverName === 'Operations Manager' ? 'selected' : ''}>Operations Manager</option>
+                <option value="Finance Manager" ${approverName === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
+                <option value="Department Head" ${approverName === 'Department Head' ? 'selected' : ''}>Department Head</option>
+              </select>
+            </div>
+
             <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div>
                 <label class="form-label" for="leave-start">Start Date</label>
-                <input class="form-input" type="date" id="leave-start" required>
+                <input class="form-input" type="date" id="leave-start" min="${localTodayStr}" required>
               </div>
               <div>
                 <label class="form-label" for="leave-end">End Date</label>
-                <input class="form-input" type="date" id="leave-end" required>
+                <input class="form-input" type="date" id="leave-end" min="${localTodayStr}" required>
               </div>
             </div>
             <div class="form-group">
               <label class="form-label" for="leave-reason">Reason for Leave</label>
               <textarea class="form-input" id="leave-reason" placeholder="Describe the reason..." rows="3" required style="resize:vertical"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="leave-proof">Supporting Document <span style="color:var(--text-muted);font-weight:normal;font-size:12px;">(Optional, e.g. medical certificate)</span></label>
+              <input class="form-input" type="file" id="leave-proof" accept="image/*,.pdf,.doc,.docx" style="padding:8px">
             </div>
             <button class="btn" type="submit">Submit Request</button>
           </form>
@@ -1738,7 +3748,7 @@ function renderEmployeeLeaves() {
           <div class="card-panel-header"><h3 class="card-panel-title">Leave Request History</h3></div>
           <div class="table-container">
             <table class="custom-table">
-              <thead><tr><th>Dates</th><th>Type</th><th>Status</th><th>Notes</th></tr></thead>
+              <thead><tr><th>Dates</th><th>Type</th><th>Approver</th><th>Status</th><th>Notes</th></tr></thead>
               <tbody id="leave-history-table-body"></tbody>
             </table>
           </div>
@@ -1754,11 +3764,17 @@ function renderEmployeeLeaves() {
     const start = document.getElementById('leave-start').value;
     const end = document.getElementById('leave-end').value;
     const reason = document.getElementById('leave-reason').value.trim();
-    if (new Date(start) > new Date(end)) {
+    const chosenApprover = document.getElementById('leave-approver').value;
+
+    if (start < localTodayStr) {
+      showLeaveAlert('Leave start date cannot be in the past.', 'error');
+      return;
+    }
+    if (end < start) {
       showLeaveAlert('Start date cannot be after end date.', 'error');
       return;
     }
-    DB.applyLeave(user.id, type, start, end, reason);
+    DB.applyLeave(user.id, type, start, end, reason, chosenApprover);
     showLeaveAlert('Leave request submitted successfully!', 'success');
     document.getElementById('leave-request-form').reset();
     renderPersonalLeaves(user.id);
@@ -1917,9 +3933,14 @@ function renderEmployeeProfile() {
   const user = DB.getUser(Auth.getCurrentUser().id);
   const main = document.getElementById('main-view');
 
-  const isSelfAdmin = user.role === 'hr' || user.role === 'manager';
+  const userSchedule = DB.data.schedules.find(s => s.id === (user.scheduleId || 'sch_1'));
+  const shiftText = userSchedule ? `${userSchedule.name} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'N/A';
+  const locationText = user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+
+  const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
   const status = user.profileVerificationStatus || 'Approved';
   const editCount = user.profileEditCount || 0;
+  const badgeTitle = user.role === 'hr' ? 'HR Badge' : (user.role === 'manager' || user.role === 'finance_manager' ? 'Manager Badge' : 'Employee Badge');
   
   let statusBannerHTML = '';
   if (!isSelfAdmin) {
@@ -1964,21 +3985,150 @@ function renderEmployeeProfile() {
     <div class="content-body">
       <div style="max-width: 800px; margin: 0 auto;">
         ${statusBannerHTML}
+        
+        <!-- Interactive Glassmorphic Digital HR ID Badge Card -->
+        <div class="id-card-wrapper" style="margin-bottom: 28px; display: flex; justify-content: center;">
+          <div class="id-card" id="employee-id-badge" style="width: 380px; height: 230px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
+            
+            <!-- FRONT SIDE -->
+            <div class="id-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
+              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 70%); pointer-events: none;"></div>
+              
+              <!-- Card Header -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img src="surya-logo.png" alt="Surya Logo" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(251,191,36,0.2));">
+                  <div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;">HS Group Delhi</div>
+                    <div style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">House of Surya</div>
+                  </div>
+                </div>
+                <div style="font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${badgeTitle}</div>
+              </div>
+              
+              <!-- Card Body -->
+              <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0;">
+                  ${getInitials(user.name)}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
+                  <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${Utils.escape(user.name)}</div>
+                  <div style="font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
+                  <div style="font-size: 10px; color: var(--text-secondary);">${Utils.escape(user.department || 'General')}</div>
+                </div>
+              </div>
+              
+              <!-- Card Footer -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9px; color: var(--text-secondary);">
+                <div>
+                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Employee ID</div>
+                  <div style="font-weight: 700; color: var(--primary); font-size: 11px;">${Utils.escape(user.employeeId)}</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Joined Date</div>
+                  <div style="font-weight: 600; color: var(--text-primary);">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- BACK SIDE -->
+            <div class="id-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; transform: rotateY(180deg);">
+              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.08), transparent 70%); pointer-events: none;"></div>
+              
+              <!-- Back Header -->
+              <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                Emergency & Office Info
+              </div>
+              
+              <!-- Back Details -->
+              <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
+                <div>
+                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Emergency Contact</span>
+                  <strong style="color: var(--text-primary);">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
+                </div>
+                <div>
+                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Office Location</span>
+                  <span style="font-size: 10px; line-height: 1.3; display: block; color: var(--text-primary);">${Utils.escape(locationText)}</span>
+                </div>
+              </div>
+              
+              <!-- Barcode / QR Code Container -->
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: var(--radius-sm);">
+                <div style="display: flex; flex-direction: column;">
+                  <span style="font-size: 7px; color: var(--text-secondary); opacity: 0.75; text-transform: uppercase;">Scan Attendance Badge</span>
+                  <span style="font-size: 9px; font-family: monospace; color: var(--primary); font-weight: 700; margin-top: 2px;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
+                </div>
+                <!-- Stylized Barcode Stripes -->
+                <div style="display: flex; gap: 2px; align-items: stretch; height: 26px; background: rgba(255,255,255,0.85); padding: 3px 6px; border-radius: 2px;">
+                  <div style="width: 2px; background: #000;"></div>
+                  <div style="width: 1px; background: #000;"></div>
+                  <div style="width: 3px; background: #000;"></div>
+                  <div style="width: 1px; background: #000;"></div>
+                  <div style="width: 2px; background: #000;"></div>
+                  <div style="width: 4px; background: #000;"></div>
+                  <div style="width: 1px; background: #000;"></div>
+                  <div style="width: 2px; background: #000;"></div>
+                  <div style="width: 3px; background: #000;"></div>
+                  <div style="width: 1px; background: #000;"></div>
+                  <div style="width: 2px; background: #000;"></div>
+                  <div style="width: 1px; background: #000;"></div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+        ${(() => {
+          if (user.assignedById) {
+            const assigner = DB.getUser(user.assignedById);
+            if (assigner) {
+              const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
+              const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+              const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+              return `
+                <div class="card-panel" style="margin-bottom:20px; border-left:3px solid var(--primary); background: linear-gradient(135deg, rgba(251,191,36,0.04), rgba(0,0,0,0));">
+                  <div style="display:flex; align-items:center; gap:16px; padding:4px 0;">
+                    <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, var(--primary), #f59e0b); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#000; flex-shrink:0; box-shadow:0 4px 14px rgba(251,191,36,0.3);">
+                      ${initials}
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:3px;">Registered / Assigned By</div>
+                      <div style="font-size:16px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
+                      <div style="font-size:12px; color:var(--primary); font-weight:500; margin-top:2px;">${roleLabel}</div>
+                    </div>
+                    <div style="text-align:right; flex-shrink:0;">
+                      <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Date of Joining</div>
+                      <div style="font-size:13px; font-weight:600; color:var(--text-secondary);">${joinedDate}</div>
+                      <div style="display:inline-block; margin-top:6px; padding:2px 10px; background:rgba(251,191,36,0.12); color:var(--primary); border-radius:20px; font-size:10px; font-weight:700; border:1px solid rgba(251,191,36,0.25);">✓ Verified Staff</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+          }
+          return '';
+        })()}
+
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Personal Details</h3></div>
           <form id="profile-details-form">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px">
               <div class="form-group">
-                <label class="form-label" for="prof-name">Full Name</label>
-                <input class="form-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required>
+                <label class="form-label" for="prof-name">Full Name <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(Letters only)</span></label>
+                <input class="form-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. Rahul Sharma">
               </div>
               <div class="form-group">
                 <label class="form-label" for="prof-empid">Employee ID</label>
                 <input class="form-input" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required>
               </div>
               <div class="form-group">
-                <label class="form-label" for="prof-username">Username</label>
-                <input class="form-input" type="text" id="prof-username" value="${Utils.escape(user.username)}" required>
+                <label class="form-label" for="prof-username">Username (Optional)</label>
+                <input class="form-input" type="text" id="prof-username" value="${Utils.escape(user.username)}">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-password">Change Password (Optional)</label>
+                <input class="form-input" type="text" id="prof-password" placeholder="Leave empty for no change">
               </div>
               <div class="form-group">
                 <label class="form-label" for="prof-email">Email Address</label>
@@ -1987,6 +4137,14 @@ function renderEmployeeProfile() {
               <div class="form-group">
                 <label class="form-label" for="prof-phone">Mobile Number</label>
                 <input class="form-input" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" placeholder="+91 9999999999" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-worksite">Worksite Location</label>
+                <input class="form-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05)">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="prof-workshift">Work Shift</label>
+                <input class="form-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05)">
               </div>
               <div class="form-group">
                 <label class="form-label" for="prof-dob">Date of Birth</label>
@@ -2025,6 +4183,10 @@ function renderEmployeeProfile() {
                 <input class="form-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required>
               </div>
               <div class="form-group">
+                <label class="form-label" for="prof-salary">Base Salary (INR/Month)</label>
+                <input class="form-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required>
+              </div>
+              <div class="form-group">
                 <label class="form-label" for="prof-hra">HRA Allowance (INR/Month)</label>
                 <input class="form-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}">
               </div>
@@ -2053,11 +4215,20 @@ function renderEmployeeProfile() {
     </div>
   `;
 
+  // Set up click listener for ID card flip
+  const idBadge = document.getElementById('employee-id-badge');
+  if (idBadge) {
+    idBadge.addEventListener('click', () => {
+      idBadge.classList.toggle('flipped');
+    });
+  }
+
   document.getElementById('profile-details-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('prof-name').value.trim();
     const employeeId = document.getElementById('prof-empid').value.trim();
-    const username = document.getElementById('prof-username').value.trim();
+    const usernameInput = document.getElementById('prof-username').value.trim();
+    const passwordInput = document.getElementById('prof-password').value.trim();
     const email = document.getElementById('prof-email').value.trim();
     const phone = document.getElementById('prof-phone').value.trim();
     const dob = document.getElementById('prof-dob').value;
@@ -2069,20 +4240,44 @@ function renderEmployeeProfile() {
     const designation = document.getElementById('prof-designation').value.trim();
     const dateOfJoining = document.getElementById('prof-doj').value;
 
+    const baseSalary = Number(document.getElementById('prof-salary').value);
     const allowanceHRA = Number(document.getElementById('prof-hra').value);
     const allowanceTravel = Number(document.getElementById('prof-travel').value);
     const deductionPF = Number(document.getElementById('prof-pf').value);
     const deductionPT = Number(document.getElementById('prof-pt').value);
     const deductionTDS = Number(document.getElementById('prof-tds').value);
 
+    // Keep existing values if fields are left empty (optional)
+    const username = usernameInput || user.username;
+    const password = passwordInput || user.password;
+
+    if (passwordInput) {
+      const rules = Auth.validatePassword(passwordInput);
+      if (!rules.valid) {
+        alert('Password must have minimum 6 chars, 1 uppercase, and 1 special symbol.');
+        return;
+      }
+    }
+
     const editCount = user.profileEditCount || 0;
-    const alert = document.getElementById('profile-alert');
-    const isSelfAdmin = user.role === 'hr' || user.role === 'manager';
+    const alertEl = document.getElementById('profile-alert');
+    const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
     
+    const profileValidation = ValidationUtils.validateProfile({
+      name, employeeId, email, phone, dob, dateOfJoining
+    });
+
+    if (!profileValidation.valid) {
+      alertEl.textContent = profileValidation.message;
+      alertEl.className = 'alert alert-error';
+      alertEl.style.display = 'flex';
+      return;
+    }
+
     if (isSelfAdmin || editCount < 3) {
       DB.updateUserProfile(user.id, { 
-        name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-        allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+        name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+        baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
       });
       const updatedUser = DB.getUser(user.id);
       if (!isSelfAdmin) {
@@ -2093,30 +4288,34 @@ function renderEmployeeProfile() {
       DB.save();
       
       Auth.init();
-      alert.className = 'alert alert-success';
-      alert.textContent = isSelfAdmin 
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = isSelfAdmin 
         ? 'Profile details updated successfully!'
         : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
     } else {
       const updatedUser = DB.getUser(user.id);
       updatedUser.profileVerificationStatus = 'Pending Approval';
       updatedUser.pendingProfileEdits = {
-        name, employeeId, username, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+        name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
         allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
       };
       DB.save();
       
       Auth.init();
-      alert.className = 'alert alert-warning';
-      alert.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+      alertEl.className = 'alert alert-warning';
+      alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
     }
     
-    alert.style.display = 'flex';
-    setTimeout(() => { alert.style.display = 'none'; }, 4000);
+    alertEl.style.display = 'flex';
+    setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
     
     renderAppShell();
     renderEmployeeProfile();
   });
+}
+
+function renderAdminProfile() {
+  renderEmployeeProfile();
 }
 
 function renderEmployeeVerification() {
@@ -2303,8 +4502,8 @@ function renderResumeDisplay(userId) {
   document.getElementById('view-resume-btn').addEventListener('click', () => showDocumentPreview(userId, 'resume'));
   document.getElementById('download-resume-btn').addEventListener('click', () => downloadDocumentSimulated(userId, 'resume'));
   document.getElementById('replace-resume-btn').addEventListener('click', () => document.getElementById('cv-file-input').click());
-  document.getElementById('delete-resume-btn').addEventListener('click', () => {
-    if (confirm('Delete CV resume?')) {
+  document.getElementById('delete-resume-btn').addEventListener('click', async () => {
+    if (await confirm('Delete CV resume?')) {
       DB.deleteResume(userId);
       renderResumeDisplay(userId);
     }
@@ -2357,8 +4556,8 @@ function renderAadharDisplay(userId) {
   document.getElementById('view-aadhar-btn').addEventListener('click', () => showDocumentPreview(userId, 'aadhar'));
   document.getElementById('download-aadhar-btn').addEventListener('click', () => downloadDocumentSimulated(userId, 'aadhar'));
   document.getElementById('replace-aadhar-btn').addEventListener('click', () => document.getElementById('aadhar-file-input').click());
-  document.getElementById('delete-aadhar-btn').addEventListener('click', () => {
-    if (confirm('Delete Aadhar Card?')) {
+  document.getElementById('delete-aadhar-btn').addEventListener('click', async () => {
+    if (await confirm('Delete Aadhar Card?')) {
       DB.deleteAadhar(userId);
       renderAadharDisplay(userId);
     }
@@ -2412,8 +4611,8 @@ function renderBankDetailsDisplay(userId) {
   document.getElementById('view-bank-btn').addEventListener('click', () => showDocumentPreview(userId, 'bank'));
   document.getElementById('download-bank-btn').addEventListener('click', () => downloadDocumentSimulated(userId, 'bank'));
   document.getElementById('replace-bank-btn').addEventListener('click', () => document.getElementById('bank-file-input').click());
-  document.getElementById('delete-bank-btn').addEventListener('click', () => {
-    if (confirm('Delete Bank Details?')) {
+  document.getElementById('delete-bank-btn').addEventListener('click', async () => {
+    if (await confirm('Delete Bank Details?')) {
       DB.deleteBankDetails(userId);
       renderBankDetailsDisplay(userId);
     }
@@ -2444,9 +4643,9 @@ function renderDocumentsDisplay(userId) {
     `;
   }).join('');
   display.querySelectorAll('.btn-delete-doc').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const docId = e.currentTarget.dataset.docid;
-      if (confirm('Delete this ID proof?')) {
+      if (await confirm('Delete this ID proof?')) {
         DB.deleteDocument(userId, docId);
         renderDocumentsDisplay(userId);
       }
@@ -2472,42 +4671,63 @@ function handleMockUpload(userId, file, type) {
   if (progressBar) progressBar.style.display = 'block';
   if (progressFill) progressFill.style.width = '0%';
   let percent = 0;
-  const interval = setInterval(() => {
-    percent += 10;
-    if (progressFill) progressFill.style.width = `${percent}%`;
-    if (percent >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {
-        if (progressBar) progressBar.style.display = 'none';
-        const sizeStr = (file.size / 1024).toFixed(0) + ' KB';
-        if (type === 'resume') {
-          DB.uploadResume(userId, file.name, sizeStr);
-          const titleEl = document.getElementById('cv-zone-title');
-          if (titleEl) titleEl.textContent = 'Replace CV Resume File';
-        } else if (type === 'aadhar') {
-          DB.uploadAadhar(userId, file.name, sizeStr);
-          const titleEl = document.getElementById('aadhar-zone-title');
-          if (titleEl) titleEl.textContent = 'Replace Aadhar Card File';
-        } else if (type === 'bank') {
-          DB.uploadBankDetails(userId, file.name, sizeStr);
-          const titleEl = document.getElementById('bank-zone-title');
-          if (titleEl) titleEl.textContent = 'Replace Bank Details File';
-        } else {
-          DB.uploadDocument(userId, file.name, sizeStr);
-        }
-
-        const currentHash = window.location.hash || '#login';
-        if (currentHash === '#employee-profile' || currentHash === '#employee-verification') {
-          renderResumeDisplay(userId);
-          renderAadharDisplay(userId);
-          renderBankDetailsDisplay(userId);
-          renderDocumentsDisplay(userId);
-        } else if (currentHash === '#admin-verification') {
-          renderAdminVerificationView();
-        }
-      }, 300);
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64Data = e.target.result;
+    let uploadedUrl = '';
+    try {
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, fileData: base64Data })
+      });
+      if (uploadRes.ok) {
+        const uploadJson = await uploadRes.json();
+        if (uploadJson.url) uploadedUrl = uploadJson.url;
+      }
+    } catch (err) {
+      console.warn('Backend file upload network fallback:', err);
     }
-  }, 80);
+
+    const interval = setInterval(() => {
+      percent += 20;
+      if (progressFill) progressFill.style.width = `${percent}%`;
+      if (percent >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          if (progressBar) progressBar.style.display = 'none';
+          const sizeStr = (file.size / 1024).toFixed(0) + ' KB';
+          if (type === 'resume') {
+            DB.uploadResume(userId, file.name, sizeStr, uploadedUrl);
+            const titleEl = document.getElementById('cv-zone-title');
+            if (titleEl) titleEl.textContent = 'Replace CV Resume File';
+          } else if (type === 'aadhar') {
+            DB.uploadAadhar(userId, file.name, sizeStr, uploadedUrl);
+            const titleEl = document.getElementById('aadhar-zone-title');
+            if (titleEl) titleEl.textContent = 'Replace Aadhar Card File';
+          } else if (type === 'bank') {
+            DB.uploadBankDetails(userId, file.name, sizeStr, uploadedUrl);
+            const titleEl = document.getElementById('bank-zone-title');
+            if (titleEl) titleEl.textContent = 'Replace Bank Details File';
+          } else {
+            DB.uploadDocument(userId, file.name, sizeStr, uploadedUrl);
+          }
+
+          const currentHash = window.location.hash || '#login';
+          if (currentHash === '#employee-profile' || currentHash === '#employee-verification') {
+            renderResumeDisplay(userId);
+            renderAadharDisplay(userId);
+            renderBankDetailsDisplay(userId);
+            renderDocumentsDisplay(userId);
+          } else if (currentHash === '#admin-verification') {
+            renderAdminVerificationView();
+          }
+        }, 200);
+      }
+    }, 40);
+  };
+  reader.readAsDataURL(file);
 }
 
 function showDocumentPreview(userId, docType) {
@@ -2593,7 +4813,7 @@ function showDocumentPreview(userId, docType) {
   `;
   document.body.appendChild(overlay);
 
-  const close = () => overlay.remove();
+  const close = () => closeModal(overlay);
   document.getElementById('close-preview-modal-btn').addEventListener('click', close);
   document.getElementById('close-preview-modal-btn2').addEventListener('click', close);
   document.getElementById('btn-preview-download').addEventListener('click', () => {
@@ -2631,19 +4851,50 @@ function renderPersonalLeaves(userId) {
   const leaves = DB.getLeaveRequests(userId);
   const tbody = document.getElementById('leave-history-table-body');
   if (leaves.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No leaves applied yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No leaves applied yet.</td></tr>`;
     return;
   }
+  
+  const u = DB.getUser(userId);
+  const userDept = u ? u.department : '';
+  const getApprovalHeadForDepartment = (dept) => {
+    const department = (dept || '').toLowerCase();
+    if (department.includes('engineering') || department.includes('quality assurance') || department.includes('qa')) {
+      return 'Operations Manager';
+    } else if (department.includes('finance')) {
+      return 'Finance Manager';
+    } else if (department.includes('operations')) {
+      return 'HR Admin Manager';
+    } else if (department.includes('resources') || department.includes('hr')) {
+      return 'HR Admin Manager';
+    } else {
+      return 'HR Admin Manager';
+    }
+  };
+  const defaultApprover = getApprovalHeadForDepartment(userDept);
+
   tbody.innerHTML = leaves.map(lv => {
     let statusClass = 'badge-pending';
     if (lv.status === 'Approved') statusClass = 'badge-approved';
     if (lv.status === 'Rejected') statusClass = 'badge-rejected';
+    const approver = lv.approverHead || defaultApprover;
+
     return `
       <tr>
-        <td style="font-weight:500">${Utils.formatDate(lv.startDate)}<br><span style="font-size:11px;color:var(--text-secondary)">to ${Utils.formatDate(lv.endDate)}</span></td>
-        <td>${lv.type}</td>
-        <td><span class="badge ${statusClass}">${lv.status}</span></td>
-        <td style="font-size:12px;color:var(--text-secondary)">
+        <td style="font-size: 13px; font-weight: 500; color: var(--text-primary);">
+          ${Utils.formatDate(lv.startDate).replace(/ /g, '&nbsp;')}<br>
+          to ${Utils.formatDate(lv.endDate).replace(/ /g, '&nbsp;')}
+        </td>
+        <td style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">
+          ${lv.type}
+        </td>
+        <td style="font-size: 13px; font-weight: 600; color: var(--primary);">
+          ${Utils.escape(approver)}
+        </td>
+        <td style="font-size: 13px;">
+          <span class="badge ${statusClass}">${lv.status}</span>
+        </td>
+        <td style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; min-width: 150px; word-wrap: break-word;">
           <strong>Reason:</strong> ${Utils.escape(lv.reason)}
           ${lv.managerComment ? `<br><strong style="color:var(--primary)">Manager:</strong> ${Utils.escape(lv.managerComment)}` : ''}
         </td>
@@ -2677,6 +4928,34 @@ function startLiveClock() {
 function startActiveWorkTimer(todayLog) {
   const timerEl = document.getElementById('active-work-timer');
   if (!timerEl) return;
+
+  const pendingAutoTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
+  if (pendingAutoTime && (!todayLog || todayLog.checkOut)) {
+    const checkInDate = new Date(pendingAutoTime);
+    timerEl.style.color = 'var(--warning)'; // amber color for pending validation
+    const update = () => {
+      const diffMs = new Date() - checkInDate;
+      if (diffMs < 0) { timerEl.textContent = '00h 00m 00s'; return; }
+      const totalSecs = Math.floor(diffMs / 1000);
+      const hrs = Math.floor(totalSecs / 3600);
+      const mins = Math.floor((totalSecs % 3600) / 60);
+      const secs = totalSecs % 60;
+      timerEl.textContent = `${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+    };
+    update();
+    const durTimer = setInterval(() => {
+      if (!document.getElementById('active-work-timer') || !sessionStorage.getItem('hs_pending_auto_checkin_time')) {
+        clearInterval(durTimer);
+        timerEl.style.color = 'var(--cyan)';
+        return;
+      }
+      update();
+    }, 1000);
+    return;
+  }
+
+  timerEl.style.color = 'var(--cyan)'; // default cyan color
+
   if (!todayLog || todayLog.checkOut) {
     timerEl.textContent = todayLog && todayLog.checkOut ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '00h 00m 00s';
     return;
@@ -2700,132 +4979,6 @@ function startActiveWorkTimer(todayLog) {
   }, 1000);
 }
 
-function triggerBiometricAuth(type) {
-  const username = document.getElementById('username').value.trim();
-  const employeeId = document.getElementById('login-empid').value.trim();
-  if (!username && !employeeId) {
-    const alert = document.getElementById('login-alert');
-    alert.className = 'alert alert-error';
-    alert.textContent = 'Please enter Username or Employee ID first.';
-    alert.style.display = 'flex';
-    return;
-  }
-  let user = null;
-  if (username && employeeId) {
-    const u = DB.getUserByUsername(username);
-    if (u && u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase()) {
-      user = u;
-    }
-  } else if (username) {
-    user = DB.getUserByUsername(username);
-  } else if (employeeId) {
-    user = DB.getUsers().find(u => u.employeeId && u.employeeId.toLowerCase() === employeeId.toLowerCase());
-  }
-
-  if (!user) {
-    const alert = document.getElementById('login-alert');
-    alert.className = 'alert alert-error';
-    alert.textContent = `User account not found.`;
-    alert.style.display = 'flex';
-    return;
-  }
-  if (!user.biometricRegistered || !user.biometricRegistered[type]) {
-    const alert = document.getElementById('login-alert');
-    alert.className = 'alert alert-error';
-    alert.textContent = `${type === 'face' ? 'Face ID' : 'Fingerprint'} is not registered. Use standard login first.`;
-    alert.style.display = 'flex';
-    return;
-  }
-  openBiometricScanner(user.id, type, (success) => {
-    if (success) {
-      Auth.login(user.username, user.employeeId, user.password);
-      window.location.hash = (user.role === 'hr' || user.role === 'manager') ? '#admin-dashboard' : '#dashboard';
-    }
-  });
-}
-
-function openBiometricScanner(userId, type, onComplete) {
-  const body = document.body;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.id = 'biometric-modal';
-  const title = type === 'face' ? 'Face Verification Scanning' : 'Fingerprint Auth Touchpad';
-  let innerHTML = '';
-  if (type === 'finger') {
-    innerHTML = `
-      <div class="biometric-scanner-box">
-        <div class="fingerprint-trigger-area" id="fingerprint-scan-pad">
-          <svg class="fingerprint-icon-svg" viewBox="0 0 24 24"><path d="M12,2C10.3,2,8.7,2.7,7.5,3.8C7.1,4.2,7.1,4.9,7.5,5.3c0.4,0.4,1,0.4,1.4,0c0.9-0.8,2.1-1.3,3.3-1.3s2.4,0.5,3.3,1.3c0.4,0.4,1,0.4,1.4,0c0.4-0.4,0.4-1.1,0-1.5C15.3,2.7,13.7,2,12,2z M12,6c-2.2,0-4,1.8-4,4v4c0,0.6-0.4,1-1,1s-1-0.4-1-1v-4c0-3.3,2.7-6,6-6s6,2.7,6,6v4c0,0.6-0.4,1-1,1s-1-0.4-1-1v-4C16,7.8,14.2,6,12,6z M12,14c-1.1,0-2-0.9-2-2v-2c0-1.1,0.9-2,2-2s2,0.9,2,2v2C14,13.1,13.1,14,12,14z M17,17c-0.6,0-1-0.4-1-1v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C18,16.6,17.6,17,17,17z M7,17c-0.6,0-1-0.4-1-1v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C8,16.6,7.6,17,7,17z M12,22c-2.8,0-5-2.2-5-5v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1c0,1.7,1.3,3,3,3s3-1.3,3-3v-1c0-0.6,0.4-1,1-1s1,0.4,1,1v1C17,19.8,14.8,22,12,22z"/></svg>
-          <canvas id="fingerprint-canvas" style="position:absolute;top:0;left:0;pointer-events:none"></canvas>
-        </div>
-        <div class="scanner-hint-text" id="scanner-hint">PRESS AND HOLD ON THE FINGERPRINT READER</div>
-      </div>
-    `;
-  } else {
-    innerHTML = `
-      <div class="biometric-scanner-box">
-        <div class="camera-feed-container">
-          <video id="face-video" class="camera-feed-video" autoplay playsinline muted></video>
-          <canvas id="face-hud" class="camera-hud-canvas"></canvas>
-        </div>
-        <div class="scanner-hint-text">ALIGN YOUR FACE AND WAIT FOR MATCH RATIO</div>
-      </div>
-    `;
-  }
-  modal.innerHTML = `
-    <div class="modal-content" style="max-width: 400px">
-      <div class="modal-header">
-        <h3 class="modal-title">${title}</h3>
-        <button class="close-modal-btn" id="close-scanner">
-          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-        </button>
-      </div>
-      ${innerHTML}
-    </div>
-  `;
-  body.appendChild(modal);
-
-  const cleanUpScanner = () => {
-    if (currentScanner) {
-      if (type === 'finger') currentScanner.cancel();
-      else currentScanner.stop();
-      currentScanner = null;
-    }
-  };
-
-  document.getElementById('close-scanner').addEventListener('click', () => { cleanUpScanner(); modal.remove(); });
-
-  if (type === 'finger') {
-    const pad = document.getElementById('fingerprint-scan-pad');
-    const canvas = document.getElementById('fingerprint-canvas');
-    const hint = document.getElementById('scanner-hint');
-    let holding = false;
-    const startHold = () => {
-      if (holding) return;
-      holding = true;
-      pad.classList.add('scanning');
-      hint.textContent = 'SCANNING FINGERPRINT CORE...';
-      currentScanner = Auth.simulateFingerprintScan(canvas, () => {}, () => {
-        pad.classList.remove('scanning');
-        pad.classList.add('success');
-        hint.textContent = 'ACCESS GRANTED';
-        setTimeout(() => { cleanUpScanner(); modal.remove(); onComplete(true); }, 800);
-      });
-    };
-    const stopHold = () => { if (!holding) return; holding = false; pad.classList.remove('scanning'); hint.textContent = 'PRESS AND HOLD SCANNER PAD'; cleanUpScanner(); };
-    pad.addEventListener('mousedown', startHold);
-    pad.addEventListener('mouseup', stopHold);
-    pad.addEventListener('mouseleave', stopHold);
-    pad.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
-    pad.addEventListener('touchend', stopHold);
-  } else {
-    const video = document.getElementById('face-video');
-    const canvas = document.getElementById('face-hud');
-    Auth.startFaceScan(video, canvas, () => {}, () => {
-      setTimeout(() => { cleanUpScanner(); modal.remove(); onComplete(true); }, 1200);
-    }).then(scanner => currentScanner = scanner);
-  }
-}
 
 function renderEmployeeSupport() {
   const user = Auth.getCurrentUser();
@@ -2922,7 +5075,12 @@ function renderEmployeeSupport() {
 function renderAdminSupport() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
-  const allTickets = DB.getTickets();
+  const isManager = user.role === 'manager';
+  let allTickets = DB.getTickets();
+  if (isManager) {
+    const assignedIds = DB.getUsers().filter(u => u.managerId === user.id).map(u => u.id);
+    allTickets = allTickets.filter(t => assignedIds.includes(t.userId));
+  }
   const allUsers = DB.getUsers();
 
   main.innerHTML = `
@@ -2996,7 +5154,12 @@ function renderAdminSupport() {
 
 function renderAdminVerificationView() {
   const main = document.getElementById('main-view');
-  const employees = DB.getUsers().filter(u => u.role === 'employee');
+  const user = Auth.getCurrentUser();
+  const isManager = user.role === 'manager';
+  let employees = DB.getUsers().filter(u => u.role === 'employee');
+  if (isManager) {
+    employees = employees.filter(u => u.managerId === user.id);
+  }
 
   main.innerHTML = `
     <div class="content-header" style="display:flex; justify-content:space-between; align-items:center">
@@ -3161,14 +5324,8 @@ function renderAdminVerificationView() {
   });
 }
 
-function closeModal() {
-  const modal = document.getElementById('biometric-modal') || document.querySelector('.modal-overlay');
-  if (modal) {
-    const closeBtn = modal.querySelector('.close-modal-btn');
-    if (closeBtn) closeBtn.click();
-    else modal.remove();
-  }
-}
+
+
 
 function openUploadDocumentModal(preselectedUserId = null) {
   const isPreselected = preselectedUserId !== null;
@@ -3192,7 +5349,7 @@ function openUploadDocumentModal(preselectedUserId = null) {
     <div class="modal-content" style="max-width: 500px">
       <div class="modal-header">
         <h3 class="modal-title">Upload verification document</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
           <svg style="width:16px; height:16px; fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
@@ -3223,7 +5380,7 @@ function openUploadDocumentModal(preselectedUserId = null) {
         </div>
 
         <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:15px; margin-top:20px">
-          <button class="btn btn-secondary" type="button" style="width:auto; padding:8px 20px; font-size:13px" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn btn-secondary" type="button" style="width:auto; padding:8px 20px; font-size:13px" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
           <button class="btn" type="submit" style="width:auto; padding:8px 20px; font-size:13px; background:var(--primary); color:var(--bg-app); font-weight:600">Upload document</button>
         </div>
       </form>
@@ -3244,16 +5401,32 @@ function openUploadDocumentModal(preselectedUserId = null) {
       return;
     }
 
-    overlay.remove();
+    closeModal(overlay);
     handleMockUpload(userId, file, docType);
   });
 }
 
 function renderAdminDashboard() {
   const main = document.getElementById('main-view');
-  const logs = DB.getLogs();
-  const users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager');
-  const leaves = DB.getLeaveRequests();
+  const currentUser = Auth.getCurrentUser();
+  const isManager = currentUser.role === 'manager';
+
+  let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager');
+  if (isManager) {
+    users = users.filter(u => u.managerId === currentUser.id);
+  }
+  const assignedUserIds = users.map(u => u.id);
+
+  let logs = DB.getLogs();
+  if (isManager) {
+    logs = logs.filter(l => assignedUserIds.includes(l.userId));
+  }
+
+  let leaves = DB.getLeaveRequests();
+  if (isManager) {
+    leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
   const presentToday = logs.filter(l => l.date === todayStr && l.checkIn);
   const lateToday = presentToday.filter(l => l.status === 'Late');
@@ -3264,15 +5437,23 @@ function renderAdminDashboard() {
   const leaveCount = onLeaveToday.length;
   const totalEmployees = users.length;
   const absentCount = totalEmployees - presentCount - leaveCount;
-  const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager').length;
+  
+  const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
+    if (s.status !== 'Pending Manager') return false;
+    if (isManager) {
+      return assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId);
+    }
+    return true;
+  }).length;
 
-  // Group today's checked-in employees by location for HR View
+  // Group today's checked-in employees by location
   const todayLogs = logs.filter(l => l.date === todayStr);
-  const locationGroups = {
-    'Kohat Enclave, Pitampura, Delhi': [],
-    'Chandni Chowk': [],
-    'Omaxe City, Delhi': []
-  };
+  const locationGroups = {};
+  
+  // Initialize with all currently registered locations from database
+  Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
+    locationGroups[loc] = [];
+  });
 
   todayLogs.forEach(l => {
     if (l.checkIn) {
@@ -3282,12 +5463,11 @@ function renderAdminDashboard() {
         if (!locationGroups[loc]) {
           locationGroups[loc] = [];
         }
-        locationGroups[loc].push({ id: u.id, name: u.name, time: l.checkIn, bio: l.biometricUsed });
+        locationGroups[loc].push({ id: u.id, name: u.name, time: l.checkIn });
       }
     }
   });
 
-  const currentUser = Auth.getCurrentUser();
   let worksitePanelHTML = '';
   if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager')) {
     worksitePanelHTML = `
@@ -3307,7 +5487,7 @@ function renderAdminDashboard() {
               : staffList.map(s => `
                   <div class="btn-view-staff-detail" data-id="${s.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all 0.2s ease">
                     <span style="font-weight:600;color:var(--text-primary);text-decoration:underline">${Utils.escape(s.name)}</span>
-                    <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time} (${s.bio !== 'none' ? '🧬 ' + s.bio : '🔑 Pass'})</span>
+                    <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time}</span>
                   </div>
                 `).join('');
 
@@ -3336,7 +5516,6 @@ function renderAdminDashboard() {
         <h1 class="content-title">Live Attendance Monitoring</h1>
         <div class="content-subtitle">Real-time status tracking for workspace logs.</div>
       </div>
-      <div><button class="btn btn-secondary" id="btn-admin-reset-db">Reset Demo Data</button></div>
     </div>
     <div class="content-body">
       <div class="stats-grid">
@@ -3382,7 +5561,7 @@ function renderAdminDashboard() {
                   <th>Shift</th>
                   <th>Checked In</th>
                   <th>Checked Out</th>
-                  <th>Verification</th>
+                  <th>Live GPS</th>
                   <th>Location</th>
                   <th>Status</th>
                 </tr>
@@ -3452,20 +5631,39 @@ function renderAdminDashboard() {
       let statusClass = 'badge-on-time';
       if (l.status === 'Late') statusClass = 'badge-late';
       if (l.status === 'Half Day') statusClass = 'badge-half-day';
-      const devBadge = l.deviationFlag ? `<br><span class="badge badge-late" style="display:inline-block;margin-top:4px;padding:2px 6px;font-size:10px;font-weight:600">⚠️ Out of Geofence (${l.distance} km)</span>` : '';
+      if (l.status === 'Pending Verification') statusClass = 'badge-late';
+
+      // Live GPS — distance is stored in km at check-in time
+      // 100m geofence = 0.1 km threshold
+      const distKm = parseFloat(l.distance) || 0;
+      const distM = Math.round(distKm * 1000);
+      let gpsCellHTML;
+      if (!l.location) {
+        gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">\u2014 No GPS Data</span>`;
+      } else if (distKm <= 0.1) {
+        const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
+        gpsCellHTML = `
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px rgba(16,185,129,0.7);animation:pulse 1.5s infinite"></span>
+            <span style="font-size:11px;font-weight:700;color:#10b981">IN RANGE</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distLabel}</div>`;
+      } else {
+        gpsCellHTML = `
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px rgba(239,68,68,0.6)"></span>
+            <span style="font-size:11px;font-weight:700;color:#ef4444">OUT OF RANGE</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
+      }
       return `
         <tr>
           <td style="font-weight:600">${Utils.escape(u.name)}</td>
           <td>${sch ? Utils.escape(sch.name) : '-'}</td>
           <td>${l.checkIn || '--:--'}</td>
           <td>${l.checkOut || '--:--'}</td>
-          <td style="text-transform:capitalize;font-size:12px;color:var(--text-secondary)">
-            ${l.biometricUsed !== 'none' ? `🧬 ${l.biometricUsed}` : '🔑 Password'}
-          </td>
-          <td style="font-size:12px;color:var(--text-secondary)">
-            ${Utils.escape(l.location || 'Office Headquarters')}
-            ${devBadge}
-          </td>
+          <td>${gpsCellHTML}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
           <td><span class="badge ${statusClass}">${l.status}</span></td>
         </tr>
       `;
@@ -3497,12 +5695,15 @@ function renderAdminDashboard() {
     }).join('');
   }
 
-  document.getElementById('btn-admin-reset-db').addEventListener('click', () => {
-    if (confirm('Reset mock database structures and clear edits?')) {
-      DB.reset();
-      renderAdminDashboard();
-    }
-  });
+  const resetDbBtn = document.getElementById('btn-admin-reset-db');
+  if (resetDbBtn) {
+    resetDbBtn.addEventListener('click', async () => {
+      if (await confirm('Reset mock database structures and clear edits?')) {
+        await DB.reset();
+        renderAdminDashboard();
+      }
+    });
+  }
 
   // Bind worksite staff detail click actions
   document.querySelectorAll('.btn-view-staff-detail').forEach(el => {
@@ -3546,23 +5747,63 @@ function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const users = DB.getUsers().filter(u => {
-    if (user.role === 'manager') {
-      return u.role === 'employee' || u.role === 'hr';
+    if (user.role === 'manager' || user.role === 'hr') {
+      return true; // show all employee, hr, and manager profiles, including their own!
+    } else if (user.role === 'finance_manager') {
+      return false; // Not showing employee list to Finance Manager
     } else {
-      return u.role === 'employee';
+      return false;
     }
   });
-  const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `<div><button class="btn" id="btn-add-user-modal">Add New Employee</button></div>` : '';
+  const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn-outline-equify" id="btn-download-profiles-users">Download report</button>
+      <button class="btn-primary-equify" id="btn-add-user-modal">+ Add Employee</button>
+    </div>
+  ` : '';
 
   main.innerHTML = `
-    <div class="content-header">
+    <div class="equify-page-header">
       <div>
-        <h1 class="content-title">Employee Registers & Payroll Setup</h1>
-        <div class="content-subtitle">Manage company staff files, base salaries, and biometrics.</div>
+        <h1 class="equify-page-title">Employee Registers & Payroll Setup</h1>
+        <div style="font-size:13px; color:#64748b; margin-top:2px">Manage company staff files and base salaries.</div>
       </div>
       ${addBtnHTML}
     </div>
     <div class="content-body">
+      <div class="equify-filter-bar">
+        <div class="equify-filter-pills">
+          <select class="equify-filter-select" id="filter-dept-select">
+            <option value="all">Department: All Departments</option>
+            <option value="Human Resources">Department: Human Resources</option>
+            <option value="Engineering">Department: Engineering</option>
+            <option value="Operations">Department: Operations</option>
+            <option value="Sales">Department: Sales & Marketing</option>
+            <option value="Finance">Department: Finance</option>
+          </select>
+          <select class="equify-filter-select" id="filter-role-select">
+            <option value="all">Role: All Roles</option>
+            <option value="hr">Role: HR Admin Manager</option>
+            <option value="manager">Role: Operations Manager</option>
+            <option value="finance_manager">Role: Finance Manager</option>
+            <option value="employee">Role: Employee</option>
+          </select>
+          <select class="equify-filter-select" id="filter-status-select">
+            <option value="all">Status: All Statuses</option>
+            <option value="Active">Status: Active</option>
+            <option value="Pending">Status: Pending Approval</option>
+            <option value="Inactive">Status: Inactive</option>
+          </select>
+          <select class="equify-filter-select" id="filter-time-select">
+            <option value="month">Time Filter: This month</option>
+            <option value="today">Time Filter: Today</option>
+            <option value="week">Time Filter: This week</option>
+            <option value="quarter">Time Filter: This quarter</option>
+            <option value="year">Time Filter: This year</option>
+          </select>
+        </div>
+        <div class="equify-pagination-info">Total: ${users.length} showing all employees</div>
+      </div>
       <div class="card-panel">
         <div class="table-container">
           <table class="custom-table">
@@ -3574,15 +5815,12 @@ function renderAdminUsers() {
                 <th>Assigned Shift</th>
                 <th>Preferred Location</th>
                 <th>Base Salary</th>
-                <th>Biometrics</th>
                 <th>Profile Controls</th>
               </tr>
             </thead>
             <tbody>
               ${users.map(u => {
                 const sch = DB.getSchedule(u.scheduleId);
-                const hasFace = u.biometricRegistered?.face ? '✅ Configured' : '❌ Empty';
-                const hasFinger = u.biometricRegistered?.finger ? '✅ Configured' : '❌ Empty';
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
@@ -3602,8 +5840,6 @@ function renderAdminUsers() {
                          <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
                        ` : ''}
                        <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                       <button class="btn btn-cyan btn-bioreg-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Biometric Keys</button>
-                       <button class="btn btn-warning btn-recap-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">📊 Recap</button>
                        <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
                      </div>
                    `
@@ -3618,14 +5854,10 @@ function renderAdminUsers() {
                       ${profileBadgeHTML}
                     </td>
                     <td>${Utils.escape(u.username)}</td>
-                    <td><code>${Utils.escape(u.password)}</code></td>
+                    <td><code>••••••••</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
                     <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
                     <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
-                    <td style="font-size:12px;line-height:1.4">
-                      Face: <strong style="color:${u.biometricRegistered?.face ? 'var(--success)' : 'var(--error)'}">${hasFace}</strong><br>
-                      Finger: <strong style="color:${u.biometricRegistered?.finger ? 'var(--success)' : 'var(--error)'}">${hasFinger}</strong>
-                    </td>
                     <td>
                       ${actionsHTML}
                     </td>
@@ -3640,9 +5872,10 @@ function renderAdminUsers() {
   `;
   const addBtn = document.getElementById('btn-add-user-modal');
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
+  const dlProfilesBtn = document.getElementById('btn-download-profiles-users');
+  if (dlProfilesBtn) dlProfilesBtn.addEventListener('click', () => openProfileDownloadModal());
   document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
-  document.querySelectorAll('.btn-bioreg-user').forEach(btn => btn.addEventListener('click', (e) => openBiometricsConfigModal(e.target.closest('.btn-bioreg-user').dataset.id)));
-  document.querySelectorAll('.btn-recap-user').forEach(btn => btn.addEventListener('click', (e) => openPunctualityRecapModal(e.target.closest('.btn-recap-user').dataset.id)));
+  document.querySelectorAll('.btn-download-user-profile').forEach(btn => btn.addEventListener('click', (e) => openProfileDownloadModal(e.target.closest('.btn-download-user-profile').dataset.id)));
   
   document.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => {
     const id = e.target.closest('.btn-approve-profile-direct').dataset.id;
@@ -3657,14 +5890,14 @@ function renderAdminUsers() {
     }
   }));
 
-  document.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => {
+  document.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', async (e) => {
     const id = e.target.closest('.btn-reject-profile-direct').dataset.id;
     const u = DB.getUser(id);
     if (u) {
-      const comment = prompt('Please enter the profile issue details / reason for rejection:');
+      const comment = await CustomDialog.prompt('Please enter the profile issue details / reason for rejection:');
       if (comment === null) return;
       if (!comment.trim()) {
-        alert('You must provide a comment to explain the rejection.');
+        await CustomDialog.alert('You must provide a comment to explain the rejection.');
         return;
       }
       u.profileVerificationStatus = 'Rejected';
@@ -3675,10 +5908,110 @@ function renderAdminUsers() {
     }
   }));
 
-  document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => {
+  // Setup real-time dynamic filter listeners on dropdowns
+  const setupFilterListeners = () => {
+    const dSel = document.getElementById('filter-dept-select');
+    const rSel = document.getElementById('filter-role-select');
+    const sSel = document.getElementById('filter-status-select');
+    const tSel = document.getElementById('filter-time-select');
+    const tbody = document.querySelector('.card-panel .custom-table tbody');
+    const pInfo = document.querySelector('.equify-pagination-info');
+
+    if (!dSel || !tbody) return;
+
+    const applyFilters = () => {
+      const dVal = dSel ? dSel.value : 'all';
+      const rVal = rSel ? rSel.value : 'all';
+      const sVal = sSel ? sSel.value : 'all';
+
+      const allUsers = DB.getUsers() || [];
+      const filtered = allUsers.filter(u => {
+        if (dVal !== 'all') {
+          const uDept = (u.department || '').toLowerCase();
+          const targetDept = dVal.toLowerCase();
+          if (!uDept.includes(targetDept) && !targetDept.includes(uDept)) return false;
+        }
+        if (rVal !== 'all') {
+          if ((u.role || '').toLowerCase() !== rVal.toLowerCase()) return false;
+        }
+        if (sVal !== 'all') {
+          if (sVal === 'Pending') {
+            if (u.profileVerificationStatus !== 'Pending Approval') return false;
+          } else if (sVal === 'Active') {
+            if (u.status === 'Inactive') return false;
+          } else if (sVal === 'Inactive') {
+            if (u.status !== 'Inactive') return false;
+          }
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
+      } else {
+        tbody.innerHTML = filtered.map(u => {
+          const sch = DB.getSchedule(u.scheduleId);
+          const profileStatus = u.profileVerificationStatus || 'Approved';
+          let profileBadgeHTML = '';
+          if (profileStatus === 'Pending Approval') {
+            profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
+          } else if (profileStatus === 'Rejected') {
+            profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
+          } else {
+            profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
+          }
+
+          const actionsHTML = (user.role === 'hr' || user.role === 'manager')
+            ? `
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                ${u.profileVerificationStatus === 'Pending Approval' ? `
+                  <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
+                  <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
+                ` : ''}
+                <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
+                <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
+              </div>
+            `
+            : `<div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>`;
+          
+          return `
+            <tr>
+              <td style="font-weight:600">
+                ${Utils.escape(u.name)}
+                ${profileBadgeHTML}
+              </td>
+              <td>${Utils.escape(u.username)}</td>
+              <td><code>••••••••</code></td>
+              <td>${sch ? Utils.escape(sch.name) : '-'}</td>
+              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
+              <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
+              <td>
+                ${actionsHTML}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
+        document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
+      }
+
+      if (pInfo) {
+        pInfo.textContent = `Total: ${filtered.length} showing filtered employees`;
+      }
+    };
+
+    [dSel, rSel, sSel, tSel].forEach(sel => {
+      if (sel) sel.addEventListener('change', applyFilters);
+    });
+  };
+
+  setupFilterListeners();
+
+  document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', async (e) => {
     const id = e.target.closest('.btn-delete-user').dataset.id;
     const u = DB.getUser(id);
-    if (confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
+    if (await CustomDialog.confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
       DB.deleteUser(id);
       renderAdminUsers();
     }
@@ -3693,22 +6026,42 @@ function openUserModal(userId = null) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 600px">
+    <div class="modal-content" style="max-width: 700px">
       <div class="modal-header">
         <h3 class="modal-title">${isEdit ? 'Modify Employee Profile' : 'Register New Employee'}</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
       <form id="user-editor-form">
         <div class="form-group">
-          <label class="form-label" for="editor-name">Full Name</label>
-          <input class="form-input" type="text" id="editor-name" value="${isEdit ? Utils.escape(user.name) : ''}" required>
+          <label class="form-label" for="editor-name">Full Name <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(Letters only)</span></label>
+          <input class="form-input" type="text" id="editor-name" value="${isEdit ? Utils.escape(user.name) : ''}" required placeholder="e.g. Rahul Sharma">
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
-            <label class="form-label" for="editor-username">Username</label>
-            <input class="form-input" type="text" id="editor-username" value="${isEdit ? Utils.escape(user.username) : ''}" required ${isEdit ? 'disabled' : ''}>
+            <label class="form-label" for="editor-empid">Employee ID <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="text" id="editor-empid" value="${isEdit ? Utils.escape(user.employeeId || '') : ''}" required placeholder="e.g. EMP-001">
+          </div>
+          <div>
+            <label class="form-label" for="editor-email">Email Address <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="email" id="editor-email" value="${isEdit ? Utils.escape(user.email || '') : ''}" required placeholder="e.g. rahul@company.com">
+          </div>
+        </div>
+        <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" for="editor-phone">Mobile Number <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="tel" id="editor-phone" value="${isEdit ? Utils.escape(user.phone || '') : ''}" required placeholder="e.g. +91 9876543210">
+          </div>
+          <div>
+            <label class="form-label" for="editor-dob">Date of Birth <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="date" id="editor-dob" value="${isEdit ? (user.dob || '') : ''}">
+          </div>
+        </div>
+        <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" for="editor-username">Username (Optional)</label>
+            <input class="form-input" type="text" id="editor-username" value="${isEdit ? Utils.escape(user.username) : ''}" ${isEdit ? 'disabled' : ''}>
           </div>
           <div>
             <label class="form-label" for="editor-gender">Gender</label>
@@ -3721,8 +6074,8 @@ function openUserModal(userId = null) {
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
-            <label class="form-label" for="editor-pass">Security Password</label>
-            <input class="form-input" type="text" id="editor-pass" value="${isEdit ? Utils.escape(user.password) : ''}" required>
+            <label class="form-label" for="editor-pass">Security Password (Optional)</label>
+            <input class="form-input" type="password" id="editor-pass" placeholder="Leave blank to keep unchanged">
           </div>
           <div>
             <label class="form-label" for="editor-salary">Base Salary (INR/Month)</label>
@@ -3778,7 +6131,7 @@ function openUserModal(userId = null) {
           <select class="form-input" id="editor-role" required>
             ${(() => {
               const currentUser = Auth.getCurrentUser();
-              if (currentUser.role === 'manager') {
+              if (currentUser.role === 'hr') {
                 return `
                   <option value="employee" ${isEdit && user.role === 'employee' ? 'selected' : ''}>Employee</option>
                   <option value="hr" ${isEdit && user.role === 'hr' ? 'selected' : ''}>HR Coordinator</option>
@@ -3792,19 +6145,53 @@ function openUserModal(userId = null) {
             })()}
           </select>
         </div>
+        ${(() => {
+          const currentUser = Auth.getCurrentUser();
+          if (currentUser.role === 'hr') {
+            const managers = DB.getUsers().filter(m => m.role === 'manager');
+            return `
+              <div class="form-group">
+                <label class="form-label" for="editor-manager">Assigned Manager</label>
+                <select class="form-input" id="editor-manager">
+                  <option value="">-- No Manager Assigned --</option>
+                  ${managers.map(m => `<option value="${m.id}" ${isEdit && user.managerId === m.id ? 'selected' : ''}>${Utils.escape(m.name)}</option>`).join('')}
+                </select>
+              </div>
+            `;
+          }
+          return '';
+        })()}
+        <div class="form-group">
+          <label class="form-label" for="editor-assigned-by">Assigned By <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(HR / Manager who is registering this employee)</span></label>
+          <select class="form-input" id="editor-assigned-by">
+            ${(() => {
+              const currentUser = Auth.getCurrentUser();
+              const admins = DB.getUsers().filter(u => u.role === 'hr' || u.role === 'manager');
+              return admins.map(a => `
+                <option value="${a.id}" ${isEdit && user.assignedById === a.id ? 'selected' : (!isEdit && a.id === currentUser.id ? 'selected' : '')}>
+                  ${Utils.escape(a.name)} (${a.role === 'hr' ? 'HR' : 'Manager'})
+                </option>
+              `).join('');
+            })()}
+          </select>
+        </div>
         <div class="form-group">
           <label class="form-label" for="editor-schedule">Assigned Shift Schedule</label>
           <select class="form-input" id="editor-schedule" required>
-            ${schedules.map(s => `<option value="${s.id}" ${isEdit && user.scheduleId === s.id ? 'selected' : ''}>${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>`).join('')}
+            ${schedules.map(s => `<option value="${s.id}" ${isEdit && user.scheduleId === s.id ? 'selected' : ''}>${Utils.escape(s.name)} (${formatTimeRange12h(s.startTime, s.endTime)})</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label class="form-label" for="editor-preferred-location">Preferred Work Location</label>
           <select class="form-input" id="editor-preferred-location" required>
-            <option value="Kohat Enclave, Pitampura, Delhi" ${isEdit && user.preferredLocation === 'Kohat Enclave, Pitampura, Delhi' ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
-            <option value="Chandni Chowk" ${isEdit && user.preferredLocation === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
-            <option value="Omaxe City, Delhi" ${isEdit && user.preferredLocation === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
+            ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+              <option value="${loc}" ${isEdit && user.preferredLocation === loc ? 'selected' : ''}>${loc}</option>
+            `).join('')}
           </select>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" id="btn-pref-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
+            <button type="button" id="btn-pref-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
+          </div>
         </div>
         <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px">
           <label class="form-label" style="font-weight: 700; color: var(--text-secondary)">Document Management</label>
@@ -3826,7 +6213,7 @@ function openUserModal(userId = null) {
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-secondary" type="button" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn btn-secondary" type="button" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
           <button class="btn" type="submit">${isEdit ? 'Save Changes' : 'Create User'}</button>
         </div>
       </form>
@@ -3834,9 +6221,62 @@ function openUserModal(userId = null) {
   `;
   document.body.appendChild(overlay);
 
+  const editorRoleSelect = document.getElementById('editor-role');
+  const editorEmpIdInput = document.getElementById('editor-empid');
+  const editorEmpIdLabel = overlay.querySelector('label[for="editor-empid"]');
+
+  function updateEditorEmpIdByRole(roleVal) {
+    if (!editorEmpIdInput) return;
+    let currentVal = editorEmpIdInput.value.trim();
+    const numMatch = currentVal.match(/\d+/);
+    const numPart = numMatch ? numMatch[0] : '100';
+
+    if (roleVal === 'hr') {
+      editorEmpIdInput.value = `HR${numPart}`;
+      editorEmpIdInput.placeholder = 'e.g. HR100';
+      if (editorEmpIdLabel) editorEmpIdLabel.innerHTML = 'HR ID <span style="color:var(--danger);font-size:11px">*</span>';
+    } else if (roleVal === 'manager' || roleVal === 'finance_manager') {
+      editorEmpIdInput.value = `MGR${numPart}`;
+      editorEmpIdInput.placeholder = 'e.g. MGR100';
+      if (editorEmpIdLabel) editorEmpIdLabel.innerHTML = 'Manager ID <span style="color:var(--danger);font-size:11px">*</span>';
+    } else {
+      editorEmpIdInput.value = `EMP${numPart}`;
+      editorEmpIdInput.placeholder = 'e.g. EMP100';
+      if (editorEmpIdLabel) editorEmpIdLabel.innerHTML = 'Employee ID <span style="color:var(--danger);font-size:11px">*</span>';
+    }
+  }
+
+  if (editorRoleSelect) {
+    editorRoleSelect.addEventListener('change', (e) => {
+      updateEditorEmpIdByRole(e.target.value);
+    });
+  }
+
+  const prefLocSelect = document.getElementById('editor-preferred-location');
+  
+  // Fetch Nearby button for preferred location
+  const btnPrefFetchNearby = document.getElementById('btn-pref-fetch-nearby');
+  if (btnPrefFetchNearby) {
+    btnPrefFetchNearby.addEventListener('click', () => {
+      fetchNearbyAndAddLocation(prefLocSelect);
+    });
+  }
+  
+  // Enter Any Location button for preferred location
+  const btnPrefAddCustom = document.getElementById('btn-pref-add-custom');
+  if (btnPrefAddCustom) {
+    btnPrefAddCustom.addEventListener('click', () => {
+      enterCustomLocation(prefLocSelect);
+    });
+  }
+
   document.getElementById('user-editor-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('editor-name').value.trim();
+    const employeeId = document.getElementById('editor-empid').value.trim();
+    const email = document.getElementById('editor-email').value.trim();
+    const phone = document.getElementById('editor-phone').value.trim();
+    const dob = document.getElementById('editor-dob').value;
     const username = document.getElementById('editor-username').value.trim();
     const password = document.getElementById('editor-pass').value.trim();
     const baseSalary = Number(document.getElementById('editor-salary').value);
@@ -3855,9 +6295,19 @@ function openUserModal(userId = null) {
     const deductionPT = Number(document.getElementById('editor-pt').value);
     const deductionTDS = Number(document.getElementById('editor-tds').value);
 
-    const rules = Auth.validatePassword(password);
-    if (!rules.valid) {
-      alert('Password must have minimum 6 chars, 1 uppercase, and 1 special symbol.');
+    if (password) {
+      const rules = Auth.validatePassword(password);
+      if (!rules.valid) {
+        alert('Password must have minimum 6 chars, 1 uppercase, and 1 special symbol.');
+        return;
+      }
+    }
+
+    const profileValidation = ValidationUtils.validateProfile({
+      name, employeeId, email, phone, dob, dateOfJoining
+    });
+    if (!profileValidation.valid) {
+      alert(profileValidation.message);
       return;
     }
 
@@ -3882,95 +6332,47 @@ function openUserModal(userId = null) {
       };
     }
 
+    const managerSelect = document.getElementById('editor-manager');
+    const managerId = managerSelect ? managerSelect.value : (currentUser.role === 'manager' ? currentUser.id : (isEdit ? user.managerId : ''));
+    const assignedBySelect = document.getElementById('editor-assigned-by');
+    const assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
+
     if (isEdit) {
+      const finalPassword = password || user.password;
       DB.updateUser(userId, { 
-        name, password, baseSalary, scheduleId, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        managerId, assignedById,
         profileVerificationStatus: 'Approved',
         profileVerificationComment: '',
         pendingProfileEdits: null
       });
     } else {
-      if (DB.getUserByUsernameOrId(username)) {
+      let maxId = 99;
+      DB.data.users.forEach(u => {
+        if (u.employeeId && u.employeeId.startsWith('EMP')) {
+          const num = parseInt(u.employeeId.substring(3), 10);
+          if (!isNaN(num) && num > maxId) {
+            maxId = num;
+          }
+        }
+      });
+      const nextEmpId = 'EMP' + (maxId + 1);
+
+      const finalUsername = username || name.toLowerCase().replace(/\s+/g, '') || nextEmpId.toLowerCase();
+      const finalPassword = password || 'Surya@123';
+
+      if (DB.getUserByUsernameOrId(finalUsername)) {
         alert('Username or Employee ID is already taken.');
         return;
       }
-      DB.addUser({ name, username, password, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS });
+      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById });
     }
-    overlay.remove();
+    closeModal(overlay);
     renderAdminUsers();
   });
 }
 
-function openBiometricsConfigModal(userId) {
-  const user = DB.getUser(userId);
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  const faceReg = user.biometricRegistered?.face;
-  const fingerReg = user.biometricRegistered?.finger;
-
-  overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 420px">
-      <div class="modal-header">
-        <h3 class="modal-title">Biometric Setup: ${Utils.escape(user.name)}</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">
-          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-        </button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:16px;border-radius:var(--radius-sm)">
-          <div>
-            <strong style="display:block;font-size:14px">Face Recognition ID</strong>
-            <span style="font-size:12px;color:var(--text-secondary)" id="status-face-text">${faceReg ? '✅ Configured' : '❌ Empty'}</span>
-          </div>
-          <button class="btn btn-cyan" id="action-face-bioreg" style="width:auto;padding:8px 14px;font-size:13px">${faceReg ? 'Remove Face' : 'Register Face'}</button>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:16px;border-radius:var(--radius-sm)">
-          <div>
-            <strong style="display:block;font-size:14px">Fingerprint Registry</strong>
-            <span style="font-size:12px;color:var(--text-secondary)" id="status-finger-text">${fingerReg ? '✅ Configured' : '❌ Empty'}</span>
-          </div>
-          <button class="btn btn-cyan" id="action-finger-bioreg" style="width:auto;padding:8px 14px;font-size:13px">${fingerReg ? 'Remove Print' : 'Register Print'}</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  const faceBtn = document.getElementById('action-face-bioreg');
-  const fingerBtn = document.getElementById('action-finger-bioreg');
-  const faceTxt = document.getElementById('status-face-text');
-  const fingerTxt = document.getElementById('status-finger-text');
-
-  faceBtn.addEventListener('click', () => {
-    const activeUser = DB.getUser(userId);
-    const registered = activeUser.biometricRegistered?.face;
-    if (registered) {
-      Auth.unregisterBiometric(userId, 'face');
-      faceBtn.textContent = 'Register Face';
-      faceTxt.textContent = '❌ Empty';
-    } else {
-      Auth.registerBiometric(userId, 'face');
-      faceBtn.textContent = 'Remove Face';
-      faceTxt.textContent = '✅ Configured';
-    }
-    renderAdminUsers();
-  });
-
-  fingerBtn.addEventListener('click', () => {
-    const activeUser = DB.getUser(userId);
-    const registered = activeUser.biometricRegistered?.finger;
-    if (registered) {
-      Auth.unregisterBiometric(userId, 'finger');
-      fingerBtn.textContent = 'Register Print';
-      fingerTxt.textContent = '❌ Empty';
-    } else {
-      Auth.registerBiometric(userId, 'finger');
-      fingerBtn.textContent = 'Remove Print';
-      fingerTxt.textContent = '✅ Configured';
-    }
-    renderAdminUsers();
-  });
-}
 
 function renderAdminSchedules() {
   const main = document.getElementById('main-view');
@@ -3981,7 +6383,10 @@ function renderAdminSchedules() {
         <h1 class="content-title">Shift Calendars & Shifts</h1>
         <div class="content-subtitle">Design active work hour calendars and assign shift profiles.</div>
       </div>
-      <div><button class="btn" id="btn-add-schedule-modal">Add Shift Pattern</button></div>
+      <div style="display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-left:auto">
+        <button class="btn btn-cyan" id="btn-express-upload-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--cyan) 0%, #0891b2 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(6, 182, 212, 0.35); transition:all 0.2s ease">Express Upload</button>
+        <button class="btn" id="btn-add-schedule-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--error) 0%, #be123c 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(225, 29, 72, 0.35); transition:all 0.2s ease">+ Add Shift Pattern</button>
+      </div>
     </div>
     <div class="content-body">
       <div class="schedule-mgmt-grid">
@@ -3998,14 +6403,17 @@ function renderAdminSchedules() {
                 </button>
               </div>
             </div>
-            <div class="shift-meta-row"><span>Working Hours:</span><strong style="color:var(--text-primary)">${s.startTime} - ${s.endTime}</strong></div>
+            <div class="shift-meta-row"><span>Working Hours:</span><strong style="color:var(--text-primary)">${formatTime12h(s.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(s.endTime)}</strong></div>
             <div class="shift-meta-row"><span>Grace Period:</span><strong style="color:var(--warning)">${s.gracePeriod} minutes</strong></div>
-            <div class="shift-meta-row" style="margin-top:6px; align-items:center;">
-              <span>Location Select:</span>
-              <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:4px 8px;font-size:12px;width:auto;margin-left:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
-                <option value="Kohat Enclave, Pitampura, Delhi" ${s.location === 'Kohat Enclave, Pitampura, Delhi' || !s.location ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
-                <option value="Chandni Chowk" ${s.location === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
-                <option value="Omaxe City, Delhi" ${s.location === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
+            <div class="shift-meta-row" style="margin-top:8px; display:flex; flex-direction:column; gap:4px; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
+                <span style="font-size:12px; color:var(--text-secondary)">Location Select:</span>
+                <button class="btn-add-location-inline" data-id="${s.id}" title="Add New Location" style="padding:2px 8px;font-size:10px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;white-space:nowrap;width:auto">➕ Add Location</button>
+              </div>
+              <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:6px 8px;font-size:12px;width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+                  <option value="${loc}" ${s.location === loc || (!s.location && loc === 'Kohat Enclave, Pitampura, Delhi') ? 'selected' : ''}>${loc}</option>
+                `).join('')}
               </select>
             </div>
             <div class="shift-meta-row" style="margin-top:6px; align-items:center;">
@@ -4021,25 +6429,37 @@ function renderAdminSchedules() {
           </div>
         `).join('')}
       </div>
+      <!-- Positioned download schedules button at the bottom-right corner of the page -->
+      <div style="display:flex; justify-content:flex-end; margin-top:24px; padding: 0 4px; width:100%">
+        <button class="btn btn-secondary btn-sm" id="btn-download-schedules-trigger" style="width:auto !important; display:inline-flex !important; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:rgba(255,255,255,0.02);">
+          📥 Download Schedules
+        </button>
+      </div>
     </div>
   `;
   document.getElementById('btn-add-schedule-modal').addEventListener('click', () => openScheduleModal());
+  const expressUploadBtn = document.getElementById('btn-express-upload-modal');
+  if (expressUploadBtn) {
+    expressUploadBtn.addEventListener('click', () => openExpressUploadModal());
+  }
+  const downloadSchedulesBtn = document.getElementById('btn-download-schedules-trigger');
+  if (downloadSchedulesBtn) {
+    downloadSchedulesBtn.addEventListener('click', () => openDownloadSchedulesModal());
+  }
   document.querySelectorAll('.btn-edit-shift').forEach(btn => btn.addEventListener('click', (e) => {
     const btnElem = e.target.closest('.btn-edit-shift');
     if (btnElem) openScheduleModal(btnElem.dataset.id);
   }));
-  document.querySelectorAll('.btn-delete-shift').forEach(btn => btn.addEventListener('click', (e) => {
+  document.querySelectorAll('.btn-delete-shift').forEach(btn => btn.addEventListener('click', async (e) => {
     const btnElem = e.target.closest('.btn-delete-shift');
     if (!btnElem) return;
     const id = btnElem.dataset.id;
-    if (confirm('Delete shift calendar?')) {
-      const deleted = DB.deleteSchedule(id);
-      if (!deleted) alert('Cannot delete the last shift.');
+    if (await confirm('Are you sure you want to delete this shift calendar?')) {
+      DB.deleteSchedule(id);
+      showToastNotification('🗑️ Shift calendar deleted successfully.', 'success');
       renderAdminSchedules();
     }
   }));
-
-  // Bind inline location change
   document.querySelectorAll('.inline-sched-location').forEach(sel => {
     sel.addEventListener('change', (e) => {
       const schedId = e.target.dataset.id;
@@ -4048,14 +6468,17 @@ function renderAdminSchedules() {
       renderAdminSchedules();
     });
   });
-
-  // Bind inline location swap
+  document.querySelectorAll('.btn-add-location-inline').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const schedId = e.target.dataset.id;
+      openAddLocationDialog(schedId);
+    });
+  });
   document.querySelectorAll('.inline-sched-swap').forEach(sel => {
     sel.addEventListener('change', (e) => {
       const schedId = e.target.dataset.id;
       const otherId = e.target.value;
       if (!otherId) return;
-
       const s1 = DB.getSchedule(schedId);
       const s2 = DB.getSchedule(otherId);
       if (s1 && s2) {
@@ -4070,6 +6493,1454 @@ function renderAdminSchedules() {
       }
     });
   });
+}// Helper to load SheetJS dynamically from CDN
+function loadSheetJS(callback, onError) {
+  if (window.XLSX) {
+    callback();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  script.onload = callback;
+  script.onerror = () => {
+    if (onError) {
+      onError();
+    } else {
+      alert('Failed to load Excel library from CDN. Please check your internet connection.');
+    }
+  };
+  document.head.appendChild(script);
+}
+
+function openExpressUploadModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width:700px; padding:28px; display:flex; flex-direction:column; gap:16px" id="express-modal-container">
+      <div class="modal-header" style="margin-bottom:5px">
+        <h3 class="modal-title">⚡ Express Schedule Upload</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+
+      <div style="font-size:12.5px; color:var(--text-secondary)">
+        Upload a CSV or Excel file to bulk-update employee schedules. The file must have <strong>Employee ID</strong>, <strong>Location</strong>, and <strong>Shift</strong> columns (any order).
+      </div>
+
+      <!-- Required columns info -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(99,102,241,0.12); color:var(--primary); border:1px solid rgba(99,102,241,0.2)">📌 Employee ID</span>
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(16,185,129,0.1); color:var(--success); border:1px solid rgba(16,185,129,0.2)">📍 Location</span>
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(245,158,11,0.1); color:var(--warning); border:1px solid rgba(245,158,11,0.2)">🕐 Shift</span>
+        <span style="font-size:11px; color:var(--text-muted); align-self:center">(column order does not matter)</span>
+      </div>
+
+      <!-- File Upload Box -->
+      <div class="form-group" style="border:2px dashed var(--border); padding:18px 16px; border-radius:var(--radius-md); text-align:center; background:rgba(255,255,255,0.01)">
+        <div style="font-size:30px; margin-bottom:8px">📤</div>
+        <input type="file" id="express-file-input" accept=".csv,.xlsx,.xls" style="display:none">
+        <button class="btn btn-secondary" id="btn-select-file" style="width:auto; padding:6px 16px; font-size:12px; margin-bottom:6px">Choose File</button>
+        <div id="express-file-name" style="font-size:11.5px; color:var(--text-muted); margin-top:4px">No file chosen (CSV or Excel)</div>
+        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap">
+          <span style="font-size:11px; color:var(--text-muted)">Download sample template:</span>
+          <button id="btn-dl-template-csv" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(255,255,255,0.03); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-sm); cursor:pointer">📄 CSV</button>
+          <button id="btn-dl-template-excel" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(16,185,129,0.07); color:var(--success); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-sm); cursor:pointer">📊 Excel</button>
+        </div>
+      </div>
+
+      <!-- Intent Textarea -->
+      <div class="form-group">
+        <label class="form-label" for="express-intent" style="font-size: 12px; font-weight: 600">What changes do you want to make?</label>
+        <textarea class="form-input" id="express-intent" placeholder="e.g. Reassign Delhi branch workers to Night Shift schedules..." rows="2" style="resize:vertical; font-size:12.5px" required></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div id="express-actions-row" style="display:flex; justify-content:flex-end; gap:10px">
+          <button class="btn btn-secondary" id="btn-express-cancel" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 20px; font-size:12.5px">Cancel</button>
+          <button class="btn" id="btn-express-process" style="width:auto; padding:8px 24px; font-size:12.5px; font-weight:700" disabled>⚡ Upload & Process</button>
+        </div>
+        <!-- Loading -->
+        <div id="express-loading-spinner" style="display:none; align-items:center; justify-content:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-md); background:rgba(255,255,255,0.01)">
+          <div style="width:20px; height:20px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--primary); border-radius:50%; animation:spin 0.8s linear infinite"></div>
+          <span id="express-loading-text" style="font-size:13px; font-weight:700; color:var(--primary)">Reading file...</span>
+        </div>
+      </div>
+
+      <!-- ===== RESULT SUMMARY (hidden until processed) ===== -->
+      <div id="express-results-section" style="display:none; flex-direction:column; gap:12px; border-top:1px solid var(--border); padding-top:16px">
+
+        <!-- Stats Row -->
+        <div id="express-stats-row" style="display:flex; gap:10px; flex-wrap:wrap"></div>
+
+        <!-- Detail Log -->
+        <div style="font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:2px">Record Details:</div>
+        <div id="express-summary-list" style="max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.15); font-size:12px"></div>
+
+        <!-- Download Failed Report button (shown only if there are failures) -->
+        <div id="express-failed-download-row" style="display:none; justify-content:flex-start">
+          <button class="btn" id="btn-download-failed-csv" style="width:auto; padding:7px 16px; font-size:12px; font-weight:700; background:rgba(239,68,68,0.12); color:var(--error); border:1px solid rgba(239,68,68,0.25)">
+            📥 Download Failed Records Report
+          </button>
+        </div>
+
+        <!-- Done button -->
+        <div style="display:flex; justify-content:flex-end">
+          <button class="btn btn-secondary" id="btn-express-done" style="width:auto; padding:8px 24px; font-size:12.5px">Close & Refresh</button>
+        </div>
+      </div>
+
+      <!-- Upload History Section -->
+      <div id="express-history-section" style="border-top:1px solid var(--border); padding-top:16px; margin-top:4px; display:flex; flex-direction:column; gap:10px">
+        <h4 style="margin:0; font-size:13px; font-weight:700; color:var(--text-primary)">📋 Upload History</h4>
+        <div style="overflow-x:auto; max-height:180px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.1)">
+          <table class="table-custom" style="width:100%; border-collapse:collapse; font-size:11.5px; min-width:500px">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.02); text-align:left; border-bottom:1px solid var(--border)">
+                <th style="padding:8px">Date/Time</th>
+                <th style="padding:8px">Employee</th>
+                <th style="padding:8px">Shift Change</th>
+                <th style="padding:8px">Location Change</th>
+                <th style="padding:8px">Effective</th>
+                <th style="padding:8px">Status</th>
+              </tr>
+            </thead>
+            <tbody id="express-history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const fileInput      = overlay.querySelector('#express-file-input');
+  const fileNameDisp   = overlay.querySelector('#express-file-name');
+  const processBtn     = overlay.querySelector('#btn-express-process');
+  const actionsRow     = overlay.querySelector('#express-actions-row');
+  const loadingSpinner = overlay.querySelector('#express-loading-spinner');
+  const loadingText    = overlay.querySelector('#express-loading-text');
+  const resultsSection = overlay.querySelector('#express-results-section');
+  const statsRow       = overlay.querySelector('#express-stats-row');
+  const summaryList    = overlay.querySelector('#express-summary-list');
+  const failedDlRow    = overlay.querySelector('#express-failed-download-row');
+  const doneBtn        = overlay.querySelector('#btn-express-done');
+  const intentInput    = overlay.querySelector('#express-intent');
+
+  renderUploadHistory(overlay);
+
+  // ---- Template download ----
+  const TPL_HEADERS = ['Employee ID', 'Location', 'Shift'];
+  const TPL_ROWS    = [
+    ['EMP001', 'Kohat Enclave, Pitampura, Delhi', 'Standard Day Shift'],
+    ['EMP002', 'Noida Office',                   'Night Shift']
+  ];
+
+  overlay.querySelector('#btn-dl-template-csv').addEventListener('click', () => {
+    const esc = v => `"${String(v).replace(/"/g, '""')}"`;
+    const rows = [TPL_HEADERS.join(','), ...TPL_ROWS.map(r => r.map(esc).join(','))];
+    const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'schedule_upload_template.csv'; a.click();
+  });
+
+  overlay.querySelector('#btn-dl-template-excel').addEventListener('click', () => {
+    const doExport = () => {
+      const ws = XLSX.utils.aoa_to_sheet([TPL_HEADERS, ...TPL_ROWS]);
+      ws['!cols'] = TPL_HEADERS.map((h,i) => ({ wch: Math.max(h.length, ...TPL_ROWS.map(r => String(r[i]||'').length)) + 2 }));
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Template');
+      XLSX.writeFile(wb, 'schedule_upload_template.xlsx');
+    };
+    if (window.XLSX) doExport();
+    else loadSheetJS(doExport, () => alert('Could not load Excel library. Download CSV instead.'));
+  });
+
+  // ---- File selection ----
+  overlay.querySelector('#btn-select-file').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) {
+      fileNameDisp.textContent = `${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+      fileNameDisp.style.color = 'var(--text-primary)';
+      processBtn.removeAttribute('disabled');
+    } else {
+      fileNameDisp.textContent = 'No file chosen (CSV or Excel)';
+      fileNameDisp.style.color = 'var(--text-muted)';
+      processBtn.setAttribute('disabled','true');
+    }
+  });
+
+  // ---- Process ----
+  processBtn.addEventListener('click', () => {
+    const file = fileInput.files[0];
+    const intent = intentInput.value.trim();
+    if (!file) return;
+    if (!intent) {
+      alert('Please describe what changes you want to make.');
+      return;
+    }
+
+    // Lock UI
+    intentInput.setAttribute('disabled','true');
+    fileInput.setAttribute('disabled','true');
+    overlay.querySelector('#btn-select-file').setAttribute('disabled','true');
+    actionsRow.style.display = 'none';
+    loadingSpinner.style.display = 'flex';
+    resultsSection.style.display = 'none';
+
+    const isExcel = file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls');
+
+    const runProcessing = () => {
+      const reader = new FileReader();
+      reader.onload = evt => {
+        let csvText = '';
+        try {
+          if (isExcel) {
+            const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+            csvText = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]);
+          } else {
+            csvText = evt.target.result;
+          }
+        } catch(err) {
+          loadingSpinner.style.display = 'none';
+          actionsRow.style.display = 'flex';
+          intentInput.removeAttribute('disabled');
+          fileInput.removeAttribute('disabled');
+          overlay.querySelector('#btn-select-file').removeAttribute('disabled');
+          alert('Could not read the file. Make sure it is a valid CSV or Excel file.');
+          return;
+        }
+
+        loadingText.textContent = 'Validating records...';
+        setTimeout(() => {
+          loadingText.textContent = 'Updating schedules...';
+          setTimeout(() => {
+            const results = executeExpressReassignments(csvText, intent);
+            loadingSpinner.style.display = 'none';
+            resultsSection.style.display = 'flex';
+
+            // --- Stats cards ---
+            const total   = results.totalCount;
+            const success = results.successCount;
+            const failed  = results.errorCount;
+            const pct = total > 0 ? Math.round(success/total*100) : 0;
+            const columnWarnings = results.columnWarnings || [];
+
+            // Prepend a banner and warnings list to the results section
+            const alertBannerHTML = (failed === 0 && total > 0)
+              ? `<div class="alert alert-success" style="padding:12px; border-radius:var(--radius-md); background:rgba(16,185,129,0.12); color:var(--success); border:1px solid rgba(16,185,129,0.25); font-weight:700; text-align:center; font-size:13px; margin-bottom:12px">
+                  🎉 Upload Completed Successfully! All records processed without errors.
+                 </div>`
+              : `<div class="alert alert-warning" style="padding:12px; border-radius:var(--radius-md); background:rgba(239,68,68,0.07); color:var(--error); border:1px solid rgba(239,68,68,0.2); font-weight:700; text-align:center; font-size:13px; margin-bottom:12px">
+                  ⚠️ Upload Completed with some issues. Please review the failed records below.
+                 </div>`;
+
+            const warningsHTML = columnWarnings.length > 0
+              ? `<div class="warnings-box" style="margin-bottom:12px; padding:10px 14px; border-radius:var(--radius-sm); background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); color:var(--primary); font-size:11.5px; line-height:1.4">
+                  <strong>⚠️ Auto-Creation Alerts:</strong>
+                  <ul style="margin:5px 0 0 16px; padding:0">
+                    ${columnWarnings.map(w => `<li>${Utils.escape(w)}</li>`).join('')}
+                  </ul>
+                 </div>`
+              : '';
+
+            // Clear any previous alerts
+            resultsSection.querySelectorAll('.alert, .warnings-box, #express-results-top-wrapper').forEach(el => el.remove());
+            
+            // Inset topWrapper before statsRow
+            const topWrapper = document.createElement('div');
+            topWrapper.id = 'express-results-top-wrapper';
+            topWrapper.style.display = 'flex';
+            topWrapper.style.flexDirection = 'column';
+            topWrapper.style.gap = '8px';
+            resultsSection.insertBefore(topWrapper, statsRow);
+            topWrapper.innerHTML = alertBannerHTML + warningsHTML;
+
+            statsRow.innerHTML = `
+              <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); text-align:center">
+                <div style="font-size:22px; font-weight:800; color:var(--primary)">${total}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Total Records</div>
+              </div>
+              <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); text-align:center">
+                <div style="font-size:22px; font-weight:800; color:var(--success)">${success}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Updated ✅</div>
+              </div>
+              <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); text-align:center">
+                <div style="font-size:22px; font-weight:800; color:var(--error)">${failed}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Failed ❌</div>
+              </div>
+              <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); text-align:center">
+                <div style="font-size:22px; font-weight:800; color:var(--text-primary)">${pct}%</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Success Rate</div>
+              </div>
+            `;
+
+            // --- Detail list ---
+            if (results.logs.length === 0) {
+              summaryList.innerHTML = '<div style="color:var(--text-muted)">No records processed.</div>';
+            } else {
+              summaryList.innerHTML = results.logs.map((log, idx) => `
+                <div style="display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04)">
+                  <span style="flex-shrink:0; font-size:13px">${log.status === 'success' ? '✅' : '❌'}</span>
+                  <div style="flex:1">
+                    <span style="font-weight:700; color:${log.status==='success'?'var(--success)':'var(--error)'}">${Utils.escape(log.employeeId || log.name)}</span>
+                    ${log.name !== log.employeeId ? `<span style="color:var(--text-muted)"> — ${Utils.escape(log.name)}</span>` : ''}
+                    <span style="color:var(--text-secondary)">: ${Utils.escape(log.message)}</span>
+                  </div>
+                  <span style="font-size:10px; color:var(--text-muted); flex-shrink:0">Row ${log.rowNum}</span>
+                </div>
+              `).join('');
+            }
+
+            // --- Failed download button ---
+            if (failed > 0) {
+              failedDlRow.style.display = 'flex';
+              overlay.querySelector('#btn-download-failed-csv').onclick = () => {
+                downloadFailedReport(results.logs.filter(l => l.status === 'error'));
+              };
+            } else {
+              failedDlRow.style.display = 'none';
+            }
+
+            renderUploadHistory(overlay);
+          }, 700);
+        }, 600);
+      };
+      isExcel ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
+    };
+
+    if (isExcel) {
+      loadSheetJS(runProcessing, () => {
+        loadingSpinner.style.display = 'none';
+        actionsRow.style.display = 'flex';
+        fileInput.removeAttribute('disabled');
+        overlay.querySelector('#btn-select-file').removeAttribute('disabled');
+        alert('Could not load Excel library. Upload a CSV file instead.');
+      });
+    } else {
+      runProcessing();
+    }
+  });
+
+  doneBtn.addEventListener('click', () => {
+    closeModal(overlay);
+    renderAdminSchedules();
+  });
+}
+
+// Download failed records as CSV
+function downloadFailedReport(failedLogs) {
+  const headers = ['Row #', 'Employee ID', 'Employee Name', 'Location (Provided)', 'Shift (Provided)', 'Failure Reason'];
+  const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const rows = [
+    headers.join(','),
+    ...failedLogs.map(l => [
+      l.rowNum, l.employeeId || '', l.name || '', l.locationProvided || '', l.shiftProvided || '', l.message
+    ].map(esc).join(','))
+  ];
+  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `failed_records_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function openDownloadSchedulesModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:16px">
+      <div class="modal-header" style="margin-bottom: 0">
+        <h3 class="modal-title">📥 Export Shift Schedules</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-muted)">
+        Configure the export parameters for the database records.
+      </div>
+
+      <!-- Scope Selector -->
+      <div class="form-group">
+        <label class="form-label" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">Shift Calendar Scope</label>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px; max-height:160px; overflow-y:auto; padding:10px; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); background:rgba(0,0,0,0.15)">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--text-primary); cursor:pointer">
+            <input type="checkbox" id="export-select-all-checkbox" checked>
+            🗂️ Select All
+          </label>
+          <div style="border-top:1px solid rgba(255,255,255,0.08); margin:4px 0"></div>
+          ${DB.getSchedules().map(s => `
+            <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer">
+              <input type="checkbox" class="export-sched-checkbox" value="${s.id}" checked>
+              📌 ${Utils.escape(s.name)}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Format Selector -->
+      <div class="form-group">
+        <label class="form-label" for="export-format-select" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">File Format</label>
+        <select id="export-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
+          <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+          <option value="csv">Comma Separated Values (.csv)</option>
+        </select>
+      </div>
+
+      <!-- Inline Warning Alert Container -->
+      <div id="export-warning-box" style="display:none; padding:10px 14px; border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-sm); background:rgba(239,68,68,0.05); color:var(--error); font-size:11.5px; font-weight:600; line-height:1.45;">
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.05); padding-top:14px">
+        <button class="btn btn-secondary" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 16px; font-size:12.5px">Cancel</button>
+        <button class="btn btn-cyan" id="btn-export-download-action" style="width:auto; padding:8px 20px; font-size:12.5px; font-weight:700">Download</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const formatSelect = overlay.querySelector('#export-format-select');
+  const warningBox = overlay.querySelector('#export-warning-box');
+  const downloadBtn = overlay.querySelector('#btn-export-download-action');
+  
+  const selectAllCheckbox = overlay.querySelector('#export-select-all-checkbox');
+  const schedCheckboxes = overlay.querySelectorAll('.export-sched-checkbox');
+
+  const CSV_HEADERS = [
+    'Employee ID', 'Employee Name', 'Department', 'Designation', 'Role', 
+    'Shift Name', 'Shift Time', 'Grace Period (mins)', 'Location', 
+    'Work Days', 'Date of Joining', 'Shift Date'
+  ];
+
+  const buildRowsForSchedule = (schedId) => {
+    try {
+      const schedule = DB.getSchedule(schedId) || {};
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const workDaysStr = schedule.workDays ? schedule.workDays.map(d => dayNames[d]).join(', ') : 'N/A';
+      return DB.getUsers()
+        .filter(u => u.scheduleId === schedId)
+        .map(u => ({
+          'Employee ID': u.employeeId || u.id || 'N/A',
+          'Employee Name': u.name || 'N/A',
+          'Department': u.department || 'N/A',
+          'Designation': u.designation || 'N/A',
+          'Role': u.role || 'N/A',
+          'Shift Name': schedule.name || 'N/A',
+          'Shift Time': schedule.startTime && schedule.endTime ? formatTimeRange12h(schedule.startTime, schedule.endTime) : 'N/A',
+          'Grace Period (mins)': schedule.gracePeriod != null ? schedule.gracePeriod : 'N/A',
+          'Location': u.preferredLocation || schedule.location || 'N/A',
+          'Work Days': workDaysStr,
+          'Date of Joining': u.dateOfJoining || 'N/A',
+          'Shift Date': new Date().toISOString().split('T')[0]
+        }));
+    } catch (e) {
+      console.error('Error constructing rows for schedule:', e);
+      return [];
+    }
+  };
+
+  const getSelectedScheduleIds = () => {
+    return Array.from(schedCheckboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+  };
+
+  const getExportData = () => {
+    const selectedIds = getSelectedScheduleIds();
+    return selectedIds.flatMap(id => buildRowsForSchedule(id));
+  };
+
+  const checkValidation = () => {
+    const selectedIds = getSelectedScheduleIds();
+    const data = getExportData();
+    if (selectedIds.length === 0) {
+      warningBox.textContent = '⚠️ Please select at least one shift schedule to download.';
+      warningBox.style.display = 'block';
+      downloadBtn.setAttribute('disabled', 'true');
+      downloadBtn.style.opacity = '0.5';
+      downloadBtn.style.cursor = 'not-allowed';
+    } else if (data.length === 0) {
+      warningBox.textContent = '⚠️ No employee is currently assigned to the selected shift schedule(s). Please assign employees first or select another shift.';
+      warningBox.style.display = 'block';
+      downloadBtn.setAttribute('disabled', 'true');
+      downloadBtn.style.opacity = '0.5';
+      downloadBtn.style.cursor = 'not-allowed';
+    } else {
+      warningBox.style.display = 'none';
+      downloadBtn.removeAttribute('disabled');
+      downloadBtn.style.opacity = '1';
+      downloadBtn.style.cursor = 'pointer';
+    }
+  };
+
+  // Event Listeners for Scope Selection
+  selectAllCheckbox.addEventListener('change', () => {
+    const isChecked = selectAllCheckbox.checked;
+    schedCheckboxes.forEach(cb => {
+      cb.checked = isChecked;
+    });
+    checkValidation();
+  });
+
+  schedCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const allChecked = Array.from(schedCheckboxes).every(c => c.checked);
+      selectAllCheckbox.checked = allChecked;
+      checkValidation();
+    });
+  });
+
+  // Run initial validation
+  checkValidation();
+
+  const toCSVContent = (rows) => {
+    const escape = v => `"${String(v).replace(/"/g, '""')}"`;
+    const csvRows = rows.map(row => CSV_HEADERS.map(h => escape(row[h] ?? '')).join(','));
+    return '\uFEFF' + [CSV_HEADERS.join(','), ...csvRows].join('\n');
+  };
+
+  const downloadCSV = (rows, filename) => {
+    try {
+      const blob = new Blob([toCSVContent(rows)], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      closeModal(overlay);
+    } catch (e) {
+      alert('Error creating CSV download. Please try again.');
+      console.error(e);
+    }
+  };
+
+  const downloadExcel = (rows, filename, sheetName) => {
+    const doExport = () => {
+      try {
+        const worksheet = XLSX.utils.json_to_sheet(rows, { header: CSV_HEADERS });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        XLSX.writeFile(workbook, filename);
+        closeModal(overlay);
+      } catch (err) {
+        alert('Error generating Excel file. Falling back to CSV...');
+        console.error(err);
+        downloadCSV(rows, filename.replace('.xlsx', '.csv'));
+      }
+    };
+    
+    // Disable download button and show loading text
+    downloadBtn.setAttribute('disabled', 'true');
+    downloadBtn.textContent = 'Generating...';
+
+    if (window.XLSX) {
+      doExport();
+    } else {
+      loadSheetJS(doExport, () => {
+        alert('Failed to load dynamic Excel library. Falling back to CSV...');
+        downloadCSV(rows, filename.replace('.xlsx', '.csv'));
+      });
+    }
+  };
+
+  downloadBtn.addEventListener('click', () => {
+    const data = getExportData();
+    if (data.length === 0) return;
+
+    const selectedIds = getSelectedScheduleIds();
+    const allSchedules = DB.getSchedules();
+
+    let filename = 'all_shift_schedules';
+    let sheetName = 'All Shifts';
+
+    if (selectedIds.length === 1) {
+      const selected = DB.getSchedule(selectedIds[0]);
+      if (selected) {
+        filename = `shift_${selected.name.replace(/\s+/g, '_').toLowerCase()}`;
+        sheetName = selected.name.substring(0, 30); // Excel sheet names max 31 chars
+      }
+    } else if (selectedIds.length < allSchedules.length) {
+      filename = 'selected_shift_schedules';
+      sheetName = 'Selected Shifts';
+    }
+
+    const format = formatSelect.value;
+    if (format === 'csv') {
+      downloadCSV(data, `${filename}.csv`);
+    } else {
+      downloadExcel(data, `${filename}.xlsx`, sheetName);
+    }
+  });
+}
+
+function openProfileDownloadModal(preSelectedUserId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  const loggedInUser = Auth.getCurrentUser() || {};
+  let users = [];
+
+  if (loggedInUser.role === 'hr') {
+    users = DB.getUsers();
+  } else if (loggedInUser.role === 'manager') {
+    users = DB.getUsers().filter(u => u.managerId === loggedInUser.id || u.id === loggedInUser.id);
+  } else {
+    users = DB.getUsers().filter(u => u.id === loggedInUser.id);
+  }
+
+  // Determine checkbox initial states
+  const isChecked = (uId) => {
+    if (preSelectedUserId) {
+      return uId === preSelectedUserId;
+    }
+    return true;
+  };
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 460px; padding: 24px; display:flex; flex-direction:column; gap:16px">
+      <div class="modal-header" style="margin-bottom: 0">
+        <h3 class="modal-title">📥 Export Employee Profiles</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-muted)">
+        Select one or more employees to combine their profile details into a single PDF/Excel export.
+      </div>
+
+      <!-- Employee Checklist Selector -->
+      <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+        <label class="form-label" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">Select Employees</label>
+        <input type="text" id="profile-search-input" class="form-input" placeholder="🔍 Search employee name or ID..." style="padding:6px 10px; font-size:12px; margin-bottom:4px; background:rgba(255,255,255,0.02)">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text-secondary)">
+            <input type="checkbox" id="profile-select-all" style="cursor:pointer" ${!preSelectedUserId ? 'checked' : ''}> Select All
+          </label>
+          <span id="profile-selection-count" style="font-size:11.5px; font-weight:600; color:var(--cyan)">0 selected</span>
+        </div>
+
+        <div id="profile-checkbox-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap:8px; background: rgba(0,0,0,0.1)">
+          ${users.map(u => `
+            <label class="profile-chk-item" data-name="${u.name.toLowerCase()}" data-empid="${(u.employeeId || '').toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); transition: background 0.15s ease;">
+              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${isChecked(u.id) ? 'checked' : ''}>
+              <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(u.name)}</span>
+              <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(u.employeeId || u.id)})</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Format Selector -->
+      <div class="form-group">
+        <label class="form-label" for="profile-format-select" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">File Format</label>
+        <select id="profile-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
+          <option value="pdf">PDF Document (.pdf)</option>
+          <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+        </select>
+      </div>
+
+      <!-- Inline Warning Box -->
+      <div id="profile-warning-box" style="display:none; padding:10px 14px; border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-sm); background:rgba(239,68,68,0.05); color:var(--error); font-size:11.5px; font-weight:600; line-height:1.45;">
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.05); padding-top:14px">
+        <button class="btn btn-secondary" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 16px; font-size:12.5px">Cancel</button>
+        <button class="btn btn-cyan" id="btn-profile-export-action" style="width:auto; padding:8px 20px; font-size:12.5px; font-weight:700">Download</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const searchInput = overlay.querySelector('#profile-search-input');
+  const selectAllChk = overlay.querySelector('#profile-select-all');
+  const checkboxList = overlay.querySelector('#profile-checkbox-list');
+  const selectionCount = overlay.querySelector('#profile-selection-count');
+  const formatSelect = overlay.querySelector('#profile-format-select');
+  const warningBox = overlay.querySelector('#profile-warning-box');
+  const downloadBtn = overlay.querySelector('#btn-profile-export-action');
+
+  const getCheckedUserIds = () => {
+    return Array.from(checkboxList.querySelectorAll('.profile-user-checkbox:checked')).map(el => el.value);
+  };
+
+  const checkValidation = () => {
+    const checkedIds = getCheckedUserIds();
+    if (users.length === 0) {
+      warningBox.textContent = '⚠️ No employee records found in the database.';
+      warningBox.style.display = 'block';
+      downloadBtn.setAttribute('disabled', 'true');
+      downloadBtn.style.opacity = '0.5';
+    } else if (checkedIds.length === 0) {
+      warningBox.textContent = '⚠️ Please select at least one employee.';
+      warningBox.style.display = 'block';
+      downloadBtn.setAttribute('disabled', 'true');
+      downloadBtn.style.opacity = '0.5';
+    } else {
+      warningBox.style.display = 'none';
+      downloadBtn.removeAttribute('disabled');
+      downloadBtn.style.opacity = '1';
+    }
+    selectionCount.textContent = `${checkedIds.length} selected`;
+  };
+
+  // Bind checkbox state updates
+  checkboxList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('profile-user-checkbox')) {
+      const checkedIds = getCheckedUserIds();
+      const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+        .filter(el => el.style.display !== 'none')
+        .map(el => el.querySelector('.profile-user-checkbox'));
+      const allVisibleChecked = visibleCheckboxes.every(cb => cb.checked);
+      selectAllChk.checked = allVisibleChecked;
+      checkValidation();
+    }
+  });
+
+  // Search Filter
+  searchInput.addEventListener('input', () => {
+    const query = searchInput.value.toLowerCase().trim();
+    const items = checkboxList.querySelectorAll('.profile-chk-item');
+    items.forEach(item => {
+      const name = item.dataset.name;
+      const empid = item.dataset.empid;
+      if (name.includes(query) || empid.includes(query)) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+      .filter(el => el.style.display !== 'none')
+      .map(el => el.querySelector('.profile-user-checkbox'));
+    const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+    selectAllChk.checked = allVisibleChecked;
+  });
+
+  // Select All Toggle
+  selectAllChk.addEventListener('change', () => {
+    const checked = selectAllChk.checked;
+    const items = checkboxList.querySelectorAll('.profile-chk-item');
+    items.forEach(item => {
+      if (item.style.display !== 'none') {
+        const cb = item.querySelector('.profile-user-checkbox');
+        if (cb) cb.checked = checked;
+      }
+    });
+    checkValidation();
+  });
+
+  checkValidation();
+
+  // Excel Headers & Row builders
+  const EXCEL_HEADERS = [
+    'Employee ID', 'Full Name', 'Username', 'Role', 'Department', 'Designation',
+    'Date of Joining', 'Base Salary (INR)', 'HRA Allowance (INR)', 'Travel Allowance (INR)',
+    'PF Deduction (INR)', 'PT Deduction (INR)', 'TDS Deduction (%)',
+    'Assigned Shift', 'Shift Timings', 'Preferred Location',
+    'Phone', 'Email', 'Gender', 'DOB', 'Residential Address', 'City',
+    'Profile Verification Status',
+    'Attendance (Current Month): Present Days', 'Attendance (Current Month): Absent Days',
+    'Attendance (Current Month): Late Days', 'Attendance (Current Month): Half Days',
+    'Payroll (Current Month): Net Payout (INR)'
+  ];
+
+  const buildProfileData = (checkedIds) => {
+    const targetUsers = users.filter(u => checkedIds.includes(u.id));
+    const today = new Date();
+    const month = today.getMonth();
+    const year = today.getFullYear();
+
+    return targetUsers.map(u => {
+      const schedule = DB.getSchedule(u.scheduleId) || {};
+      const p = DB.calculateMonthlyPayroll(u.id, month, year) || {};
+      return {
+        'Employee ID': u.employeeId || u.id || 'N/A',
+        'Full Name': u.name || 'N/A',
+        'Username': u.username || 'N/A',
+        'Role': u.role || 'N/A',
+        'Department': u.department || 'N/A',
+        'Designation': u.designation || 'N/A',
+        'Date of Joining': u.dateOfJoining || 'N/A',
+        'Base Salary (INR)': u.baseSalary || 0,
+        'HRA Allowance (INR)': u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round((u.baseSalary || 50000) * 0.15),
+        'Travel Allowance (INR)': u.allowanceTravel !== undefined ? u.allowanceTravel : 3000,
+        'PF Deduction (INR)': u.deductionPF !== undefined ? u.deductionPF : Math.round((u.baseSalary || 50000) * 0.08),
+        'PT Deduction (INR)': u.deductionPT !== undefined ? u.deductionPT : 200,
+        'TDS Deduction (%)': u.deductionTDS !== undefined ? u.deductionTDS : ((u.baseSalary || 50000) > 60000 ? 10 : 5),
+        'Assigned Shift': schedule.name || 'N/A',
+        'Shift Timings': schedule.startTime && schedule.endTime ? formatTimeRange12h(schedule.startTime, schedule.endTime) : 'N/A',
+        'Preferred Location': u.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi',
+        'Phone': u.phone || 'N/A',
+        'Email': u.email || 'N/A',
+        'Gender': u.gender || 'N/A',
+        'DOB': u.dob || 'N/A',
+        'Residential Address': u.address || 'N/A',
+        'City': u.city || 'Delhi',
+        'Profile Verification Status': u.profileVerificationStatus || 'Approved',
+        'Attendance (Current Month): Present Days': p.presentDays != null ? p.presentDays : 0,
+        'Attendance (Current Month): Absent Days': p.absentDays != null ? p.absentDays : 0,
+        'Attendance (Current Month): Late Days': p.lateDays != null ? p.lateDays : 0,
+        'Attendance (Current Month): Half Days': p.halfDays != null ? p.halfDays : 0,
+        'Payroll (Current Month): Net Payout (INR)': p.netSalary != null ? p.netSalary : 0
+      };
+    });
+  };
+
+  const downloadExcel = (data, filename) => {
+    const doExport = () => {
+      try {
+        const worksheet = XLSX.utils.json_to_sheet(data, { header: EXCEL_HEADERS });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Employee Profiles');
+        XLSX.writeFile(workbook, filename);
+        closeModal(overlay);
+      } catch (err) {
+        alert('Error generating Excel file.');
+        console.error(err);
+        downloadBtn.removeAttribute('disabled');
+        downloadBtn.textContent = 'Download';
+      }
+    };
+
+    if (window.XLSX) {
+      doExport();
+    } else {
+      loadSheetJS(doExport, () => {
+        alert('Failed to load Excel library.');
+        downloadBtn.removeAttribute('disabled');
+        downloadBtn.textContent = 'Download';
+      });
+    }
+  };
+
+  const downloadPDF = (checkedIds) => {
+    try {
+      const targetUsers = users.filter(u => checkedIds.includes(u.id));
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Popup blocker blocked the download window. Please allow popups for this site.');
+        return;
+      }
+
+      const styles = `
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+          body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #ffffff;
+            color: #1e1b18;
+            margin: 0;
+            padding: 30px;
+          }
+          .profile-card {
+            border: 2px solid #1e1b18;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+          }
+          .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+          }
+          .logo-area {
+            display: flex;
+            flex-direction: column;
+          }
+          .logo-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ef4444;
+          }
+          .logo-sub {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #b45309;
+          }
+          .doc-title {
+            text-align: right;
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 600;
+          }
+          .profile-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #111827;
+          }
+          .section-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #b45309;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px 0;
+            border-left: 3px solid #ef4444;
+            padding-left: 8px;
+          }
+          .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .info-block {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 8px;
+          }
+          .label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+          }
+          .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+          }
+          .footer-note {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+          }
+          @media print {
+            body { padding: 0; }
+            .profile-card { border: 1px solid #e5e7eb; box-shadow: none; margin-bottom: 0; page-break-after: always; }
+            .profile-card:last-child { page-break-after: avoid; }
+          }
+        </style>
+      `;
+
+      const today = new Date();
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+      const cardsHTML = targetUsers.map(u => {
+        const schedule = DB.getSchedule(u.scheduleId) || {};
+        const p = DB.calculateMonthlyPayroll(u.id, today.getMonth(), today.getFullYear()) || {};
+        const base = u.baseSalary || 50000;
+        const hra = u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round(base * 0.15);
+        const travel = u.allowanceTravel !== undefined ? u.allowanceTravel : 3000;
+        const pf = u.deductionPF !== undefined ? u.deductionPF : Math.round(base * 0.08);
+        const pt = u.deductionPT !== undefined ? u.deductionPT : 200;
+        const tds = u.deductionTDS !== undefined ? u.deductionTDS : (base > 60000 ? 10 : 5);
+
+        return `
+          <div class="profile-card">
+            <div class="header-row">
+              <div class="logo-area">
+                <span class="logo-title">HS GROUP DELHI</span>
+                <span class="logo-sub">House of Surya</span>
+              </div>
+              <div class="doc-title">
+                EMPLOYEE PROFILE RECORD<br>
+                <span style="font-size:11px; font-weight:normal">System Generated: ${today.toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            <div class="profile-title">${Utils.escape(u.name)}</div>
+            
+            <div class="section-title">General Information</div>
+            <div class="grid-container">
+              <div class="info-block"><span class="label">Employee ID</span><span class="value">${Utils.escape(u.employeeId || u.id || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Username</span><span class="value">${Utils.escape(u.username || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Department</span><span class="value">${Utils.escape(u.department || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Designation</span><span class="value">${Utils.escape(u.designation || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Role Permission</span><span class="value">${Utils.escape(u.role || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Date of Joining</span><span class="value">${Utils.escape(u.dateOfJoining || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Gender</span><span class="value">${Utils.escape(u.gender || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Date of Birth</span><span class="value">${Utils.escape(u.dob || 'N/A')}</span></div>
+            </div>
+
+            <div class="section-title">Contact Details</div>
+            <div class="grid-container">
+              <div class="info-block"><span class="label">Phone Number</span><span class="value">${Utils.escape(u.phone || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Email Address</span><span class="value">${Utils.escape(u.email || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Residential Address</span><span class="value">${Utils.escape(u.address || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">City</span><span class="value">${Utils.escape(u.city || 'Delhi')}</span></div>
+            </div>
+
+            <div class="section-title">Shift & Location Info</div>
+            <div class="grid-container">
+              <div class="info-block"><span class="label">Assigned Shift</span><span class="value">${Utils.escape(schedule.name || 'N/A')} (${formatTimeRange12h(schedule.startTime || '', schedule.endTime || '')})</span></div>
+              <div class="info-block"><span class="label">Grace Period</span><span class="value">${schedule.gracePeriod != null ? schedule.gracePeriod : 0} minutes</span></div>
+              <div class="info-block"><span class="label">Preferred Location</span><span class="value">${Utils.escape(u.preferredLocation || schedule.location || 'N/A')}</span></div>
+              <div class="info-block"><span class="label">Verification status</span><span class="value">${Utils.escape(u.profileVerificationStatus || 'Approved')}</span></div>
+            </div>
+
+            <div class="section-title">Attendance Summary (${monthNames[today.getMonth()]} ${today.getFullYear()})</div>
+            <div class="grid-container">
+              <div class="info-block"><span class="label">Present Days</span><span class="value">${p.presentDays != null ? p.presentDays : 0} days</span></div>
+              <div class="info-block"><span class="label">Absent Days</span><span class="value">${p.absentDays != null ? p.absentDays : 0} days</span></div>
+              <div class="info-block"><span class="label">Late Days</span><span class="value">${p.lateDays != null ? p.lateDays : 0} days</span></div>
+              <div class="info-block"><span class="label">Half Days</span><span class="value">${p.halfDays != null ? p.halfDays : 0} days</span></div>
+            </div>
+
+            <div class="section-title">Payroll Structure & Deductions (INR)</div>
+            <div class="grid-container">
+              <div class="info-block"><span class="label">Base Salary</span><span class="value">₹${base.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">HRA / Travel Allowances</span><span class="value">₹${hra.toLocaleString()} / ₹${travel.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">PF / PT Deductions</span><span class="value">₹${pf.toLocaleString()} / ₹${pt.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">TDS Tax Rate</span><span class="value">${tds}%</span></div>
+              <div class="info-block" style="border-bottom: 2px solid #ef4444;"><span class="label" style="color:#ef4444; font-weight:800">Net Estimated Payout</span><span class="value" style="color:#ef4444; font-size:15px; font-weight:800">₹${(p.netSalary != null ? p.netSalary : 0).toLocaleString()}</span></div>
+            </div>
+
+            <div class="footer-note">
+              This document is a certified copy of the employee registration record registered under HS Group Delhi.
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Employee Profiles - HS Group</title>
+          ${styles}
+        </head>
+        <body>
+          ${cardsHTML}
+          <script>
+            window.addEventListener('DOMContentLoaded', () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            });
+          </script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      closeModal(overlay);
+    } catch (e) {
+      alert('Error printing PDF. Please try again.');
+      console.error(e);
+    }
+  };
+
+  downloadBtn.addEventListener('click', () => {
+    const checkedIds = getCheckedUserIds();
+    const format = formatSelect.value;
+
+    if (checkedIds.length === 0) {
+      alert('Please select at least one employee.');
+      return;
+    }
+    
+    if (format === 'pdf') {
+      downloadPDF(checkedIds);
+    } else {
+      const data = buildProfileData(checkedIds);
+      const filename = checkedIds.length === 1 ? `profile_${checkedIds[0]}.xlsx` : 'combined_employee_profiles.xlsx';
+      downloadExcel(data, filename);
+    }
+  });
+}
+
+
+function renderUploadHistory(overlay) {
+  const tbody = overlay.querySelector('#express-history-tbody');
+  if (!tbody) return;
+  const history = DB.data.uploadHistory || [];
+  if (history.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:12px; color:var(--text-muted)">No upload history found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = history.map(h => {
+    const isSuccess = h.status === 'Success';
+    return `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.02)">
+        <td style="padding: 8px; color: var(--text-secondary)">${h.date} ${h.time}</td>
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary)">${Utils.escape(h.employeeName)}</td>
+        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldShift)} ➔ ${Utils.escape(h.newShift)}</td>
+        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldLocation)} ➔ ${Utils.escape(h.newLocation)}</td>
+        <td style="padding: 8px; color: var(--text-secondary)">${h.effective || 'N/A'}</td>
+        <td style="padding: 8px; font-weight: 700; color: ${isSuccess ? 'var(--success)' : 'var(--error)'}">${h.status}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+
+function parseCSV(text) {
+  const lines = [];
+  let row = [""];
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i+1];
+    if (c === '"') {
+      if (inQuotes && next === '"') {
+        row[row.length - 1] += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      row.push('');
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') {
+        i++;
+      }
+      lines.push(row);
+      row = [''];
+    } else {
+      row[row.length - 1] += c;
+    }
+  }
+  if (row.length > 1 || row[0] !== '') {
+    lines.push(row);
+  }
+  return lines;
+}
+
+function executeExpressReassignments(fileContent, intent = '') {
+  // ---- Helper Functions ----
+  const parseShiftValue = (nameVal, timingVal = '') => {
+    let name = nameVal.trim();
+    let startTime = '09:00';
+    let endTime = '17:00';
+
+    // Regex to match "HH:MM - HH:MM" or "HH:MM to HH:MM"
+    const timeRangeRegex = /(\d{1,2}:\d{2})\s*(?:-|to)\s*(\d{1,2}:\d{2})/i;
+
+    // Helper to normalize 12-hour end times to 24-hour military time
+    const normalizeTimeRange = (start, end) => {
+      let [sh, sm] = start.split(':').map(Number);
+      let [eh, em] = end.split(':').map(Number);
+      let duration = (eh * 60 + em - (sh * 60 + sm) + 1440) % 1440;
+      if (duration > 720) {
+        let nextEh = (eh + 12) % 24;
+        let nextDuration = (nextEh * 60 + em - (sh * 60 + sm) + 1440) % 1440;
+        if (nextDuration >= 360 && nextDuration <= 600) {
+          eh = nextEh;
+        } else {
+          let nextSh = (sh + 12) % 24;
+          nextDuration = (eh * 60 + em - (nextSh * 60 + sm) + 1440) % 1440;
+          if (nextDuration >= 360 && nextDuration <= 600) {
+            sh = nextSh;
+          }
+        }
+      }
+      return {
+        startTime: `${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}`,
+        endTime: `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`
+      };
+    };
+
+    // 1. Try to parse from the timingVal first
+    let match = timingVal ? timingVal.match(timeRangeRegex) : null;
+    if (match) {
+      const normalized = normalizeTimeRange(match[1], match[2]);
+      startTime = normalized.startTime;
+      endTime = normalized.endTime;
+    } else {
+      // 2. Try to parse from nameVal (e.g. "Morning Shift (07:00-15:00)")
+      match = name.match(timeRangeRegex);
+      if (match) {
+        const normalized = normalizeTimeRange(match[1], match[2]);
+        startTime = normalized.startTime;
+        endTime = normalized.endTime;
+        // Clean name: e.g. "Night Shift (21:00-05:00)" -> "Night Shift"
+        name = name.replace(timeRangeRegex, '').replace(/\(\s*\)/g, '').trim();
+        name = name.replace(/^[-_\s]+|[-_\s]+$/g, '').trim();
+      } else {
+        // 3. Fallbacks based on shift name
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes('night')) {
+          startTime = '21:00';
+          endTime = '05:00';
+        } else if (lowerName.includes('morning')) {
+          startTime = '07:00';
+          endTime = '15:00';
+        }
+      }
+    }
+
+    if (!name) {
+      name = `${startTime}-${endTime} Shift`;
+    }
+    return { name, startTime, endTime };
+  };
+
+  const getUpcomingMonday = (refDate) => {
+    const resultDate = new Date(refDate);
+    const day = resultDate.getDay();
+    const daysToAdd = (1 - day + 7) % 7;
+    resultDate.setDate(resultDate.getDate() + daysToAdd);
+    return resultDate;
+  };
+
+  // ---- Parse CSV ----
+  const parsed = parseCSV(fileContent);
+  if (!parsed || parsed.length < 2) {
+    return { totalCount: 0, successCount: 0, errorCount: 1, logs: [{ rowNum: '-', employeeId: '', name: 'File Error', status: 'error', message: 'File is empty or contains no data rows.', locationProvided:'', shiftProvided:'' }], columnWarnings: [] };
+  }
+
+  // ---- Locate required columns by name (case-insensitive, flexible) ----
+  const rawHeaders = parsed[0];
+  const headers = rawHeaders.map(h => h.toLowerCase().trim());
+
+  const findCol = (aliases) => headers.findIndex(h => aliases.some(a => h === a || h.includes(a)));
+
+  const empIdIdx = findCol(['employee id','emp id','employeeid','empid']);
+  let locIdx   = findCol(['location','office','worksite','work site','branch']);
+  let shiftIdx = findCol(['shift','shift name','shiftname','schedule','schedule name']);
+  let timingIdx = findCol(['timing','shift timing','shifttiming','time','schedule time','scheduletime']);
+
+  // ---- Validate headers ----
+  if (empIdIdx === -1) {
+    return {
+      totalCount: 0, successCount: 0, errorCount: 1,
+      logs: [{ rowNum:'-', employeeId:'', name:'Header Error', status:'error',
+        message: 'Required column "Employee ID" not found in the uploaded file.',
+        locationProvided:'', shiftProvided:'' }],
+      columnWarnings: []
+    };
+  }
+
+  const columnWarnings = [];
+  if (locIdx === -1) {
+    columnWarnings.push('Worksite Location column was missing in the file and has been automatically created.');
+  }
+  if (shiftIdx === -1) {
+    columnWarnings.push('Shift Schedule column was missing in the file and has been automatically created.');
+  }
+
+  let successCount = 0;
+  let errorCount   = 0;
+  const logs = [];
+  const now      = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const timeStr  = now.toTimeString().split(' ')[0].substring(0, 5);
+
+  if (!DB.data.uploadHistory)  DB.data.uploadHistory  = [];
+  if (!DB.data.announcements)  DB.data.announcements  = [];
+
+  // Track seen Employee IDs to detect duplicates within the file
+  const seenEmpIds = {};
+
+  // Collect only real data rows (skip blank rows)
+  const dataRows = [];
+  for (let i = 1; i < parsed.length; i++) {
+    const row = parsed[i];
+    if (!row || row.length === 0 || row.every(c => c.trim() === '')) continue;
+    dataRows.push({ row, origIndex: i });
+  }
+
+  const totalCount = dataRows.length;
+
+  // Calculate upcoming Monday
+  const upcomingMonday = getUpcomingMonday(now);
+  const options = { month: 'short', day: 'numeric', year: 'numeric' };
+  const effective = `Monday, ${upcomingMonday.toLocaleDateString('en-US', options)}`;
+  const effectiveISO = upcomingMonday.toISOString().split('T')[0];
+
+  for (const { row, origIndex } of dataRows) {
+    const rowNum      = origIndex + 1;  // 1-based, 1=header
+    const empId       = (row[empIdIdx] || '').trim();
+
+    const pushError = (name, reason, locValErr = '', shiftValErr = '') => {
+      errorCount++;
+      logs.push({ rowNum, employeeId: empId, name: name || empId || `Row ${rowNum}`, status:'error', message: reason, locationProvided: locValErr, shiftProvided: shiftValErr });
+      DB.data.uploadHistory.unshift({ id:'upl_'+Math.random().toString(36).substring(2,9), employeeName: name || empId || `Row ${rowNum}`, oldLocation:'N/A', newLocation: locValErr||'N/A', oldShift:'N/A', newShift: shiftValErr||'N/A', date: todayStr, time: timeStr, status:'Failed', effective:'N/A', reason: reason });
+    };
+
+    // 1. Missing required field: Employee ID
+    if (!empId) {
+      pushError(`Row ${rowNum}`, `Missing required field: Employee ID.`);
+      continue;
+    }
+
+    // 2. Duplicate Employee ID within file
+    if (seenEmpIds[empId.toLowerCase()]) {
+      pushError(empId, `Duplicate Employee ID "${empId}" — already processed in this file.`);
+      continue;
+    }
+    seenEmpIds[empId.toLowerCase()] = true;
+
+    // 3. Employee not found
+    const matchedUser = DB.data.users.find(u =>
+      (u.employeeId && u.employeeId.toLowerCase() === empId.toLowerCase()) ||
+      (u.username   && u.username.toLowerCase()   === empId.toLowerCase()) ||
+      (u.id         && u.id.toLowerCase()         === empId.toLowerCase())
+    );
+    if (!matchedUser) {
+      pushError(empId, `Employee ID "${empId}" not found in the system.`);
+      continue;
+    }
+
+    // Determine location value (use column value if column exists, else fallback to current user location)
+    let locVal = '';
+    if (locIdx !== -1) {
+      locVal = (row[locIdx] || '').trim();
+    } else {
+      locVal = matchedUser.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+    }
+
+    // Determine shift value (use column value if column exists, else fallback to current user shift)
+    let shiftVal = '';
+    if (shiftIdx !== -1) {
+      shiftVal = (row[shiftIdx] || '').trim();
+    } else {
+      const oldSchedule = DB.getSchedule(matchedUser.scheduleId);
+      shiftVal = oldSchedule ? oldSchedule.name : 'Standard Day Shift';
+    }
+
+    // Determine timing value if timing column exists
+    let timingVal = '';
+    if (timingIdx !== -1) {
+      timingVal = (row[timingIdx] || '').trim();
+    }
+
+    // Check if fields are still empty (meaning column existed but value was blank)
+    const missingFields = [];
+    if (!locVal)   missingFields.push('Location');
+    if (!shiftVal) missingFields.push('Shift');
+    if (missingFields.length > 0) {
+      pushError(matchedUser.name, `Missing required field(s): ${missingFields.join(', ')}.`, locVal, shiftVal);
+      continue;
+    }
+
+    // 4. Auto-create worksite location if not existing
+    const officeCoords = DB.getOfficeCoordinates();
+    if (!officeCoords[locVal]) {
+      DB.saveOfficeCoordinate(locVal, 28.6978, 77.1408, true);
+      console.log(`Auto-created missing worksite location: "${locVal}"`);
+      const alertMsg = `Worksite Location "${locVal}" was missing and automatically registered.`;
+      if (!columnWarnings.includes(alertMsg)) {
+        columnWarnings.push(alertMsg);
+      }
+    }
+
+    // 5. Auto-create or update shift schedule based on the file
+    const parsedShift = parseShiftValue(shiftVal, timingVal);
+    let matchedShift = DB.data.schedules.find(s =>
+      (s.name.toLowerCase() === parsedShift.name.toLowerCase() || s.id.toLowerCase() === parsedShift.name.toLowerCase()) &&
+      (s.location || '').toLowerCase() === locVal.toLowerCase()
+    );
+
+    if (!matchedShift) {
+      // Auto-create shift schedule for this location and time
+      matchedShift = DB.addSchedule({
+        name: parsedShift.name,
+        startTime: parsedShift.startTime,
+        endTime: parsedShift.endTime,
+        gracePeriod: 15,
+        halfDayLimit: 120,
+        workDays: [1, 2, 3, 4, 5],
+        location: locVal
+      }, true);
+      console.log(`Auto-created missing shift schedule: "${parsedShift.name}" for "${locVal}" (${parsedShift.startTime}-${parsedShift.endTime})`);
+      const alertMsg = `Shift Schedule "${parsedShift.name}" for "${locVal}" (${parsedShift.startTime}-${parsedShift.endTime}) was missing and automatically created.`;
+      if (!columnWarnings.includes(alertMsg)) {
+        columnWarnings.push(alertMsg);
+      }
+    } else {
+      // If it exists, update its startTime and endTime to match the file if different
+      if (matchedShift.startTime !== parsedShift.startTime || matchedShift.endTime !== parsedShift.endTime) {
+        matchedShift.startTime = parsedShift.startTime;
+        matchedShift.endTime = parsedShift.endTime;
+        console.log(`Updated timings of existing shift "${matchedShift.name}" for "${locVal}" to ${parsedShift.startTime}-${parsedShift.endTime}`);
+        const alertMsg = `Shift Schedule "${matchedShift.name}" for "${locVal}" timings updated to ${parsedShift.startTime}-${parsedShift.endTime}.`;
+        if (!columnWarnings.includes(alertMsg)) {
+          columnWarnings.push(alertMsg);
+        }
+      }
+    }
+
+    // 6. Invalid location length check
+    if (locVal.length > 200) {
+      pushError(matchedUser.name, `Invalid location: value is too long (${locVal.length} chars, max 200).`, locVal, shiftVal);
+      continue;
+    }
+
+    // ---- All validations passed — detect actual changes ----
+    const oldSchedule  = DB.getSchedule(matchedUser.scheduleId);
+    const oldShiftName = oldSchedule ? oldSchedule.name : 'None';
+    const oldShiftId   = matchedUser.scheduleId || '';
+    const oldLocation  = matchedUser.preferredLocation || 'N/A';
+
+    const shiftChanged    = oldShiftId !== matchedShift.id;
+    const locationChanged = oldLocation.toLowerCase() !== locVal.toLowerCase();
+
+    // Skip if nothing actually changed
+    if (!shiftChanged && !locationChanged) {
+      successCount++;
+      logs.push({ rowNum, employeeId: empId, name: matchedUser.name, status:'success', message:'No changes — Shift and Location already match.', locationProvided: locVal, shiftProvided: shiftVal });
+      continue;
+    }
+
+    // Queue future changes if effective date is in the future
+    const isFuture = effectiveISO > todayStr;
+    if (isFuture) {
+      if (!matchedUser.futureReassignments) {
+        matchedUser.futureReassignments = [];
+      }
+      // Remove any existing pending reassignment for the same date to avoid duplicates
+      matchedUser.futureReassignments = matchedUser.futureReassignments.filter(r => r.effectiveDate !== effectiveISO);
+      matchedUser.futureReassignments.push({
+        scheduleId: matchedShift.id,
+        preferredLocation: locVal,
+        effectiveDate: effectiveISO
+      });
+    } else {
+      if (shiftChanged)    matchedUser.scheduleId        = matchedShift.id;
+      if (locationChanged) matchedUser.preferredLocation = locVal;
+    }
+
+    // Build a human-readable change summary
+    const changes = [];
+    if (shiftChanged)    changes.push(`Shift → "${matchedShift.name}"`);
+    if (locationChanged) changes.push(`Location → "${locVal}"`);
+    const changeSummary = changes.join(' | ');
+
+    successCount++;
+    logs.push({ rowNum, employeeId: empId, name: matchedUser.name, status:'success', message: changeSummary, locationProvided: locVal, shiftProvided: shiftVal });
+
+    DB.data.uploadHistory.unshift({
+      id: 'upl_'+Math.random().toString(36).substring(2,9),
+      employeeName: matchedUser.name,
+      oldLocation, newLocation: locationChanged ? locVal : oldLocation,
+      oldShift: oldShiftName, newShift: shiftChanged ? matchedShift.name : oldShiftName,
+      date: todayStr, time: timeStr,
+      status: 'Success', effective,
+      reason: intent
+    });
+
+    // Send individual notification ONLY to this employee
+    const notifParts = [];
+    if (shiftChanged)    notifParts.push(`Your shift has changed from "${oldShiftName}" to "${matchedShift.name}" (${formatTimeRange12h(matchedShift.startTime, matchedShift.endTime)})`);
+    if (locationChanged) notifParts.push(`Your work location has changed from "${oldLocation}" to "${locVal}"`);
+
+    DB.data.announcements.unshift({
+      id: 'ann_'+Math.random().toString(36).substring(2,9),
+      title: '⚡ Schedule Updated',
+      content: `${notifParts.join('. ')}. Effective: ${effective}.${intent ? ' Reason: ' + intent + '.' : ''}`,
+      category: 'Update', date: todayStr,
+      author: 'HR Express Upload',
+      targetUserId: matchedUser.id
+    });
+  }
+
+  if (successCount > 0 || errorCount > 0) DB.save();
+
+  return { totalCount, successCount, errorCount, logs, columnWarnings };
 }
 
 function openScheduleModal(schedId = null) {
@@ -4083,7 +7954,7 @@ function openScheduleModal(schedId = null) {
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">${isEdit ? 'Edit Shift Pattern' : 'Create New Shift Calendar'}</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
@@ -4095,11 +7966,17 @@ function openScheduleModal(schedId = null) {
         <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="sched-start">Start Time</label>
-            <input class="form-input" type="time" id="sched-start" value="${isEdit ? sched.startTime : '09:00'}" required>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input class="form-input" type="time" id="sched-start" value="${isEdit ? sched.startTime : '09:00'}" required style="flex:1">
+              <span id="sched-start-ampm" style="font-size:13px;font-weight:700;color:var(--primary);min-width:52px;text-align:center;padding:6px 8px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm)">${formatTime12h(isEdit ? sched.startTime : '09:00').split(' ').pop()}</span>
+            </div>
           </div>
           <div>
             <label class="form-label" for="sched-end">End Time</label>
-            <input class="form-input" type="time" id="sched-end" value="${isEdit ? sched.endTime : '17:00'}" required>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input class="form-input" type="time" id="sched-end" value="${isEdit ? sched.endTime : '17:00'}" required style="flex:1">
+              <span id="sched-end-ampm" style="font-size:13px;font-weight:700;color:var(--cyan);min-width:52px;text-align:center;padding:6px 8px;background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);border-radius:var(--radius-sm)">${formatTime12h(isEdit ? sched.endTime : '17:00').split(' ').pop()}</span>
+            </div>
           </div>
         </div>
         <div class="form-group">
@@ -4120,19 +7997,60 @@ function openScheduleModal(schedId = null) {
         <div class="form-group">
           <label class="form-label" for="sched-location">Shift Location</label>
           <select class="form-input" id="sched-location" required>
-            <option value="Kohat Enclave, Pitampura, Delhi" ${isEdit && sched.location === 'Kohat Enclave, Pitampura, Delhi' ? 'selected' : ''}>Kohat Enclave, Pitampura, Delhi</option>
-            <option value="Chandni Chowk" ${isEdit && sched.location === 'Chandni Chowk' ? 'selected' : ''}>Chandni Chowk</option>
-            <option value="Omaxe City, Delhi" ${isEdit && sched.location === 'Omaxe City, Delhi' ? 'selected' : ''}>Omaxe City, Delhi</option>
+            ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+              <option value="${loc}" ${isEdit && sched.location === loc ? 'selected' : ''}>${loc}</option>
+            `).join('')}
           </select>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" id="btn-modal-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
+            <button type="button" id="btn-modal-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
+          </div>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-secondary" type="button" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn btn-secondary" type="button" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
           <button class="btn" type="submit">${isEdit ? 'Save Shift' : 'Create Shift'}</button>
         </div>
       </form>
     </div>
   `;
   document.body.appendChild(overlay);
+
+  const schedLocSelect = document.getElementById('sched-location');
+  
+  // Fetch Nearby button
+  const btnFetchNearby = document.getElementById('btn-modal-fetch-nearby');
+  if (btnFetchNearby) {
+    btnFetchNearby.addEventListener('click', () => {
+      fetchNearbyAndAddLocation(schedLocSelect);
+    });
+  }
+  
+  // Enter Any Location button
+  const btnAddCustom = document.getElementById('btn-modal-add-custom');
+  if (btnAddCustom) {
+    btnAddCustom.addEventListener('click', () => {
+      enterCustomLocation(schedLocSelect);
+    });
+  }
+
+  // Live AM/PM badge update on time input change
+  const schedStartInput = document.getElementById('sched-start');
+  const schedEndInput = document.getElementById('sched-end');
+  const startAmpmBadge = document.getElementById('sched-start-ampm');
+  const endAmpmBadge = document.getElementById('sched-end-ampm');
+  if (schedStartInput && startAmpmBadge) {
+    schedStartInput.addEventListener('input', () => {
+      const formatted = formatTime12h(schedStartInput.value);
+      startAmpmBadge.textContent = formatted.split(' ').pop() || 'AM';
+    });
+  }
+  if (schedEndInput && endAmpmBadge) {
+    schedEndInput.addEventListener('input', () => {
+      const formatted = formatTime12h(schedEndInput.value);
+      endAmpmBadge.textContent = formatted.split(' ').pop() || 'PM';
+    });
+  }
+
   document.getElementById('schedule-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('sched-name').value.trim();
@@ -4144,21 +8062,41 @@ function openScheduleModal(schedId = null) {
     if (workDays.length === 0) { alert('Select working days.'); return; }
     if (isEdit) { DB.updateSchedule(schedId, { name, startTime, endTime, gracePeriod, workDays, location }); }
     else { DB.addSchedule({ name, startTime, endTime, gracePeriod, workDays, location }); }
-    overlay.remove();
+    closeModal(overlay);
     renderAdminSchedules();
   });
 }
 
 function renderAdminApprovals() {
   const main = document.getElementById('main-view');
-  const leaves = DB.getLeaveRequests();
-  const swaps = DB.getShiftSwaps().filter(s => s.status === 'Pending Manager');
-  const allSwaps = DB.getShiftSwaps();
-  const allDeviations = DB.getLogs().filter(l => l.coords);
+  const user = Auth.getCurrentUser();
+  const isManager = user.role === 'manager';
+  const assignedEmployees = DB.getUsers().filter(u => u.role === 'employee' && u.managerId === user.id);
+  const assignedUserIds = assignedEmployees.map(u => u.id);
+
+  let leaves = DB.getLeaveRequests();
+  if (isManager) {
+    leaves = leaves.filter(l => assignedUserIds.includes(l.userId));
+  }
+
+  let swaps = DB.getShiftSwaps().filter(s => s.status === 'Pending Manager');
+  if (isManager) {
+    swaps = swaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
+  }
+
+  let allSwaps = DB.getShiftSwaps();
+  if (isManager) {
+    allSwaps = allSwaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
+  }
+
+  let allDeviations = DB.getLogs().filter(l => l.coords);
+  if (isManager) {
+    allDeviations = allDeviations.filter(l => assignedUserIds.includes(l.userId));
+  }
 
   const pendingLeavesCount = leaves.filter(l => l.status === 'Pending').length;
   const pendingSwapsCount = swaps.length;
-  const pendingDeviationsCount = DB.getLogs().filter(l => l.deviationFlag).length;
+  const pendingDeviationsCount = DB.getLogs().filter(l => l.deviationFlag && (!isManager || assignedUserIds.includes(l.userId))).length;
 
   let tabContentHTML = '';
 
@@ -4178,17 +8116,24 @@ function renderAdminApprovals() {
               if (lv.status === 'Rejected') statusClass = 'badge-rejected';
               return `
                 <tr>
-                  <td style="font-weight:600">${u ? Utils.escape(u.name) : 'Unknown'}</td>
-                  <td><strong>${lv.type}</strong></td>
-                  <td>${Utils.formatDate(lv.startDate)}<br><span style="font-size:11px;color:var(--text-secondary)">to ${Utils.formatDate(lv.endDate)}</span></td>
-                  <td style="max-width:250px;font-size:12px;color:var(--text-secondary);line-height:1.4">"${Utils.escape(lv.reason)}"${lv.managerComment ? `<br><span style="color:var(--primary)"><strong>Comment:</strong> ${Utils.escape(lv.managerComment)}</span>` : ''}</td>
-                  <td>${Utils.formatDate(lv.requestDate)}</td>
-                  <td><span class="badge ${statusClass}">${lv.status}</span></td>
-                  <td>
+                  <td style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${u ? Utils.escape(u.name) : 'Unknown'}</td>
+                  <td style="font-size: 13px; font-weight: 500; color: var(--text-secondary);"><strong>${lv.type}</strong></td>
+                  <td style="font-size: 13px; font-weight: 500; color: var(--text-primary);">
+                    ${Utils.formatDate(lv.startDate).replace(/ /g, '&nbsp;')}<br>to ${Utils.formatDate(lv.endDate).replace(/ /g, '&nbsp;')}
+                  </td>
+                  <td style="font-size: 13px; color:var(--text-secondary); line-height:1.4; min-width: 150px; word-wrap: break-word;">
+                    "${Utils.escape(lv.reason)}"
+                    ${lv.managerComment ? `<br><span style="color:var(--primary)"><strong>Comment:</strong> ${Utils.escape(lv.managerComment)}</span>` : ''}
+                  </td>
+                  <td style="font-size: 13px; color: var(--text-secondary);">${Utils.formatDate(lv.requestDate).replace(/ /g, '&nbsp;')}</td>
+                  <td style="font-size: 13px;">
+                    <span class="badge ${statusClass}">${lv.status}</span>
+                  </td>
+                  <td style="font-size: 13px;">
                     ${lv.status === 'Pending' ? `
                       <div style="display:flex;gap:6px">
-                        <button class="btn btn-success btn-approve-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px">Approve</button>
-                        <button class="btn btn-danger btn-reject-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px">Reject</button>
+                        <button class="btn btn-success btn-approve-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px;">Approve</button>
+                        <button class="btn btn-danger btn-reject-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px;">Reject</button>
                       </div>
                     ` : `<span style="font-size:11px;color:var(--text-muted)">Completed</span>`}
                   </td>
@@ -4348,29 +8293,150 @@ function renderAdminApprovals() {
   }
 }
 
+// ── Custom comment modal (replaces browser prompt) ──────────────────────────
+function showCommentModal({ title, label, placeholder = '', required = false, actionLabel = 'Confirm', actionClass = 'btn', onConfirm }) {
+  // Remove any existing comment modal
+  const existing = document.getElementById('comment-modal-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'comment-modal-overlay';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center;
+    animation:fadeIn 0.15s ease;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      background:var(--bg-surface);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px 28px 22px;
+      width:100%;
+      max-width:420px;
+      box-shadow:var(--shadow-lg);
+      animation:slideUp 0.2s cubic-bezier(0.4,0,0.2,1);
+    ">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(251,191,36,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${title}</div>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">${label}</div>
+        </div>
+      </div>
+      <textarea id="comment-modal-input"
+        rows="3"
+        placeholder="${placeholder}"
+        style="
+          width:100%; box-sizing:border-box;
+          background:var(--bg-surface-hover);
+          border:1px solid var(--border);
+          border-radius:10px;
+          color:var(--text-primary);
+          font-size:13px; font-family:inherit;
+          padding:10px 12px; resize:vertical;
+          outline:none; transition:border-color 0.2s;
+        "
+        onfocus="this.style.borderColor='var(--primary)'"
+        onblur="this.style.borderColor='var(--border)'"
+      ></textarea>
+      ${required ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">⚠️ A comment is required to proceed.</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Comment is optional. Leave blank to skip.</div>`}
+      <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
+        <button id="comment-modal-cancel" style="
+          padding:8px 20px; border-radius:8px; border:1px solid var(--border);
+          background:transparent; color:var(--text-secondary);
+          font-size:13px; font-weight:600; cursor:pointer;
+          transition:background 0.15s;
+        " onmouseover="this.style.background='var(--bg-surface-hover)'" onmouseout="this.style.background='transparent'">
+          Cancel
+        </button>
+        <button id="comment-modal-confirm" class="${actionClass}" style="padding:8px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+          ${actionLabel}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Focus textarea
+  setTimeout(() => document.getElementById('comment-modal-input')?.focus(), 50);
+
+  // Cancel
+  document.getElementById('comment-modal-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  // Confirm
+  document.getElementById('comment-modal-confirm').addEventListener('click', () => {
+    const val = document.getElementById('comment-modal-input').value.trim();
+    if (required && !val) {
+      document.getElementById('comment-modal-input').style.borderColor = 'var(--error,#ef4444)';
+      document.getElementById('comment-modal-input').placeholder = '⚠️ Please enter a comment to continue...';
+      return;
+    }
+    overlay.remove();
+    onConfirm(val);
+  });
+
+  // Enter key to confirm (Shift+Enter = new line)
+  document.getElementById('comment-modal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('comment-modal-confirm').click();
+    }
+  });
+}
+
 function processLeaveRequest(id, status) {
-  const comment = prompt(`Add a manager comment:`);
-  if (comment === null) return;
-  DB.updateLeaveStatus(id, status, comment);
-  renderAdminApprovals();
+  const isApprove = status === 'Approved';
+  showCommentModal({
+    title: isApprove ? 'Approve Leave Request' : 'Reject Leave Request',
+    label: isApprove ? 'Add an optional approval comment for the employee.' : 'Provide a reason for rejection.',
+    placeholder: isApprove ? 'e.g. Approved. Enjoy your leave!' : 'e.g. Insufficient leave balance.',
+    required: !isApprove,
+    actionLabel: isApprove ? '✅ Approve' : '❌ Reject',
+    actionClass: isApprove ? 'btn' : 'btn btn-danger',
+    onConfirm: (comment) => {
+      DB.updateLeaveStatus(id, status, comment);
+      renderAdminApprovals();
+    }
+  });
 }
 
 function processManagerSwap(swapId, approve) {
-  const comment = prompt(`Add a manager comment (optional):`);
-  if (comment === null) return;
-  DB.respondToShiftSwapManager(swapId, approve, comment);
-  renderAdminApprovals();
+  showCommentModal({
+    title: approve ? 'Approve Shift Swap' : 'Reject Shift Swap',
+    label: approve ? 'Add an optional comment for the swap request.' : 'Provide a reason for rejecting this swap.',
+    placeholder: approve ? 'e.g. Swap approved. Please coordinate with your team.' : 'e.g. Overlap with critical project deadline.',
+    required: !approve,
+    actionLabel: approve ? '✅ Approve Swap' : '❌ Reject Swap',
+    actionClass: approve ? 'btn' : 'btn btn-danger',
+    onConfirm: (comment) => {
+      DB.respondToShiftSwapManager(swapId, approve, comment);
+      renderAdminApprovals();
+    }
+  });
 }
 
 function processGeofenceDeviation(logId, excuse) {
-  const comment = prompt(`Add a manager review comment (optional):`);
-  if (comment === null) return;
-  if (excuse) {
-    DB.excuseDeviation(logId, comment);
-  } else {
-    DB.flagDeviationAsViolation(logId, comment);
-  }
-  renderAdminApprovals();
+  showCommentModal({
+    title: excuse ? 'Excuse Geo-fence Deviation' : 'Flag as Violation',
+    label: excuse ? 'Add an optional note excusing this deviation.' : 'Provide a reason for flagging this as a violation.',
+    placeholder: excuse ? 'e.g. Employee was at client site during this check-in.' : 'e.g. No prior approval for off-site work.',
+    required: !excuse,
+    actionLabel: excuse ? '✅ Excuse Deviation' : '🚩 Flag Violation',
+    actionClass: excuse ? 'btn' : 'btn btn-danger',
+    onConfirm: (comment) => {
+      if (excuse) {
+        DB.excuseDeviation(logId, comment);
+      } else {
+        DB.flagDeviationAsViolation(logId, comment);
+      }
+      renderAdminApprovals();
+    }
+  });
 }
 
 function renderAdminReports() {
@@ -4384,6 +8450,11 @@ function renderAdminReports() {
       <div>
         <h1 class="content-title">Monthly Payroll & Attendance Ledger</h1>
         <div class="content-subtitle">Inspect aggregated logs, salary deductions, and print payslips.</div>
+      </div>
+      <div>
+        <button class="btn btn-secondary btn-sm" id="btn-download-profiles-payroll" style="width:auto; font-weight:600; font-size:12px; display:flex; align-items:center; gap:6px; padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:rgba(255,255,255,0.02)">
+          📥 Download Profiles
+        </button>
       </div>
     </div>
     <div class="content-body">
@@ -4433,7 +8504,7 @@ function compileReports(month, year) {
   const loggedInUser = Auth.getCurrentUser();
   const users = DB.getUsers().filter(u => {
     if (loggedInUser.role === 'manager') {
-      return u.role === 'employee' || u.role === 'hr';
+      return u.role === 'employee' && u.managerId === loggedInUser.id;
     } else {
       return u.role === 'employee';
     }
@@ -4611,6 +8682,10 @@ function compileReports(month, year) {
       drawer.scrollIntoView({ behavior: 'smooth' });
     });
   });
+  const dlProfilesBtn = document.getElementById('btn-download-profiles-payroll');
+  if (dlProfilesBtn) {
+    dlProfilesBtn.addEventListener('click', () => openProfileDownloadModal());
+  }
 }
 
 function renderReportChart(present, late) {
@@ -4652,7 +8727,7 @@ function openGuidelinesModal() {
     <div class="modal-content" style="max-width: 480px;animation: scaleUp 0.3s ease">
       <div class="modal-header">
         <h3 class="modal-title">Company Shift Guidelines</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
@@ -4684,13 +8759,13 @@ function openGuidelinesModal() {
             <span class="guideline-icon">📍</span>
             <div class="guideline-details">
               <strong>Office Attendance Rules</strong>
-              <span>Must be checked in from preferred office coordinates or headquarters location for biometric mapping.</span>
+              <span>Must be checked in from preferred office coordinates or headquarters location.</span>
             </div>
           </div>
         </div>
       </div>
       <div class="modal-actions" style="margin-top:20px">
-        <button class="btn" onclick="this.closest('.modal-overlay').remove()">Understood & Accept</button>
+        <button class="btn" onclick="closeModal(this.closest('.modal-overlay'))">Understood & Accept</button>
       </div>
     </div>
   `;
@@ -4706,10 +8781,6 @@ function openStaffDetailModal(userId) {
   overlay.className = 'modal-overlay';
 
   const avatarLetters = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-  // Biometrics info
-  const hasFace = user.biometricRegistered?.face ? 'Configured' : 'Not Registered';
-  const hasFinger = user.biometricRegistered?.finger ? 'Configured' : 'Not Registered';
 
   // Workdays description
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -4776,7 +8847,7 @@ function openStaffDetailModal(userId) {
             <div style="font-size:12px; color:var(--text-muted)">Employee Code: <strong>${Utils.escape(user.employeeId)}</strong> | Role: ${Utils.escape(user.role)}</div>
           </div>
         </div>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
@@ -4803,7 +8874,7 @@ function openStaffDetailModal(userId) {
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Shift Schedule</h4>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--text-secondary)">
               <div><strong>Shift Name:</strong> ${Utils.escape(schedule.name)}</div>
-              <div><strong>Working Hours:</strong> ${schedule.startTime} to ${schedule.endTime}</div>
+              <div><strong>Working Hours:</strong> ${formatTime12h(schedule.startTime)} to ${formatTime12h(schedule.endTime)}</div>
               <div><strong>Grace Period:</strong> ${schedule.gracePeriod} minutes</div>
               <div><strong>Working Days:</strong> ${workDaysStr}</div>
               <div><strong>Preferred Location:</strong> ${Utils.escape(user.preferredLocation || 'Delhi HQ Office')}</div>
@@ -4831,7 +8902,7 @@ function openStaffDetailModal(userId) {
  
         </div>
  
-        <!-- Column 2: Payroll, Biometrics & Documents -->
+        <!-- Column 2: Payroll & Documents -->
         <div style="display:flex; flex-direction:column; gap:16px">
           
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
@@ -4846,13 +8917,7 @@ function openStaffDetailModal(userId) {
             </div>
           </div>
  
-          <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
-            <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Biometric Key Config</h4>
-            <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--text-secondary)">
-              <div><strong>Face Identification:</strong> ${hasFace}</div>
-              <div><strong>Fingerprint Scanner:</strong> ${hasFinger}</div>
-            </div>
-          </div>
+
  
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Verification Attachments</h4>
@@ -4866,7 +8931,7 @@ function openStaffDetailModal(userId) {
       </div>
 
       <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--border); padding-top:14px; display:flex; justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()" style="width:auto; padding:8px 24px">Close Details</button>
+        <button class="btn btn-secondary" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 24px">Close Details</button>
       </div>
     </div>
   `;
@@ -4900,7 +8965,6 @@ function openStaffDetailModal(userId) {
 function renderEmployeeSwapsView() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
-  const coworkers = DB.getUsers().filter(u => u.id !== user.id && u.role !== 'hr' && u.role !== 'manager');
   const userSchedule = DB.getSchedule(user.scheduleId);
 
   main.innerHTML = `
@@ -4915,19 +8979,15 @@ function renderEmployeeSwapsView() {
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Request a Shift Swap</h3></div>
           <div style="background:rgba(251,191,36,0.05);border-left:4px solid var(--primary);padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;line-height:1.4">
-            <strong>My Current Shift:</strong> ${userSchedule ? Utils.escape(userSchedule.name) : 'None'} (${userSchedule ? userSchedule.startTime : ''} - ${userSchedule ? userSchedule.endTime : ''}) at <span style="color:var(--primary);font-weight:600">${userSchedule && userSchedule.location ? Utils.escape(userSchedule.location) : 'Kohat Enclave, Pitampura, Delhi'}</span>
+            <strong>My Current Shift:</strong> ${userSchedule ? Utils.escape(userSchedule.name) : 'None'} (${userSchedule ? formatTime12h(userSchedule.startTime) : ''} - ${userSchedule ? formatTime12h(userSchedule.endTime) : ''}) at <span style="color:var(--primary);font-weight:600">${userSchedule && userSchedule.location ? Utils.escape(userSchedule.location) : 'Kohat Enclave, Pitampura, Delhi'}</span>
           </div>
           <form id="shift-swap-request-form">
             <div class="form-group">
-              <label class="form-label" for="swap-coworker">Select Coworker</label>
-              <select class="form-input" id="swap-coworker" required>
-                <option value="">-- Choose Coworker --</option>
-                ${coworkers.map(c => {
-                  const s = DB.getSchedule(c.scheduleId);
-                  const loc = s && s.location ? s.location : (c.preferredLocation || 'Kohat Enclave, Pitampura, Delhi');
-                  return `<option value="${c.id}">${Utils.escape(c.name)} [${s ? Utils.escape(s.name) : 'No Shift'} at ${Utils.escape(loc)}]</option>`;
-                }).join('')}
-              </select>
+              <label class="form-label" for="swap-coworker-empid">Coworker Employee ID</label>
+              <div style="display:flex;gap:8px">
+                <input class="form-input" type="text" id="swap-coworker-empid" placeholder="e.g. EMP104" required style="text-transform:uppercase">
+                <button type="button" class="btn btn-secondary" id="btn-validate-coworker" style="width:auto;padding:8px 16px;font-size:12.5px;font-weight:600">Validate</button>
+              </div>
             </div>
             
             <div id="coworker-swap-preview" style="display:none;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:16px;font-size:12.5px;line-height:1.4"></div>
@@ -4974,44 +9034,66 @@ function renderEmployeeSwapsView() {
     </div>
   `;
 
-  renderEmployeeSwapsData(user.id);
-
-  const coworkerSelect = document.getElementById('swap-coworker');
+  let validatedCoworkerId = null;
+  const empidInput = document.getElementById('swap-coworker-empid');
+  const validateBtn = document.getElementById('btn-validate-coworker');
   const previewDiv = document.getElementById('coworker-swap-preview');
-  if (coworkerSelect && previewDiv) {
-    coworkerSelect.addEventListener('change', (e) => {
-      const selectedId = e.target.value;
-      if (!selectedId) {
+
+  if (validateBtn && empidInput && previewDiv) {
+    validateBtn.addEventListener('click', () => {
+      const val = empidInput.value.trim().toUpperCase();
+      if (!val) {
         previewDiv.style.display = 'none';
+        validatedCoworkerId = null;
         return;
       }
-      const coworker = DB.getUser(selectedId);
+      if (val === user.employeeId.toUpperCase()) {
+        previewDiv.style.display = 'block';
+        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">⚠️ You cannot swap shifts with yourself.</span>`;
+        validatedCoworkerId = null;
+        return;
+      }
+      const coworker = DB.getUsers().find(u => u.employeeId && u.employeeId.toUpperCase() === val && u.role === 'employee');
+      if (!coworker) {
+        previewDiv.style.display = 'block';
+        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">⚠️ Employee ID not found. Only registered employees can swap shifts.</span>`;
+        validatedCoworkerId = null;
+        return;
+      }
+      validatedCoworkerId = coworker.id;
       const s = DB.getSchedule(coworker.scheduleId);
       const coworkerLoc = s && s.location ? s.location : (coworker.preferredLocation || 'Kohat Enclave, Pitampura, Delhi');
       
       previewDiv.style.display = 'block';
       previewDiv.innerHTML = `
-        <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--cyan)">👥 Coworker Current Assignment</h4>
-        <div><strong>Name:</strong> ${Utils.escape(coworker.name)}</div>
-        <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'No Shift'} (${s ? s.startTime : ''} - ${s ? s.endTime : ''})</div>
+        <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--success)">✅ Coworker ID Verified</h4>
+        <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'No Shift'} (${s ? formatTime12h(s.startTime) : ''} - ${s ? formatTime12h(s.endTime) : ''})</div>
         <div><strong>Work Location:</strong> <span style="color:var(--primary);font-weight:600">${Utils.escape(coworkerLoc)}</span></div>
       `;
     });
+
+    empidInput.addEventListener('input', () => {
+      previewDiv.style.display = 'none';
+      validatedCoworkerId = null;
+    });
   }
+
+  renderEmployeeSwapsData(user.id);
 
   document.getElementById('shift-swap-request-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const coworkerId = document.getElementById('swap-coworker').value;
-    const swapType = document.getElementById('swap-type').value;
-    const reason = document.getElementById('swap-reason').value.trim();
-    if (!coworkerId) {
-      showSwapAlert('Please select a coworker.', 'error');
+    if (!validatedCoworkerId) {
+      showSwapAlert('Please enter and validate a coworker Employee ID first.', 'error');
       return;
     }
-    DB.submitShiftSwap(user.id, coworkerId, reason, swapType);
+    const swapType = document.getElementById('swap-type').value;
+    const reason = document.getElementById('swap-reason').value.trim();
+    
+    DB.submitShiftSwap(user.id, validatedCoworkerId, reason, swapType);
     showSwapAlert('Shift swap request submitted successfully!', 'success');
     document.getElementById('shift-swap-request-form').reset();
     if (previewDiv) previewDiv.style.display = 'none';
+    validatedCoworkerId = null;
     renderEmployeeSwapsData(user.id);
   });
 }
@@ -5036,7 +9118,7 @@ function renderEmployeeSwapsData(userId) {
 
     return `
       <tr>
-        <td style="font-weight:600">${sender ? Utils.escape(sender.name) : 'Unknown'}</td>
+        <td style="font-weight:600">${sender ? 'Employee ID: ' + Utils.escape(sender.employeeId) : 'Unknown'}</td>
         <td>
           ${senderSchedule ? Utils.escape(senderSchedule.name) : 'None'}<br>
           <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(senderLoc)}</span>
@@ -5071,7 +9153,7 @@ function renderEmployeeSwapsData(userId) {
 
     return `
       <tr>
-        <td style="font-weight:600">${receiver ? Utils.escape(receiver.name) : 'Unknown'}</td>
+        <td style="font-weight:600">${receiver ? 'Employee ID: ' + Utils.escape(receiver.employeeId) : 'Unknown'}</td>
         <td>
           ${receiverSchedule ? Utils.escape(receiverSchedule.name) : 'None'}<br>
           <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(receiverLoc)}</span>
@@ -5091,8 +9173,8 @@ function renderEmployeeSwapsData(userId) {
   document.querySelectorAll('.btn-reject-swap').forEach(btn => btn.addEventListener('click', (e) => processCoworkerSwap(e.target.dataset.id, false)));
 }
 
-function processCoworkerSwap(swapId, accept) {
-  const comment = prompt(`Add a response comment (optional):`);
+async function processCoworkerSwap(swapId, accept) {
+  const comment = await prompt(`Add a response comment (optional):`);
   if (comment === null) return;
   DB.respondToShiftSwapCoworker(swapId, accept, comment);
   renderEmployeeSwapsView();
@@ -5125,12 +9207,26 @@ function renderEmployeeNotices(userId) {
   const container = document.getElementById('employee-notices-container');
   if (!container) return;
 
-  const notices = DB.getAnnouncements();
+  let notices = DB.getAnnouncements();
+  
+  // Filter for this specific user's targeted notices OR global notices
+  notices = notices.filter(a => !a.targetUserId || a.targetUserId === userId);
+
   const readKey = `hs_read_notices_${userId}`;
   const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+  
+  const delKey = `hs_del_notices_${userId}`;
+  const delIds = JSON.parse(localStorage.getItem(delKey) || '[]');
+
+  notices = notices.filter(a => !delIds.includes(a.id));
+
+  const btnDeleteAll = document.getElementById('btn-delete-all-notices');
+  if (btnDeleteAll) {
+    btnDeleteAll.style.display = notices.length > 0 ? 'block' : 'none';
+  }
 
   if (notices.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:12px">No active announcements.</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:12px">No active notifications.</div>`;
     return;
   }
 
@@ -5145,7 +9241,10 @@ function renderEmployeeNotices(userId) {
       <div class="notice-item" data-id="${a.id}" style="background:rgba(255,255,255,${isRead ? '0.01' : '0.03'});border:1px solid ${isRead ? 'var(--border)' : 'rgba(251,191,36,0.2)'};border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;opacity:${isRead ? '0.6' : '1'}">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
-          <span style="font-size:10.5px;color:var(--text-muted)">${a.date}</span>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:10.5px;color:var(--text-muted)">${a.date}</span>
+            <button class="btn-del-notice" data-id="${a.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7" title="Delete">🗑️</button>
+          </div>
         </div>
         <strong style="font-size:13px;color:var(--text-primary)">${Utils.escape(a.title)}</strong>
         <p style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin:0">${Utils.escape(a.content)}</p>
@@ -5169,6 +9268,30 @@ function renderEmployeeNotices(userId) {
       renderEmployeeNotices(userId);
     });
   });
+
+  // Bind delete single notice events
+  container.querySelectorAll('.btn-del-notice').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      delIds.push(id);
+      localStorage.setItem(delKey, JSON.stringify(delIds));
+      renderEmployeeNotices(userId);
+    });
+  });
+
+  // Bind delete all notices event
+  if (btnDeleteAll) {
+    // Prevent multiple bindings if called repeatedly
+    btnDeleteAll.replaceWith(btnDeleteAll.cloneNode(true));
+    const newBtn = document.getElementById('btn-delete-all-notices');
+    newBtn.addEventListener('click', async () => {
+      if (await CustomDialog.confirm('Are you sure you want to delete all notifications?')) {
+        notices.forEach(n => delIds.push(n.id));
+        localStorage.setItem(delKey, JSON.stringify(delIds));
+        renderEmployeeNotices(userId);
+      }
+    });
+  }
 }
 
 function renderAdminAnnouncementsList() {
@@ -5205,9 +9328,9 @@ function renderAdminAnnouncementsList() {
 
   // Bind delete events
   container.querySelectorAll('.btn-delete-announcement').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const id = e.target.getAttribute('data-id');
-      if (confirm('Are you sure you want to delete this notice?')) {
+      if (await CustomDialog.confirm('Are you sure you want to delete this notice?')) {
         DB.deleteAnnouncement(id);
         renderAdminAnnouncementsList();
       }
@@ -5258,7 +9381,7 @@ function updateNotificationsUI() {
           category: 'Swap'
         });
       });
-
+    } else if (user.role === 'finance_manager') {
       const financeAlerts = DB.data.financeAlerts || [];
       financeAlerts.forEach(al => {
         notifications.push({
@@ -5287,6 +9410,12 @@ function updateNotificationsUI() {
       });
     }
 
+    const delKey = `hs_del_notices_${user.id}`;
+    const delIds = JSON.parse(localStorage.getItem(delKey) || '[]');
+
+    // Filter out deleted notifications
+    notifications = notifications.filter(n => !delIds.includes(n.id));
+
     // Update Badge
     if (notifications.length > 0) {
       countBadge.style.display = 'flex';
@@ -5313,13 +9442,27 @@ function updateNotificationsUI() {
           <div class="notification-item-row" data-id="${n.id}" data-link="${n.link}" data-category="${n.category}" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.2s;display:flex;flex-direction:column;gap:4px">
             <div style="display:flex;justify-content:space-between;align-items:center">
               <span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;${badgeStyle}">${n.category}</span>
-              <span style="font-size:10px;color:var(--text-muted)">New</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <span style="font-size:10px;color:var(--text-muted)">New</span>
+                <button class="btn-del-dropdown-notice" data-id="${n.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:0.7" title="Delete">🗑️</button>
+              </div>
             </div>
             <strong style="font-size:12.5px;color:var(--text-primary)">${Utils.escape(n.title)}</strong>
             <p style="font-size:11.5px;color:var(--text-secondary);line-height:1.4;margin:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:300px">${Utils.escape(n.desc)}</p>
           </div>
         `;
       }).join('');
+
+      // Bind delete single notice events
+      listContainer.querySelectorAll('.btn-del-dropdown-notice').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent opening the link
+          const id = e.currentTarget.getAttribute('data-id');
+          delIds.push(id);
+          localStorage.setItem(delKey, JSON.stringify(delIds));
+          updateNotificationsUI();
+        });
+      });
 
       // Bind click events on notification items
       listContainer.querySelectorAll('.notification-item-row').forEach(row => {
@@ -5369,7 +9512,7 @@ function openPayrollAdjustmentModal(userId, month, year) {
     <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease">
       <div class="modal-header">
         <h3 class="modal-title">Edit Payslip Adjustments</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
       <form id="payroll-adjustment-form">
         <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:15px;line-height:1.4">
@@ -5389,7 +9532,7 @@ function openPayrollAdjustmentModal(userId, month, year) {
           <textarea class="form-input" id="adj-remarks" placeholder="Notes printed on the payslip..." rows="3" style="resize:vertical">${Utils.escape(p.remarks || '')}</textarea>
         </div>
         <div class="modal-actions">
-          <button class="btn btn-secondary" type="button" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+          <button class="btn btn-secondary" type="button" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
           <button class="btn" type="submit">Save Adjustments</button>
         </div>
       </form>
@@ -5403,7 +9546,7 @@ function openPayrollAdjustmentModal(userId, month, year) {
     const remarks = document.getElementById('adj-remarks').value.trim();
     
     DB.savePayrollAdjustment(userId, month, year, bonus, deduction, remarks);
-    overlay.remove();
+    closeModal(overlay);
     
     // Refresh the reports sheet and re-render the preview drawer
     compileReports(month, year);
@@ -5431,7 +9574,7 @@ function openPunctualityRecapModal(userId) {
     <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="margin-bottom:15px">
         <h3 class="modal-title">📊 Punctuality Recap</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
       <div style="font-size:13px; color:var(--text-secondary); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
         <div>
@@ -5573,7 +9716,7 @@ function openProfileReviewModal(userId) {
     <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="margin-bottom:15px">
         <h3 class="modal-title">📝 Review Profile Changes</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
       <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:15px">
         Employee: <strong>${Utils.escape(u.name)}</strong> (${userId})
@@ -5611,7 +9754,7 @@ function openProfileReviewModal(userId) {
     u.profileVerificationStatus = 'Approved';
     u.profileVerificationComment = '';
     DB.save();
-    overlay.remove();
+    closeModal(overlay);
     renderAdminUsers();
   });
   
@@ -5625,7 +9768,7 @@ function openProfileReviewModal(userId) {
     u.profileVerificationComment = comment;
     u.pendingProfileEdits = null;
     DB.save();
-    overlay.remove();
+    closeModal(overlay);
     renderAdminUsers();
   });
 }
@@ -5637,7 +9780,7 @@ function openHelpGuidelinesModal() {
     <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px">
         <h3 class="modal-title">🔐 Portal Guidelines & Security Instructions</h3>
-        <button class="close-modal-btn" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
       
       <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; display:flex; flex-direction:column; gap:16px; max-height: 60vh; overflow-y: auto; padding-right: 4px">
@@ -5653,7 +9796,7 @@ function openHelpGuidelinesModal() {
           <strong style="color:var(--text-primary); font-size:13.5px">📍 2. Geo-Fencing Constraints</strong>
           <ul style="margin:6px 0 0 15px; padding:0">
             <li>All check-ins are verified against geofence parameters.</li>
-            <li>Biometric logging is strictly limited to the HQ site. Out-of-range logins require passcode verification and mandatory written deviation justification.</li>
+            <li>Out-of-range logins require passcode verification and mandatory written deviation justification.</li>
           </ul>
         </div>
         
@@ -5661,7 +9804,7 @@ function openHelpGuidelinesModal() {
           <strong style="color:var(--text-primary); font-size:13.5px">🛡️ 3. Security & Access Protocols</strong>
           <ul style="margin:6px 0 0 15px; padding:0">
             <li>Passwords must contain at least 8 characters, an uppercase letter, a number, and a special character.</li>
-            <li>Keep your biometric credentials updated. Escalations or role changes must be authorized by the Operations Manager.</li>
+            <li>Keep your credentials updated. Escalations or role changes must be authorized by the Operations Manager.</li>
             <li>Do not share your portal passcode. Unauthorized login attempts are flagged immediately.</li>
           </ul>
         </div>
@@ -5672,7 +9815,7 @@ function openHelpGuidelinesModal() {
       </div>
       
       <div class="modal-actions" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px">
-        <button class="btn" onclick="this.closest('.modal-overlay').remove()">Understood & Close</button>
+        <button class="btn" onclick="closeModal(this.closest('.modal-overlay'))">Understood & Close</button>
       </div>
     </div>
   `;
@@ -5682,7 +9825,7 @@ function openHelpGuidelinesModal() {
 function renderAdminFinance() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
-  if (!user || (user.role !== 'hr' && user.role !== 'manager' && user.role !== 'finance_manager')) {
+  if (!user || user.role !== 'finance_manager') {
     window.location.hash = '#dashboard';
     return;
   }
@@ -6010,9 +10153,9 @@ function renderAdminFinance() {
     `;
 
     document.querySelectorAll('.btn-delete-record').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const id = e.currentTarget.dataset.id;
-        if (confirm('Permanently delete this financial record?')) {
+        if (await confirm('Permanently delete this financial record?')) {
           DB.deleteFinancialRecord(id);
           renderDashboardUI();
         }
@@ -6043,8 +10186,8 @@ function renderAdminFinance() {
       });
     }
     if (btnRejectReport && lblStatus) {
-      btnRejectReport.addEventListener('click', () => {
-        const comment = prompt('Enter description of discrepancy:');
+      btnRejectReport.addEventListener('click', async () => {
+        const comment = await prompt('Enter description of discrepancy:');
         if (comment) {
           lblStatus.textContent = `❌ Flagged: ${comment}`;
           lblStatus.style.background = 'rgba(239,68,68,0.1)';
@@ -6167,246 +10310,380 @@ function addSystemNotificationAlert(title, desc = '') {
   updateNotificationsUI();
 }
 
-function renderAdminAnalytics() {
+
+
+
+// =============================================================
+// GEOLOCATION RADAR MAP & WORKSITE LOCATION MANAGEMENT PANEL
+// =============================================================
+
+function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, distance, inRange, targetName) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  
+  const w = rect.width;
+  const h = rect.height;
+  
+  // Clean dark slate background
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, w, h);
+  
+  const cx = w / 2;
+  const cy = h / 2;
+  
+  // Concentric radar rings
+  ctx.strokeStyle = 'rgba(251, 191, 36, 0.1)';
+  ctx.lineWidth = 1;
+  for (let r = 30; r < Math.max(w, h); r += 30) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+  
+  // Crosshairs grid
+  ctx.strokeStyle = 'rgba(251, 191, 36, 0.05)';
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(w, cy);
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, h);
+  ctx.stroke();
+  
+  // Geofence Circle (100 meters, mapped to 40px radius)
+  const geofenceRadius = 40;
+  ctx.strokeStyle = inRange ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+  ctx.fillStyle = inRange ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.02)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, geofenceRadius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+  
+  // Sonar sweeps rotation line based on date
+  const sweepAngle = (Date.now() / 1500) % (2 * Math.PI);
+  ctx.strokeStyle = inRange ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(sweepAngle) * (Math.max(w, h)), cy + Math.sin(sweepAngle) * (Math.max(w, h)));
+  ctx.stroke();
+  
+  // Draw fixed worksite marker (use hex - canvas doesn't support CSS var())
+  ctx.fillStyle = '#89201B';
+  ctx.shadowColor = '#89201B';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.shadowBlur = 0; // reset glow
+  
+  // Label for worksite
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(targetName || 'Worksite', cx, cy - 10);
+  
+  // Draw Employee dot marker using proper meters-to-pixel projection
+  // Convert lat/lng differences to meters (Delhi ~28.7°N latitude)
+  const cosLat = Math.cos(targetLat * Math.PI / 180);
+  const xMeters = (currentLng - targetLng) * 111139 * cosLat; // East-West offset in meters
+  const yMeters = (currentLat - targetLat) * 111139;           // North-South offset in meters
+  
+  // Scale: 100 meters = geofenceRadius (40px)
+  const metersPerPixel = 100 / geofenceRadius;
+  let exRaw = xMeters / metersPerPixel;  // positive = right (East)
+  let eyRaw = -yMeters / metersPerPixel; // negative = up (North, screen Y inverted)
+  
+  // Constrain to canvas bounds
+  const maxOffset = Math.min(w, h) / 2 - 12;
+  const rawDist = Math.sqrt(exRaw * exRaw + eyRaw * eyRaw);
+  if (rawDist > maxOffset) {
+    const scale = maxOffset / rawDist;
+    exRaw *= scale;
+    eyRaw *= scale;
+  }
+  
+  const ex = cx + exRaw;
+  const ey = cy + eyRaw;
+  
+  const pulseR = 5 + Math.sin(Date.now() / 150) * 1.5;
+  ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
+  ctx.shadowColor = inRange ? '#10b981' : '#ef4444';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(ex, ey, pulseR, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  
+  ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
+  ctx.fillText('Live GPS', ex, ey - 10);
+}
+
+function renderAdminLocations() {
   const main = document.getElementById('main-view');
-  const user = Auth.getCurrentUser();
-  if (!user || (user.role !== 'hr' && user.role !== 'manager' && user.role !== 'finance_manager')) {
-    window.location.hash = '#dashboard';
-    return;
-  }
-
-  let activeTab = 'attendance';
-
-  function renderAnalyticsContent() {
-    main.innerHTML = `
-      <div class="content-header">
-        <div>
-          <h1 class="content-title">📈 Business Intelligence & Analytics</h1>
-          <div class="content-subtitle">Cross-department performance trends, salary expenditures, and cash flow projections.</div>
-        </div>
+  if (!main) return;
+  
+  const locations = DB.getOfficeCoordinates();
+  
+  main.innerHTML = `
+    <div class="content-header">
+      <div>
+        <h1 class="content-title">🏢 Worksite Locations Configuration</h1>
+        <div class="content-subtitle">Register and manage fixed worksite coordinates used for employee geofencing validation.</div>
       </div>
-      <div class="content-body">
+    </div>
+    
+    <div class="content-body">
+      <div class="dashboard-split" style="grid-template-columns:1.6fr 1fr; gap:24px; align-items:start">
         
-        <!-- Tab Selectors -->
-        <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:10px; flex-wrap:wrap">
-          <button class="btn ${activeTab === 'attendance' ? '' : 'btn-secondary'}" id="tab-analytics-attendance" style="width:auto; padding:8px 16px; font-size:12.5px">Attendance Analytics</button>
-          <button class="btn ${activeTab === 'payroll' ? '' : 'btn-secondary'}" id="tab-analytics-payroll" style="width:auto; padding:8px 16px; font-size:12.5px">Payroll Analytics</button>
-          <button class="btn ${activeTab === 'finance' ? '' : 'btn-secondary'}" id="tab-analytics-finance" style="width:auto; padding:8px 16px; font-size:12.5px">Finance Analytics</button>
-          <button class="btn ${activeTab === 'hr' ? '' : 'btn-secondary'}" id="tab-analytics-hr" style="width:auto; padding:8px 16px; font-size:12.5px">HR & Operations Analytics</button>
+        <!-- Locations List Card -->
+        <div class="card-panel">
+          <h3 class="card-panel-title" style="margin-bottom:15px">Corporate Worksite Coordinates</h3>
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Location Name</th>
+                  <th>Latitude</th>
+                  <th>Longitude</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-locations-table-body">
+                ${Object.entries(locations).map(([name, coords]) => `
+                  <tr>
+                    <td style="font-weight:600; color:var(--text-primary)">${Utils.escape(name)}</td>
+                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lat.toFixed(6)}° N</td>
+                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lng.toFixed(6)}° E</td>
+                    <td>
+                      <button class="btn btn-secondary btn-edit-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; margin-right:6px">✏️ Edit</button>
+                      <button class="btn btn-danger btn-delete-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; background:rgba(239,68,68,0.1); color:var(--error); border-color:rgba(239,68,68,0.2)">🗑️ Delete</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div id="analytics-charts-container">
-          <!-- Charts load dynamically -->
+        
+        <!-- Add Location Form -->
+        <div class="card-panel">
+          <h3 class="card-panel-title" style="margin-bottom:15px">➕ Add New Worksite Location</h3>
+          <form id="form-admin-add-location" style="display:flex; flex-direction:column; gap:12px">
+            <div class="form-group">
+              <label class="form-label" for="add-loc-name">Worksite Name</label>
+              <input type="text" class="form-input" id="add-loc-name" placeholder="e.g. Gurugram Branch Office" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="add-loc-lat">Latitude</label>
+              <input type="number" step="any" class="form-input" id="add-loc-lat" placeholder="e.g. 28.4595" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="add-loc-lng">Longitude</label>
+              <input type="number" step="any" class="form-input" id="add-loc-lng" placeholder="e.g. 77.0266" required>
+            </div>
+            <button class="btn" type="submit" style="margin-top:8px">Register Worksite</button>
+          </form>
         </div>
-
+        
       </div>
-    `;
-
-    // Bind tab clicks
-    document.getElementById('tab-analytics-attendance').addEventListener('click', () => { activeTab = 'attendance'; renderTabCharts(); });
-    document.getElementById('tab-analytics-payroll').addEventListener('click', () => { activeTab = 'payroll'; renderTabCharts(); });
-    document.getElementById('tab-analytics-finance').addEventListener('click', () => { activeTab = 'finance'; renderTabCharts(); });
-    document.getElementById('tab-analytics-hr').addEventListener('click', () => { activeTab = 'hr'; renderTabCharts(); });
-
-    renderTabCharts();
+    </div>
+  `;
+  
+  // Attach listeners
+  const form = document.getElementById('form-admin-add-location');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('add-loc-name').value.trim();
+      const lat = parseFloat(document.getElementById('add-loc-lat').value);
+      const lng = parseFloat(document.getElementById('add-loc-lng').value);
+      
+      if (!name || isNaN(lat) || isNaN(lng)) {
+        showToastNotification("Please provide valid worksite parameters.", "warning");
+        return;
+      }
+      
+      DB.saveOfficeCoordinate(name, lat, lng);
+      
+      // Also register a default shift schedule automatically for it
+      DB.addSchedule({
+        name: name + ' Shift',
+        startTime: '09:00',
+        endTime: '17:00',
+        gracePeriod: 15,
+        workDays: [1, 2, 3, 4, 5],
+        location: name
+      });
+      
+      showToastNotification(`✅ Worksite "${name}" registered successfully!`, "success");
+      renderAdminLocations();
+    });
   }
+  
+  // Edit & Delete button listeners
+  document.querySelectorAll('.btn-edit-loc-coords').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const name = btn.getAttribute('data-name');
+      const coords = DB.getOfficeCoordinates()[name];
+      if (!coords) return;
+      
+      const newLatStr = await prompt(`Enter new Latitude for "${name}":`, coords.lat);
+      if (newLatStr === null) return;
+      const newLngStr = await prompt(`Enter new Longitude for "${name}":`, coords.lng);
+      if (newLngStr === null) return;
+      
+      const lat = parseFloat(newLatStr);
+      const lng = parseFloat(newLngStr);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        showToastNotification("Invalid coordinate values provided.", "warning");
+        return;
+      }
+      
+      DB.saveOfficeCoordinate(name, lat, lng);
+      showToastNotification(`✅ Coordinates for "${name}" updated successfully!`, "success");
+      renderAdminLocations();
+    });
+  });
 
-  function renderTabCharts() {
-    const container = document.getElementById('analytics-charts-container');
-    if (!container) return;
-
-    // Reset active button classes
-    ['attendance', 'payroll', 'finance', 'hr'].forEach(t => {
-      const btn = document.getElementById(`tab-analytics-${t}`);
-      if (btn) {
-        if (t === activeTab) {
-          btn.classList.remove('btn-secondary');
-        } else {
-          btn.classList.add('btn-secondary');
-        }
+  document.querySelectorAll('.btn-delete-loc-coords').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const name = btn.getAttribute('data-name');
+      if (await confirm(`Are you sure you want to delete worksite "${name}"?\nThis cannot be undone.`)) {
+        DB.deleteOfficeCoordinate(name);
+        showToastNotification(`🗑️ Worksite "${name}" deleted.`, "success");
+        renderAdminLocations();
       }
     });
+  });
+}
 
-    if (activeTab === 'attendance') {
-      container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
-          
-          <!-- Daily Attendance Stack -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📅 Daily Attendance Ratios (Today)</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="240" height="150" viewBox="0 0 240 150">
-                <rect x="30" y="20" width="35" height="100" fill="var(--success)" rx="3" ry="3"></rect>
-                <rect x="100" y="50" width="35" height="70" fill="var(--primary)" rx="3" ry="3"></rect>
-                <rect x="170" y="90" width="35" height="30" fill="var(--error)" rx="3" ry="3"></rect>
-                <text x="47" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Present (85)</text>
-                <text x="117" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Late (12)</text>
-                <text x="187" y="135" fill="var(--text-secondary)" font-size="10" text-anchor="middle">Absent (3)</text>
-              </svg>
-            </div>
-          </div>
 
-          <!-- Monthly Attendance Trend -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Monthly Attendance curve (%)</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <line x1="30" y1="120" x2="280" y2="120" stroke="var(--border)" stroke-width="1"></line>
-                <line x1="30" y1="30" x2="280" y2="30" stroke="var(--border)" stroke-dasharray="3,3" stroke-width="1"></line>
-                <path d="M30 100 Q 80 50, 130 60 T 230 40 T 280 35" fill="none" stroke="var(--primary)" stroke-width="3"></path>
-                <circle cx="130" cy="60" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
-                <circle cx="280" cy="35" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
-                <text x="30" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jan</text>
-                <text x="130" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Mar</text>
-                <text x="280" y="138" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jun</text>
-                <text x="280" y="25" fill="var(--text-primary)" font-size="9" text-anchor="middle">98.2%</text>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Avg Attendance Gauge -->
-          <div class="card-panel" style="padding:15px; display:flex; flex-direction:column; align-items:center; justify-content:center">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🎯 Average Company Attendance Rate</h3>
-            <div style="position:relative; width:120px; height:120px; margin-top:15px">
-              <svg width="120" height="120" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3"></circle>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--success)" stroke-width="3" stroke-dasharray="94 6" stroke-dashoffset="25"></circle>
-              </svg>
-              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center">
-                <span style="font-size:22px; font-weight:700; color:var(--text-primary)">94%</span>
-              </div>
-            </div>
-            <div style="font-size:11.5px; color:var(--text-muted); text-align:center; margin-top:10px">Target Benchmark: >92%</div>
-          </div>
-
-        </div>
-      `;
-    } else if (activeTab === 'payroll') {
-      container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
-          
-          <!-- Monthly Payroll Trend -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📊 Monthly Payroll Trend (INR)</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <rect x="40" y="50" width="20" height="70" fill="var(--primary)" rx="2"></rect>
-                <rect x="90" y="45" width="20" height="75" fill="var(--primary)" rx="2"></rect>
-                <rect x="140" y="40" width="20" height="80" fill="var(--primary)" rx="2"></rect>
-                <rect x="190" y="35" width="20" height="85" fill="var(--primary)" rx="2"></rect>
-                <rect x="240" y="30" width="20" height="90" fill="var(--primary)" rx="2"></rect>
-                <text x="50" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Feb</text>
-                <text x="150" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Apr</text>
-                <text x="250" y="135" fill="var(--text-muted)" font-size="9" text-anchor="middle">Jun</text>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Salary by Department Donut -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🍩 Payroll share by Department</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px; gap:20px">
-              <svg width="120" height="120" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--primary)" stroke-width="4" stroke-dasharray="50 50" stroke-dashoffset="25"></circle>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--warning)" stroke-width="4" stroke-dasharray="30 70" stroke-dashoffset="75"></circle>
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="var(--cyan)" stroke-width="4" stroke-dasharray="20 80" stroke-dashoffset="5"></circle>
-              </svg>
-              <div style="font-size:11px; display:flex; flex-direction:column; gap:6px">
-                <div><span style="display:inline-block; width:8px; height:8px; background:var(--primary); margin-right:4px"></span>Eng (50%)</div>
-                <div><span style="display:inline-block; width:8px; height:8px; background:var(--warning); margin-right:4px"></span>Ops (30%)</div>
-                <div><span style="display:inline-block; width:8px; height:8px; background:var(--cyan); margin-right:4px"></span>HR (20%)</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      `;
-    } else if (activeTab === 'finance') {
-      container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
-          
-          <!-- Revenue & Expense dual curves -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Revenue vs Operational Expenses</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <path d="M40 90 L 90 70 L 140 60 L 190 40 L 240 30 L 280 20" fill="none" stroke="var(--success)" stroke-width="2.5"></path>
-                <path d="M40 110 L 90 100 L 140 105 L 190 95 L 240 90 L 280 85" fill="none" stroke="var(--error)" stroke-width="2.5"></path>
-                <text x="240" y="15" fill="var(--success)" font-size="9">Revenues</text>
-                <text x="240" y="80" fill="var(--error)" font-size="9">Expenses</text>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Profit & Loss Bars -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📊 Profit & Loss trend (Net Surplus)</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <line x1="30" y1="75" x2="280" y2="75" stroke="var(--border)" stroke-width="1.5"></line>
-                <rect x="50" y="30" width="18" height="45" fill="var(--success)" rx="2"></rect>
-                <rect x="100" y="20" width="18" height="55" fill="var(--success)" rx="2"></rect>
-                <rect x="150" y="75" width="18" height="30" fill="var(--error)" rx="2"></rect>
-                <rect x="200" y="15" width="18" height="60" fill="var(--success)" rx="2"></rect>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Budget vs Actual -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">⚖️ Budget Allocation vs Actual Expenses</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <rect x="40" y="30" width="15" height="90" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
-                <rect x="40" y="45" width="15" height="75" fill="var(--cyan)"></rect>
-                <rect x="120" y="40" width="15" height="80" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
-                <rect x="120" y="65" width="15" height="55" fill="var(--cyan)"></rect>
-                <rect x="200" y="60" width="15" height="60" fill="rgba(255,255,255,0.05)" stroke="var(--border)"></rect>
-                <rect x="200" y="55" width="15" height="65" fill="var(--error)"></rect>
-                <text x="47" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">Eng</text>
-                <text x="127" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">Ops</text>
-                <text x="207" y="135" fill="var(--text-secondary)" font-size="9" text-anchor="middle">HR</text>
-              </svg>
-            </div>
-          </div>
-
-        </div>
-      `;
-    } else if (activeTab === 'hr') {
-      container.innerHTML = `
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px">
-          
-          <!-- Employee Growth -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">📈 Headcount & Employee Growth</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <path d="M40 120 L 90 110 L 140 100 L 190 85 L 240 70 L 280 55" fill="none" stroke="var(--primary)" stroke-width="3"></path>
-                <circle cx="280" cy="55" r="4" fill="var(--bg-app)" stroke="var(--primary)" stroke-width="2"></circle>
-                <text x="280" y="42" fill="var(--text-primary)" font-size="10" text-anchor="middle">108 Active</text>
-              </svg>
-            </div>
-          </div>
-
-          <!-- New Joinees vs Resignations -->
-          <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:13.5px; margin-bottom:10px">🚪 Monthly Recruitment vs Attrition</h3>
-            <div style="display:flex; justify-content:center; align-items:center; height:180px">
-              <svg width="300" height="150" viewBox="0 0 300 150">
-                <rect x="50" y="50" width="12" height="70" fill="var(--success)"></rect>
-                <rect x="64" y="100" width="12" height="20" fill="var(--error)"></rect>
-                <rect x="130" y="40" width="12" height="80" fill="var(--success)"></rect>
-                <rect x="144" y="95" width="12" height="25" fill="var(--error)"></rect>
-                <rect x="210" y="30" width="12" height="90" fill="var(--success)"></rect>
-                <rect x="224" y="110" width="12" height="10" fill="var(--error)"></rect>
-              </svg>
-            </div>
-          </div>
-
-        </div>
-      `;
+function showAutoCheckinBanner(active, timeString = '') {
+  let banner = document.getElementById('gps-auto-checkin-banner');
+  const timerEl = document.getElementById('active-work-timer');
+  if (!timerEl) return;
+  
+  const parentCard = timerEl.parentNode;
+  
+  if (active) {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'gps-auto-checkin-banner';
+      banner.style.padding = '10px';
+      banner.style.background = 'rgba(245, 158, 11, 0.08)';
+      banner.style.border = '1px solid rgba(245, 158, 11, 0.2)';
+      banner.style.borderRadius = 'var(--radius-sm)';
+      banner.style.fontSize = '12px';
+      banner.style.marginTop = '15px';
+      banner.style.textAlign = 'center';
+      banner.style.color = 'var(--warning)';
+      banner.style.lineHeight = '1.4';
+      banner.style.animation = 'pulse 2s infinite';
+      parentCard.appendChild(banner);
+    }
+    banner.innerHTML = `⚡ <strong>Geofence Entered!</strong> Auto-tracking started at ${timeString}. Please check in to complete your attendance.`;
+  } else {
+    if (banner) {
+      banner.remove();
     }
   }
-
-  renderAnalyticsContent();
 }
+
+
+function requestsPushDBState() {
+  // Push database mutation to sync backend so admin view is up to date immediately
+  if (typeof DB !== 'undefined' && DB.save) {
+    // DB.save() already triggers localStorage save. We trigger API save manually:
+    try {
+      fetch('/api/mutate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', data: DB.data })
+      }).catch(err => console.warn("API state sync failed:", err));
+    } catch (e) {
+      console.warn("API state sync exception:", e);
+    }
+  }
+}
+
+function showToastNotification(message, type = 'info') {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.position = 'fixed';
+    container.style.bottom = '24px';
+    container.style.right = '24px';
+    container.style.zIndex = '10000';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '10px';
+    container.style.pointerEvents = 'none';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.style.pointerEvents = 'auto';
+  toast.style.minWidth = '280px';
+  toast.style.maxWidth = '360px';
+  toast.style.padding = '14px 18px';
+  toast.style.borderRadius = 'var(--radius-md)';
+  toast.style.boxShadow = 'var(--shadow-lg)';
+  toast.style.display = 'flex';
+  toast.style.alignItems = 'center';
+  toast.style.gap = '12px';
+  toast.style.color = '#ffffff';
+  toast.style.fontSize = '13px';
+  toast.style.fontWeight = '600';
+  toast.style.transform = 'translateX(120%)';
+  toast.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+  toast.style.border = '1px solid';
+
+  let icon = '';
+  if (type === 'success') {
+    toast.style.background = 'rgba(16, 185, 129, 0.95)';
+    toast.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+    toast.style.backdropFilter = 'blur(10px)';
+    icon = `<svg style="width:20px;height:20px;flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+  } else if (type === 'warning' || type === 'error') {
+    toast.style.background = 'rgba(239, 68, 68, 0.95)';
+    toast.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    toast.style.backdropFilter = 'blur(10px)';
+    icon = `<svg style="width:20px;height:20px;flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+  } else {
+    toast.style.background = 'rgba(6, 182, 212, 0.95)';
+    toast.style.borderColor = 'rgba(6, 182, 212, 0.3)';
+    toast.style.backdropFilter = 'blur(10px)';
+    icon = `<svg style="width:20px;height:20px;flex-shrink:0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+  }
+
+  toast.innerHTML = `${icon}<span>${message}</span>`;
+  container.appendChild(toast);
+
+  // Force reflow
+  toast.offsetHeight;
+
+  // Slide in
+  toast.style.transform = 'translateX(0)';
+
+  // Slide out and remove
+  setTimeout(() => {
+    toast.style.transform = 'translateX(120%)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
+  }, 4500);
+}
+
+export { executeExpressReassignments };
+

@@ -3,6 +3,7 @@
 const DB_KEY = 'attendance_system_db';
 
 const defaultSchedules = [
+  { id: 'sch_hemant', name: 'Hemant Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Hemant Location' },
   { id: 'sch_1', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Kohat Enclave, Pitampura, Delhi' },
   { id: 'sch_2', name: 'Morning Shift', startTime: '07:00', endTime: '15:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Chandni Chowk' },
   { id: 'sch_3', name: 'Night Shift', startTime: '22:00', endTime: '06:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Omaxe City, Delhi' }
@@ -16,7 +17,6 @@ const defaultUsers = [
     name: 'HR Admin Manager', 
     password: 'AdminPassword123!', 
     role: 'hr', 
-    biometricRegistered: { face: true, finger: true }, 
     scheduleId: 'sch_1', 
     baseSalary: 95000,
     allowanceHRA: 14250,
@@ -45,7 +45,6 @@ const defaultUsers = [
     name: 'HR Coordinator', 
     password: 'HRPassword123!', 
     role: 'hr', 
-    biometricRegistered: { face: false, finger: false }, 
     scheduleId: 'sch_1', 
     baseSalary: 75000,
     allowanceHRA: 11250,
@@ -74,7 +73,6 @@ const defaultUsers = [
     name: 'Operations Manager', 
     password: 'ManagerPassword123!', 
     role: 'manager', 
-    biometricRegistered: { face: false, finger: false }, 
     scheduleId: 'sch_1', 
     baseSalary: 80000,
     allowanceHRA: 12000,
@@ -103,7 +101,6 @@ const defaultUsers = [
     name: 'Finance Manager', 
     password: 'FinancePassword123!', 
     role: 'finance_manager', 
-    biometricRegistered: { face: false, finger: false }, 
     scheduleId: 'sch_1', 
     baseSalary: 78000,
     allowanceHRA: 11700,
@@ -132,7 +129,8 @@ const defaultUsers = [
     name: 'John Doe', 
     password: 'JohnPassword123!', 
     role: 'employee', 
-    biometricRegistered: { face: true, finger: false }, 
+    managerId: 'usr_manager',
+    assignedById: 'usr_admin',
     scheduleId: 'sch_1', 
     baseSalary: 55000,
     allowanceHRA: 8250,
@@ -162,7 +160,8 @@ const defaultUsers = [
     name: 'Sarah Connor', 
     password: 'SarahPassword123!', 
     role: 'employee', 
-    biometricRegistered: { face: false, finger: true }, 
+    managerId: 'usr_manager',
+    assignedById: 'usr_admin',
     scheduleId: 'sch_2', 
     baseSalary: 62000,
     allowanceHRA: 9300,
@@ -193,7 +192,7 @@ const defaultUsers = [
     name: 'David Lightman', 
     password: 'DavidPassword123!', 
     role: 'employee', 
-    biometricRegistered: { face: false, finger: false }, 
+    assignedById: 'usr_admin',
     scheduleId: 'sch_3', 
     baseSalary: 48000,
     allowanceHRA: 7200,
@@ -286,7 +285,7 @@ function generateDemoLogs() {
           checkIn: checkInTime,
           checkOut: checkOutTime,
           status,
-          biometricUsed: Math.random() > 0.4 ? (Math.random() > 0.5 ? 'face' : 'fingerprint') : 'none',
+          biometricUsed: 'none',
           location: 'Kohat Enclave, Pitampura, Delhi'
         });
       }
@@ -311,161 +310,160 @@ export const DB = {
 
   async init() {
     try {
-      const res = await fetch('/api/db-state');
-      if (!res.ok) throw new Error('API server returned error');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const res = await fetch('/api/db-state', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error('API server returned error status');
       this.data = await res.json();
-      console.log('Database state initialized from MongoDB backend.');
+      console.log('Database state initialized from backend API.');
     } catch (e) {
-      console.warn('Backend API connection failed. Falling back to local cache.', e);
-      const raw = localStorage.getItem(DB_KEY);
-      if (raw) {
-        try {
+      console.warn('Backend API connection failed or timed out. Falling back to local cache.', e);
+      try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) {
           this.data = JSON.parse(raw);
-          // Migration: migrate legacy admin role to hr role
-          this.data.users.forEach(u => {
-            if (u.role === 'admin') u.role = 'hr';
-          });
-
-          // Migration: ensure every user has a dynamic employeeId and aadhar property
-          this.data.users.forEach((u, index) => {
-            if (!u.employeeId) {
-              const mappedIds = {
-                'admin': 'EMP100',
-                'hr': 'EMP101',
-                'manager': 'EMP102',
-                'john': 'EMP103',
-                'sarah': 'EMP104',
-                'david': 'EMP105'
-              };
-              u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
-            }
-            if (u.aadhar === undefined) {
-              if (u.username === 'john') {
-                u.aadhar = { name: 'Aadhar_Card.pdf', size: '1.4 MB', date: '2026-06-10' };
-                u.documents = (u.documents || []).filter(d => !d.name.includes('Aadhar'));
-              } else {
-                u.aadhar = null;
-              }
-            }
-            if (u.gender === undefined) {
-              u.gender = u.username === 'sarah' || u.username === 'hr' ? 'Female' : (u.username === 'admin' ? 'Other' : 'Male');
-            }
-            if (u.department === undefined) {
-              if (u.role === 'hr') u.department = 'Human Resources';
-              else if (u.role === 'manager') u.department = 'Operations';
-              else u.department = 'Engineering';
-            }
-            if (u.designation === undefined) {
-              if (u.username === 'admin') u.designation = 'HR Admin Manager';
-              else if (u.username === 'hr') u.designation = 'HR Coordinator';
-              else if (u.username === 'manager') u.designation = 'Operations Manager';
-              else if (u.username === 'john') u.designation = 'Software Engineer';
-              else if (u.username === 'sarah') u.designation = 'QA Lead';
-              else u.designation = 'Junior Developer';
-            }
-            if (u.dateOfJoining === undefined) {
-              const mappedDoj = {
-                'admin': '2020-04-15',
-                'hr': '2022-03-20',
-                'manager': '2021-08-01',
-                'john': '2023-11-12',
-                'sarah': '2024-02-15',
-                'david': '2025-01-20'
-              };
-              u.dateOfJoining = mappedDoj[u.username] || '2024-05-10';
-            }
-            if (u.emergencyContact === undefined) {
-              u.emergencyContact = '+91 98765 4320' + (index + 1);
-            }
-            if (u.allowanceHRA === undefined) {
-              u.allowanceHRA = Math.round((u.baseSalary || 50000) * 0.15);
-            }
-            if (u.allowanceTravel === undefined) {
-              u.allowanceTravel = 3000;
-            }
-            if (u.deductionPF === undefined) {
-              u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08);
-            }
-            if (u.deductionPT === undefined) {
-              u.deductionPT = 200;
-            }
-            if (u.deductionTDS === undefined) {
-              u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5;
-            }
-          });
-          
-          if (!this.data.users.some(u => u.username === 'hr')) {
-             this.data.users.push(defaultUsers.find(u => u.username === 'hr'));
-           }
-           if (!this.data.users.some(u => u.username === 'manager')) {
-             this.data.users.push(defaultUsers.find(u => u.username === 'manager'));
-           }
-           if (!this.data.users.some(u => u.username === 'finance')) {
-             this.data.users.push(defaultUsers.find(u => u.username === 'finance'));
-           }
-           if (!this.data.tickets) {
-             this.data.tickets = [];
-           }
-          if (!this.data.shiftSwaps) {
-            this.data.shiftSwaps = [
-              {
-                id: 'swap_1',
-                senderId: 'usr_john',
-                receiverId: 'usr_sarah',
-                reason: 'Have a personal appointment in the morning.',
-                status: 'Pending Coworker',
-                date: '2026-06-25',
-                managerComment: '',
-                coworkerComment: ''
-              }
-            ];
-          }
-          if (!this.data.announcements) {
-            this.data.announcements = [
-              {
-                id: 'ann_1',
-                title: 'Welcome to the New Attendance & Onboarding Portal',
-                content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.',
-                category: 'General',
-                date: '2026-06-25',
-                author: 'HR Admin Manager'
-              },
-              {
-                id: 'ann_2',
-                title: 'Upcoming Holiday Notice: Eid-ul-Adha',
-                content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha. Have a wonderful holiday with your families!',
-                category: 'Holiday',
-                date: '2026-06-26',
-                author: 'HR Coordinator'
-              }
-            ];
-          }
-           if (!this.data.financeData) {
-             this.data.financeData = {
-               yearlyRevenue: 250000000,
-               fixedOverhead: 50000000,
-               nationalPct: 60
-             };
-           }
-           if (!this.data.financialRecords) {
-             this.data.financialRecords = generateDemoFinanceData();
-           }
-           if (!this.data.budgets) {
-             this.data.budgets = generateDemoBudgets();
-           }
-           this.save();
-        } catch (err) {
-          console.error('Failed to parse local storage cache, resetting to defaults.', err);
-          this.reset();
+        } else {
+          await this.reset();
         }
-      } else {
-        this.reset();
+      } catch (err) {
+        console.error('Failed to parse local storage cache, resetting to defaults.', err);
+        await this.reset();
       }
+    }
+    try {
+      this.validateAndMigrateState();
+    } catch (migErr) {
+      console.error('State migration warning:', migErr);
+    }
+  },
+
+  validateAndMigrateState() {
+    if (!this.data) this.data = {};
+    if (!this.data.schedules) this.data.schedules = [...defaultSchedules];
+    if (!this.data.users) this.data.users = [...defaultUsers];
+    if (!this.data.attendanceLogs) this.data.attendanceLogs = generateDemoLogs();
+    if (!this.data.leaveRequests) this.data.leaveRequests = [...defaultLeaves];
+    if (!this.data.uploadHistory) this.data.uploadHistory = [];
+    if (!this.data.tickets) this.data.tickets = [];
+    if (!this.data.shiftSwaps) {
+      this.data.shiftSwaps = [
+        {
+          id: 'swap_1',
+          senderId: 'usr_john',
+          receiverId: 'usr_sarah',
+          reason: 'Have a personal appointment in the morning.',
+          status: 'Pending Coworker',
+          date: '2026-06-25',
+          managerComment: '',
+          coworkerComment: ''
+        }
+      ];
+    }
+    if (!this.data.announcements) {
+      this.data.announcements = [
+        {
+          id: 'ann_1',
+          title: 'Welcome to the New Attendance & Onboarding Portal',
+          content: 'We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation online and request shift swaps directly.',
+          category: 'General',
+          date: '2026-06-25',
+          author: 'HR Admin Manager'
+        },
+        {
+          id: 'ann_2',
+          title: 'Upcoming Holiday Notice: Eid-ul-Adha',
+          content: 'Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha.',
+          category: 'Holiday',
+          date: '2026-06-26',
+          author: 'HR Coordinator'
+        }
+      ];
+    }
+    if (!this.data.financeData) {
+      this.data.financeData = {
+        yearlyRevenue: 250000000,
+        fixedOverhead: 50000000,
+        nationalPct: 60
+      };
+    }
+    if (!this.data.financialRecords) {
+      this.data.financialRecords = generateDemoFinanceData();
+    }
+    if (!this.data.budgets) {
+      this.data.budgets = generateDemoBudgets();
+    }
+
+    let modified = false;
+
+    // Migration: migrate legacy admin role to hr role
+    this.data.users.forEach((u, index) => {
+      if (u.role === 'admin') { u.role = 'hr'; modified = true; }
+      if (!u.employeeId) {
+        const mappedIds = { 'admin': 'EMP100', 'hr': 'EMP101', 'manager': 'EMP102', 'john': 'EMP103', 'sarah': 'EMP104', 'david': 'EMP105' };
+        u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
+        modified = true;
+      }
+      if (u.gender === undefined) {
+        u.gender = u.username === 'sarah' || u.username === 'hr' ? 'Female' : (u.username === 'admin' ? 'Other' : 'Male');
+        modified = true;
+      }
+      if (u.department === undefined) {
+        if (u.role === 'hr') u.department = 'Human Resources';
+        else if (u.role === 'manager') u.department = 'Operations';
+        else u.department = 'Engineering';
+        modified = true;
+      }
+      if (u.designation === undefined) {
+        if (u.username === 'admin') u.designation = 'HR Admin Manager';
+        else if (u.username === 'hr') u.designation = 'HR Coordinator';
+        else if (u.username === 'manager') u.designation = 'Operations Manager';
+        else if (u.username === 'john') u.designation = 'Software Engineer';
+        else if (u.username === 'sarah') u.designation = 'QA Lead';
+        else u.designation = 'Junior Developer';
+        modified = true;
+      }
+      if (u.dateOfJoining === undefined) {
+        const mappedDoj = { 'admin': '2020-04-15', 'hr': '2022-03-20', 'manager': '2021-08-01', 'john': '2023-11-12', 'sarah': '2024-02-15', 'david': '2025-01-20' };
+        u.dateOfJoining = mappedDoj[u.username] || '2024-05-10';
+        modified = true;
+      }
+      if (u.emergencyContact === undefined) {
+        u.emergencyContact = '+91 98765 4320' + (index + 1);
+        modified = true;
+      }
+      if (u.allowanceHRA === undefined) { u.allowanceHRA = Math.round((u.baseSalary || 50000) * 0.15); modified = true; }
+      if (u.allowanceTravel === undefined) { u.allowanceTravel = 3000; modified = true; }
+      if (u.deductionPF === undefined) { u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08); modified = true; }
+      if (u.deductionPT === undefined) { u.deductionPT = 200; modified = true; }
+      if (u.deductionTDS === undefined) { u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5; modified = true; }
+      if (u.assignedById === undefined && u.role === 'employee') { u.assignedById = 'usr_admin'; modified = true; }
+    });
+
+    // Ensure essential system users exist
+    ['hr', 'manager', 'finance'].forEach(name => {
+      if (!this.data.users.some(u => u.username === name)) {
+        const defaultU = defaultUsers.find(u => u.username === name);
+        if (defaultU) { this.data.users.push(defaultU); modified = true; }
+      }
+    });
+
+    // Ensure all schedules have workDays, location, halfDayLimit, gracePeriod
+    this.data.schedules.forEach(s => {
+      if (!s.workDays) { s.workDays = [1, 2, 3, 4, 5]; modified = true; }
+      if (!s.location) { s.location = 'Kohat Enclave, Pitampura, Delhi'; modified = true; }
+      if (s.gracePeriod === undefined) { s.gracePeriod = 15; modified = true; }
+      if (s.halfDayLimit === undefined) { s.halfDayLimit = 120; modified = true; }
+    });
+
+    if (modified) {
+      this.save();
     }
   },
 
   save() {
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+    window.dispatchEvent(new Event('db_updated'));
 
     // Async push mutations to MongoDB in background
     fetch('/api/mutate', {
@@ -479,7 +477,22 @@ export const DB = {
     });
   },
 
-  reset() {
+  async reset() {
+    try {
+      const seedRes = await fetch('/seed.json');
+      if (seedRes.ok) {
+        this.data = await seedRes.json();
+        this.save();
+        console.log('Database state reset from seed.json successfully.');
+        return;
+      }
+    } catch (err) {
+      console.warn('Failed to reset DB from seed.json, falling back to hardcoded defaults:', err);
+    }
+    this.resetToHardcodedDefaults();
+  },
+
+  resetToHardcodedDefaults() {
     this.data.schedules = [...defaultSchedules];
     this.data.users = JSON.parse(JSON.stringify(defaultUsers));
     this.data.attendanceLogs = generateDemoLogs();
@@ -489,8 +502,8 @@ export const DB = {
         id: 'tkt_1',
         userId: 'usr_john',
         category: 'Attendance',
-        subject: 'Missed Biometric Clock-in',
-        message: 'My biometric face clock-in failed today due to lighting. Can HR please verify my attendance log manually?',
+        subject: 'Missed Check-in / GPS Issue',
+        message: 'My check-in didn\'t register today due to poor GPS network signal. Can HR please verify my attendance log manually?',
         date: '2026-06-24',
         status: 'Open',
         responses: []
@@ -579,13 +592,22 @@ export const DB = {
   },
 
   getUserByUsername(username) {
-    return this.data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!username) return null;
+    return this.data.users.find(u => u.username && u.username.toLowerCase() === username.toLowerCase().trim());
+  },
+
+  getUserByEmail(email) {
+    if (!email) return null;
+    const key = email.toLowerCase().trim();
+    return this.data.users.find(u => u.email && u.email.toLowerCase() === key);
   },
 
   getUserByUsernameOrId(loginKey) {
+    if (!loginKey) return null;
     const key = loginKey.toLowerCase().trim();
     return this.data.users.find(u => 
-      u.username.toLowerCase() === key || 
+      (u.username && u.username.toLowerCase() === key) || 
+      (u.email && u.email.toLowerCase() === key) ||
       (u.employeeId && u.employeeId.toLowerCase() === key)
     );
   },
@@ -605,7 +627,6 @@ export const DB = {
     const newUser = {
       id: newId,
       employeeId: nextEmpId,
-      biometricRegistered: { face: false, finger: false },
       scheduleId: 'sch_1',
       baseSalary: 50000,
       allowanceHRA: Math.round(50000 * 0.15),
@@ -691,10 +712,12 @@ export const DB = {
       if (details.city !== undefined) user.city = details.city;
       if (details.emergencyContact !== undefined) user.emergencyContact = details.emergencyContact;
       if (details.username !== undefined) user.username = details.username;
+      if (details.password !== undefined) user.password = details.password;
       if (details.employeeId !== undefined) user.employeeId = details.employeeId;
       if (details.department !== undefined) user.department = details.department;
       if (details.designation !== undefined) user.designation = details.designation;
       if (details.dateOfJoining !== undefined) user.dateOfJoining = details.dateOfJoining;
+      if (details.baseSalary !== undefined) user.baseSalary = Number(details.baseSalary);
       if (details.allowanceHRA !== undefined) user.allowanceHRA = Number(details.allowanceHRA);
       if (details.allowanceTravel !== undefined) user.allowanceTravel = Number(details.allowanceTravel);
       if (details.deductionPF !== undefined) user.deductionPF = Number(details.deductionPF);
@@ -706,7 +729,7 @@ export const DB = {
     return null;
   },
 
-  uploadDocument(userId, fileName, fileSize) {
+  uploadDocument(userId, fileName, fileSize, url = '') {
     const user = this.getUser(userId);
     if (user) {
       user.documents = user.documents || [];
@@ -714,6 +737,7 @@ export const DB = {
         id: 'doc_' + Math.random().toString(36).substring(2, 9),
         name: fileName,
         size: fileSize,
+        url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
       user.documents.push(newDoc);
@@ -733,12 +757,13 @@ export const DB = {
     return false;
   },
 
-  uploadResume(userId, fileName, fileSize) {
+  uploadResume(userId, fileName, fileSize, url = '') {
     const user = this.getUser(userId);
     if (user) {
       user.resume = {
         name: fileName,
         size: fileSize,
+        url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
       this.save();
@@ -757,12 +782,13 @@ export const DB = {
     return false;
   },
 
-  uploadAadhar(userId, fileName, fileSize) {
+  uploadAadhar(userId, fileName, fileSize, url = '') {
     const user = this.getUser(userId);
     if (user) {
       user.aadhar = {
         name: fileName,
         size: fileSize,
+        url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
       this.save();
@@ -781,12 +807,13 @@ export const DB = {
     return false;
   },
 
-  uploadBankDetails(userId, fileName, fileSize) {
+  uploadBankDetails(userId, fileName, fileSize, url = '') {
     const user = this.getUser(userId);
     if (user) {
       user.bankDetails = {
         name: fileName,
         size: fileSize,
+        url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
       this.save();
@@ -806,24 +833,78 @@ export const DB = {
   },
 
   // Schedules API
+  getOfficeCoordinates() {
+    if (!this.data.officeCoordinates || Object.keys(this.data.officeCoordinates).length === 0) {
+      this.data.officeCoordinates = {
+        'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 }
+      };
+      this.save();
+    }
+    return this.data.officeCoordinates;
+  },
+
+  saveOfficeCoordinate(name, lat, lng, skipSave = false) {
+    if (!this.data.officeCoordinates) {
+      this.getOfficeCoordinates();
+    }
+    this.data.officeCoordinates[name] = { lat: Number(lat), lng: Number(lng) };
+    if (!skipSave) this.save();
+    return this.data.officeCoordinates;
+  },
+
+  deleteOfficeCoordinate(name) {
+    if (!this.data.officeCoordinates) {
+      this.getOfficeCoordinates();
+    }
+    if (this.data.officeCoordinates[name]) {
+      delete this.data.officeCoordinates[name];
+      this.save();
+      return true;
+    }
+    return false;
+  },
+
+  resolveUserShiftForDate(user, dateStr) {
+    if (!user) return { scheduleId: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi' };
+    
+    let activeScheduleId = user.scheduleId;
+    let activeLocation = user.preferredLocation;
+
+    if (user.futureReassignments && user.futureReassignments.length > 0) {
+      // Sort future assignments by effectiveDate ascending
+      const sorted = [...user.futureReassignments].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
+      for (const reassignment of sorted) {
+        if (dateStr >= reassignment.effectiveDate) {
+          activeScheduleId = reassignment.scheduleId;
+          activeLocation = reassignment.preferredLocation;
+        }
+      }
+    }
+
+    return {
+      scheduleId: activeScheduleId,
+      preferredLocation: activeLocation || 'Kohat Enclave, Pitampura, Delhi'
+    };
+  },
+
   getSchedules() {
     return this.data.schedules;
   },
 
   getSchedule(id) {
-    return this.data.schedules.find(s => s.id === id) || defaultSchedules[0];
+    return this.data.schedules.find(s => String(s.id) === String(id)) || defaultSchedules[0];
   },
 
-  addSchedule(schedule) {
+  addSchedule(schedule, skipSave = false) {
     const newId = 'sch_' + Math.random().toString(36).substring(2, 9);
     const newSchedule = { id: newId, ...schedule };
     this.data.schedules.push(newSchedule);
-    this.save();
+    if (!skipSave) this.save();
     return newSchedule;
   },
 
   updateSchedule(id, updates) {
-    const idx = this.data.schedules.findIndex(s => s.id === id);
+    const idx = this.data.schedules.findIndex(s => String(s.id) === String(id));
     if (idx !== -1) {
       this.data.schedules[idx] = { ...this.data.schedules[idx], ...updates };
       this.save();
@@ -833,12 +914,11 @@ export const DB = {
   },
 
   deleteSchedule(id) {
-    if (this.data.schedules.length <= 1) return false;
-    this.data.schedules = this.data.schedules.filter(s => s.id !== id);
+    this.data.schedules = this.data.schedules.filter(s => String(s.id) !== String(id));
     
-    const fallbackId = this.data.schedules[0].id;
+    const fallbackId = this.data.schedules.length > 0 ? this.data.schedules[0].id : null;
     this.data.users.forEach(u => {
-      if (u.scheduleId === id) u.scheduleId = fallbackId;
+      if (String(u.scheduleId) === String(id)) u.scheduleId = fallbackId;
     });
     this.save();
     return true;
@@ -857,12 +937,51 @@ export const DB = {
     return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr);
   },
 
-  checkIn(userId, method = 'none', location = 'Kohat Enclave, Pitampura, Delhi', deviationFlag = false, justification = '', coords = '', distance = 0) {
+  addPendingCheckIn(userId, location = 'Kohat Enclave, Pitampura, Delhi', coords = '', distance = 0) {
     const todayStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5); // HH:MM
-    
+
     const existing = this.getTodayLog(userId);
     if (existing) return existing;
+
+    const newLog = {
+      id: `log_${userId}_${todayStr}`,
+      userId,
+      date: todayStr,
+      checkIn: timeStr,
+      checkOut: null,
+      status: 'Pending Verification',
+      biometricUsed: 'none',
+      location: location,
+      coords: coords,
+      distance: Number(distance)
+    };
+
+    this.data.attendanceLogs.push(newLog);
+    this.save();
+    return newLog;
+  },
+
+  removePendingCheckIn(userId) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const idx = this.data.attendanceLogs.findIndex(l => l.id === `log_${userId}_${todayStr}` && l.status === 'Pending Verification');
+    if (idx !== -1) {
+      this.data.attendanceLogs.splice(idx, 1);
+      this.save();
+      return true;
+    }
+    return false;
+  },
+
+  checkIn(userId, method = 'none', location = 'Kohat Enclave, Pitampura, Delhi', deviationFlag = false, justification = '', coords = '', distance = 0, facePhoto = null, timeOverride = null) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    let existing = this.getTodayLog(userId);
+    if (existing && existing.status !== 'Pending Verification') {
+      return existing;
+    }
+
+    const timeStr = timeOverride || (existing ? existing.checkIn : new Date().toTimeString().split(' ')[0].substring(0, 5));
 
     const user = this.getUser(userId);
     const schedule = this.getSchedule(user.scheduleId);
@@ -884,6 +1003,18 @@ export const DB = {
       status = 'Deviation Logged';
     }
 
+    if (existing && existing.status === 'Pending Verification') {
+      existing.checkIn = timeStr;
+      existing.status = status;
+      existing.biometricUsed = method;
+      existing.location = location;
+      existing.coords = coords;
+      existing.distance = Number(distance);
+      existing.facePhoto = facePhoto;
+      this.save();
+      return existing;
+    }
+
     const newLog = {
       id: `log_${userId}_${todayStr}`,
       userId,
@@ -896,7 +1027,8 @@ export const DB = {
       deviationFlag,
       justification,
       coords,
-      distance
+      distance: Number(distance),
+      facePhoto: facePhoto
     };
 
     this.data.attendanceLogs.push(newLog);
@@ -904,7 +1036,7 @@ export const DB = {
     return newLog;
   },
 
-  checkOut(userId, method = 'none') {
+  checkOut(userId, method = 'none', facePhoto = null) {
     const todayStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
 
@@ -914,6 +1046,9 @@ export const DB = {
     log.checkOut = timeStr;
     if (method !== 'none') {
       log.biometricUsed = method; // Log checkout biometric type
+    }
+    if (facePhoto) {
+      log.facePhotoOut = facePhoto; // Store checkout photo
     }
 
     const user = this.getUser(userId);
@@ -944,7 +1079,7 @@ export const DB = {
     return this.data.leaveRequests.sort((a, b) => b.requestDate.localeCompare(a.requestDate));
   },
 
-  applyLeave(userId, type, startDate, endDate, reason) {
+  applyLeave(userId, type, startDate, endDate, reason, approverHead = '') {
     const newId = 'lv_' + Math.random().toString(36).substring(2, 9);
     const newRequest = {
       id: newId,
@@ -953,6 +1088,7 @@ export const DB = {
       startDate,
       endDate,
       reason,
+      approverHead,
       status: 'Pending',
       requestDate: new Date().toISOString().split('T')[0],
       managerComment: ''

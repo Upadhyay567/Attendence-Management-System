@@ -71,5 +71,29 @@ export const Utils = {
       date.setDate(date.getDate() + 1);
     }
     return days;
+  },
+
+  // Secure password hashing helper
+  hashPassword(password) {
+    if (!password) return '';
+    if (String(password).startsWith('$hash$')) return String(password); // Already hashed
+    let hash = 0x811c9dc5;
+    const str = String(password);
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    const hex = (hash >>> 0).toString(16).padStart(8, '0');
+    return `$hash$${hex}`;
+  },
+
+  // Secure password verification helper supporting both hashed and legacy formats
+  verifyPassword(inputPassword, storedPassword) {
+    if (!storedPassword || !inputPassword) return false;
+    const storedStr = String(storedPassword);
+    if (storedStr.startsWith('$hash$')) {
+      return this.hashPassword(inputPassword) === storedStr;
+    }
+    return String(inputPassword) === storedStr;
   }
 };

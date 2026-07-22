@@ -60,9 +60,45 @@ The application runs as a front-end SPA supported by a mocked database layer sto
 * **Calculations & Persistence**: Integrated adjustments directly into the database calculations (`js/db.js`). The net disbursed payouts reflect the overridden values immediately.
 * **Payslip Template Update**: Modified both the administrator inspect template and the employee's personal payslip statement (`js/app.js`) to display discretionary bonuses, custom deductions, and remarks dynamically when present.
 
+### Phase 6: Real-Time Geofencing & Native WebAuthn (Passkey) Integration
+* **Dynamic Geofence Verification**:
+  * Added **"Use Device GPS (Real-Time Location)"** toggle to allow employees to request their actual location via `navigator.geolocation.getCurrentPosition`.
+  * Computes exact real-time distance using the **Haversine Formula** (geodesic distance on a spherical earth) against their *assigned shift location*.
+  * Restricts attendance logging: if an employee is outside the 100-meter radius, biometric clocking is disabled, and manual clock-in requires an **Out-of-Geofence Deviation Justification** (pending manager review).
+* **Native WebAuthn Biometric Authentication**:
+  * Integrated the W3C **WebAuthn API** (Passkeys) for secure, platform-bound biometric credentials (Touch ID, Face ID, Windows Hello).
+  * Employees can enroll their hardware biometrics by calling `navigator.credentials.create()`, which registers a secure public-key credential on their device.
+  * Clocking in and out requests authentication via `navigator.credentials.get()`.
+  * Fully supports **graceful degradation**: if WebAuthn is unsupported (e.g., non-secure context) or permission is denied/cancelled, the application seamlessly falls back to the customized visual scanning simulators (webcam Face HUD or Fingerprint scanpad).
+
 ---
 
-## 4. Verification & Testing Guide
+## 4. Technology Deep Dive: Geofencing & Biometrics
+
+### A. Geofencing & Haversine Distance Calculation
+Geofencing restricts employee check-ins to predefined coordinate boundaries. The distance between the employee's coordinates and the assigned workplace is calculated using the **Haversine Formula**:
+* **d = 2 * R * arcsin(sqrt(sin^2(D_lat / 2) + cos(lat1) * cos(lat2) * sin^2(D_lon / 2)))**
+* Where:
+  * **d** is the distance between coordinates in meters.
+  * **R** is the Earth's radius (approx. 6,371,000 meters).
+  * **lat1, lat2** are the latitudes of both points in radians.
+  * **D_lat, D_lon** are the differences in latitude and longitude in radians.
+* If **d <= 100** meters, the employee is "In Range" and biometric clock-in is enabled. If **d > 100** meters, they are flagged for geofence deviation.
+
+### B. W3C WebAuthn Biometric Authentication
+WebAuthn (Web Authentication) is a web standard that allows servers to authenticate users using public-key cryptography instead of passwords.
+* **Initialization / Registration**:
+  * The browser requests credential creation via `navigator.credentials.create()`.
+  * The OS authenticates the user (via fingerprint, face scan, or PIN) and generates a unique cryptographic key pair.
+  * The public key and credential ID are returned and stored in the database (`localStorage`), while the private key remains secure in the device's hardware TPM/Enclave.
+* **Verification / Authentication**:
+  * When checking in, the browser requests assertion via `navigator.credentials.get()` matching the stored credential ID.
+  * The user scans their biometric, signing a server challenge using their private key.
+  * The app validates the signature response, granting instant access without requiring manual passwords.
+
+---
+
+## 5. System Setup & Initialization Guide
 
 ### Running the App Locally
 The application is served locally via a Python HTTP server on port 8012:
@@ -70,6 +106,17 @@ The application is served locally via a Python HTTP server on port 8012:
 python -m http.server 8012
 ```
 To run the server, browse to: **[http://localhost:8012](http://localhost:8012)**
+
+### Biometric Setup Initialization
+1. Log in as any employee (e.g., username `john`, password `JohnPassword123!`).
+2. Click **Setup Face ID** or **Setup Fingerprint** on the top warning banner.
+3. Choose **Yes** to register your device's native hardware credentials. Authenticate via your OS prompt.
+4. If your device doesn't support platform authenticators or you choose to skip, the system will initialize the simulated enrollment scanner, allowing you to complete setup.
+
+### Geofencing Simulation & Real Mode
+1. In the **Simulated GPS Geofence** card, select **Use Device GPS (Real-Time Location)**.
+2. Grant the browser permission to access your location.
+3. The app will fetch your real-world coordinates, compute the distance to your assigned workplace, and enforce geofence policy constraints immediately.
 
 ### Simulated User Credentials
 1. **Operations Manager** (Full Control, edit HR, adjust payslips):

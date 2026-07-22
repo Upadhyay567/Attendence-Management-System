@@ -11,22 +11,32 @@
   <meta name="author" content="HS Group">
 
   <!-- Style Sheets -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
   <!-- Single Page Application Shell container -->
   <div id="app-root">
-    <div style="display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;flex-direction:column;gap:15px;background:#0c0304;color:#fffbeb">
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:26px;background:linear-gradient(135deg,#fde047,#f97316,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+    <div style="display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;flex-direction:column;gap:15px;background:#1a0504;color:#fffbeb">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:26px;background:linear-gradient(135deg,#c93830,#89201B,#591411);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
         HS Group Delhi
       </div>
-      <div style="font-size:11px;color:#fcd34d;letter-spacing:2px;text-transform:uppercase">House of Surya</div>
-      <div style="font-size:10px;color:#b45309;letter-spacing:1px;margin-top:10px">ESTABLISHING SECURE PROTOCOLS...</div>
+      <div style="font-size:11px;color:#f87171;letter-spacing:2px;text-transform:uppercase">House of Surya</div>
+      <div style="font-size:10px;color:#cbd5e1;letter-spacing:1px;margin-top:10px">ESTABLISHING SECURE PROTOCOLS...</div>
     </div>
   </div>
 
   <!-- App Bootstrapper script module -->
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=5"></script>
+  <script>
+    setTimeout(function() {
+      var root = document.getElementById('app-root');
+      if (root && root.innerHTML.indexOf('ESTABLISHING SECURE PROTOCOLS') !== -1) {
+        if (typeof window.bootstrapperReady === 'function') {
+          window.bootstrapperReady();
+        }
+      }
+    }, 800);
+  </script>
 </body>
 </html>
