@@ -874,7 +874,9 @@ function renderLoginView() {
           <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
           ${skipButtonHTML}
           `}
+          ${(!isHrOrManager && skipButtonHTML) ? '' : `
           <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
+          `}
 
           ${isHrOrManager ? `
           <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
