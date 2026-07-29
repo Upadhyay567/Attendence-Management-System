@@ -6099,14 +6099,14 @@ function getBirthdayWidgetHTML() {
           </div>
           <div style="min-width:0; flex:1">
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
-              <strong style="font-size:13px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <strong style="font-size:13px; color:#ffffff !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
               ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">🎂</span>' : ''}
             </div>
-            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <div style="font-size:11px; color:#aab4c0 !important; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
               ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
             </div>
-            <div style="font-size:10px; color:var(--text-muted); margin-top:2px">
-              ID: ${Utils.escape(u.employeeId)} • Date: ${s.formattedDate}
+            <div style="font-size:10px; color:#8896a5 !important; margin-top:2px">
+              ID: ${Utils.escape(u.employeeId)} • Date: <strong style="color:#ffffff !important">${s.formattedDate}</strong>
             </div>
           </div>
         </div>
@@ -6224,8 +6224,8 @@ function openSendWishModal(userId) {
         `}
       </div>
       <div>
-        <strong style="color:#ffffff; font-size:13.5px">${Utils.escape(user.name)}</strong>
-        <div style="font-size:11px; color:var(--text-muted); margin-top:2px">${Utils.escape(user.designation || 'Staff')} (${Utils.escape(user.employeeId)})</div>
+        <strong style="color:#ffffff !important; font-size:13.5px">${Utils.escape(user.name)}</strong>
+        <div style="font-size:11px; color:#aab4c0 !important; margin-top:2px">${Utils.escape(user.designation || 'Staff')} (${Utils.escape(user.employeeId)})</div>
       </div>
     </div>
     <div class="form-group" style="margin-bottom:16px">
