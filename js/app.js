@@ -6370,7 +6370,7 @@ function openAllBirthdaysModal() {
         : `<button class="btn btn-directory-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
 
       return `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:12px; gap:10px">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; gap:10px">
           <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
             <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0;">
               ${u.photo ? `
@@ -6382,12 +6382,12 @@ function openAllBirthdaysModal() {
               `}
             </div>
             <div style="min-width:0; flex:1">
-              <strong style="font-size:13px; color:#ffffff; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
-              <span style="font-size:11px; color:var(--text-secondary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              <strong style="font-size:13px; color:#f1f5f9; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <span style="font-size:11px; color:#94a3b8; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
                 ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
               </span>
-              <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px">
-                ID: ${Utils.escape(u.employeeId)} • DOB: <strong>${formattedDob}</strong>
+              <span style="font-size:10px; color:#64748b; display:block; margin-top:3px">
+                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:#cbd5e1">${formattedDob}</strong>
               </span>
             </div>
           </div>
