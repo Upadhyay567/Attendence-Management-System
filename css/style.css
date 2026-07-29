@@ -2470,8 +2470,8 @@ body.light-theme .hamburger-menu-btn:hover {
 
 /* Main Page Layout & Canvas */
 body {
-  background-color: #f4f6fa !important;
-  color: #1e293b !important;
+  background: var(--bg-gradient) !important;
+  color: var(--text-primary) !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   margin: 0;
   padding: 0;
@@ -2482,7 +2482,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #f4f6fa !important;
+  background: transparent !important;
 }
 
 /* Dark Sidebar Navigation (#89201B Brand Theme) */
@@ -3326,19 +3326,20 @@ body.light-theme select option {
   justify-content: space-between;
   width: 100%;
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: var(--bg-surface) !important;
   border: 1px solid var(--border) !important;
   border-radius: 16px !important;
   cursor: pointer;
   text-align: left;
   transition: all 0.22s ease-in-out;
+  box-shadow: var(--shadow-sm);
 }
 
 .role-portal-btn:hover {
-  background: rgba(137, 32, 27, 0.05) !important;
-  border-color: rgba(251, 191, 36, 0.25) !important;
+  background: var(--bg-surface-hover) !important;
+  border-color: var(--primary) !important;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 
