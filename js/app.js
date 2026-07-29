@@ -719,7 +719,19 @@ function renderLoginView() {
       btn.addEventListener('click', (e) => {
         const targetBtn = e.currentTarget;
         const role = targetBtn.getAttribute('data-role');
-        renderUsersList(role);
+        
+        let defaultUser = null;
+        if (role === 'hr') {
+          defaultUser = DB.getUsers().find(u => u.id === 'usr_admin');
+        } else if (role === 'manager') {
+          defaultUser = DB.getUsers().find(u => u.id === 'usr_manager');
+        } else {
+          defaultUser = DB.getUsers().find(u => u.id === 'usr_john');
+        }
+        
+        if (defaultUser) {
+          showVerificationScreen(defaultUser);
+        }
       });
     });
 
