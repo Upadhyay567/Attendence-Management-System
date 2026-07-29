@@ -708,11 +708,6 @@ function renderLoginView() {
           </button>
         </div>
 
-        <!-- Create Account link -->
-        <div style="margin-top: 18px; text-align: center; font-size: 13px; color: var(--text-secondary);">
-          Don't have an HR/Manager account? <a href="#" id="btn-home-create-account" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
-        </div>
-
         <div class="auth-policy-footer" style="margin-top: 24px; text-align: center; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px;">
           By logging in, you agree to the <a href="#" id="btn-show-policy" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy & Guidelines</a>.
         </div>
@@ -739,14 +734,6 @@ function renderLoginView() {
         }
       });
     });
-
-    const homeCreateAccBtn = authBox.querySelector('#btn-home-create-account');
-    if (homeCreateAccBtn) {
-      homeCreateAccBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        showAccountModal();
-      });
-    }
 
     const policyBtn = document.getElementById('btn-show-policy');
     if (policyBtn) {
@@ -888,6 +875,13 @@ function renderLoginView() {
           ${skipButtonHTML}
           `}
           <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
+
+          ${isHrOrManager ? `
+          <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
+            Don't have an HR/Manager account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
+          </div>
+          ` : ''}
+
           <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
