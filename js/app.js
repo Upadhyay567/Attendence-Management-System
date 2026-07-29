@@ -1,4 +1,4 @@
-// app.js - SPA Router & Controller
+﻿// app.js - SPA Router & Controller
 import { DB } from './db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
@@ -143,13 +143,13 @@ window.alert = function(msg) {
   }
 };
 
-// Override native confirm() — returns a Promise, so callers must use `await`
+// Override native confirm() â€” returns a Promise, so callers must use `await`
 const _nativeConfirm = window.confirm;
 window.confirm = function(msg) {
   return CustomDialog.confirm(String(msg || ''));
 };
 
-// Override native prompt() — returns a Promise, so callers must use `await`
+// Override native prompt() â€” returns a Promise, so callers must use `await`
 const _nativePrompt = window.prompt;
 window.prompt = function(msg, defaultVal) {
   return CustomDialog.prompt(String(msg || ''), defaultVal != null ? String(defaultVal) : '');
@@ -205,18 +205,18 @@ const Translations = {
     settings: "Settings"
   },
   hi: {
-    brand: "एचएस ग्रुप दिल्ली",
-    subtitle: "हाउस ऑफ़ सूर्य",
-    monitor: "लाइव निगरानी",
-    employees: "कर्मचारी और पेरोल",
-    shifts: "शिफ्ट अनुसूची",
-    approvals: "स्वीकृति डेस्क",
-    reports: "मासिक रिपोर्ट",
-    status: "चेक-इन / स्थिति",
-    leaves: "छुट्टी के अनुरोध",
-    payslips: "मेरी वेतन पर्ची",
-    profile: "मेरी प्रोफाइल",
-    settings: "सेटिंग्स"
+    brand: "à¤à¤šà¤à¤¸ à¤—à¥à¤°à¥à¤ª à¤¦à¤¿à¤²à¥à¤²à¥€",
+    subtitle: "à¤¹à¤¾à¤‰à¤¸ à¤‘à¥ž à¤¸à¥‚à¤°à¥à¤¯",
+    monitor: "à¤²à¤¾à¤‡à¤µ à¤¨à¤¿à¤—à¤°à¤¾à¤¨à¥€",
+    employees: "à¤•à¤°à¥à¤®à¤šà¤¾à¤°à¥€ à¤”à¤° à¤ªà¥‡à¤°à¥‹à¤²",
+    shifts: "à¤¶à¤¿à¤«à¥à¤Ÿ à¤…à¤¨à¥à¤¸à¥‚à¤šà¥€",
+    approvals: "à¤¸à¥à¤µà¥€à¤•à¥ƒà¤¤à¤¿ à¤¡à¥‡à¤¸à¥à¤•",
+    reports: "à¤®à¤¾à¤¸à¤¿à¤• à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿ",
+    status: "à¤šà¥‡à¤•-à¤‡à¤¨ / à¤¸à¥à¤¥à¤¿à¤¤à¤¿",
+    leaves: "à¤›à¥à¤Ÿà¥à¤Ÿà¥€ à¤•à¥‡ à¤…à¤¨à¥à¤°à¥‹à¤§",
+    payslips: "à¤®à¥‡à¤°à¥€ à¤µà¥‡à¤¤à¤¨ à¤ªà¤°à¥à¤šà¥€",
+    profile: "à¤®à¥‡à¤°à¥€ à¤ªà¥à¤°à¥‹à¤«à¤¾à¤‡à¤²",
+    settings: "à¤¸à¥‡à¤Ÿà¤¿à¤‚à¤—à¥à¤¸"
   }
 };
 
@@ -698,7 +698,7 @@ function renderLoginView() {
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Manage payroll, user directories & request approvals</div>
               </div>
             </div>
-            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">âž”</div>
           </button>
 
           <!-- Manager Button -->
@@ -714,7 +714,7 @@ function renderLoginView() {
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Review shift swaps & oversee team operations</div>
               </div>
             </div>
-            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">âž”</div>
           </button>
 
           <!-- Employee Button -->
@@ -730,7 +730,7 @@ function renderLoginView() {
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Clock in/out, view payslips & schedules</div>
               </div>
             </div>
-            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">âž”</div>
           </button>
         </div>
 
@@ -798,7 +798,7 @@ function renderLoginView() {
       <div id="role-users-section" style="animation: fadeIn 0.3s ease;">
         <div class="auth-header" style="margin-bottom: 20px; text-align: center; position: relative;">
           <button id="btn-back-to-roles" style="position: absolute; left: 0; top: 0; background: transparent; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 0;">
-            ◀ Back
+            â—€ Back
           </button>
           <div class="auth-logo" style="margin-bottom: 8px; justify-content: center; display: flex;">
             <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
@@ -876,7 +876,7 @@ function renderLoginView() {
           </div>
           <div style="position:relative">
             <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
-            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px">👁️</button>
+            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px">ðŸ‘ï¸</button>
           </div>
         </div>
         ` : ''}
@@ -903,7 +903,7 @@ function renderLoginView() {
           </div>
           ` : ''}
 
-          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
+          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">â† Back to Select Account</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
           By logging in, you agree to the <a href="#" id="btn-show-policy-verify" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy</a>.
@@ -954,7 +954,7 @@ function renderLoginView() {
       const enteredPwd = pwdEl ? pwdEl.value : '';
 
       if (!enteredId) {
-        warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
+        warningEl.textContent = `âš ï¸ Please enter your ${idLabelText}.`;
         warningEl.style.display = 'block';
         return;
       }
@@ -967,7 +967,7 @@ function renderLoginView() {
       );
 
       if (!matchedUser) {
-        warningEl.textContent = `⚠️ Invalid ${idLabelText}. No matching account found.`;
+        warningEl.textContent = `âš ï¸ Invalid ${idLabelText}. No matching account found.`;
         warningEl.style.display = 'block';
         return;
       }
@@ -980,27 +980,27 @@ function renderLoginView() {
       if (expectedRole === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
 
       if (!isRoleValid) {
-        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
+        warningEl.textContent = `âš ï¸ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
         warningEl.style.display = 'block';
         return;
       }
 
       if (matchedUser.status === 'Inactive') {
-        warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
+        warningEl.textContent = `âš ï¸ Your account is Inactive. Please contact HR.`;
         warningEl.style.display = 'block';
         return;
       }
 
       if (matchedUser.password || isHrOrManager) {
         if (!enteredPwd) {
-          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
+          warningEl.textContent = `âš ï¸ Password is required to log in to this account.`;
           warningEl.style.display = 'block';
           return;
         }
         if (matchedUser.password) {
           const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
           if (!isValidPwd) {
-            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
+            warningEl.textContent = `âš ï¸ Invalid Password. Please check your password and try again.`;
             warningEl.style.display = 'block';
             return;
           }
@@ -1509,10 +1509,10 @@ function renderEmployeeDashboard() {
 
   // Dynamic GPS Mock Selector options
   let optionsHTML = '';
-  optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
+  optionsHTML += `<option value="real">ðŸ›°ï¸ Use Device GPS (Real-Time Location)</option>`;
   Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
     const isPreferred = locName === (schedule.location || 'Kohat Enclave, Pitampura, Delhi');
-    optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
+    optionsHTML += `<option value="${locName}">ðŸ“ Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
   });
 
   let alertBannerHTML = '';
@@ -1562,7 +1562,7 @@ function renderEmployeeDashboard() {
           <!-- GPS Geofence Card -->
           <div class="card-panel gps-sim-card">
             <div class="card-panel-header">
-              <h3 class="card-panel-title">🛰️ Attendance Geofence Validation</h3>
+              <h3 class="card-panel-title">ðŸ›°ï¸ Attendance Geofence Validation</h3>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px">
               
@@ -1577,12 +1577,12 @@ function renderEmployeeDashboard() {
               <!-- Side-by-side location verification -->
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
                 <div>
-                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Fixed Worksite Location</span>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ¢ Fixed Worksite Location</span>
                   <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</div>
                   <div style="color:var(--text-secondary); font-size:11px" id="gps-worksite-coords-display">--</div>
                 </div>
                 <div style="border-left:1px solid var(--border); padding-left:10px">
-                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📱 Live GPS Location</span>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ“± Live GPS Location</span>
                   <div style="font-weight:600; color:var(--text-primary); margin-top:2px" id="gps-coords-display">Acquiring...</div>
                   <div style="color:var(--text-secondary); font-size:11px" id="gps-status-sub-display">--</div>
                 </div>
@@ -1591,16 +1591,16 @@ function renderEmployeeDashboard() {
               <!-- GPS Real-Time Details (Address & Timestamp) -->
               <div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
                 <div>
-                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📍 Current Address</span>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ“ Current Address</span>
                   <div id="gps-address-display" style="font-weight:500; color:var(--text-primary); margin-top:2px">Acquiring address...</div>
                 </div>
                 <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px">
                   <div>
-                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Last Updated</span>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ•’ Last Updated</span>
                     <div id="gps-timestamp-display" style="font-weight:500; color:var(--text-primary); margin-top:1px">--</div>
                   </div>
                   <div>
-                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🎯 Accuracy</span>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸŽ¯ Accuracy</span>
                     <div id="gps-accuracy-display" style="font-weight:500; color:var(--text-primary); margin-top:1px; text-align:right">--</div>
                   </div>
                 </div>
@@ -1648,7 +1648,7 @@ function renderEmployeeDashboard() {
               </div>
               <div class="shift-meta-row">
                 <span>Working Hours:</span>
-                <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(schedule.endTime)}</strong>
+                <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">â†’</span> ${formatTime12h(schedule.endTime)}</strong>
               </div>
               <div class="shift-meta-row">
                 <span>Grace Period:</span>
@@ -1677,7 +1677,7 @@ function renderEmployeeDashboard() {
           <!-- Notice Board Card -->
           <div class="card-panel" style="margin-bottom:20px; min-height:220px; display:flex; flex-direction:column">
             <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
-              <h3 class="card-panel-title">📢 Notifications</h3>
+              <h3 class="card-panel-title">ðŸ“¢ Notifications</h3>
               <button id="btn-delete-all-notices" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;text-decoration:underline;display:none;">Delete All</button>
             </div>
             <div id="employee-notices-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;flex-grow:1;max-height:320px;overflow-y:auto;padding-right:4px">
@@ -1688,7 +1688,7 @@ function renderEmployeeDashboard() {
           <!-- Schedule & Attendance Calendar Card -->
           <div class="card-panel" style="margin-bottom:0; display:flex; flex-direction:column; gap:16px">
             <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
-              <h3 class="card-panel-title">🗓️ Schedule & Attendance Calendar</h3>
+              <h3 class="card-panel-title">ðŸ—“ï¸ Schedule & Attendance Calendar</h3>
               <!-- Schedule Quick Tabs -->
               <div class="calendar-tabs" style="display:flex; gap:6px; background:rgba(255,255,255,0.03); padding:4px; border-radius:var(--radius-sm); border:1px solid var(--border)">
                 <button class="cal-tab-btn active" data-tab="today" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Today</button>
@@ -1794,12 +1794,12 @@ function renderEmployeeDashboard() {
   const geoCheckIn = document.getElementById('btn-geofence-checkin');
   if (geoCheckIn) {
     geoCheckIn.addEventListener('click', () => {
-      const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
+      const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978Â° N, 77.1408Â° E';
       const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
       const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
       
       if (!inRange) {
-        alert('❌ Check-in Rejected! You are out of range.');
+        alert('âŒ Check-in Rejected! You are out of range.');
         return;
       }
 
@@ -1823,7 +1823,7 @@ function renderEmployeeDashboard() {
     geoCheckOut.addEventListener('click', () => {
       const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
       if (!inRange) {
-        alert('❌ Check-out Rejected! You are out of range.');
+        alert('âŒ Check-out Rejected! You are out of range.');
         return;
       }
       
@@ -1880,14 +1880,14 @@ function renderEmployeeDashboard() {
     }
 
     if (now - lastAddressFetchTime < 4000) {
-      element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+      element.textContent = `${lat.toFixed(6)}Â° N, ${lng.toFixed(6)}Â° E (Locating...)`;
       return;
     }
 
     lastAddressFetchTime = now;
     lastAddressLat = roundedLat;
     lastAddressLng = roundedLng;
-    element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+    element.textContent = `${lat.toFixed(6)}Â° N, ${lng.toFixed(6)}Â° E (Locating...)`;
 
     fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
       headers: {
@@ -1903,7 +1903,7 @@ function renderEmployeeDashboard() {
           lastAddressVal = data.display_name;
           element.textContent = lastAddressVal;
         } else {
-          lastAddressVal = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
+          lastAddressVal = `${lat.toFixed(6)}Â° N, ${lng.toFixed(6)}Â° E`;
           element.textContent = lastAddressVal;
         }
       })
@@ -1975,8 +1975,8 @@ function renderEmployeeDashboard() {
       justBlock.style.display = 'none'; // Hidden by default until range check confirms out-of-range
       justBlock.innerHTML = `
         <div style="font-size:12px; font-weight:600; color:var(--error); background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
-          ❌ Check-in Rejected! You are out of geofence range. Under company policy, you must be within 100m of your assigned work location (${officeName}) to clock in.
-          <button class="btn btn-warning btn-sm" id="btn-gps-use-worksite" style="margin-top:8px; display:block; width:100%; padding:6px; font-size:11px; font-weight:700">📍 Switch to Assigned Worksite Location</button>
+          âŒ Check-in Rejected! You are out of geofence range. Under company policy, you must be within 100m of your assigned work location (${officeName}) to clock in.
+          <button class="btn btn-warning btn-sm" id="btn-gps-use-worksite" style="margin-top:8px; display:block; width:100%; padding:6px; font-size:11px; font-weight:700">ðŸ“ Switch to Assigned Worksite Location</button>
         </div>
       `;
       const selectEl = document.getElementById('gps-mock-selector');
@@ -2021,15 +2021,15 @@ function renderEmployeeDashboard() {
       const prevInRange = window.lastGpsInRangeState;
       if (prevInRange !== undefined && prevInRange !== inRange) {
         if (inRange) {
-          showToastNotification(`📍 Geofence Alert: You are now IN RANGE of your worksite location. Check-in unlocked!`, 'success');
+          showToastNotification(`ðŸ“ Geofence Alert: You are now IN RANGE of your worksite location. Check-in unlocked!`, 'success');
         } else {
-          showToastNotification(`⚠️ Geofence Alert: You are OUT OF RANGE of your worksite location. Check-in locked.`, 'warning');
+          showToastNotification(`âš ï¸ Geofence Alert: You are OUT OF RANGE of your worksite location. Check-in locked.`, 'warning');
         }
       } else if (prevInRange === undefined) {
         if (inRange) {
-          showToastNotification(`📍 Geofence Active: Located at assigned worksite (${officeName}). Check-in unlocked!`, 'success');
+          showToastNotification(`ðŸ“ Geofence Active: Located at assigned worksite (${officeName}). Check-in unlocked!`, 'success');
         } else {
-          showToastNotification(`⚠️ Geofence Active: Outside of worksite range. Check-in locked.`, 'warning');
+          showToastNotification(`âš ï¸ Geofence Active: Outside of worksite range. Check-in locked.`, 'warning');
         }
       }
       window.lastGpsInRangeState = inRange;
@@ -2047,7 +2047,7 @@ function renderEmployeeDashboard() {
       // Set target worksite and status detail displays
       const worksiteCoordsDisplay = document.getElementById('gps-worksite-coords-display');
       if (worksiteCoordsDisplay) {
-        worksiteCoordsDisplay.textContent = `${targetCoords.lat.toFixed(6)}° N, ${targetCoords.lng.toFixed(6)}° E`;
+        worksiteCoordsDisplay.textContent = `${targetCoords.lat.toFixed(6)}Â° N, ${targetCoords.lng.toFixed(6)}Â° E`;
       }
       const worksiteNameDisplay = document.getElementById('gps-worksite-name-display');
       if (worksiteNameDisplay) {
@@ -2055,7 +2055,7 @@ function renderEmployeeDashboard() {
       }
       const statusSubDisplay = document.getElementById('gps-status-sub-display');
       if (statusSubDisplay) {
-        statusSubDisplay.textContent = inRange ? '✅ In geofence range' : '❌ Out of range';
+        statusSubDisplay.textContent = inRange ? 'âœ… In geofence range' : 'âŒ Out of range';
       }
 
       // Draw custom canvas radar map
@@ -2203,7 +2203,7 @@ function renderEmployeeDashboard() {
           errContainer.style.display = 'block';
           errContainer.innerHTML = `
             <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
-              ⚠️ Mobile Device GPS problem (Insecure HTTP/No GPS). Automatically fixed location at your assigned worksite: <strong>\${officeName}</strong>.
+              âš ï¸ Mobile Device GPS problem (Insecure HTTP/No GPS). Automatically fixed location at your assigned worksite: <strong>\${officeName}</strong>.
             </div>
           `;
         }
@@ -2257,7 +2257,7 @@ function renderEmployeeDashboard() {
             // Display accuracy
             const accuracyDisplay = document.getElementById('gps-accuracy-display');
             if (accuracyDisplay) {
-              accuracyDisplay.textContent = `±${Math.round(accuracy)}m (${highAccuracy ? 'GPS' : 'Network'})`;
+              accuracyDisplay.textContent = `Â±${Math.round(accuracy)}m (${highAccuracy ? 'GPS' : 'Network'})`;
             }
 
             // Display timestamp
@@ -2272,7 +2272,7 @@ function renderEmployeeDashboard() {
               updateAddressDisplay(lat, lng, addressDisplay);
             }
 
-            applyLocationState(lat, lng, `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`);
+            applyLocationState(lat, lng, `${lat.toFixed(6)}Â° N, ${lng.toFixed(6)}Â° E`);
           },
           (err) => {
             console.error("GPS Watch error:", err, "High Accuracy:", highAccuracy);
@@ -2297,7 +2297,7 @@ function renderEmployeeDashboard() {
               errContainer.style.display = 'block';
               errContainer.innerHTML = `
                 <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
-                  ⚠️ Mobile Device GPS problem (Permission Denied/Unavailable). Automatically fixed location at your assigned worksite: <strong>${officeName}</strong>.
+                  âš ï¸ Mobile Device GPS problem (Permission Denied/Unavailable). Automatically fixed location at your assigned worksite: <strong>${officeName}</strong>.
                 </div>
               `;
             }
@@ -2322,7 +2322,7 @@ function renderEmployeeDashboard() {
 
       startWatching(true);
     } else {
-      // Switching to mock — clear any active GPS watch
+      // Switching to mock â€” clear any active GPS watch
       if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
         try {
           navigator.geolocation.clearWatch(window.activeGpsWatchId);
@@ -2370,10 +2370,10 @@ function renderEmployeeDashboard() {
       // Update GPS sub-status to show it's a simulation
       const statusSubDisplay = document.getElementById('gps-status-sub-display');
       if (statusSubDisplay) {
-        statusSubDisplay.textContent = `📍 Simulating: ${resolvedMockName}`;
+        statusSubDisplay.textContent = `ðŸ“ Simulating: ${resolvedMockName}`;
       }
 
-      applyLocationState(selectedCoords.lat, selectedCoords.lng, `${selectedCoords.lat.toFixed(6)}° N, ${selectedCoords.lng.toFixed(6)}° E`);
+      applyLocationState(selectedCoords.lat, selectedCoords.lng, `${selectedCoords.lat.toFixed(6)}Â° N, ${selectedCoords.lng.toFixed(6)}Â° E`);
     }
   }
 
@@ -2388,8 +2388,8 @@ function renderEmployeeDashboard() {
 async function openAddLocationDialog(schedId) {
   const choice = await CustomDialog.prompt(
     'Add New Location to Shift Schedule:\n\n' +
-    'Type 1 for: 📍 Fetch Nearby Location (uses GPS)\n' +
-    'Type 2 for: ✏️ Enter Any Location (manual entry)\n\n' +
+    'Type 1 for: ðŸ“ Fetch Nearby Location (uses GPS)\n' +
+    'Type 2 for: âœï¸ Enter Any Location (manual entry)\n\n' +
     'Enter 1 or 2:'
   );
   
@@ -2432,7 +2432,7 @@ async function fetchNearbyAndRegister(callback) {
     alert("Geolocation is not supported by this browser. Using fallback coordinates.");
     const lat = 28.6985, lng = 77.1384;
     const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    const name = await prompt('ðŸ“ Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + 'Â° N, ' + lng.toFixed(4) + 'Â° E\n\nEnter a name for this location:', defaultName);
     if (name && name.trim()) {
       registerNewLocation(name.trim(), lat, lng);
       if (callback) callback(name.trim());
@@ -2440,7 +2440,7 @@ async function fetchNearbyAndRegister(callback) {
     return;
   }
 
-  alert('📡 Acquiring GPS signal... Please allow location access when prompted.');
+  alert('ðŸ“¡ Acquiring GPS signal... Please allow location access when prompted.');
   
   const position = await new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: true });
@@ -2453,7 +2453,7 @@ async function fetchNearbyAndRegister(callback) {
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
     const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    const name = await prompt('ðŸ“ Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + 'Â° N, ' + lng.toFixed(4) + 'Â° E\n\nEnter a name for this location:', defaultName);
     if (name && name.trim()) {
       registerNewLocation(name.trim(), lat, lng);
       if (callback) callback(name.trim());
@@ -2461,7 +2461,7 @@ async function fetchNearbyAndRegister(callback) {
   } else {
     const lat = 28.6985, lng = 77.1384;
     const defaultName = `Worksite Delhi (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('⚠️ GPS unavailable — using fallback coordinates.\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
+    const name = await prompt('âš ï¸ GPS unavailable â€” using fallback coordinates.\n\nCoordinates: ' + lat.toFixed(4) + 'Â° N, ' + lng.toFixed(4) + 'Â° E\n\nEnter a name for this location:', defaultName);
     if (name && name.trim()) {
       registerNewLocation(name.trim(), lat, lng);
       if (callback) callback(name.trim());
@@ -2471,7 +2471,7 @@ async function fetchNearbyAndRegister(callback) {
 
 // Core: Enter custom location name + coordinates manually
 async function enterCustomAndRegister(callback) {
-  const name = await prompt('✏️ Enter Location Name:\n\n(e.g. "Sector 62, Noida" or "CP Office, Delhi")');
+  const name = await prompt('âœï¸ Enter Location Name:\n\n(e.g. "Sector 62, Noida" or "CP Office, Delhi")');
   if (!name || !name.trim()) return;
   
   const coordStr = await prompt('Enter GPS Coordinates (optional):\n\nFormat: latitude, longitude\n(e.g. 28.6139, 77.2090)\n\nLeave blank to use default Delhi coordinates:');
@@ -2517,7 +2517,7 @@ function showForgotPasswordModal(initialId = '') {
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
       <div style="display:flex; align-items:center; gap:10px">
         <div style="width:36px; height:36px; border-radius:10px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:18px">
-          🔑
+          ðŸ”‘
         </div>
         <div>
           <h3 style="font-size:17px; font-weight:800; color:#f8fafc; margin:0">Reset Password</h3>
@@ -2583,7 +2583,7 @@ function showForgotPasswordModal(initialId = '') {
         <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">NEW PASSWORD *</label>
         <div style="position:relative">
           <input type="password" id="forgot-newpwd" class="form-control" placeholder="Minimum 6 characters" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">ðŸ‘ï¸</button>
         </div>
         
         <!-- Strength Indicator -->
@@ -2601,7 +2601,7 @@ function showForgotPasswordModal(initialId = '') {
         <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">CONFIRM PASSWORD *</label>
         <div style="position:relative">
           <input type="password" id="forgot-confirmpwd" class="form-control" placeholder="Re-enter new password" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">ðŸ‘ï¸</button>
         </div>
       </div>
 
@@ -2650,7 +2650,7 @@ function showForgotPasswordModal(initialId = '') {
 
     const rawInput = modal.querySelector('#forgot-input-identifier').value.trim();
     if (!rawInput) {
-      errorEl.textContent = '⚠️ Please enter your User ID, Email, or Mobile Number.';
+      errorEl.textContent = 'âš ï¸ Please enter your User ID, Email, or Mobile Number.';
       errorEl.style.display = 'block';
       return;
     }
@@ -2669,7 +2669,7 @@ function showForgotPasswordModal(initialId = '') {
     });
 
     if (!matchedUser) {
-      errorEl.textContent = '⚠️ Account record not found for the entered credentials.';
+      errorEl.textContent = 'âš ï¸ Account record not found for the entered credentials.';
       errorEl.style.display = 'block';
       return;
     }
@@ -2732,7 +2732,7 @@ function showForgotPasswordModal(initialId = '') {
 
     const enteredOtp = modal.querySelector('#forgot-input-otp').value.trim();
     if (enteredOtp !== '123456') {
-      errorEl.textContent = '⚠️ Invalid verification code. Please enter 123456 to bypass.';
+      errorEl.textContent = 'âš ï¸ Invalid verification code. Please enter 123456 to bypass.';
       errorEl.style.display = 'block';
       return;
     }
@@ -2813,17 +2813,17 @@ function showForgotPasswordModal(initialId = '') {
     const confirmPwd = confirmPwdInput.value;
 
     if (newPwd.length < 6) {
-      errorEl.textContent = '⚠️ Password must be at least 6 characters long.';
+      errorEl.textContent = 'âš ï¸ Password must be at least 6 characters long.';
       errorEl.style.display = 'block';
       return;
     }
     if (!/[A-Z]/.test(newPwd) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPwd)) {
-      errorEl.textContent = '⚠️ Password must contain at least 1 uppercase letter and 1 special character.';
+      errorEl.textContent = 'âš ï¸ Password must contain at least 1 uppercase letter and 1 special character.';
       errorEl.style.display = 'block';
       return;
     }
     if (newPwd !== confirmPwd) {
-      errorEl.textContent = '⚠️ Passwords do not match.';
+      errorEl.textContent = 'âš ï¸ Passwords do not match.';
       errorEl.style.display = 'block';
       return;
     }
@@ -2839,7 +2839,7 @@ function showForgotPasswordModal(initialId = '') {
 
     closeModal();
     if (typeof showToastNotification === 'function') {
-      showToastNotification('✅ Password updated successfully! Please log in with your new credentials.', 'success');
+      showToastNotification('âœ… Password updated successfully! Please log in with your new credentials.', 'success');
     }
     const loginPwdInput = document.getElementById('auth-pwd-input');
     if (loginPwdInput) {
@@ -2897,7 +2897,7 @@ function renderAccountManagementView() {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" style="text-align:center; padding: 36px; color: var(--text-secondary);">
-            <div style="font-size: 32px; margin-bottom: 8px;">👤</div>
+            <div style="font-size: 32px; margin-bottom: 8px;">ðŸ‘¤</div>
             <div style="font-weight: 600; font-size: 15px;">No Accounts Found</div>
             <div style="font-size: 12.5px; margin-top: 4px;">Try adjusting your search query or filters.</div>
           </td>
@@ -2916,14 +2916,14 @@ function renderAccountManagementView() {
       let actionButtons = '<span style="font-size:11px; color:var(--text-muted); font-style:italic">View Only</span>';
       if (canManage) {
         const deleteBtn = (currentUser.role === 'hr' && u.id !== currentUser.id)
-          ? `<button class="btn btn-sm btn-danger btn-delete-account" data-id="${u.id}" title="Delete Account" style="padding:5px 10px; font-size:12px">🗑️ Delete</button>`
+          ? `<button class="btn btn-sm btn-danger btn-delete-account" data-id="${u.id}" title="Delete Account" style="padding:5px 10px; font-size:12px">ðŸ—‘ï¸ Delete</button>`
           : '';
         actionButtons = `
           <button class="btn btn-sm btn-secondary btn-toggle-status" data-id="${u.id}" title="${isActive ? 'Deactivate Account' : 'Activate Account'}" style="padding:5px 10px; font-size:12px">
-            ${isActive ? '🔴 Disable' : '🟢 Enable'}
+            ${isActive ? 'ðŸ”´ Disable' : 'ðŸŸ¢ Enable'}
           </button>
           <button class="btn btn-sm btn-outline btn-edit-account" data-id="${u.id}" title="Edit Account Details" style="padding:5px 10px; font-size:12px">
-            ✏️ Edit
+            âœï¸ Edit
           </button>
           ${deleteBtn}
         `;
@@ -3027,28 +3027,28 @@ function renderAccountManagementView() {
     if (statsContainer) {
       statsContainer.innerHTML = `
         <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
-          <div style="width:44px; height:44px; border-radius:12px; background:rgba(251,191,36,0.12); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:22px">👥</div>
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(251,191,36,0.12); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:22px">ðŸ‘¥</div>
           <div>
             <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Total Accounts</div>
             <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-top:2px">${total}</div>
           </div>
         </div>
         <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
-          <div style="width:44px; height:44px; border-radius:12px; background:rgba(16,185,129,0.12); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:22px">🟢</div>
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(16,185,129,0.12); color:var(--success); display:flex; align-items:center; justify-content:center; font-size:22px">ðŸŸ¢</div>
           <div>
             <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Active Accounts</div>
             <div style="font-size:22px; font-weight:800; color:var(--success); margin-top:2px">${active}</div>
           </div>
         </div>
         <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
-          <div style="width:44px; height:44px; border-radius:12px; background:rgba(239,68,68,0.12); color:var(--error); display:flex; align-items:center; justify-content:center; font-size:22px">🔴</div>
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(239,68,68,0.12); color:var(--error); display:flex; align-items:center; justify-content:center; font-size:22px">ðŸ”´</div>
           <div>
             <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">Inactive Accounts</div>
             <div style="font-size:22px; font-weight:800; color:var(--error); margin-top:2px">${inactive}</div>
           </div>
         </div>
         <div class="card-panel" style="padding:16px 20px; display:flex; align-items:center; gap:16px">
-          <div style="width:44px; height:44px; border-radius:12px; background:rgba(6,182,212,0.12); color:var(--cyan); display:flex; align-items:center; justify-content:center; font-size:22px">🛡️</div>
+          <div style="width:44px; height:44px; border-radius:12px; background:rgba(6,182,212,0.12); color:var(--cyan); display:flex; align-items:center; justify-content:center; font-size:22px">ðŸ›¡ï¸</div>
           <div>
             <div style="font-size:12px; color:var(--text-secondary); font-weight:600; text-transform:uppercase; letter-spacing:0.5px">HR / Managers</div>
             <div style="font-size:22px; font-weight:800; color:var(--text-primary); margin-top:2px">${hrCount} HR / ${managerCount} Mgr</div>
@@ -3082,7 +3082,7 @@ function renderAccountManagementView() {
       <div class="card-panel" style="padding:16px 20px">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px">
           <div style="flex:1; min-width:260px">
-            <input type="text" id="acct-search-input" class="form-control" placeholder="🔍 Search name, username, email, or employee ID..." style="padding:10px 14px">
+            <input type="text" id="acct-search-input" class="form-control" placeholder="ðŸ” Search name, username, email, or employee ID..." style="padding:10px 14px">
           </div>
           <div style="display:flex; gap:12px; flex-wrap:wrap">
             <select id="acct-role-filter" class="form-control" style="width:auto; min-width:140px">
@@ -3173,7 +3173,7 @@ function showAccountModal(editUser = null) {
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-bottom:1px solid rgba(137,32,27,0.08); padding-bottom:16px">
       <div style="display:flex; align-items:center; gap:12px">
         <div style="width:38px; height:38px; border-radius:10px; background:rgba(137,32,27,0.08); border:1px solid rgba(137,32,27,0.15); display:flex; align-items:center; justify-content:center; font-size:18px">
-          ${isEdit ? '✏️' : '👤'}
+          ${isEdit ? 'âœï¸' : 'ðŸ‘¤'}
         </div>
         <div>
           <h3 style="font-size:18px; font-weight:800; color:#1a0504; margin:0; letter-spacing:-0.01em">
@@ -3188,16 +3188,16 @@ function showAccountModal(editUser = null) {
     <!-- Role Selection Tabs -->
     <div id="create-acct-role-tabs" style="display:grid; grid-template-columns:${isEdit ? '1fr 1fr 1fr' : '1fr 1fr'}; gap:12px; margin-bottom:20px">
       <button type="button" class="acct-role-tab" data-role="hr" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
-        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">👤</div>
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">ðŸ‘¤</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">HR / Admin</span>
       </button>
       <button type="button" class="acct-role-tab" data-role="manager" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
-        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">ℹ️</div>
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">â„¹ï¸</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">Manager</span>
       </button>
       ${isEdit ? `
       <button type="button" class="acct-role-tab" data-role="employee" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
-        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">📋</div>
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">ðŸ“‹</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">Employee</span>
       </button>
       ` : ''}
@@ -3206,7 +3206,7 @@ function showAccountModal(editUser = null) {
     <!-- Upload Photo Section -->
     <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:20px">
       <div id="acct-photo-preview" style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:20px; color:#64748b; overflow:hidden; cursor:pointer">
-        ${isEdit && editUser.photo ? `<img src="${editUser.photo}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
+        ${isEdit && editUser.photo ? `<img src="${editUser.photo}" style="width:100%; height:100%; object-fit:cover;">` : 'ðŸ‘¤'}
       </div>
       <input type="file" id="acct-input-photo-file" accept="image/*" style="display:none">
       <button type="button" id="btn-acct-upload-photo" style="background:#fff; border:1px solid #cbd5e1; padding:6px 14px; border-radius:20px; font-size:11px; font-weight:700; color:#1e293b; cursor:pointer">Upload Photo</button>
@@ -3240,7 +3240,7 @@ function showAccountModal(editUser = null) {
         <div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">PASSWORD *</label>
           <div style="position:relative">
-            <input type="password" id="acct-input-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+            <input type="password" id="acct-input-password" class="form-control" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
             <button type="button" id="btn-toggle-pwd-vis" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
@@ -3250,7 +3250,7 @@ function showAccountModal(editUser = null) {
         <div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">CONFIRM PASSWORD *</label>
           <div style="position:relative">
-            <input type="password" id="acct-input-confirm-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+            <input type="password" id="acct-input-confirm-password" class="form-control" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
           </div>
         </div>
       </div>
@@ -3469,51 +3469,51 @@ function showAccountModal(editUser = null) {
     const customRoleName = selectedOption ? (selectedOption.dataset.customName || selectedOption.text) : role;
 
     if (!name || !username || !email || !mobile || (!isEdit && !password)) {
-      errorEl.textContent = '⚠️ Please fill out all required fields.';
+      errorEl.textContent = 'âš ï¸ Please fill out all required fields.';
       errorEl.style.display = 'block';
       return;
     }
 
     if (!emailStrictRegex.test(email)) {
-      errorEl.textContent = '⚠️ Invalid Email Format! Please enter a valid email address (e.g. alex@gmail.com or name@surya.group).';
+      errorEl.textContent = 'âš ï¸ Invalid Email Format! Please enter a valid email address (e.g. alex@gmail.com or name@surya.group).';
       errorEl.style.display = 'block';
       return;
     }
 
     if (!/^[0-9+\s\-()]{7,15}$/.test(mobile)) {
-      errorEl.textContent = '⚠️ Please enter a valid Mobile Number (7-15 digits).';
+      errorEl.textContent = 'âš ï¸ Please enter a valid Mobile Number (7-15 digits).';
       errorEl.style.display = 'block';
       return;
     }
 
     if (!/^[A-Za-z\s]+$/.test(name)) {
-      errorEl.textContent = '⚠️ Full Name can only contain letters (A-Z) and spaces.';
+      errorEl.textContent = 'âš ï¸ Full Name can only contain letters (A-Z) and spaces.';
       errorEl.style.display = 'block';
       return;
     }
 
     if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
-      errorEl.textContent = '⚠️ Please enter a valid email address (e.g. name@company.com).';
+      errorEl.textContent = 'âš ï¸ Please enter a valid email address (e.g. name@company.com).';
       errorEl.style.display = 'block';
       return;
     }
 
     if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
-      errorEl.textContent = '⚠️ Username can only contain letters, numbers, underscores, dots, or hyphens.';
+      errorEl.textContent = 'âš ï¸ Username can only contain letters, numbers, underscores, dots, or hyphens.';
       errorEl.style.display = 'block';
       return;
     }
 
     const existingUserByUsername = DB.getUserByUsername(username);
     if (existingUserByUsername && (!isEdit || existingUserByUsername.id !== editUser.id)) {
-      errorEl.textContent = `⚠️ Username '@${username}' is already taken. Please choose another username.`;
+      errorEl.textContent = `âš ï¸ Username '@${username}' is already taken. Please choose another username.`;
       errorEl.style.display = 'block';
       return;
     }
 
     const existingUserByEmail = DB.getUserByEmail(email);
     if (existingUserByEmail && (!isEdit || existingUserByEmail.id !== editUser.id)) {
-      errorEl.textContent = `⚠️ Email '${email}' is already registered to another account.`;
+      errorEl.textContent = `âš ï¸ Email '${email}' is already registered to another account.`;
       errorEl.style.display = 'block';
       return;
     }
@@ -3521,7 +3521,7 @@ function showAccountModal(editUser = null) {
     if (password) {
       const pwdVal = Auth.validatePassword(password);
       if (!pwdVal.valid) {
-        errorEl.textContent = '⚠️ Password must be at least 6 characters long and include an uppercase letter and a special character (!@#$%^&*).';
+        errorEl.textContent = 'âš ï¸ Password must be at least 6 characters long and include an uppercase letter and a special character (!@#$%^&*).';
         errorEl.style.display = 'block';
         return;
       }
@@ -3562,7 +3562,7 @@ function showAccountModal(editUser = null) {
       `;
       credModal.innerHTML = `
         <div class="card-panel" style="max-width: 440px; width: 90%; padding: 26px; background: var(--bg-surface); border: 1px solid var(--primary); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
-          <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
+          <div style="font-size: 40px; margin-bottom: 8px;">ðŸŽ‰</div>
           <h3 style="font-size: 19px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">Account Created Successfully!</h3>
           <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px;">Here are the credentials for the newly created account:</p>
           
@@ -3613,7 +3613,7 @@ function registerNewLocation(name, lat, lng) {
     location: name
   });
   
-  alert('✅ Location "' + name + '" registered successfully!\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E');
+  alert('âœ… Location "' + name + '" registered successfully!\nCoordinates: ' + lat.toFixed(4) + 'Â° N, ' + lng.toFixed(4) + 'Â° E');
 }
 
 // Rebuild a select dropdown with all current locations
@@ -3819,7 +3819,7 @@ function renderCalendarScheduleTab(userId, activeTab) {
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px">
       <div>
-        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
+        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ¢ Assigned Shift</span>
         ${showShiftInfo ? `
           <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${Utils.escape(schedule.name)}</div>
           <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</div>
@@ -3829,7 +3829,7 @@ function renderCalendarScheduleTab(userId, activeTab) {
         `}
       </div>
       <div>
-        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">ðŸ•’ Clock Activity</span>
         <div style="font-weight:600; color:var(--text-primary); margin-top:2px">In: ${checkInTime} | Out: ${checkOutTime}</div>
         <div style="color:var(--cyan); font-size:11px; margin-top:1px">Duration: ${workDuration}</div>
       </div>
@@ -3872,8 +3872,8 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:14px">
       <div class="modal-header" style="margin-bottom: 2px">
-        <h3 class="modal-title">📅 Date Attendance Summary</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“… Date Attendance Summary</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       
       <div style="font-size: 15px; font-weight: 700; color: var(--text-primary)">
@@ -3886,7 +3886,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
       </div>
 
       <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px">
-        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Pattern</h4>
+        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">ðŸ“‹ Shift Pattern</h4>
         ${showShiftInfo ? `
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-primary)">${Utils.escape(schedule.name)}</strong></div>
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-primary)">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</strong></div>
@@ -3899,7 +3899,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
       </div>
 
       <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; border-top: 1px solid var(--border); padding-top: 12px">
-        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">🕒 Clock Activity</h4>
+        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">ðŸ•’ Clock Activity</h4>
         <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Time:</span><strong style="color:var(--text-primary)">${checkInTime}</strong></div>
         <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkInLoc)}</strong></div>
         <div style="display:flex; justify-content:space-between; margin-top:4px"><span style="color:var(--text-secondary)">Check-out Time:</span><strong style="color:var(--text-primary)">${checkOutTime}</strong></div>
@@ -3912,7 +3912,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
 }
 
 async function handlePinClockIn(userId) {
-  const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
+  const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978Â° N, 77.1408Â° E';
   const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
   const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
 
@@ -3923,7 +3923,7 @@ async function handlePinClockIn(userId) {
   const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
 
   if (!inRange) {
-    alert(`❌ Check-in Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock in.`);
+    alert(`âŒ Check-in Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock in.`);
     return;
   }
 
@@ -3953,7 +3953,7 @@ async function handleClockOut(userId) {
   const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
 
   if (!inRange) {
-    alert(`❌ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);
+    alert(`âŒ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);
     return;
   }
 
@@ -3988,7 +3988,7 @@ function renderSettingsView() {
           <div style="display:flex;flex-direction:column;gap:12px">
             <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:rgba(255,255,255,0.01)">
               <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:18px">🌇</span>
+                <span style="font-size:18px">ðŸŒ‡</span>
                 <div>
                   <strong style="display:block;font-size:13px">Dark Mode</strong>
                   <span style="font-size:11px;color:var(--text-muted)">Sunset burgundy/gold theme</span>
@@ -3999,7 +3999,7 @@ function renderSettingsView() {
 
             <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:rgba(255,255,255,0.01)">
               <div style="display:flex;align-items:center;gap:10px">
-                <span style="font-size:18px">🌅</span>
+                <span style="font-size:18px">ðŸŒ…</span>
                 <div>
                   <strong style="display:block;font-size:13px">Light Mode</strong>
                   <span style="font-size:11px;color:var(--text-muted)">Sunrise cream/gold theme</span>
@@ -4018,7 +4018,7 @@ function renderSettingsView() {
           <div class="form-group">
             <select class="form-input" id="settings-lang-select" style="padding:12px">
               <option value="en" ${currentLang === 'en' ? 'selected' : ''}>English (US)</option>
-              <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>Hindi (हिन्दी)</option>
+              <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>Hindi (à¤¹à¤¿à¤¨à¥à¤¦à¥€)</option>
             </select>
           </div>
           <button class="btn btn-secondary" id="btn-save-lang" style="font-size:13px">Change Language</button>
@@ -4074,7 +4074,7 @@ function renderSettingsView() {
     localStorage.setItem('hs_app_lang', currentLang);
     renderAppShell();
     renderSettingsView();
-    alert('Language updated successfully / भाषा सफलतापूर्वक अपडेट की गई');
+    alert('Language updated successfully / à¤­à¤¾à¤·à¤¾ à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¥€ à¤—à¤ˆ');
   });
 
   const verBtn = document.getElementById('btn-check-version');
@@ -4086,7 +4086,7 @@ function renderSettingsView() {
     verStatus.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulseScan 1s infinite;display:inline-block"></span> Checking HS Group server hubs...`;
     
     setTimeout(() => {
-      verStatus.innerHTML = `✓ System is up to date. Latest version <strong>v1.3.0</strong> is active.`;
+      verStatus.innerHTML = `âœ“ System is up to date. Latest version <strong>v1.3.0</strong> is active.`;
       verBtn.disabled = false;
     }, 2000);
   });
@@ -4246,7 +4246,7 @@ function renderEmployeeReports() {
             ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
           </select>
         </div>
-        <button class="btn btn-cyan" id="btn-emp-print-payslip" style="margin-left:auto;padding:10px 18px;width:auto;font-size:13px">🖨️ Print Payslip</button>
+        <button class="btn btn-cyan" id="btn-emp-print-payslip" style="margin-left:auto;padding:10px 18px;width:auto;font-size:13px">ðŸ–¨ï¸ Print Payslip</button>
       </div>
       <div id="payslip-render-container"></div>
     </div>
@@ -4298,48 +4298,48 @@ function renderEmployeePayslip(userId, month, year) {
         <tbody>
           <tr>
             <td>Base Fixed Monthly Salary</td>
-            <td style="text-align:right">₹${payroll.baseSalary.toLocaleString()}</td>
+            <td style="text-align:right">â‚¹${payroll.baseSalary.toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
           <tr>
             <td>House Rent Allowance (HRA)</td>
-            <td style="text-align:right">₹${payroll.allowanceHRA.toLocaleString()}</td>
+            <td style="text-align:right">â‚¹${payroll.allowanceHRA.toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
           <tr>
             <td>Travel Allowance</td>
-            <td style="text-align:right">₹${payroll.allowanceTravel.toLocaleString()}</td>
+            <td style="text-align:right">â‚¹${payroll.allowanceTravel.toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
           <tr>
             <td>Absent Penalties (${payroll.absentDays} days absent)</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.absentDeduction.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">â‚¹${payroll.absentDeduction.toLocaleString()}</td>
           </tr>
           <tr>
             <td>Half-day Salary Deductions (${payroll.halfDays} occurrences)</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.halfDayDeduction.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">â‚¹${payroll.halfDayDeduction.toLocaleString()}</td>
           </tr>
           <tr>
             <td>Provident Fund (PF) Deduction</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionPF.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">â‚¹${payroll.deductionPF.toLocaleString()}</td>
           </tr>
           <tr>
             <td>Professional Tax (PT)</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionPT.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">â‚¹${payroll.deductionPT.toLocaleString()}</td>
           </tr>
           <tr>
             <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS}%)</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionTDSVal.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">â‚¹${payroll.deductionTDSVal.toLocaleString()}</td>
           </tr>
           ${payroll.bonus > 0 ? `
           <tr>
             <td>Manager Discretionary Bonus / Rewards</td>
-            <td style="text-align:right;color:var(--success);font-weight:600">₹${payroll.bonus.toLocaleString()}</td>
+            <td style="text-align:right;color:var(--success);font-weight:600">â‚¹${payroll.bonus.toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
           ` : ''}
@@ -4347,12 +4347,12 @@ function renderEmployeePayslip(userId, month, year) {
           <tr>
             <td>Manager Ad-hoc Deduction / Adjustments</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:var(--error);font-weight:600">₹${payroll.adhocDeduction.toLocaleString()}</td>
+            <td style="text-align:right;color:var(--error);font-weight:600">â‚¹${payroll.adhocDeduction.toLocaleString()}</td>
           </tr>
           ` : ''}
           <tr class="total-row">
             <td>Net Disbursed Take-home Salary</td>
-            <td style="text-align:right" colspan="2">₹${payroll.netSalary.toLocaleString()}</td>
+            <td style="text-align:right" colspan="2">â‚¹${payroll.netSalary.toLocaleString()}</td>
           </tr>
         </tbody>
       </table>
@@ -4386,15 +4386,15 @@ function renderEmployeeProfile() {
   if (!isSelfAdmin) {
     let statusColor = 'var(--success)';
     let statusText = 'Verified / Approved';
-    let icon = '✅';
+    let icon = 'âœ…';
     if (status === 'Pending Approval') {
       statusColor = 'var(--warning)';
       statusText = 'Pending Review';
-      icon = '⏳';
+      icon = 'â³';
     } else if (status === 'Rejected') {
       statusColor = 'var(--error)';
       statusText = 'Issue Flagged';
-      icon = '❌';
+      icon = 'âŒ';
     }
     
     verificationStatusHTML = `
@@ -4419,7 +4419,7 @@ function renderEmployeeProfile() {
       <div style="display:flex; flex-direction:column; gap:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
-          <strong style="color:var(--success); font-size:13px">✅ Verified Admin</strong>
+          <strong style="color:var(--success); font-size:13px">âœ… Verified Admin</strong>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
           <span style="font-size:11.5px; color:var(--text-muted)">Edit Access:</span>
@@ -4431,92 +4431,339 @@ function renderEmployeeProfile() {
 
   main.innerHTML = `
     <style>
-      .profile-layout-container {
-        display: flex;
-        gap: 24px;
-        width: 100%;
-        max-width: 1080px;
+      .prof-page-wrap {
+        max-width: 820px;
         margin: 0 auto;
-      }
-      .profile-left-col {
-        flex: 7;
         display: flex;
         flex-direction: column;
-        gap: 24px;
-        min-width: 0;
+        gap: 18px;
       }
-      .profile-right-col {
-        flex: 3;
-        min-width: 320px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
+      .prof-field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
       }
-      .profile-grid-2-col {
+      .prof-field-row-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
       }
-      @media (max-width: 992px) {
-        .profile-layout-container {
-          flex-direction: column;
-        }
-        .profile-left-col, .profile-right-col {
-          width: 100%;
-          flex: none;
-        }
+      .prof-input {
+        height: 42px;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        padding: 0 12px;
+        font-size: 13.5px;
+        background: #f8fafc;
+        color: #1e293b;
+        width: 100%;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.2s;
       }
-      @media (max-width: 600px) {
-        .profile-grid-2-col {
-          grid-template-columns: 1fr;
-        }
-        .profile-grid-2-col > div {
-          grid-column: auto !important;
-        }
+      .prof-input:focus { border-color: #ef4444; background: #fff; }
+      .prof-input[readonly], .prof-input[disabled] { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+      .prof-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 5px;
+        display: block;
+      }
+      .prof-section-card {
+        background: #fff;
+        border: 1.5px solid #e8ecf0;
+        border-radius: 14px;
+        padding: 22px 24px;
+      }
+      .prof-section-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0 0 16px 0;
+        padding-bottom: 10px;
+        border-bottom: 1.5px solid #f1f5f9;
+      }
+      @media (max-width: 700px) {
+        .prof-field-row { grid-template-columns: 1fr 1fr; }
+        .prof-field-row-2 { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 500px) {
+        .prof-field-row { grid-template-columns: 1fr; }
       }
     </style>
-    
+
     <div class="content-header">
       <div>
         <h1 class="content-title">My Details</h1>
         <div class="content-subtitle">Complete your details and update your personal information.</div>
       </div>
     </div>
-    
-    <div class="content-body" style="padding-top: 0;">
-      <form id="profile-details-form" style="width: 100%;">
-        <div class="profile-layout-container">
-          
-          <!-- Left Column (70%) -->
-          <div class="profile-left-col">
-            
-            <!-- Assigner Card -->
-            ${(() => {
-              if (user.assignedById) {
-                const assigner = DB.getUser(user.assignedById);
-                if (assigner) {
-                  const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
-                  const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-                  const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-                  return `
-                    <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding: 16px 20px; border-left:4px solid var(--primary); background: linear-gradient(135deg, rgba(251,191,36,0.04), rgba(0,0,0,0));">
-                      <div style="display:flex; align-items:center; gap:16px;">
-                        <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, var(--primary), #f59e0b); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#000; flex-shrink:0; box-shadow:0 4px 10px rgba(251,191,36,0.25);">
-                          ${initials}
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:2px;">Registered / Assigned By</div>
-                          <div style="font-size:15px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
-                          <div style="font-size:11.5px; color:var(--primary); font-weight:500; margin-top:1px;">${roleLabel}</div>
-                        </div>
-                        <div style="text-align:right; flex-shrink:0;">
-                          <div style="font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Date of Joining</div>
-                          <div style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">${joinedDate}</div>
-                          <div style="display:inline-block; margin-top:4px; padding:2px 8px; background:rgba(251,191,36,0.1); color:var(--primary); border-radius:20px; font-size:9.5px; font-weight:700; border:1px solid rgba(251,191,36,0.15);">✓ Verified Staff</div>
-                        </div>
+
+    <div class="content-body" style="padding-top:0;">
+      <form id="profile-details-form">
+        <div class="prof-page-wrap">
+
+          <!-- Alert -->
+          <div id="profile-alert" class="alert" style="display:none;"></div>
+
+          <!-- Profile Status Bar -->
+          ${!isSelfAdmin ? `
+          <div class="prof-section-card" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:13px; color:#475569;">
+              Profile Status:&nbsp;
+              <strong style="color:${
+                status === 'Approved' ? '#16a34a' : status === 'Pending Approval' ? '#d97706' : '#dc2626'
+              };">
+                ${status === 'Approved' ? 'âœ… Verified / Approved' : status === 'Pending Approval' ? 'â³ Pending Review' : 'âŒ Issue Flagged'}
+              </strong>
+            </div>
+            <div style="font-size:12.5px; color:#94a3b8; font-weight:600;">Direct Edits Used: ${editCount}/3</div>
+          </div>
+          ` : `
+          <div class="prof-section-card" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="font-size:13px; color:#475569;">
+              Profile Status:&nbsp;<strong style="color:#16a34a;">âœ… Verified Admin</strong>
+            </div>
+            <div style="font-size:12.5px; color:#94a3b8; font-weight:600;">Edit Access: Unlimited</div>
+          </div>
+          `}
+
+          <!-- ID Card (centered) -->
+          <div style="display:flex; justify-content:center; align-items:center;">
+            <div class="id-card" id="employee-id-badge" style="width:100%; max-width:360px; height:210px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer;">
+              <!-- FRONT -->
+              <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fdf6ec,#faebd7); border:1px solid #e8d5b7; box-shadow:0 8px 24px rgba(180,130,60,0.12); display:flex; flex-direction:column; justify-content:space-between;">
+                <!-- Header -->
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(180,130,60,0.2); padding-bottom:8px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="surya-logo.png?v=6" alt="Surya Logo" style="height:22px; object-fit:contain;">
+                    <div>
+                      <div style="font-size:10px; font-weight:800; color:#b45309; letter-spacing:1px; text-transform:uppercase; line-height:1.2;">HS GROUP DELHI</div>
+                      <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px;">HOUSE OF SURYA</div>
+                    </div>
+                  </div>
+                  <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
+                </div>
+                <!-- Avatar + Name -->
+                <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
+                  <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
+                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(user.name)}
+                  </div>
+                  <div style="overflow:hidden;">
+                    <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'Plus Jakarta Sans',sans-serif; margin-bottom:2px;">${Utils.escape(user.name)}</div>
+                    <div style="font-size:10px; color:#b45309; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
+                    <div style="font-size:9.5px; color:#78716c; margin-top:1px;">${Utils.escape(user.department || 'General')}</div>
+                  </div>
+                </div>
+                <!-- Footer -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                  <div>
+                    <div style="font-size:7px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; opacity:0.8;">EMPLOYEE ID</div>
+                    <div style="font-size:11px; font-weight:800; color:#b45309;">${Utils.escape(user.employeeId)}</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:7px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; opacity:0.8;">JOINED DATE</div>
+                    <div style="font-size:11px; font-weight:600; color:#44403c;">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+              <!-- BACK -->
+              <div class="id-card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#1e293b,#0f172a); border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 24px rgba(0,0,0,0.35); display:flex; flex-direction:column; justify-content:space-between; transform:rotateY(180deg);">
+                <div style="border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px; font-size:9px; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Emergency &amp; Office Info</div>
+                <div style="font-size:10.5px; display:flex; flex-direction:column; gap:8px;">
+                  <div>
+                    <span style="color:rgba(255,255,255,0.5); font-size:8px; text-transform:uppercase; display:block; margin-bottom:1px;">Emergency Contact</span>
+                    <strong style="color:#fff;">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
+                  </div>
+                  <div>
+                    <span style="color:rgba(255,255,255,0.5); font-size:8px; text-transform:uppercase; display:block; margin-bottom:1px;">Office Location</span>
+                    <span style="font-size:10px; color:rgba(255,255,255,0.8); line-height:1.3; display:block;">${Utils.escape(locationText)}</span>
+                  </div>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); padding:8px 12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <span style="font-size:7px; color:rgba(255,255,255,0.5); text-transform:uppercase; display:block;">Attendance Badge</span>
+                    <span style="font-size:9px; font-family:monospace; color:#fbbf24; font-weight:700; margin-top:2px; display:block;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
+                  </div>
+                  <div style="display:flex; gap:2px; height:24px; background:rgba(255,255,255,0.9); padding:3px 6px; border-radius:2px; align-items:stretch;">
+                    <div style="width:2px; background:#000;"></div><div style="width:1px; background:#000;"></div><div style="width:3px; background:#000;"></div><div style="width:1px; background:#000;"></div><div style="width:2px; background:#000;"></div><div style="width:4px; background:#000;"></div><div style="width:1px; background:#000;"></div><div style="width:2px; background:#000;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assigner Card -->
+          ${(() => {
+            if (user.assignedById) {
+              const assigner = DB.getUser(user.assignedById);
+              if (assigner) {
+                const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
+                const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                return `
+                  <div class="prof-section-card" style="padding:16px 20px; border-left:4px solid #ef4444;">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                      <div style="width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#ef4444,#f97316); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; flex-shrink:0; box-shadow:0 4px 10px rgba(239,68,68,0.25);">${initials}</div>
+                      <div style="flex:1; min-width:0;">
+                        <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:2px;">REGISTERED / ASSIGNED BY</div>
+                        <div style="font-size:14.5px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
+                        <div style="font-size:11.5px; color:#ef4444; font-weight:500; margin-top:1px;">${roleLabel}</div>
+                      </div>
+                      <div style="text-align:right; flex-shrink:0;">
+                        <div style="font-size:9px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">DATE OF JOINING</div>
+                        <div style="font-size:13px; font-weight:700; color:#ef4444;">${joinedDate}</div>
+                        <div style="display:inline-block; margin-top:5px; padding:2px 9px; background:#fef2f2; color:#dc2626; border-radius:20px; font-size:9.5px; font-weight:700; border:1px solid #fecaca;">âœ“ Verified Staff</div>
                       </div>
                     </div>
-                  `;
+                  </div>
+                `;
+              }
+            }
+            return '';
+          })()}
+
+          <!-- Personal Details -->
+          <div class="prof-section-card">
+            <h3 class="prof-section-title">Personal Details</h3>
+            <div class="prof-field-row" style="margin-bottom:16px;">
+              <div>
+                <label class="prof-label" for="prof-name">Full Name <span style="font-weight:400;color:#b0bec5;font-size:11px;">(Letters only)</span></label>
+                <input class="prof-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. John Doe">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-empid">Employee ID</label>
+                <input class="prof-input" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-username">Username (Optional)</label>
+                <input class="prof-input" type="text" id="prof-username" value="${Utils.escape(user.username)}">
+              </div>
+            </div>
+            <div class="prof-field-row">
+              <div>
+                <label class="prof-label" for="prof-password">Change Password (Optional)</label>
+                <input class="prof-input" type="text" id="prof-password" placeholder="Leave empty for no change">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-email">Email Address</label>
+                <input class="prof-input" type="email" id="prof-email" value="${Utils.escape(user.email)}" placeholder="username@surya.group" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-phone">Mobile Number</label>
+                <input class="prof-input" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" placeholder="+91 9999999999" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Personal Info -->
+          <div class="prof-section-card">
+            <h3 class="prof-section-title">Additional Information</h3>
+            <div class="prof-field-row" style="margin-bottom:16px;">
+              <div>
+                <label class="prof-label" for="prof-dob">Date of Birth</label>
+                <input class="prof-input" type="date" id="prof-dob" value="${user.dob || ''}" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-gender">Gender</label>
+                <select class="prof-input" id="prof-gender" required>
+                  <option value="Male" ${user.gender === 'Male' ? 'selected' : ''}>Male</option>
+                  <option value="Female" ${user.gender === 'Female' ? 'selected' : ''}>Female</option>
+                  <option value="Other" ${user.gender === 'Other' ? 'selected' : ''}>Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-emergency">Emergency Contact</label>
+                <input class="prof-input" type="text" id="prof-emergency" value="${Utils.escape(user.emergencyContact || '')}" placeholder="Emergency contact phone" required>
+              </div>
+            </div>
+            <div class="prof-field-row-2">
+              <div>
+                <label class="prof-label" for="prof-city">City</label>
+                <input class="prof-input" type="text" id="prof-city" value="${Utils.escape(user.city)}" placeholder="e.g. Delhi" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-address">Address</label>
+                <input class="prof-input" type="text" id="prof-address" value="${Utils.escape(user.address)}" placeholder="Street/Building info" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Work Information -->
+          <div class="prof-section-card">
+            <h3 class="prof-section-title">Work Information</h3>
+            <div class="prof-field-row" style="margin-bottom:16px;">
+              <div>
+                <label class="prof-label" for="prof-dept">Department</label>
+                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-designation">Designation</label>
+                <input class="prof-input" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-doj">Date of Joining</label>
+                <input class="prof-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required>
+              </div>
+            </div>
+            <div class="prof-field-row-2">
+              <div>
+                <label class="prof-label" for="prof-worksite">Worksite Location</label>
+                <input class="prof-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-workshift">Work Shift</label>
+                <input class="prof-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payroll Information -->
+          <div class="prof-section-card">
+            <h3 class="prof-section-title">Payroll Information</h3>
+            <div class="prof-field-row">
+              <div>
+                <label class="prof-label" for="prof-salary">Base Salary (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-hra">HRA Allowance (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-travel">Travel Allowance (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-pf">PF Deduction (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-pt">Professional Tax (PT)</label>
+                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}">
+              </div>
+              <div>
+                <label class="prof-label" for="prof-tds">TDS Rate (%)</label>
+                <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100">
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
+            <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #e2e8f0; background:#fff; color:#475569; cursor:pointer; width:auto;">Edit Profile</button>
+            <button class="btn" type="button" id="btn-profile-update" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #e2e8f0; background:#fff; color:#1e293b; cursor:pointer; width:auto;">Update</button>
+            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding:10px 28px; font-size:13px; font-weight:700; border-radius:8px; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; cursor:pointer; width:auto; opacity:0.6;">Save Changes</button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  `;
+
+
+          
                 }
               }
               return '';
@@ -4643,128 +4890,6 @@ function renderEmployeeProfile() {
             </div>
 
           </div>
-          
-          <!-- Right Column (30%) -->
-          <div class="profile-right-col">
-            
-            <!-- Profile ID Badge Card & Photo Button -->
-            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display: flex; flex-direction: column; align-items: center; gap: 16px;">
-              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; width: 100%;">Identity Card</h3>
-              
-              <div class="id-card-wrapper" style="display: flex; justify-content: center; width: 100%;">
-                <div class="id-card" id="employee-id-badge" style="width: 100%; max-width: 380px; height: 230px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
-                  
-                  <!-- FRONT SIDE -->
-                  <div class="id-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 70%); pointer-events: none;"></div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
-                      <div style="display: flex; align-items: center; gap: 8px;">
-                        <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(251,191,36,0.2)); mix-blend-mode: multiply;">
-                        <div>
-                          <div style="font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;">HS Group Delhi</div>
-                          <div style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">House of Surya</div>
-                        </div>
-                      </div>
-                      <div style="font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${badgeTitle}</div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                      <div id="btn-upload-profile-photo" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; position: relative;">
-                        ${user.photo ? `
-                          <img src="${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
-                        ` : `
-                          ${getInitials(user.name)}
-                        `}
-                      </div>
-                      <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
-                        <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);margin-bottom:2px;font-family:'Plus Jakarta Sans',sans-serif;">${Utils.escape(user.name)}</div>
-                        <div style="font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
-                        <div style="font-size: 10px; color: var(--text-secondary);">${Utils.escape(user.department || 'General')}</div>
-                      </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9px; color: var(--text-secondary);">
-                      <div>
-                        <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Employee ID</div>
-                        <div style="font-weight: 700; color: var(--primary); font-size: 11px;">${Utils.escape(user.employeeId)}</div>
-                      </div>
-                      <div style="text-align: right;">
-                        <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Joined Date</div>
-                        <div style="font-weight: 600; color: var(--text-primary);">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- BACK SIDE -->
-                  <div class="id-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; transform: rotateY(180deg);">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.08), transparent 70%); pointer-events: none;"></div>
-                    
-                    <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
-                      Emergency & Office Info
-                    </div>
-                    
-                    <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
-                      <div>
-                        <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Emergency Contact</span>
-                        <strong style="color: var(--text-primary);">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
-                      </div>
-                      <div>
-                        <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Office Location</span>
-                        <span style="font-size: 10px; line-height: 1.3; display: block; color: var(--text-primary);">${Utils.escape(locationText)}</span>
-                      </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: var(--radius-sm);">
-                      <div style="display: flex; flex-direction: column;">
-                        <span style="font-size: 7px; color: var(--text-secondary); opacity: 0.75; text-transform: uppercase;">Scan Attendance Badge</span>
-                        <span style="font-size: 9px; font-family: monospace; color: var(--primary); font-weight: 700; margin-top: 2px;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
-                      </div>
-                      <div style="display: flex; gap: 2px; align-items: stretch; height: 26px; background: rgba(255,255,255,0.85); padding: 3px 6px; border-radius: 2px;">
-                        <div style="width: 2px; background: #000;"></div>
-                        <div style="width: 1px; background: #000;"></div>
-                        <div style="width: 3px; background: #000;"></div>
-                        <div style="width: 1px; background: #000;"></div>
-                        <div style="width: 2px; background: #000;"></div>
-                        <div style="width: 4px; background: #000;"></div>
-                        <div style="width: 1px; background: #000;"></div>
-                        <div style="width: 2px; background: #000;"></div>
-                        <div style="width: 3px; background: #000;"></div>
-                        <div style="width: 1px; background: #000;"></div>
-                        <div style="width: 2px; background: #000;"></div>
-                        <div style="width: 1px; background: #000;"></div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                </div>
-              </div>
-
-
-            </div>
-
-            <!-- Account Status Card -->
-            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display:flex; flex-direction:column; gap:12px;">
-              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Account Verification</h3>
-              ${verificationStatusHTML}
-            </div>
-
-            <!-- Quick Actions Card -->
-            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display:flex; flex-direction:column; gap:16px;">
-              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Quick Actions</h3>
-              <div style="display:flex; flex-direction:column; gap:12px">
-                <button class="btn btn-outline-equify" type="button" id="btn-profile-edit-focus" style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-secondary); cursor:pointer;">Edit Profile</button>
-                <button class="btn btn-primary-equify" type="submit" id="btn-profile-save" disabled style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">Save</button>
-                <button class="btn btn-outline-equify" type="button" id="btn-profile-update" style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid var(--border); color:var(--text-primary); cursor:pointer;">Update</button>
-              </div>
-            </div>
-
-          </div>
-          
-        </div>
-      </form>
-    </div>
-  `;
 
 
 
@@ -4777,7 +4902,7 @@ function renderEmployeeProfile() {
     });
   }
 
-  // Photo upload bindings — Upload Photo button & Avatar click
+  // Photo upload bindings â€” Upload Photo button & Avatar click
   const uploadPhotoBtn = document.getElementById('btn-upload-profile-photo');
   const uploadPhotoBtnReal = document.getElementById('btn-upload-profile-photo-real');
   const photoFileInput = document.getElementById('my-profile-photo-file-input');
@@ -4795,7 +4920,7 @@ function renderEmployeeProfile() {
         const targetBtn = uploadPhotoBtnReal || uploadPhotoBtn;
         const originalHTML = targetBtn.innerHTML;
         targetBtn.disabled = true;
-        targetBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">⏳ Uploading...</span>';
+        targetBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">â³ Uploading...</span>';
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -4805,7 +4930,7 @@ function renderEmployeeProfile() {
             Auth.init();
             renderAppShell();
             if (typeof showToastNotification === 'function') {
-              showToastNotification('✅ Profile photo uploaded successfully!', 'success');
+              showToastNotification('âœ… Profile photo uploaded successfully!', 'success');
             }
             renderEmployeeProfile();
           } catch (err) {
@@ -4890,11 +5015,11 @@ function renderEmployeeProfile() {
 
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.innerHTML = '⏳ Saving...';
+      saveBtn.innerHTML = 'â³ Saving...';
     }
     if (updateBtn) {
       updateBtn.disabled = true;
-      updateBtn.innerHTML = '⏳ Updating...';
+      updateBtn.innerHTML = 'â³ Updating...';
     }
 
     setTimeout(() => {
@@ -5090,11 +5215,11 @@ function renderEmployeeVerification() {
 function getVerificationBadgeHTML(user, type) {
   const status = user.verificationStatuses ? user.verificationStatuses[type] : null;
   if (status === 'Approved') {
-    return `<span class="badge badge-approved" style="font-size:10.5px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2)">✅ Approved</span>`;
+    return `<span class="badge badge-approved" style="font-size:10.5px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2)">âœ… Approved</span>`;
   } else if (status === 'Rejected') {
-    return `<span class="badge badge-rejected" style="font-size:10.5px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(239,68,68,0.2)">❌ Rejected</span>`;
+    return `<span class="badge badge-rejected" style="font-size:10.5px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(239,68,68,0.2)">âŒ Rejected</span>`;
   } else {
-    return `<span class="badge badge-pending" style="font-size:10.5px; width:fit-content; background:rgba(251,191,36,0.1); color:var(--primary); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(251,191,36,0.2)">⏳ Pending Approval</span>`;
+    return `<span class="badge badge-pending" style="font-size:10.5px; width:fit-content; background:rgba(251,191,36,0.1); color:var(--primary); font-weight:600; padding:2px 8px; border-radius:4px; border:1px solid rgba(251,191,36,0.2)">â³ Pending Approval</span>`;
   }
 }
 
@@ -5396,10 +5521,10 @@ function showDocumentPreview(userId, docType) {
     <div class="modal-content" style="max-width: 600px">
       <div class="modal-header">
         <h3 class="modal-title">${modalTitle} - Preview</h3>
-        <button class="close-modal-btn" id="close-preview-modal-btn">✕</button>
+        <button class="close-modal-btn" id="close-preview-modal-btn">âœ•</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;padding:20px;border:1px dashed var(--border);border-radius:var(--radius-md);background:rgba(255,255,255,0.02)">
-        <div style="font-size:48px">${docType === 'resume' ? '📄' : (docType === 'aadhar' ? '🪪' : '🏦')}</div>
+        <div style="font-size:48px">${docType === 'resume' ? 'ðŸ“„' : (docType === 'aadhar' ? 'ðŸªª' : 'ðŸ¦')}</div>
         <div style="font-weight:600;font-size:16px">${Utils.escape(doc.name)}</div>
         <div style="color:var(--text-muted);font-size:12px">${doc.size} | Uploaded on ${doc.date}</div>
         <hr style="width:100%;border:0;border-top:1px solid var(--border);margin:12px 0">
@@ -5422,7 +5547,7 @@ function showDocumentPreview(userId, docType) {
                 <span style="font-size:10px;color:var(--text-muted)">Aadhaar Card Simulator</span>
               </div>
               <div style="display:flex;gap:16px;align-items:center">
-                <div style="width:60px;height:75px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:32px">👤</div>
+                <div style="width:60px;height:75px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:32px">ðŸ‘¤</div>
                 <div>
                   <div style="font-size:14px;font-weight:700;margin-bottom:4px">${Utils.escape(user.name)}</div>
                   <div style="font-size:11px">DOB: ${user.dob || 'N/A'}</div>
@@ -5831,15 +5956,15 @@ function renderAdminVerificationView() {
               ${employees.map(u => {
                 const getDocStatusHTML = (doc, type) => {
                   if (!doc) {
-                    return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+                    return `<span class="badge badge-absent" style="font-size:11px">âŒ Missing</span>`;
                   }
                   
                   const status = u.verificationStatuses ? u.verificationStatuses[type] : null;
-                  let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
+                  let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">âœ… Uploaded</span>`;
                   if (status === 'Approved') {
-                    badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`;
+                    badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">âœ… Approved</span>`;
                   } else if (status === 'Rejected') {
-                    badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">❌ Rejected</span>`;
+                    badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">âŒ Rejected</span>`;
                   }
                   
                   let approveBtnHTML = '';
@@ -5853,7 +5978,7 @@ function renderAdminVerificationView() {
 
                   if (type === 'document') {
                     if (Array.isArray(doc) && doc.length === 0) {
-                      return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+                      return `<span class="badge badge-absent" style="font-size:11px">âŒ Missing</span>`;
                     }
                     const docObj = Array.isArray(doc) ? doc[0] : doc;
                     return `
@@ -5980,10 +6105,10 @@ function openUploadDocumentModal(preselectedUserId = null) {
   let employeeOptionsHTML = '';
   if (isPreselected) {
     const targetUser = DB.getUser(preselectedUserId);
-    employeeOptionsHTML = `<option value="${targetUser.id}" selected>${Utils.escape(targetUser.name)} — ${Utils.escape(targetUser.department || 'Staff')}</option>`;
+    employeeOptionsHTML = `<option value="${targetUser.id}" selected>${Utils.escape(targetUser.name)} â€” ${Utils.escape(targetUser.department || 'Staff')}</option>`;
   } else {
     employeeOptionsHTML = allEmployees.map(u => 
-      `<option value="${u.id}">${Utils.escape(u.name)} — ${Utils.escape(u.department || 'Staff')}</option>`
+      `<option value="${u.id}">${Utils.escape(u.name)} â€” ${Utils.escape(u.department || 'Staff')}</option>`
     ).join('');
   }
 
@@ -6119,7 +6244,7 @@ function getBirthdayWidgetHTML() {
     
     const isSelf = currentUser && u.id === currentUser.id;
     const wishBtnHTML = isSelf 
-      ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! 🎉</span>`
+      ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! ðŸŽ‰</span>`
       : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>`;
     
     return `
@@ -6137,13 +6262,13 @@ function getBirthdayWidgetHTML() {
           <div style="min-width:0; flex:1">
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
               <strong style="font-size:13px; color:#ffffff !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
-              ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">🎂</span>' : ''}
+              ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">ðŸŽ‚</span>' : ''}
             </div>
             <div style="font-size:11px; color:#aab4c0 !important; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
               ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
             </div>
             <div style="font-size:10px; color:#8896a5 !important; margin-top:2px">
-              ID: ${Utils.escape(u.employeeId)} • Date: <strong style="color:#ffffff !important">${s.formattedDate}</strong>
+              ID: ${Utils.escape(u.employeeId)} â€¢ Date: <strong style="color:#ffffff !important">${s.formattedDate}</strong>
             </div>
           </div>
         </div>
@@ -6154,15 +6279,15 @@ function getBirthdayWidgetHTML() {
 
   const todayHTML = todayList.length > 0 
     ? todayList.map(item => renderCard(item, true)).join('')
-    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays today 🎂</div>`;
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays today ðŸŽ‚</div>`;
 
   const tomorrowHTML = tomorrowList.length > 0
     ? tomorrowList.map(item => renderCard(item, false)).join('')
-    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays tomorrow 🎉</div>`;
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays tomorrow ðŸŽ‰</div>`;
 
   const upcomingHTML = upcomingList.length > 0
     ? upcomingList.map(item => renderCard(item, false)).join('')
-    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No upcoming birthdays in the next 7 days 📅</div>`;
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No upcoming birthdays in the next 7 days ðŸ“…</div>`;
 
   const totalCount = todayList.length + tomorrowList.length + upcomingList.length;
 
@@ -6170,7 +6295,7 @@ function getBirthdayWidgetHTML() {
     <div class="card-panel" style="margin-top:0px">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px">
         <h3 class="card-panel-title" style="margin:0; font-size:14px; display:flex; align-items:center; gap:6px">
-          🎉 Company Birthdays <span style="font-size:10px; background:rgba(220,38,38,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700">${totalCount}</span>
+          ðŸŽ‰ Company Birthdays <span style="font-size:10px; background:rgba(220,38,38,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700">${totalCount}</span>
         </h3>
         <button id="btn-birthday-view-all" class="btn" style="padding:4px 10px; font-size:11px; width:auto; background:rgba(137,32,27,0.06); border:1px solid var(--border); color:var(--primary); font-weight:700">View All</button>
       </div>
@@ -6179,7 +6304,7 @@ function getBirthdayWidgetHTML() {
         <!-- Today's Group -->
         <div>
           <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
-            <span>🎂 Today</span>
+            <span>ðŸŽ‚ Today</span>
             <span>(${todayList.length})</span>
           </div>
           ${todayHTML}
@@ -6188,7 +6313,7 @@ function getBirthdayWidgetHTML() {
         <!-- Tomorrow's Group -->
         <div>
           <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
-            <span>🎉 Tomorrow</span>
+            <span>ðŸŽ‰ Tomorrow</span>
             <span>(${tomorrowList.length})</span>
           </div>
           ${tomorrowHTML}
@@ -6197,7 +6322,7 @@ function getBirthdayWidgetHTML() {
         <!-- Upcoming Group -->
         <div>
           <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
-            <span>📅 Upcoming (Next 7 Days)</span>
+            <span>ðŸ“… Upcoming (Next 7 Days)</span>
             <span>(${upcomingList.length})</span>
           </div>
           ${upcomingHTML}
@@ -6247,7 +6372,7 @@ function openSendWishModal(userId) {
 
   modal.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px">
-      <h3 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">🎉 Send Birthday Wishes</h3>
+      <h3 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">ðŸŽ‰ Send Birthday Wishes</h3>
       <button id="btn-close-wish-modal" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer">&times;</button>
     </div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid var(--border)">
@@ -6267,7 +6392,7 @@ function openSendWishModal(userId) {
     </div>
     <div class="form-group" style="margin-bottom:16px">
       <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">BIRTHDAY MESSAGE</label>
-      <textarea id="wish-message-text" class="form-input" rows="3" style="width:100%; box-sizing:border-box; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:12.5px; padding:10px; border-radius:10px; resize:vertical">Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, ${user.name}! 🎂🎉</textarea>
+      <textarea id="wish-message-text" class="form-input" rows="3" style="width:100%; box-sizing:border-box; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:12.5px; padding:10px; border-radius:10px; resize:vertical">Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, ${user.name}! ðŸŽ‚ðŸŽ‰</textarea>
     </div>
     <div class="form-group" style="margin-bottom:20px">
       <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">SENDING METHOD</label>
@@ -6305,7 +6430,7 @@ function openSendWishModal(userId) {
       if (!DB.data.announcements) DB.data.announcements = [];
       DB.data.announcements.unshift({
         id: 'ann_' + Math.random().toString(36).substring(2, 9),
-        title: '🎂 Happy Birthday Wish!',
+        title: 'ðŸŽ‚ Happy Birthday Wish!',
         content: message,
         category: 'Urgent',
         date: new Date().toISOString().split('T')[0],
@@ -6317,7 +6442,7 @@ function openSendWishModal(userId) {
 
     closeWishModal();
     if (typeof showToastNotification === 'function') {
-      showToastNotification(`✅ Birthday wishes successfully sent to ${user.name}!`, 'success');
+      showToastNotification(`âœ… Birthday wishes successfully sent to ${user.name}!`, 'success');
     }
   });
 }
@@ -6343,7 +6468,7 @@ function openAllBirthdaysModal() {
 
   modal.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
-      <h3 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">📅 Company Birthday Directory</h3>
+      <h3 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">ðŸ“… Company Birthday Directory</h3>
       <button id="btn-close-all-birthdays" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer">&times;</button>
     </div>
     <div style="margin-bottom:16px">
@@ -6403,7 +6528,7 @@ function openAllBirthdaysModal() {
 
       const isSelf = currentUser && u.id === currentUser.id;
       const wishBtnHTML = isSelf 
-        ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! 🎉</span>`
+        ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! ðŸŽ‰</span>`
         : `<button class="btn btn-directory-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
 
       return `
@@ -6424,7 +6549,7 @@ function openAllBirthdaysModal() {
                 ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
               </span>
               <span style="font-size:10px; color:#a0aec0 !important; display:block; margin-top:3px">
-                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:#ffffff !important">${formattedDob}</strong>
+                ID: ${Utils.escape(u.employeeId)} &nbsp;â€¢&nbsp; DOB: <strong style="color:#ffffff !important">${formattedDob}</strong>
               </span>
             </div>
           </div>
@@ -6532,14 +6657,14 @@ function renderAdminDashboard() {
     worksitePanelHTML = `
       <div class="card-panel" style="margin-top:20px">
         <div class="card-panel-header">
-          <h3 class="card-panel-title">🏢 Today's Worksite Distribution (Management View)</h3>
+          <h3 class="card-panel-title">ðŸ¢ Today's Worksite Distribution (Management View)</h3>
         </div>
         <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
           ${Object.entries(locationGroups).map(([locName, staffList]) => {
-            let locIcon = '📍';
-            if (locName.includes('HQ')) locIcon = '🏢';
-            else if (locName.includes('Hub')) locIcon = '🏬';
-            else if (locName.includes('Home')) locIcon = '🏠';
+            let locIcon = 'ðŸ“';
+            if (locName.includes('HQ')) locIcon = 'ðŸ¢';
+            else if (locName.includes('Hub')) locIcon = 'ðŸ¬';
+            else if (locName.includes('Home')) locIcon = 'ðŸ ';
 
             const staffListHTML = staffList.length === 0
               ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No staff checked in here today.</div>`
@@ -6580,32 +6705,32 @@ function renderAdminDashboard() {
       <div class="stats-grid">
         <!-- Total Employees -->
         <div class="stat-card">
-          <div class="stat-icon stat-icon-blue">👥</div>
+          <div class="stat-icon stat-icon-blue">ðŸ‘¥</div>
           <div class="stat-info"><span class="stat-value">${totalEmployees}</span><span class="stat-label">Total Staff</span></div>
         </div>
         <!-- Present Now -->
         <div class="stat-card">
-          <div class="stat-icon stat-icon-green">✅</div>
+          <div class="stat-icon stat-icon-green">âœ…</div>
           <div class="stat-info"><span class="stat-value">${presentCount}</span><span class="stat-label">Present Now</span></div>
         </div>
         <!-- Absent Today -->
         <div class="stat-card">
-          <div class="stat-icon stat-icon-red">❌</div>
+          <div class="stat-icon stat-icon-red">âŒ</div>
           <div class="stat-info"><span class="stat-value">${absentCount < 0 ? 0 : absentCount}</span><span class="stat-label">Absent Today</span></div>
         </div>
         <!-- Late Arrivals -->
         <div class="stat-card">
-          <div class="stat-icon stat-icon-amber">⏰</div>
+          <div class="stat-icon stat-icon-amber">â°</div>
           <div class="stat-info"><span class="stat-value">${lateCount}</span><span class="stat-label">Late Arrivals</span></div>
         </div>
         <!-- Approved Leave -->
         <div class="stat-card">
-          <div class="stat-icon stat-icon-cyan">📁</div>
+          <div class="stat-icon stat-icon-cyan">ðŸ“</div>
           <div class="stat-info"><span class="stat-value">${leaveCount}</span><span class="stat-label">Approved Leave</span></div>
         </div>
         <!-- Pending Swaps -->
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:rgb(139,92,246)">🔄</div>
+          <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:rgb(139,92,246)">ðŸ”„</div>
           <div class="stat-info"><span class="stat-value">${pendingSwapsCount}</span><span class="stat-label">Pending Swaps</span></div>
         </div>
       </div>
@@ -6651,7 +6776,7 @@ function renderAdminDashboard() {
         <!-- Publish Announcement Card -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">📢 Publish Company Announcement</h3>
+            <h3 class="card-panel-title">ðŸ“¢ Publish Company Announcement</h3>
           </div>
           <form id="admin-announcement-form" style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
             <div class="form-group">
@@ -6679,7 +6804,7 @@ function renderAdminDashboard() {
         <!-- Active Announcements List Card -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">🗂️ Active Board Notices</h3>
+            <h3 class="card-panel-title">ðŸ—‚ï¸ Active Board Notices</h3>
           </div>
           <div id="admin-announcements-list" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
             <!-- announcements list loaded dynamically -->
@@ -6703,7 +6828,7 @@ function renderAdminDashboard() {
       if (l.status === 'Half Day') statusClass = 'badge-half-day';
       if (l.status === 'Pending Verification') statusClass = 'badge-late';
 
-      // Live GPS — distance is stored in km at check-in time
+      // Live GPS â€” distance is stored in km at check-in time
       // 100m geofence = 0.1 km threshold
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
@@ -6899,11 +7024,11 @@ function renderAdminUsers() {
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
                 if (profileStatus === 'Pending Approval') {
-                  profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
+                  profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">â³ Profile Pending</span>`;
                 } else if (profileStatus === 'Rejected') {
-                  profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
+                  profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">âŒ Profile Issue</span>`;
                 } else {
-                  profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
+                  profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">âœ… Profile Approved</span>`;
                 }
 
                  const actionsHTML = (user.role === 'hr' || user.role === 'manager')
@@ -6928,10 +7053,10 @@ function renderAdminUsers() {
                       ${profileBadgeHTML}
                     </td>
                     <td>${Utils.escape(u.username)}</td>
-                    <td><code>••••••••</code></td>
+                    <td><code>â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
                     <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
-                    <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
+                    <td style="font-weight:700;color:var(--primary)">â‚¹${(u.baseSalary || 50000).toLocaleString()}</td>
                     <td>
                       ${actionsHTML}
                     </td>
@@ -7041,11 +7166,11 @@ function renderAdminUsers() {
           const profileStatus = u.profileVerificationStatus || 'Approved';
           let profileBadgeHTML = '';
           if (profileStatus === 'Pending Approval') {
-            profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
+            profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">â³ Profile Pending</span>`;
           } else if (profileStatus === 'Rejected') {
-            profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
+            profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">âŒ Profile Issue</span>`;
           } else {
-            profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
+            profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">âœ… Profile Approved</span>`;
           }
 
           const actionsHTML = (user.role === 'hr' || user.role === 'manager')
@@ -7068,10 +7193,10 @@ function renderAdminUsers() {
                 ${profileBadgeHTML}
               </td>
               <td>${Utils.escape(u.username)}</td>
-              <td><code>••••••••</code></td>
+              <td><code>â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</code></td>
               <td>${sch ? Utils.escape(sch.name) : '-'}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
-              <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
+              <td style="font-weight:700;color:var(--primary)">â‚¹${(u.baseSalary || 50000).toLocaleString()}</td>
               <td>
                 ${actionsHTML}
               </td>
@@ -7266,8 +7391,8 @@ function openUserModal(userId = null) {
             `).join('')}
           </select>
           <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="button" id="btn-pref-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
-            <button type="button" id="btn-pref-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
+            <button type="button" id="btn-pref-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">ðŸ“ Fetch Nearby Location</button>
+            <button type="button" id="btn-pref-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">âœï¸ Enter Any Location</button>
           </div>
         </div>
         <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px">
@@ -7484,12 +7609,12 @@ function renderAdminSchedules() {
                 </button>
               </div>
             </div>
-            <div class="shift-meta-row"><span>Working Hours:</span><strong style="color:var(--text-primary)">${formatTime12h(s.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(s.endTime)}</strong></div>
+            <div class="shift-meta-row"><span>Working Hours:</span><strong style="color:var(--text-primary)">${formatTime12h(s.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">â†’</span> ${formatTime12h(s.endTime)}</strong></div>
             <div class="shift-meta-row"><span>Grace Period:</span><strong style="color:var(--warning)">${s.gracePeriod} minutes</strong></div>
             <div class="shift-meta-row" style="margin-top:8px; display:flex; flex-direction:column; gap:4px; align-items:stretch;">
               <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
                 <span style="font-size:12px; color:var(--text-secondary)">Location Select:</span>
-                <button class="btn-add-location-inline" data-id="${s.id}" title="Add New Location" style="padding:2px 8px;font-size:10px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;white-space:nowrap;width:auto">➕ Add Location</button>
+                <button class="btn-add-location-inline" data-id="${s.id}" title="Add New Location" style="padding:2px 8px;font-size:10px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;white-space:nowrap;width:auto">âž• Add Location</button>
               </div>
               <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:6px 8px;font-size:12px;width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
                 ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
@@ -7513,7 +7638,7 @@ function renderAdminSchedules() {
       <!-- Positioned download schedules button at the bottom-right corner of the page -->
       <div style="display:flex; justify-content:flex-end; margin-top:24px; padding: 0 4px; width:100%">
         <button class="btn btn-secondary btn-sm" id="btn-download-schedules-trigger" style="width:auto !important; display:inline-flex !important; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:rgba(255,255,255,0.02);">
-          📥 Download Schedules
+          ðŸ“¥ Download Schedules
         </button>
       </div>
     </div>
@@ -7537,7 +7662,7 @@ function renderAdminSchedules() {
     const id = btnElem.dataset.id;
     if (await confirm('Are you sure you want to delete this shift calendar?')) {
       DB.deleteSchedule(id);
-      showToastNotification('🗑️ Shift calendar deleted successfully.', 'success');
+      showToastNotification('ðŸ—‘ï¸ Shift calendar deleted successfully.', 'success');
       renderAdminSchedules();
     }
   }));
@@ -7600,8 +7725,8 @@ function openExpressUploadModal() {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:700px; padding:28px; display:flex; flex-direction:column; gap:16px" id="express-modal-container">
       <div class="modal-header" style="margin-bottom:5px">
-        <h3 class="modal-title">⚡ Express Schedule Upload</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">âš¡ Express Schedule Upload</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
 
       <div style="font-size:12.5px; color:var(--text-secondary)">
@@ -7610,22 +7735,22 @@ function openExpressUploadModal() {
 
       <!-- Required columns info -->
       <div style="display:flex; gap:8px; flex-wrap:wrap">
-        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(99,102,241,0.12); color:var(--primary); border:1px solid rgba(99,102,241,0.2)">📌 Employee ID</span>
-        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(16,185,129,0.1); color:var(--success); border:1px solid rgba(16,185,129,0.2)">📍 Location</span>
-        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(245,158,11,0.1); color:var(--warning); border:1px solid rgba(245,158,11,0.2)">🕐 Shift</span>
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(99,102,241,0.12); color:var(--primary); border:1px solid rgba(99,102,241,0.2)">ðŸ“Œ Employee ID</span>
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(16,185,129,0.1); color:var(--success); border:1px solid rgba(16,185,129,0.2)">ðŸ“ Location</span>
+        <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(245,158,11,0.1); color:var(--warning); border:1px solid rgba(245,158,11,0.2)">ðŸ• Shift</span>
         <span style="font-size:11px; color:var(--text-muted); align-self:center">(column order does not matter)</span>
       </div>
 
       <!-- File Upload Box -->
       <div class="form-group" style="border:2px dashed var(--border); padding:18px 16px; border-radius:var(--radius-md); text-align:center; background:rgba(255,255,255,0.01)">
-        <div style="font-size:30px; margin-bottom:8px">📤</div>
+        <div style="font-size:30px; margin-bottom:8px">ðŸ“¤</div>
         <input type="file" id="express-file-input" accept=".csv,.xlsx,.xls" style="display:none">
         <button class="btn btn-secondary" id="btn-select-file" style="width:auto; padding:6px 16px; font-size:12px; margin-bottom:6px">Choose File</button>
         <div id="express-file-name" style="font-size:11.5px; color:var(--text-muted); margin-top:4px">No file chosen (CSV or Excel)</div>
         <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap">
           <span style="font-size:11px; color:var(--text-muted)">Download sample template:</span>
-          <button id="btn-dl-template-csv" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(255,255,255,0.03); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-sm); cursor:pointer">📄 CSV</button>
-          <button id="btn-dl-template-excel" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(16,185,129,0.07); color:var(--success); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-sm); cursor:pointer">📊 Excel</button>
+          <button id="btn-dl-template-csv" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(255,255,255,0.03); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-sm); cursor:pointer">ðŸ“„ CSV</button>
+          <button id="btn-dl-template-excel" style="font-size:10.5px; font-weight:700; padding:3px 10px; background:rgba(16,185,129,0.07); color:var(--success); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-sm); cursor:pointer">ðŸ“Š Excel</button>
         </div>
       </div>
 
@@ -7639,7 +7764,7 @@ function openExpressUploadModal() {
       <div style="display:flex; flex-direction:column; gap:12px">
         <div id="express-actions-row" style="display:flex; justify-content:flex-end; gap:10px">
           <button class="btn btn-secondary" id="btn-express-cancel" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 20px; font-size:12.5px">Cancel</button>
-          <button class="btn" id="btn-express-process" style="width:auto; padding:8px 24px; font-size:12.5px; font-weight:700" disabled>⚡ Upload & Process</button>
+          <button class="btn" id="btn-express-process" style="width:auto; padding:8px 24px; font-size:12.5px; font-weight:700" disabled>âš¡ Upload & Process</button>
         </div>
         <!-- Loading -->
         <div id="express-loading-spinner" style="display:none; align-items:center; justify-content:center; gap:12px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-md); background:rgba(255,255,255,0.01)">
@@ -7661,7 +7786,7 @@ function openExpressUploadModal() {
         <!-- Download Failed Report button (shown only if there are failures) -->
         <div id="express-failed-download-row" style="display:none; justify-content:flex-start">
           <button class="btn" id="btn-download-failed-csv" style="width:auto; padding:7px 16px; font-size:12px; font-weight:700; background:rgba(239,68,68,0.12); color:var(--error); border:1px solid rgba(239,68,68,0.25)">
-            📥 Download Failed Records Report
+            ðŸ“¥ Download Failed Records Report
           </button>
         </div>
 
@@ -7673,7 +7798,7 @@ function openExpressUploadModal() {
 
       <!-- Upload History Section -->
       <div id="express-history-section" style="border-top:1px solid var(--border); padding-top:16px; margin-top:4px; display:flex; flex-direction:column; gap:10px">
-        <h4 style="margin:0; font-size:13px; font-weight:700; color:var(--text-primary)">📋 Upload History</h4>
+        <h4 style="margin:0; font-size:13px; font-weight:700; color:var(--text-primary)">ðŸ“‹ Upload History</h4>
         <div style="overflow-x:auto; max-height:180px; border:1px solid var(--border); border-radius:var(--radius-sm); background:rgba(0,0,0,0.1)">
           <table class="table-custom" style="width:100%; border-collapse:collapse; font-size:11.5px; min-width:500px">
             <thead>
@@ -7808,15 +7933,15 @@ function openExpressUploadModal() {
             // Prepend a banner and warnings list to the results section
             const alertBannerHTML = (failed === 0 && total > 0)
               ? `<div class="alert alert-success" style="padding:12px; border-radius:var(--radius-md); background:rgba(16,185,129,0.12); color:var(--success); border:1px solid rgba(16,185,129,0.25); font-weight:700; text-align:center; font-size:13px; margin-bottom:12px">
-                  🎉 Upload Completed Successfully! All records processed without errors.
+                  ðŸŽ‰ Upload Completed Successfully! All records processed without errors.
                  </div>`
               : `<div class="alert alert-warning" style="padding:12px; border-radius:var(--radius-md); background:rgba(239,68,68,0.07); color:var(--error); border:1px solid rgba(239,68,68,0.2); font-weight:700; text-align:center; font-size:13px; margin-bottom:12px">
-                  ⚠️ Upload Completed with some issues. Please review the failed records below.
+                  âš ï¸ Upload Completed with some issues. Please review the failed records below.
                  </div>`;
 
             const warningsHTML = columnWarnings.length > 0
               ? `<div class="warnings-box" style="margin-bottom:12px; padding:10px 14px; border-radius:var(--radius-sm); background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); color:var(--primary); font-size:11.5px; line-height:1.4">
-                  <strong>⚠️ Auto-Creation Alerts:</strong>
+                  <strong>âš ï¸ Auto-Creation Alerts:</strong>
                   <ul style="margin:5px 0 0 16px; padding:0">
                     ${columnWarnings.map(w => `<li>${Utils.escape(w)}</li>`).join('')}
                   </ul>
@@ -7842,11 +7967,11 @@ function openExpressUploadModal() {
               </div>
               <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); text-align:center">
                 <div style="font-size:22px; font-weight:800; color:var(--success)">${success}</div>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Updated ✅</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Updated âœ…</div>
               </div>
               <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); text-align:center">
                 <div style="font-size:22px; font-weight:800; color:var(--error)">${failed}</div>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Failed ❌</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Failed âŒ</div>
               </div>
               <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); text-align:center">
                 <div style="font-size:22px; font-weight:800; color:var(--text-primary)">${pct}%</div>
@@ -7860,10 +7985,10 @@ function openExpressUploadModal() {
             } else {
               summaryList.innerHTML = results.logs.map((log, idx) => `
                 <div style="display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.04)">
-                  <span style="flex-shrink:0; font-size:13px">${log.status === 'success' ? '✅' : '❌'}</span>
+                  <span style="flex-shrink:0; font-size:13px">${log.status === 'success' ? 'âœ…' : 'âŒ'}</span>
                   <div style="flex:1">
                     <span style="font-weight:700; color:${log.status==='success'?'var(--success)':'var(--error)'}">${Utils.escape(log.employeeId || log.name)}</span>
-                    ${log.name !== log.employeeId ? `<span style="color:var(--text-muted)"> — ${Utils.escape(log.name)}</span>` : ''}
+                    ${log.name !== log.employeeId ? `<span style="color:var(--text-muted)"> â€” ${Utils.escape(log.name)}</span>` : ''}
                     <span style="color:var(--text-secondary)">: ${Utils.escape(log.message)}</span>
                   </div>
                   <span style="font-size:10px; color:var(--text-muted); flex-shrink:0">Row ${log.rowNum}</span>
@@ -7931,8 +8056,8 @@ function openDownloadSchedulesModal() {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:16px">
       <div class="modal-header" style="margin-bottom: 0">
-        <h3 class="modal-title">📥 Export Shift Schedules</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“¥ Export Shift Schedules</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
 
       <div style="font-size:12px; color:var(--text-muted)">
@@ -7945,13 +8070,13 @@ function openDownloadSchedulesModal() {
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px; max-height:160px; overflow-y:auto; padding:10px; border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); background:rgba(0,0,0,0.15)">
           <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--text-primary); cursor:pointer">
             <input type="checkbox" id="export-select-all-checkbox" checked>
-            🗂️ Select All
+            ðŸ—‚ï¸ Select All
           </label>
           <div style="border-top:1px solid rgba(255,255,255,0.08); margin:4px 0"></div>
           ${DB.getSchedules().map(s => `
             <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer">
               <input type="checkbox" class="export-sched-checkbox" value="${s.id}" checked>
-              📌 ${Utils.escape(s.name)}
+              ðŸ“Œ ${Utils.escape(s.name)}
             </label>
           `).join('')}
         </div>
@@ -8034,13 +8159,13 @@ function openDownloadSchedulesModal() {
     const selectedIds = getSelectedScheduleIds();
     const data = getExportData();
     if (selectedIds.length === 0) {
-      warningBox.textContent = '⚠️ Please select at least one shift schedule to download.';
+      warningBox.textContent = 'âš ï¸ Please select at least one shift schedule to download.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled', 'true');
       downloadBtn.style.opacity = '0.5';
       downloadBtn.style.cursor = 'not-allowed';
     } else if (data.length === 0) {
-      warningBox.textContent = '⚠️ No employee is currently assigned to the selected shift schedule(s). Please assign employees first or select another shift.';
+      warningBox.textContent = 'âš ï¸ No employee is currently assigned to the selected shift schedule(s). Please assign employees first or select another shift.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled', 'true');
       downloadBtn.style.opacity = '0.5';
@@ -8178,8 +8303,8 @@ function openProfileDownloadModal(preSelectedUserId) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 460px; padding: 24px; display:flex; flex-direction:column; gap:16px">
       <div class="modal-header" style="margin-bottom: 0">
-        <h3 class="modal-title">📥 Export Employee Profiles</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“¥ Export Employee Profiles</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
 
       <div style="font-size:12px; color:var(--text-muted)">
@@ -8189,7 +8314,7 @@ function openProfileDownloadModal(preSelectedUserId) {
       <!-- Employee Checklist Selector -->
       <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
         <label class="form-label" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">Select Employees</label>
-        <input type="text" id="profile-search-input" class="form-input" placeholder="🔍 Search employee name or ID..." style="padding:6px 10px; font-size:12px; margin-bottom:4px; background:rgba(255,255,255,0.02)">
+        <input type="text" id="profile-search-input" class="form-input" placeholder="ðŸ” Search employee name or ID..." style="padding:6px 10px; font-size:12px; margin-bottom:4px; background:rgba(255,255,255,0.02)">
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
           <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text-secondary)">
@@ -8246,12 +8371,12 @@ function openProfileDownloadModal(preSelectedUserId) {
   const checkValidation = () => {
     const checkedIds = getCheckedUserIds();
     if (users.length === 0) {
-      warningBox.textContent = '⚠️ No employee records found in the database.';
+      warningBox.textContent = 'âš ï¸ No employee records found in the database.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled', 'true');
       downloadBtn.style.opacity = '0.5';
     } else if (checkedIds.length === 0) {
-      warningBox.textContent = '⚠️ Please select at least one employee.';
+      warningBox.textContent = 'âš ï¸ Please select at least one employee.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled', 'true');
       downloadBtn.style.opacity = '0.5';
@@ -8571,11 +8696,11 @@ function openProfileDownloadModal(preSelectedUserId) {
 
             <div class="section-title">Payroll Structure & Deductions (INR)</div>
             <div class="grid-container">
-              <div class="info-block"><span class="label">Base Salary</span><span class="value">₹${base.toLocaleString()}</span></div>
-              <div class="info-block"><span class="label">HRA / Travel Allowances</span><span class="value">₹${hra.toLocaleString()} / ₹${travel.toLocaleString()}</span></div>
-              <div class="info-block"><span class="label">PF / PT Deductions</span><span class="value">₹${pf.toLocaleString()} / ₹${pt.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">Base Salary</span><span class="value">â‚¹${base.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">HRA / Travel Allowances</span><span class="value">â‚¹${hra.toLocaleString()} / â‚¹${travel.toLocaleString()}</span></div>
+              <div class="info-block"><span class="label">PF / PT Deductions</span><span class="value">â‚¹${pf.toLocaleString()} / â‚¹${pt.toLocaleString()}</span></div>
               <div class="info-block"><span class="label">TDS Tax Rate</span><span class="value">${tds}%</span></div>
-              <div class="info-block" style="border-bottom: 2px solid #ef4444;"><span class="label" style="color:#ef4444; font-weight:800">Net Estimated Payout</span><span class="value" style="color:#ef4444; font-size:15px; font-weight:800">₹${(p.netSalary != null ? p.netSalary : 0).toLocaleString()}</span></div>
+              <div class="info-block" style="border-bottom: 2px solid #ef4444;"><span class="label" style="color:#ef4444; font-weight:800">Net Estimated Payout</span><span class="value" style="color:#ef4444; font-size:15px; font-weight:800">â‚¹${(p.netSalary != null ? p.netSalary : 0).toLocaleString()}</span></div>
             </div>
 
             <div class="footer-note">
@@ -8633,11 +8758,11 @@ function openProfileDownloadModal(preSelectedUserId) {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DOWNLOAD REPORT MODAL  –  Attendance & Payroll Report (Monthly Report section)
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// DOWNLOAD REPORT MODAL  â€“  Attendance & Payroll Report (Monthly Report section)
 // Completely separate from openProfileDownloadModal. Any change here does NOT
 // affect the Download Profile modal, and vice versa.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function openAttendanceReportModal() {
   const loggedInUser = Auth.getCurrentUser() || {};
   let reportUsers = DB.getUsers().filter(u => {
@@ -8657,8 +8782,8 @@ function openAttendanceReportModal() {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:500px;padding:24px;display:flex;flex-direction:column;gap:16px">
       <div class="modal-header" style="margin-bottom:0">
-        <h3 class="modal-title">📊 Export Attendance & Payroll Report</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“Š Export Attendance & Payroll Report</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted)">
         Exports attendance summary, check-in/out logs, working hours, overtime, leave details, and payroll data for the selected period.
@@ -8683,7 +8808,7 @@ function openAttendanceReportModal() {
       <!-- Employee Selector -->
       <div class="form-group" style="display:flex;flex-direction:column;gap:6px">
         <label class="form-label" style="font-size:11.5px;font-weight:700;color:var(--text-secondary)">Select Employees</label>
-        <input type="text" id="rpt-search-input" class="form-input" placeholder="🔍 Search name or ID..." style="padding:6px 10px;font-size:12px;margin-bottom:4px;background:rgba(255,255,255,0.02)">
+        <input type="text" id="rpt-search-input" class="form-input" placeholder="ðŸ” Search name or ID..." style="padding:6px 10px;font-size:12px;margin-bottom:4px;background:rgba(255,255,255,0.02)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text-secondary)">
             <input type="checkbox" id="rpt-select-all" style="cursor:pointer" checked> Select All
@@ -8738,12 +8863,12 @@ function openAttendanceReportModal() {
   const validate = () => {
     const ids = getCheckedIds();
     if (reportUsers.length === 0) {
-      warningBox.textContent = '⚠️ No employee records found.';
+      warningBox.textContent = 'âš ï¸ No employee records found.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled','true');
       downloadBtn.style.opacity = '0.5';
     } else if (ids.length === 0) {
-      warningBox.textContent = '⚠️ Please select at least one employee.';
+      warningBox.textContent = 'âš ï¸ Please select at least one employee.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled','true');
       downloadBtn.style.opacity = '0.5';
@@ -8788,7 +8913,7 @@ function openAttendanceReportModal() {
 
   validate();
 
-  // ── Excel export ──────────────────────────────────────────────────────────
+  // â”€â”€ Excel export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const REPORT_HEADERS = [
     'Employee ID','Full Name','Department','Designation',
     'Period','Working Days','Present Days','Absent Days','Late Days','Half Days',
@@ -8855,7 +8980,7 @@ function openAttendanceReportModal() {
     else { loadSheetJS(doExport, () => { alert('Failed to load Excel library.'); downloadBtn.removeAttribute('disabled'); downloadBtn.textContent = 'Download'; }); }
   };
 
-  // ── PDF export ───────────────────────────────────────────────────────────
+  // â”€â”€ PDF export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const downloadReportPDF = (checkedIds, month, year) => {
     try {
       const targetUsers = reportUsers.filter(u => checkedIds.includes(u.id));
@@ -8893,9 +9018,9 @@ function openAttendanceReportModal() {
               <div class="doc-t">ATTENDANCE &amp; PAYROLL REPORT<br><span style="font-size:11px;font-weight:normal">Period: ${period} &nbsp;|&nbsp; Generated: ${today.toLocaleDateString()}</span></div>
             </div>
             <div class="emp-name">${Utils.escape(u.name)}</div>
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${Utils.escape(u.employeeId||u.id)} &nbsp;·&nbsp; ${Utils.escape(u.department||'N/A')} &nbsp;·&nbsp; ${Utils.escape(u.designation||'N/A')}</div>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${Utils.escape(u.employeeId||u.id)} &nbsp;Â·&nbsp; ${Utils.escape(u.department||'N/A')} &nbsp;Â·&nbsp; ${Utils.escape(u.designation||'N/A')}</div>
 
-            <div class="sec-title">Attendance Summary – ${period}</div>
+            <div class="sec-title">Attendance Summary â€“ ${period}</div>
             <div class="grid">
               <div class="ib"><span class="lbl">Working Days</span><span class="val">${p.workingDays??0} days</span></div>
               <div class="ib"><span class="lbl">Present Days</span><span class="val">${p.presentDays??0} days</span></div>
@@ -8914,21 +9039,21 @@ function openAttendanceReportModal() {
               <div class="ib"><span class="lbl">Grace Period</span><span class="val">${sched.gracePeriod??0} min</span></div>
             </div>
 
-            <div class="sec-title">Payroll & Deductions (INR) – ${period}</div>
+            <div class="sec-title">Payroll & Deductions (INR) â€“ ${period}</div>
             <div class="grid">
-              <div class="ib"><span class="lbl">Base Salary</span><span class="val">₹${(p.baseSalary??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Gross Earnings</span><span class="val">₹${(p.grossEarnings??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Absent Deduction</span><span class="val">₹${(p.absentDeduction??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">PF / PT / TDS</span><span class="val">₹${(p.deductionPF??0).toLocaleString()} / ₹${(p.deductionPT??0).toLocaleString()} / ₹${(p.deductionTDSVal??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Total Deductions</span><span class="val">₹${(p.totalDeductions??0).toLocaleString()}</span></div>
-              <div class="ib" style="border-bottom:2px solid #ef4444"><span class="lbl" style="color:#ef4444;font-weight:800">Net Payout</span><span class="val" style="color:#ef4444;font-size:15px;font-weight:800">₹${(p.netSalary??0).toLocaleString()}</span></div>
+              <div class="ib"><span class="lbl">Base Salary</span><span class="val">â‚¹${(p.baseSalary??0).toLocaleString()}</span></div>
+              <div class="ib"><span class="lbl">Gross Earnings</span><span class="val">â‚¹${(p.grossEarnings??0).toLocaleString()}</span></div>
+              <div class="ib"><span class="lbl">Absent Deduction</span><span class="val">â‚¹${(p.absentDeduction??0).toLocaleString()}</span></div>
+              <div class="ib"><span class="lbl">PF / PT / TDS</span><span class="val">â‚¹${(p.deductionPF??0).toLocaleString()} / â‚¹${(p.deductionPT??0).toLocaleString()} / â‚¹${(p.deductionTDSVal??0).toLocaleString()}</span></div>
+              <div class="ib"><span class="lbl">Total Deductions</span><span class="val">â‚¹${(p.totalDeductions??0).toLocaleString()}</span></div>
+              <div class="ib" style="border-bottom:2px solid #ef4444"><span class="lbl" style="color:#ef4444;font-weight:800">Net Payout</span><span class="val" style="color:#ef4444;font-size:15px;font-weight:800">â‚¹${(p.netSalary??0).toLocaleString()}</span></div>
             </div>
 
-            <div class="footer">This document is an auto-generated Attendance &amp; Payroll Report for ${period} — HS Group Delhi.</div>
+            <div class="footer">This document is an auto-generated Attendance &amp; Payroll Report for ${period} â€” HS Group Delhi.</div>
           </div>`;
       }).join('');
 
-      printWindow.document.write(`<!DOCTYPE html><html><head><title>Attendance Report – HS Group ${monthNames[month]} ${year}</title>${styles}</head><body>${cardsHTML}<script>window.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{window.print();window.close();},500);});<\/script></body></html>`);
+      printWindow.document.write(`<!DOCTYPE html><html><head><title>Attendance Report â€“ HS Group ${monthNames[month]} ${year}</title>${styles}</head><body>${cardsHTML}<script>window.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{window.print();window.close();},500);});<\/script></body></html>`);
       printWindow.document.close();
       closeModal(overlay);
     } catch(e) {
@@ -8970,8 +9095,8 @@ function renderUploadHistory(overlay) {
       <tr style="border-bottom: 1px solid rgba(255,255,255,0.02)">
         <td style="padding: 8px; color: var(--text-secondary)">${h.date} ${h.time}</td>
         <td style="padding: 8px; font-weight: 600; color: var(--text-primary)">${Utils.escape(h.employeeName)}</td>
-        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldShift)} ➔ ${Utils.escape(h.newShift)}</td>
-        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldLocation)} ➔ ${Utils.escape(h.newLocation)}</td>
+        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldShift)} âž” ${Utils.escape(h.newShift)}</td>
+        <td style="padding: 8px; color: var(--text-secondary)">${Utils.escape(h.oldLocation)} âž” ${Utils.escape(h.newLocation)}</td>
         <td style="padding: 8px; color: var(--text-secondary)">${h.effective || 'N/A'}</td>
         <td style="padding: 8px; font-weight: 700; color: ${isSuccess ? 'var(--success)' : 'var(--error)'}">${h.status}</td>
       </tr>
@@ -9173,7 +9298,7 @@ function executeExpressReassignments(fileContent, intent = '') {
 
     // 2. Duplicate Employee ID within file
     if (seenEmpIds[empId.toLowerCase()]) {
-      pushError(empId, `Duplicate Employee ID "${empId}" — already processed in this file.`);
+      pushError(empId, `Duplicate Employee ID "${empId}" â€” already processed in this file.`);
       continue;
     }
     seenEmpIds[empId.toLowerCase()] = true;
@@ -9274,7 +9399,7 @@ function executeExpressReassignments(fileContent, intent = '') {
       continue;
     }
 
-    // ---- All validations passed — detect actual changes ----
+    // ---- All validations passed â€” detect actual changes ----
     const oldSchedule  = DB.getSchedule(matchedUser.scheduleId);
     const oldShiftName = oldSchedule ? oldSchedule.name : 'None';
     const oldShiftId   = matchedUser.scheduleId || '';
@@ -9286,7 +9411,7 @@ function executeExpressReassignments(fileContent, intent = '') {
     // Skip if nothing actually changed
     if (!shiftChanged && !locationChanged) {
       successCount++;
-      logs.push({ rowNum, employeeId: empId, name: matchedUser.name, status:'success', message:'No changes — Shift and Location already match.', locationProvided: locVal, shiftProvided: shiftVal });
+      logs.push({ rowNum, employeeId: empId, name: matchedUser.name, status:'success', message:'No changes â€” Shift and Location already match.', locationProvided: locVal, shiftProvided: shiftVal });
       continue;
     }
 
@@ -9310,8 +9435,8 @@ function executeExpressReassignments(fileContent, intent = '') {
 
     // Build a human-readable change summary
     const changes = [];
-    if (shiftChanged)    changes.push(`Shift → "${matchedShift.name}"`);
-    if (locationChanged) changes.push(`Location → "${locVal}"`);
+    if (shiftChanged)    changes.push(`Shift â†’ "${matchedShift.name}"`);
+    if (locationChanged) changes.push(`Location â†’ "${locVal}"`);
     const changeSummary = changes.join(' | ');
 
     successCount++;
@@ -9334,7 +9459,7 @@ function executeExpressReassignments(fileContent, intent = '') {
 
     DB.data.announcements.unshift({
       id: 'ann_'+Math.random().toString(36).substring(2,9),
-      title: '⚡ Schedule Updated',
+      title: 'âš¡ Schedule Updated',
       content: `${notifParts.join('. ')}. Effective: ${effective}.${intent ? ' Reason: ' + intent + '.' : ''}`,
       category: 'Update', date: todayStr,
       author: 'HR Express Upload',
@@ -9406,8 +9531,8 @@ function openScheduleModal(schedId = null) {
             `).join('')}
           </select>
           <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="button" id="btn-modal-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
-            <button type="button" id="btn-modal-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
+            <button type="button" id="btn-modal-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">ðŸ“ Fetch Nearby Location</button>
+            <button type="button" id="btn-modal-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">âœï¸ Enter Any Location</button>
           </div>
         </div>
         <div class="modal-actions">
@@ -9575,12 +9700,12 @@ function renderAdminApprovals() {
                   <td style="font-weight:600">
                     ${sender ? Utils.escape(sender.name) : 'Unknown'}
                     <br><span style="font-size:11px;color:var(--text-secondary)">Shift: ${senderSched ? Utils.escape(senderSched.name) : 'None'}</span>
-                    <br><span style="font-size:10px;color:var(--text-muted)">📍 ${Utils.escape(senderLoc)}</span>
+                    <br><span style="font-size:10px;color:var(--text-muted)">ðŸ“ ${Utils.escape(senderLoc)}</span>
                   </td>
                   <td style="font-weight:600">
                     ${receiver ? Utils.escape(receiver.name) : 'Unknown'}
                     <br><span style="font-size:11px;color:var(--text-secondary)">Shift: ${receiverSched ? Utils.escape(receiverSched.name) : 'None'}</span>
-                    <br><span style="font-size:10px;color:var(--text-muted)">📍 ${Utils.escape(receiverLoc)}</span>
+                    <br><span style="font-size:10px;color:var(--text-muted)">ðŸ“ ${Utils.escape(receiverLoc)}</span>
                   </td>
                   <td style="font-size:12px;color:var(--text-secondary)">
                     <strong>Mode:</strong> ${modeLabel}<br>
@@ -9697,7 +9822,7 @@ function renderAdminApprovals() {
   }
 }
 
-// ── Custom comment modal (replaces browser prompt) ──────────────────────────
+// â”€â”€ Custom comment modal (replaces browser prompt) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function showCommentModal({ title, label, placeholder = '', required = false, actionLabel = 'Confirm', actionClass = 'btn', onConfirm }) {
   // Remove any existing comment modal
   const existing = document.getElementById('comment-modal-overlay');
@@ -9724,7 +9849,7 @@ function showCommentModal({ title, label, placeholder = '', required = false, ac
       animation:slideUp 0.2s cubic-bezier(0.4,0,0.2,1);
     ">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(251,191,36,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💬</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(251,191,36,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">ðŸ’¬</div>
         <div>
           <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${title}</div>
           <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">${label}</div>
@@ -9746,7 +9871,7 @@ function showCommentModal({ title, label, placeholder = '', required = false, ac
         onfocus="this.style.borderColor='var(--primary)'"
         onblur="this.style.borderColor='var(--border)'"
       ></textarea>
-      ${required ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">⚠️ A comment is required to proceed.</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Comment is optional. Leave blank to skip.</div>`}
+      ${required ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">âš ï¸ A comment is required to proceed.</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Comment is optional. Leave blank to skip.</div>`}
       <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
         <button id="comment-modal-cancel" style="
           padding:8px 20px; border-radius:8px; border:1px solid var(--border);
@@ -9777,7 +9902,7 @@ function showCommentModal({ title, label, placeholder = '', required = false, ac
     const val = document.getElementById('comment-modal-input').value.trim();
     if (required && !val) {
       document.getElementById('comment-modal-input').style.borderColor = 'var(--error,#ef4444)';
-      document.getElementById('comment-modal-input').placeholder = '⚠️ Please enter a comment to continue...';
+      document.getElementById('comment-modal-input').placeholder = 'âš ï¸ Please enter a comment to continue...';
       return;
     }
     overlay.remove();
@@ -9800,7 +9925,7 @@ function processLeaveRequest(id, status) {
     label: isApprove ? 'Add an optional approval comment for the employee.' : 'Provide a reason for rejection.',
     placeholder: isApprove ? 'e.g. Approved. Enjoy your leave!' : 'e.g. Insufficient leave balance.',
     required: !isApprove,
-    actionLabel: isApprove ? '✅ Approve' : '❌ Reject',
+    actionLabel: isApprove ? 'âœ… Approve' : 'âŒ Reject',
     actionClass: isApprove ? 'btn' : 'btn btn-danger',
     onConfirm: (comment) => {
       DB.updateLeaveStatus(id, status, comment);
@@ -9815,7 +9940,7 @@ function processManagerSwap(swapId, approve) {
     label: approve ? 'Add an optional comment for the swap request.' : 'Provide a reason for rejecting this swap.',
     placeholder: approve ? 'e.g. Swap approved. Please coordinate with your team.' : 'e.g. Overlap with critical project deadline.',
     required: !approve,
-    actionLabel: approve ? '✅ Approve Swap' : '❌ Reject Swap',
+    actionLabel: approve ? 'âœ… Approve Swap' : 'âŒ Reject Swap',
     actionClass: approve ? 'btn' : 'btn btn-danger',
     onConfirm: (comment) => {
       DB.respondToShiftSwapManager(swapId, approve, comment);
@@ -9830,7 +9955,7 @@ function processGeofenceDeviation(logId, excuse) {
     label: excuse ? 'Add an optional note excusing this deviation.' : 'Provide a reason for flagging this as a violation.',
     placeholder: excuse ? 'e.g. Employee was at client site during this check-in.' : 'e.g. No prior approval for off-site work.',
     required: !excuse,
-    actionLabel: excuse ? '✅ Excuse Deviation' : '🚩 Flag Violation',
+    actionLabel: excuse ? 'âœ… Excuse Deviation' : 'ðŸš© Flag Violation',
     actionClass: excuse ? 'btn' : 'btn btn-danger',
     onConfirm: (comment) => {
       if (excuse) {
@@ -9857,7 +9982,7 @@ function renderAdminReports() {
       </div>
       <div>
         <button class="btn btn-secondary btn-sm" id="btn-download-report-payroll" style="width:auto; font-weight:600; font-size:12px; display:flex; align-items:center; gap:6px; padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:rgba(255,255,255,0.02)">
-          📊 Download Report
+          ðŸ“Š Download Report
         </button>
       </div>
     </div>
@@ -9873,8 +9998,8 @@ function renderAdminReports() {
           </select>
         </div>
         <div style="margin-left:auto;display:flex;gap:12px">
-          <button class="btn btn-secondary" id="btn-export-csv" style="padding:10px 18px;width:auto;font-size:13px">📥 Export CSV</button>
-          <button class="btn btn-cyan" id="btn-print-report" style="padding:10px 18px;width:auto;font-size:13px">🖨️ Print Sheet</button>
+          <button class="btn btn-secondary" id="btn-export-csv" style="padding:10px 18px;width:auto;font-size:13px">ðŸ“¥ Export CSV</button>
+          <button class="btn btn-cyan" id="btn-print-report" style="padding:10px 18px;width:auto;font-size:13px">ðŸ–¨ï¸ Print Sheet</button>
         </div>
       </div>
       <div class="stats-grid" id="report-stats-box" style="margin-bottom:24px"></div>
@@ -9931,26 +10056,26 @@ function compileReports(month, year) {
 
   document.getElementById('report-stats-box').innerHTML = `
     <div class="stat-card">
-      <div class="stat-icon stat-icon-blue">📁</div>
-      <div class="stat-info"><span class="stat-value">₹${grandGrossSalary.toLocaleString()}</span><span class="stat-label">Gross Payroll Budget</span></div>
+      <div class="stat-icon stat-icon-blue">ðŸ“</div>
+      <div class="stat-info"><span class="stat-value">â‚¹${grandGrossSalary.toLocaleString()}</span><span class="stat-label">Gross Payroll Budget</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon stat-icon-red">⏰</div>
-      <div class="stat-info"><span class="stat-value">₹${grandDeductions.toLocaleString()}</span><span class="stat-label">Total Deductions (Leave & Tax)</span></div>
+      <div class="stat-icon stat-icon-red">â°</div>
+      <div class="stat-info"><span class="stat-value">â‚¹${grandDeductions.toLocaleString()}</span><span class="stat-label">Total Deductions (Leave & Tax)</span></div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon stat-icon-green">⏱️</div>
-      <div class="stat-info"><span class="stat-value">₹${grandNetPayout.toLocaleString()}</span><span class="stat-label">Net Salary Disbursed</span></div>
+      <div class="stat-icon stat-icon-green">â±ï¸</div>
+      <div class="stat-info"><span class="stat-value">â‚¹${grandNetPayout.toLocaleString()}</span><span class="stat-label">Net Salary Disbursed</span></div>
     </div>
   `;
 
   document.getElementById('report-table-body').innerHTML = userPayrollData.map(p => `
     <tr>
       <td style="font-weight:600">${Utils.escape(p.employeeName)}</td>
-      <td>₹${p.baseSalary.toLocaleString()}</td>
+      <td>â‚¹${p.baseSalary.toLocaleString()}</td>
       <td style="font-size:12px">Present: <strong>${p.presentDays}</strong>d<br>Absent: <span style="color:${p.absentDays > 0 ? 'var(--error)' : 'currentColor'}">${p.absentDays}</span>d</td>
-      <td style="color:var(--error);font-weight:600">-₹${p.totalDeductions.toLocaleString()}</td>
-      <td style="color:var(--success);font-weight:700">₹${p.netSalary.toLocaleString()}</td>
+      <td style="color:var(--error);font-weight:600">-â‚¹${p.totalDeductions.toLocaleString()}</td>
+      <td style="color:var(--success);font-weight:700">â‚¹${p.netSalary.toLocaleString()}</td>
       <td><button class="btn btn-cyan btn-view-payslip-admin" data-id="${p.userId}" style="padding:6px 10px;width:auto;font-size:11px">Inspect</button></td>
     </tr>
   `).join('');
@@ -9967,7 +10092,7 @@ function compileReports(month, year) {
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const loggedInUser = Auth.getCurrentUser();
       const editBtnHTML = loggedInUser.role === 'manager'
-        ? `<button class="btn btn-warning" id="btn-admin-edit-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">✏️ Edit Adjustments</button>`
+        ? `<button class="btn btn-warning" id="btn-admin-edit-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">âœï¸ Edit Adjustments</button>`
         : '';
 
       drawer.innerHTML = `
@@ -9976,7 +10101,7 @@ function compileReports(month, year) {
             <h3 class="card-panel-title">Employee Payslip Preview</h3>
             <div style="display:flex;gap:10px">
               ${editBtnHTML}
-              <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
+              <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">ðŸ–¨ï¸ Print Statement</button>
               <button class="btn btn-secondary" onclick="document.getElementById('admin-payslip-preview-drawer').style.display='none'" style="padding:6px 12px;width:auto;font-size:12px">Close</button>
             </div>
           </div>
@@ -10011,48 +10136,48 @@ function compileReports(month, year) {
               <tbody>
                 <tr>
                   <td>Base Fixed Monthly Salary</td>
-                  <td style="text-align:right">₹${p.baseSalary.toLocaleString()}</td>
+                  <td style="text-align:right">â‚¹${p.baseSalary.toLocaleString()}</td>
                   <td style="text-align:right">-</td>
                 </tr>
                 <tr>
                   <td>House Rent Allowance (HRA)</td>
-                  <td style="text-align:right">₹${p.allowanceHRA.toLocaleString()}</td>
+                  <td style="text-align:right">â‚¹${p.allowanceHRA.toLocaleString()}</td>
                   <td style="text-align:right">-</td>
                 </tr>
                 <tr>
                   <td>Travel Allowance</td>
-                  <td style="text-align:right">₹${p.allowanceTravel.toLocaleString()}</td>
+                  <td style="text-align:right">â‚¹${p.allowanceTravel.toLocaleString()}</td>
                   <td style="text-align:right">-</td>
                 </tr>
                 <tr>
                   <td>Absent Penalties (${p.absentDays} days absent)</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.absentDeduction.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">â‚¹${p.absentDeduction.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Half-day Salary Deductions (${p.halfDays} occurrences)</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.halfDayDeduction.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">â‚¹${p.halfDayDeduction.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Provident Fund (PF) Deduction</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionPF.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">â‚¹${p.deductionPF.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Professional Tax (PT)</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionPT.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">â‚¹${p.deductionPT.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Tax Deducted at Source (TDS) (${p.deductionTDS}%)</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionTDSVal.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">â‚¹${p.deductionTDSVal.toLocaleString()}</td>
                 </tr>
                 ${p.bonus > 0 ? `
                 <tr>
                   <td>Manager Discretionary Bonus / Rewards</td>
-                  <td style="text-align:right;color:var(--success);font-weight:600">₹${p.bonus.toLocaleString()}</td>
+                  <td style="text-align:right;color:var(--success);font-weight:600">â‚¹${p.bonus.toLocaleString()}</td>
                   <td style="text-align:right">-</td>
                 </tr>
                 ` : ''}
@@ -10060,12 +10185,12 @@ function compileReports(month, year) {
                 <tr>
                   <td>Manager Ad-hoc Deduction / Adjustments</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:var(--error);font-weight:600">₹${p.adhocDeduction.toLocaleString()}</td>
+                  <td style="text-align:right;color:var(--error);font-weight:600">â‚¹${p.adhocDeduction.toLocaleString()}</td>
                 </tr>
                 ` : ''}
                 <tr class="total-row">
                   <td>Net Salary Disbursed</td>
-                  <td style="text-align:right" colspan="2">₹${p.netSalary.toLocaleString()}</td>
+                  <td style="text-align:right" colspan="2">â‚¹${p.netSalary.toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
@@ -10139,28 +10264,28 @@ function openGuidelinesModal() {
         <p style="margin-bottom: 15px">Please review the standard shift schedules and leave parameters for HS Group Delhi (House of Surya):</p>
         <div class="guidelines-list">
           <div class="guideline-item">
-            <span class="guideline-icon">📅</span>
+            <span class="guideline-icon">ðŸ“…</span>
             <div class="guideline-details">
               <strong>Work Week Shift</strong>
               <span>Monday to Saturday working days (Sunday weekly off).</span>
             </div>
           </div>
           <div class="guideline-item">
-            <span class="guideline-icon">⏱️</span>
+            <span class="guideline-icon">â±ï¸</span>
             <div class="guideline-details">
               <strong>Shift Timings</strong>
               <span>09:00 AM to 07:00 PM standard office hours.</span>
             </div>
           </div>
           <div class="guideline-item">
-            <span class="guideline-icon">🌴</span>
+            <span class="guideline-icon">ðŸŒ´</span>
             <div class="guideline-details">
               <strong>Monthly Leave Cap</strong>
               <span>Maximum of 2 approved paid leaves per month. Absences beyond this limit are subject to daily rate deduction.</span>
             </div>
           </div>
           <div class="guideline-item">
-            <span class="guideline-icon">📍</span>
+            <span class="guideline-icon">ðŸ“</span>
             <div class="guideline-details">
               <strong>Office Attendance Rules</strong>
               <span>Must be checked in from preferred office coordinates or headquarters location.</span>
@@ -10251,7 +10376,7 @@ function openStaffDetailModal(userId) {
             <div style="font-size:12px; color:var(--text-muted)">Employee Code: <strong>${Utils.escape(user.employeeId)}</strong> | Role: ${Utils.escape(user.role)}</div>
           </div>
         </div>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
@@ -10312,11 +10437,11 @@ function openStaffDetailModal(userId) {
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Corporate Payroll Settings</h4>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px; color:var(--text-secondary)">
-              <div><strong>Base Salary:</strong> <span style="color:var(--text-primary)">₹${(user.baseSalary || 50000).toLocaleString()}</span></div>
-              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)).toLocaleString()}</span></div>
-              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceTravel !== undefined ? user.allowanceTravel : 3000).toLocaleString()}</span></div>
-              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">₹${(user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)).toLocaleString()}</span></div>
-              <div><strong>Professional Tax:</strong> <span style="color:var(--text-primary)">₹${(user.deductionPT !== undefined ? user.deductionPT : 200).toLocaleString()}</span></div>
+              <div><strong>Base Salary:</strong> <span style="color:var(--text-primary)">â‚¹${(user.baseSalary || 50000).toLocaleString()}</span></div>
+              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">â‚¹${(user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)).toLocaleString()}</span></div>
+              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">â‚¹${(user.allowanceTravel !== undefined ? user.allowanceTravel : 3000).toLocaleString()}</span></div>
+              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">â‚¹${(user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)).toLocaleString()}</span></div>
+              <div><strong>Professional Tax:</strong> <span style="color:var(--text-primary)">â‚¹${(user.deductionPT !== undefined ? user.deductionPT : 200).toLocaleString()}</span></div>
               <div><strong>TDS Tax Rate:</strong> <span style="color:var(--text-primary)">${user.deductionTDS !== undefined ? user.deductionTDS : 5}%</span></div>
             </div>
           </div>
@@ -10416,7 +10541,7 @@ function renderEmployeeSwapsView() {
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Shift Swap Requests Ledger</h3></div>
           <div style="margin-bottom:20px">
-            <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-primary)">📥 Received Requests</h4>
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-primary)">ðŸ“¥ Received Requests</h4>
             <div class="table-container">
               <table class="custom-table" id="received-swaps-table">
                 <thead><tr><th>Sender</th><th>Their Shift</th><th>Reason Notes</th><th>Status</th><th>Actions</th></tr></thead>
@@ -10425,7 +10550,7 @@ function renderEmployeeSwapsView() {
             </div>
           </div>
           <div>
-            <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-primary)">📤 Sent Requests</h4>
+            <h4 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-primary)">ðŸ“¤ Sent Requests</h4>
             <div class="table-container">
               <table class="custom-table" id="sent-swaps-table">
                 <thead><tr><th>Coworker</th><th>Their Shift</th><th>Reason Notes</th><th>Status</th></tr></thead>
@@ -10453,14 +10578,14 @@ function renderEmployeeSwapsView() {
       }
       if (val === user.employeeId.toUpperCase()) {
         previewDiv.style.display = 'block';
-        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">⚠️ You cannot swap shifts with yourself.</span>`;
+        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">âš ï¸ You cannot swap shifts with yourself.</span>`;
         validatedCoworkerId = null;
         return;
       }
       const coworker = DB.getUsers().find(u => u.employeeId && u.employeeId.toUpperCase() === val && u.role === 'employee');
       if (!coworker) {
         previewDiv.style.display = 'block';
-        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">⚠️ Employee ID not found. Only registered employees can swap shifts.</span>`;
+        previewDiv.innerHTML = `<span style="color:var(--error);font-weight:600">âš ï¸ Employee ID not found. Only registered employees can swap shifts.</span>`;
         validatedCoworkerId = null;
         return;
       }
@@ -10470,7 +10595,7 @@ function renderEmployeeSwapsView() {
       
       previewDiv.style.display = 'block';
       previewDiv.innerHTML = `
-        <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--success)">✅ Coworker ID Verified</h4>
+        <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--success)">âœ… Coworker ID Verified</h4>
         <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'No Shift'} (${s ? formatTime12h(s.startTime) : ''} - ${s ? formatTime12h(s.endTime) : ''})</div>
         <div><strong>Work Location:</strong> <span style="color:var(--primary);font-weight:600">${Utils.escape(coworkerLoc)}</span></div>
       `;
@@ -10525,7 +10650,7 @@ function renderEmployeeSwapsData(userId) {
         <td style="font-weight:600">${sender ? 'Employee ID: ' + Utils.escape(sender.employeeId) : 'Unknown'}</td>
         <td>
           ${senderSchedule ? Utils.escape(senderSchedule.name) : 'None'}<br>
-          <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(senderLoc)}</span>
+          <span style="font-size:11px;color:var(--text-secondary)">ðŸ“ ${Utils.escape(senderLoc)}</span>
         </td>
         <td style="font-size:12px;color:var(--text-secondary)">
           <strong>Mode:</strong> ${modeLabel}<br>
@@ -10560,7 +10685,7 @@ function renderEmployeeSwapsData(userId) {
         <td style="font-weight:600">${receiver ? 'Employee ID: ' + Utils.escape(receiver.employeeId) : 'Unknown'}</td>
         <td>
           ${receiverSchedule ? Utils.escape(receiverSchedule.name) : 'None'}<br>
-          <span style="font-size:11px;color:var(--text-secondary)">📍 ${Utils.escape(receiverLoc)}</span>
+          <span style="font-size:11px;color:var(--text-secondary)">ðŸ“ ${Utils.escape(receiverLoc)}</span>
         </td>
         <td style="font-size:12px;color:var(--text-secondary)">
           <strong>Mode:</strong> ${modeLabel}<br>
@@ -10647,7 +10772,7 @@ function renderEmployeeNotices(userId) {
           <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
           <div style="display:flex; gap:8px; align-items:center;">
             <span style="font-size:10.5px;color:var(--text-muted)">${a.date}</span>
-            <button class="btn-del-notice" data-id="${a.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7" title="Delete">🗑️</button>
+            <button class="btn-del-notice" data-id="${a.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7" title="Delete">ðŸ—‘ï¸</button>
           </div>
         </div>
         <strong style="font-size:13px;color:var(--text-primary)">${Utils.escape(a.title)}</strong>
@@ -10655,7 +10780,7 @@ function renderEmployeeNotices(userId) {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid rgba(255,255,255,0.03);padding-top:6px">
           <span style="font-size:10px;color:var(--text-muted)">By: ${Utils.escape(a.author)}</span>
           ${isRead 
-            ? `<span style="font-size:11.5px;color:var(--cyan);display:flex;align-items:center;gap:3px;font-weight:600">✓ Read</span>` 
+            ? `<span style="font-size:11.5px;color:var(--cyan);display:flex;align-items:center;gap:3px;font-weight:600">âœ“ Read</span>` 
             : `<button class="btn-mark-notice-read" data-id="${a.id}" style="background:transparent;border:none;color:var(--primary);cursor:pointer;font-size:11px;padding:0;text-decoration:underline">Mark as Read</button>`
           }
         </div>
@@ -10848,7 +10973,7 @@ function updateNotificationsUI() {
               <span style="font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700;${badgeStyle}">${n.category}</span>
               <div style="display:flex; gap:8px; align-items:center;">
                 <span style="font-size:10px;color:var(--text-muted)">New</span>
-                <button class="btn-del-dropdown-notice" data-id="${n.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:0.7" title="Delete">🗑️</button>
+                <button class="btn-del-dropdown-notice" data-id="${n.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:0.7" title="Delete">ðŸ—‘ï¸</button>
               </div>
             </div>
             <strong style="font-size:12.5px;color:var(--text-primary)">${Utils.escape(n.title)}</strong>
@@ -10937,7 +11062,7 @@ function updateMessagesInbox() {
       if (receivedMessages.length === 0) {
         msgList.innerHTML = `
           <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12.5px">
-            ✉️ No messages or emails.
+            âœ‰ï¸ No messages or emails.
           </div>
         `;
       } else {
@@ -10996,7 +11121,7 @@ function openComposeMessageModal() {
     <div class="modal-content" style="max-width: 480px; animation: scaleUp 0.3s ease">
       <div class="modal-header">
         <h3 class="modal-title">New Internal Message</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <form id="compose-message-form">
         <div class="form-group">
@@ -11047,7 +11172,7 @@ function openComposeMessageModal() {
     DB.save();
 
     closeModal(overlay);
-    CustomDialog.alert('✉️ Message sent successfully!');
+    CustomDialog.alert('âœ‰ï¸ Message sent successfully!');
     updateMessagesInbox();
   });
 }
@@ -11061,7 +11186,7 @@ function openViewMessageModal(msg) {
     <div class="modal-content" style="max-width: 480px; animation: scaleUp 0.3s ease">
       <div class="modal-header">
         <h3 class="modal-title">Internal Email / Message</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <div style="font-size:13px;line-height:1.6;color:var(--text-primary)">
         <div style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
@@ -11088,7 +11213,7 @@ function openPayrollAdjustmentModal(userId, month, year) {
     <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease">
       <div class="modal-header">
         <h3 class="modal-title">Edit Payslip Adjustments</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <form id="payroll-adjustment-form">
         <div style="font-size:12.5px;color:var(--text-secondary);margin-bottom:15px;line-height:1.4">
@@ -11149,8 +11274,8 @@ function openPunctualityRecapModal(userId) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 450px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="margin-bottom:15px">
-        <h3 class="modal-title">📊 Punctuality Recap</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“Š Punctuality Recap</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <div style="font-size:13px; color:var(--text-secondary); margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
         <div>
@@ -11291,8 +11416,8 @@ function openProfileReviewModal(userId) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="margin-bottom:15px">
-        <h3 class="modal-title">📝 Review Profile Changes</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ“ Review Profile Changes</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       <div style="font-size:12.5px; color:var(--text-secondary); margin-bottom:15px">
         Employee: <strong>${Utils.escape(u.name)}</strong> (${userId})
@@ -11355,13 +11480,13 @@ function openHelpGuidelinesModal() {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 500px; animation: scaleUp 0.3s ease; padding: 24px">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px">
-        <h3 class="modal-title">🔐 Portal Guidelines & Security Instructions</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <h3 class="modal-title">ðŸ” Portal Guidelines & Security Instructions</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">âœ•</button>
       </div>
       
       <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; display:flex; flex-direction:column; gap:16px; max-height: 60vh; overflow-y: auto; padding-right: 4px">
         <div>
-          <strong style="color:var(--text-primary); font-size:13.5px">📅 1. Company Shift Guidelines</strong>
+          <strong style="color:var(--text-primary); font-size:13.5px">ðŸ“… 1. Company Shift Guidelines</strong>
           <ul style="margin:6px 0 0 15px; padding:0">
             <li>Standard working hours are 09:00 AM to 07:00 PM (Monday to Saturday).</li>
             <li>Maximum of 2 approved paid leaves per month. Absences beyond this are subject to salary rate deduction.</li>
@@ -11369,7 +11494,7 @@ function openHelpGuidelinesModal() {
         </div>
         
         <div>
-          <strong style="color:var(--text-primary); font-size:13.5px">📍 2. Geo-Fencing Constraints</strong>
+          <strong style="color:var(--text-primary); font-size:13.5px">ðŸ“ 2. Geo-Fencing Constraints</strong>
           <ul style="margin:6px 0 0 15px; padding:0">
             <li>All check-ins are verified against geofence parameters.</li>
             <li>Out-of-range logins require passcode verification and mandatory written deviation justification.</li>
@@ -11377,7 +11502,7 @@ function openHelpGuidelinesModal() {
         </div>
         
         <div>
-          <strong style="color:var(--text-primary); font-size:13.5px">🛡️ 3. Security & Access Protocols</strong>
+          <strong style="color:var(--text-primary); font-size:13.5px">ðŸ›¡ï¸ 3. Security & Access Protocols</strong>
           <ul style="margin:6px 0 0 15px; padding:0">
             <li>Passwords must contain at least 8 characters, an uppercase letter, a number, and a special character.</li>
             <li>Keep your credentials updated. Escalations or role changes must be authorized by the Operations Manager.</li>
@@ -11483,7 +11608,7 @@ function renderAdminFinance() {
     main.innerHTML = `
       <div class="content-header">
         <div>
-          <h1 class="content-title">💼 Corporate Finance Desk</h1>
+          <h1 class="content-title">ðŸ’¼ Corporate Finance Desk</h1>
           <div class="content-subtitle">Central ledger, budget allocations, and P&L statements.</div>
         </div>
       </div>
@@ -11492,27 +11617,27 @@ function renderAdminFinance() {
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:20px">
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--primary)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Total Revenue</div>
-            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.revenue.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">â‚¹${metrics.revenue.toLocaleString()}</div>
           </div>
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--error)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Total Expenses</div>
-            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.expenses.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">â‚¹${metrics.expenses.toLocaleString()}</div>
           </div>
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--success)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Net Profit</div>
-            <div style="font-size:18px; font-weight:700; color:var(--success); margin-top:4px">₹${metrics.profit.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--success); margin-top:4px">â‚¹${metrics.profit.toLocaleString()}</div>
           </div>
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--error)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Net Loss</div>
-            <div style="font-size:18px; font-weight:700; color:var(--error); margin-top:4px">₹${metrics.loss.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--error); margin-top:4px">â‚¹${metrics.loss.toLocaleString()}</div>
           </div>
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--warning)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Payroll Cost</div>
-            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">₹${metrics.payroll.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:4px">â‚¹${metrics.payroll.toLocaleString()}</div>
           </div>
           <div class="card-panel" style="padding:15px; border-left:4px solid var(--cyan)">
             <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:700">Budget Remaining</div>
-            <div style="font-size:18px; font-weight:700; color:var(--cyan); margin-top:4px">₹${metrics.budgetRemaining.toLocaleString()}</div>
+            <div style="font-size:18px; font-weight:700; color:var(--cyan); margin-top:4px">â‚¹${metrics.budgetRemaining.toLocaleString()}</div>
           </div>
         </div>
 
@@ -11520,7 +11645,7 @@ function renderAdminFinance() {
           
           ${isEditor ? `
           <div class="card-panel" style="padding:15px">
-            <h3 class="card-panel-title" style="font-size:14px; margin-bottom:12px">📥 Upload Financial Record</h3>
+            <h3 class="card-panel-title" style="font-size:14px; margin-bottom:12px">ðŸ“¥ Upload Financial Record</h3>
             
             <div class="form-group" style="margin-bottom:10px">
               <label class="form-label">Record Type</label>
@@ -11574,7 +11699,7 @@ function renderAdminFinance() {
 
           <div class="card-panel" style="padding:15px">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px">
-              <h3 class="card-panel-title" style="font-size:14px; margin:0">📋 P&L Transaction Ledger</h3>
+              <h3 class="card-panel-title" style="font-size:14px; margin:0">ðŸ“‹ P&L Transaction Ledger</h3>
               <div style="display:flex; gap:6px">
                 <button class="btn btn-secondary btn-xs" id="btn-export-csv" style="padding:5px 10px; font-size:11px">Export CSV</button>
                 <button class="btn btn-secondary btn-xs" id="btn-export-excel" style="padding:5px 10px; font-size:11px">Export Excel</button>
@@ -11651,7 +11776,7 @@ function renderAdminFinance() {
                       <td style="font-weight:600">${Utils.escape(r.category)}</td>
                       <td>${Utils.escape(r.department)} / <span style="color:var(--text-secondary)">${Utils.escape(r.project || '-')}</span></td>
                       <td>${Utils.escape(r.details || '')}</td>
-                      <td style="text-align:right; font-weight:700; color:${r.type === 'revenue' ? 'var(--success)' : 'var(--text-primary)'}">₹${(Number(r.amount) || 0).toLocaleString()}</td>
+                      <td style="text-align:right; font-weight:700; color:${r.type === 'revenue' ? 'var(--success)' : 'var(--text-primary)'}">â‚¹${(Number(r.amount) || 0).toLocaleString()}</td>
                       ${isEditor ? `<td><button class="btn-delete-record" data-id="${r.id}" style="background:none; border:none; color:var(--error); cursor:pointer; font-size:11px; text-decoration:underline">Delete</button></td>` : ''}
                     </tr>
                   `).join('')}
@@ -11664,45 +11789,45 @@ function renderAdminFinance() {
         </div>
 
         <div class="card-panel" style="padding:20px; margin-top:20px">
-          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">📊 Annual Financial Report (Year 2026 Rollup)</h3>
+          <h3 class="card-panel-title" style="font-size:15px; margin-bottom:15px">ðŸ“Š Annual Financial Report (Year 2026 Rollup)</h3>
           
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px">
             
             <div style="font-size:13px; line-height:1.6">
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Annual Revenue:</span>
-                <strong>₹${metrics.revenue.toLocaleString()}</strong>
+                <strong>â‚¹${metrics.revenue.toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Salary Expenses Paid:</span>
-                <strong>₹${metrics.payroll.toLocaleString()}</strong>
+                <strong>â‚¹${metrics.payroll.toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Operational Expenses:</span>
-                <strong>₹${(metrics.expenses - metrics.payroll).toLocaleString()}</strong>
+                <strong>â‚¹${(metrics.expenses - metrics.payroll).toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Asset Investments:</span>
-                <strong>₹${(records.filter(r => r.type === 'investment' && r.category !== 'Upload Liabilities').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
+                <strong>â‚¹${(records.filter(r => r.type === 'investment' && r.category !== 'Upload Liabilities').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Corporate Tax Paid:</span>
-                <strong>₹${(records.filter(r => r.category === 'Upload Tax Details').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
+                <strong>â‚¹${(records.filter(r => r.category === 'Upload Tax Details').reduce((sum, r) => sum + r.amount, 0)).toLocaleString()}</strong>
               </div>
             </div>
 
             <div style="font-size:13px; line-height:1.6">
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Profit Generated:</span>
-                <strong style="color:var(--success)">₹${metrics.profit.toLocaleString()}</strong>
+                <strong style="color:var(--success)">â‚¹${metrics.profit.toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Total Loss Incurred:</span>
-                <strong style="color:var(--error)">₹${metrics.loss.toLocaleString()}</strong>
+                <strong style="color:var(--error)">â‚¹${metrics.loss.toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Net Company Worth:</span>
-                <strong>₹${(metrics.revenue - metrics.expenses + 25000000).toLocaleString()}</strong>
+                <strong>â‚¹${(metrics.revenue - metrics.expenses + 25000000).toLocaleString()}</strong>
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>Financial Growth Ratio:</span>
@@ -11710,7 +11835,7 @@ function renderAdminFinance() {
               </div>
               <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:6px 0">
                 <span>P&L Status Verification:</span>
-                <span class="badge badge-approved" id="lbl-finance-verification" style="font-size:10px; background:rgba(16,185,129,0.1); color:var(--success)">✅ Verified by Manager</span>
+                <span class="badge badge-approved" id="lbl-finance-verification" style="font-size:10px; background:rgba(16,185,129,0.1); color:var(--success)">âœ… Verified by Manager</span>
               </div>
             </div>
 
@@ -11755,7 +11880,7 @@ function renderAdminFinance() {
     
     if (btnApproveReport && lblStatus) {
       btnApproveReport.addEventListener('click', () => {
-        lblStatus.textContent = '✅ Certified & Approved';
+        lblStatus.textContent = 'âœ… Certified & Approved';
         lblStatus.style.background = 'rgba(16,185,129,0.1)';
         lblStatus.style.color = 'var(--success)';
         alert('Report successfully certified by Finance Manager.');
@@ -11765,7 +11890,7 @@ function renderAdminFinance() {
       btnRejectReport.addEventListener('click', async () => {
         const comment = await prompt('Enter description of discrepancy:');
         if (comment) {
-          lblStatus.textContent = `❌ Flagged: ${comment}`;
+          lblStatus.textContent = `âŒ Flagged: ${comment}`;
           lblStatus.style.background = 'rgba(239,68,68,0.1)';
           lblStatus.style.color = 'var(--error)';
         }
@@ -11841,7 +11966,7 @@ function renderAdminFinance() {
 
       if (totalExpenses > totalBudget && totalBudget > 0) {
         if (typeof addSystemNotificationAlert === 'function') {
-          addSystemNotificationAlert(`⚠️ Budget Exceeded! ${department} expenses of ₹${totalExpenses.toLocaleString()} have exceeded the allocated budget limit of ₹${totalBudget.toLocaleString()}!`);
+          addSystemNotificationAlert(`âš ï¸ Budget Exceeded! ${department} expenses of â‚¹${totalExpenses.toLocaleString()} have exceeded the allocated budget limit of â‚¹${totalBudget.toLocaleString()}!`);
         }
       }
 
@@ -11849,11 +11974,11 @@ function renderAdminFinance() {
       const summary = calculateFinanceMetrics(allRecords);
       if (summary.loss > 0) {
         if (typeof addSystemNotificationAlert === 'function') {
-          addSystemNotificationAlert(`⚠️ Loss Warning: Company P&L deficit logged. Expenses exceed current revenues by ₹${summary.loss.toLocaleString()}!`);
+          addSystemNotificationAlert(`âš ï¸ Loss Warning: Company P&L deficit logged. Expenses exceed current revenues by â‚¹${summary.loss.toLocaleString()}!`);
         }
       } else if (summary.profit > 10000000) {
         if (typeof addSystemNotificationAlert === 'function') {
-          addSystemNotificationAlert(`🎉 Goal Achieved: Projected net annual profit target exceeded ₹1,00,00,000!`);
+          addSystemNotificationAlert(`ðŸŽ‰ Goal Achieved: Projected net annual profit target exceeded â‚¹1,00,00,000!`);
         }
       }
 
@@ -11967,7 +12092,7 @@ function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, di
   ctx.fillText(targetName || 'Worksite', cx, cy - 10);
   
   // Draw Employee dot marker using proper meters-to-pixel projection
-  // Convert lat/lng differences to meters (Delhi ~28.7°N latitude)
+  // Convert lat/lng differences to meters (Delhi ~28.7Â°N latitude)
   const cosLat = Math.cos(targetLat * Math.PI / 180);
   const xMeters = (currentLng - targetLng) * 111139 * cosLat; // East-West offset in meters
   const yMeters = (currentLat - targetLat) * 111139;           // North-South offset in meters
@@ -12011,7 +12136,7 @@ function renderAdminLocations() {
   main.innerHTML = `
     <div class="content-header">
       <div>
-        <h1 class="content-title">🏢 Worksite Locations Configuration</h1>
+        <h1 class="content-title">ðŸ¢ Worksite Locations Configuration</h1>
         <div class="content-subtitle">Register and manage fixed worksite coordinates used for employee geofencing validation.</div>
       </div>
     </div>
@@ -12036,11 +12161,11 @@ function renderAdminLocations() {
                 ${Object.entries(locations).map(([name, coords]) => `
                   <tr>
                     <td style="font-weight:600; color:var(--text-primary)">${Utils.escape(name)}</td>
-                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lat.toFixed(6)}° N</td>
-                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lng.toFixed(6)}° E</td>
+                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lat.toFixed(6)}Â° N</td>
+                    <td style="font-family:monospace; color:var(--text-secondary)">${coords.lng.toFixed(6)}Â° E</td>
                     <td>
-                      <button class="btn btn-secondary btn-edit-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; margin-right:6px">✏️ Edit</button>
-                      <button class="btn btn-danger btn-delete-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; background:rgba(239,68,68,0.1); color:var(--error); border-color:rgba(239,68,68,0.2)">🗑️ Delete</button>
+                      <button class="btn btn-secondary btn-edit-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; margin-right:6px">âœï¸ Edit</button>
+                      <button class="btn btn-danger btn-delete-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; background:rgba(239,68,68,0.1); color:var(--error); border-color:rgba(239,68,68,0.2)">ðŸ—‘ï¸ Delete</button>
                     </td>
                   </tr>
                 `).join('')}
@@ -12051,7 +12176,7 @@ function renderAdminLocations() {
         
         <!-- Add Location Form -->
         <div class="card-panel">
-          <h3 class="card-panel-title" style="margin-bottom:15px">➕ Add New Worksite Location</h3>
+          <h3 class="card-panel-title" style="margin-bottom:15px">âž• Add New Worksite Location</h3>
           <form id="form-admin-add-location" style="display:flex; flex-direction:column; gap:12px">
             <div class="form-group">
               <label class="form-label" for="add-loc-name">Worksite Name</label>
@@ -12099,7 +12224,7 @@ function renderAdminLocations() {
         location: name
       });
       
-      showToastNotification(`✅ Worksite "${name}" registered successfully!`, "success");
+      showToastNotification(`âœ… Worksite "${name}" registered successfully!`, "success");
       renderAdminLocations();
     });
   }
@@ -12125,7 +12250,7 @@ function renderAdminLocations() {
       }
       
       DB.saveOfficeCoordinate(name, lat, lng);
-      showToastNotification(`✅ Coordinates for "${name}" updated successfully!`, "success");
+      showToastNotification(`âœ… Coordinates for "${name}" updated successfully!`, "success");
       renderAdminLocations();
     });
   });
@@ -12135,7 +12260,7 @@ function renderAdminLocations() {
       const name = btn.getAttribute('data-name');
       if (await confirm(`Are you sure you want to delete worksite "${name}"?\nThis cannot be undone.`)) {
         DB.deleteOfficeCoordinate(name);
-        showToastNotification(`🗑️ Worksite "${name}" deleted.`, "success");
+        showToastNotification(`ðŸ—‘ï¸ Worksite "${name}" deleted.`, "success");
         renderAdminLocations();
       }
     });
@@ -12166,7 +12291,7 @@ function showAutoCheckinBanner(active, timeString = '') {
       banner.style.animation = 'pulse 2s infinite';
       parentCard.appendChild(banner);
     }
-    banner.innerHTML = `⚡ <strong>Geofence Entered!</strong> Auto-tracking started at ${timeString}. Please check in to complete your attendance.`;
+    banner.innerHTML = `âš¡ <strong>Geofence Entered!</strong> Auto-tracking started at ${timeString}. Please check in to complete your attendance.`;
   } else {
     if (banner) {
       banner.remove();
