@@ -3254,7 +3254,6 @@ function showAccountModal(editUser = null) {
         <div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
             <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; letter-spacing:0.02em; margin:0">PORTAL ACCESS *</label>
-            <button type="button" id="btn-add-custom-role" title="Add New Custom Department / Role" style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; height:20px; padding:0 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:2px; transition:all 0.2s ease">+ Role</button>
           </div>
           <select id="acct-input-role-select" class="form-control" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box; cursor:pointer">
             <option value="hr" ${initialRole === 'hr' ? 'selected' : ''}>HR Administrator</option>
