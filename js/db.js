@@ -10,209 +10,314 @@ const defaultSchedules = [
 ];
 
 const defaultUsers = [
-  { 
-    id: 'usr_admin', 
-    username: 'admin', 
-    employeeId: 'EMP100',
-    name: 'HR Admin Manager', 
-    password: 'AdminPassword123!', 
-    role: 'hr', 
-    scheduleId: 'sch_1', 
-    baseSalary: 95000,
-    allowanceHRA: 14250,
-    allowanceTravel: 3000,
-    deductionPF: 7600,
-    deductionPT: 200,
-    deductionTDS: 10,
-    phone: '+91 9876543209',
-    email: 'admin@surya.group',
-    dob: '1985-05-12',
-    address: '12, Surya Bhavan, Connaught Place',
-    city: 'Delhi',
-    gender: 'Other',
-    department: 'Human Resources',
-    designation: 'HR Admin Manager',
-    dateOfJoining: '2020-04-15',
-    emergencyContact: '+91 98765 43201',
-    documents: [],
-    resume: null,
-    aadhar: null
+  {
+    "id": "usr_admin",
+    "username": "admin",
+    "employeeId": "HR100",
+    "name": "DEEPAK SHARMA HR Admin Manager",
+    "password": "Deepak@123",
+    "role": "hr",
+    "scheduleId": "sch_1",
+    "baseSalary": 95000,
+    "allowanceHRA": 14250,
+    "allowanceTravel": 3000,
+    "deductionPF": 7600,
+    "deductionPT": 200,
+    "deductionTDS": 10,
+    "phone": "+91 9876543209",
+    "email": "adminsurya.group@gmail.com",
+    "dob": "1985-05-12",
+    "address": "12, Surya Bhavan, Connaught Place",
+    "city": "Delhi",
+    "gender": "Male",
+    "department": "Human Resources",
+    "designation": "HR Admin Manager",
+    "dateOfJoining": "2020-04-15",
+    "emergencyContact": "+91 98765 43201",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+    "managerId": "",
+    "assignedById": "usr_admin",
+    "profileVerificationStatus": "Approved",
+    "profileVerificationComment": "",
+    "pendingProfileEdits": null
   },
-  { 
-    id: 'usr_hr', 
-    username: 'hr', 
-    employeeId: 'EMP101',
-    name: 'HR Coordinator', 
-    password: 'HRPassword123!', 
-    role: 'hr', 
-    scheduleId: 'sch_1', 
-    baseSalary: 75000,
-    allowanceHRA: 11250,
-    allowanceTravel: 3000,
-    deductionPF: 6000,
-    deductionPT: 200,
-    deductionTDS: 10,
-    phone: '+91 9876543211',
-    email: 'hr@surya.group',
-    dob: '1988-06-15',
-    address: '24, Surya Bhavan, Connaught Place',
-    city: 'Delhi',
-    gender: 'Female',
-    department: 'Human Resources',
-    designation: 'HR Coordinator',
-    dateOfJoining: '2022-03-20',
-    emergencyContact: '+91 98765 43202',
-    documents: [],
-    resume: null,
-    aadhar: null
+  {
+    "id": "usr_hr",
+    "username": "hr",
+    "employeeId": "HR101",
+    "name": "shubham HR Coordinator",
+    "password": "Shubham@2456",
+    "role": "hr",
+    "scheduleId": "sch_mfl8wvv",
+    "baseSalary": 75000,
+    "allowanceHRA": 11250,
+    "allowanceTravel": 3000,
+    "deductionPF": 6000,
+    "deductionPT": 200,
+    "deductionTDS": 10,
+    "phone": "+91 9876543211",
+    "email": "hrsurya.group@gmail.com",
+    "dob": "1988-06-15",
+    "address": "24, Surya Bhavan, Connaught Place",
+    "city": "Delhi",
+    "gender": "Female",
+    "department": "Human Resources",
+    "designation": "HR Coordinator",
+    "dateOfJoining": "2022-03-20",
+    "emergencyContact": "+91 98765 43202",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "Noida sector 61",
+    "managerId": "",
+    "assignedById": "usr_admin",
+    "profileVerificationStatus": "Approved",
+    "profileVerificationComment": "",
+    "pendingProfileEdits": null
   },
-  { 
-    id: 'usr_manager', 
-    username: 'manager', 
-    employeeId: 'EMP102',
-    name: 'Operations Manager', 
-    password: 'ManagerPassword123!', 
-    role: 'manager', 
-    scheduleId: 'sch_1', 
-    baseSalary: 80000,
-    allowanceHRA: 12000,
-    allowanceTravel: 3000,
-    deductionPF: 6400,
-    deductionPT: 200,
-    deductionTDS: 10,
-    phone: '+91 9876543212',
-    email: 'manager@surya.group',
-    dob: '1986-04-20',
-    address: '36, Surya Bhavan, Connaught Place',
-    city: 'Delhi',
-    gender: 'Male',
-    department: 'Operations',
-    designation: 'Operations Manager',
-    dateOfJoining: '2021-08-01',
-    emergencyContact: '+91 98765 43203',
-    documents: [],
-    resume: null,
-    aadhar: null
+  {
+    "id": "usr_manager",
+    "username": "manager",
+    "employeeId": "MGR102",
+    "name": "Manjit  kour Operations Manager",
+    "password": "Manjit@123",
+    "role": "manager",
+    "scheduleId": "sch_q8jji9v",
+    "baseSalary": 80000,
+    "allowanceHRA": 12000,
+    "allowanceTravel": 3000,
+    "deductionPF": 6400,
+    "deductionPT": 200,
+    "deductionTDS": 10,
+    "phone": "+91 9876543212",
+    "email": "managersurya.group@gmail.com",
+    "dob": "1986-04-20",
+    "address": "36, Surya Bhavan, Connaught Place",
+    "city": "Delhi",
+    "gender": "Male",
+    "department": "Operations",
+    "designation": "Operations Manager",
+    "dateOfJoining": "2021-08-01",
+    "emergencyContact": "+91 98765 43203",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "Noida sector 61",
+    "managerId": "",
+    "assignedById": "usr_admin",
+    "profileVerificationStatus": "Approved",
+    "profileVerificationComment": "",
+    "pendingProfileEdits": null
   },
-  { 
-    id: 'usr_finance', 
-    username: 'finance', 
-    employeeId: 'EMP106',
-    name: 'Finance Manager', 
-    password: 'FinancePassword123!', 
-    role: 'finance_manager', 
-    scheduleId: 'sch_1', 
-    baseSalary: 78000,
-    allowanceHRA: 11700,
-    allowanceTravel: 3000,
-    deductionPF: 6240,
-    deductionPT: 200,
-    deductionTDS: 10,
-    phone: '+91 9876543213',
-    email: 'finance@surya.group',
-    dob: '1990-09-15',
-    address: '48, Surya Bhavan, Connaught Place',
-    city: 'Delhi',
-    gender: 'Male',
-    department: 'Finance',
-    designation: 'Finance Manager',
-    dateOfJoining: '2023-01-10',
-    emergencyContact: '+91 98765 43204',
-    documents: [],
-    resume: null,
-    aadhar: null
+  {
+    "id": "usr_john",
+    "username": "john",
+    "employeeId": "EMP103",
+    "name": "John Doe",
+    "password": "JohnPassword123!",
+    "role": "employee",
+    "managerId": "usr_manager",
+    "scheduleId": "sch_q8jji9v",
+    "baseSalary": 55000,
+    "allowanceHRA": 8250,
+    "allowanceTravel": 3000,
+    "deductionPF": 4400,
+    "deductionPT": 200,
+    "deductionTDS": 5,
+    "phone": "+91 9999911111",
+    "email": "john.doe345@gmail.com",
+    "dob": "1992-08-23",
+    "address": "H.No. 45, Sector 15",
+    "city": "Noida",
+    "gender": "Male",
+    "department": "Engineering",
+    "designation": "Software Engineer",
+    "dateOfJoining": "2023-11-12",
+    "emergencyContact": "+91 99999 00001",
+    "documents": [],
+    "resume": {
+      "name": "John_Doe_Resume.pdf",
+      "size": "380 KB",
+      "date": "2026-06-10"
+    },
+    "aadhar": {
+      "name": "Aadhar_Card.pdf",
+      "size": "1.4 MB",
+      "date": "2026-06-10"
+    },
+    "bankDetails": {
+      "name": "Bank_Passbook.pdf",
+      "size": "512 KB",
+      "date": "2026-06-10"
+    },
+    "preferredLocation": "Noida sector 61",
+    "assignedById": "usr_admin",
+    "profileVerificationStatus": "Approved",
+    "profileVerificationComment": "",
+    "pendingProfileEdits": null
   },
-  { 
-    id: 'usr_john', 
-    username: 'john', 
-    employeeId: 'EMP103',
-    name: 'John Doe', 
-    password: 'JohnPassword123!', 
-    role: 'employee', 
-    managerId: 'usr_manager',
-    assignedById: 'usr_admin',
-    scheduleId: 'sch_1', 
-    baseSalary: 55000,
-    allowanceHRA: 8250,
-    allowanceTravel: 3000,
-    deductionPF: 4400,
-    deductionPT: 200,
-    deductionTDS: 5,
-    phone: '+91 9999911111',
-    email: 'john.doe@surya.group',
-    dob: '1992-08-23',
-    address: 'H.No. 45, Sector 15',
-    city: 'Noida',
-    gender: 'Male',
-    department: 'Engineering',
-    designation: 'Software Engineer',
-    dateOfJoining: '2023-11-12',
-    emergencyContact: '+91 99999 00001',
-    documents: [],
-    resume: { name: 'John_Doe_Resume.pdf', size: '380 KB', date: '2026-06-10' },
-    aadhar: { name: 'Aadhar_Card.pdf', size: '1.4 MB', date: '2026-06-10' },
-    bankDetails: { name: 'Bank_Passbook.pdf', size: '512 KB', date: '2026-06-10' }
-  },
-  { 
-    id: 'usr_sarah', 
-    username: 'sarah', 
-    employeeId: 'EMP104',
-    name: 'Sarah Connor', 
-    password: 'SarahPassword123!', 
-    role: 'employee', 
-    managerId: 'usr_manager',
-    assignedById: 'usr_admin',
-    scheduleId: 'sch_2', 
-    baseSalary: 62000,
-    allowanceHRA: 9300,
-    allowanceTravel: 3000,
-    deductionPF: 4960,
-    deductionPT: 200,
-    deductionTDS: 10,
-    phone: '+91 9888822222',
-    email: 'sarah.c@surya.group',
-    dob: '1994-11-04',
-    address: 'Plot 102, Gali No 3, Laxmi Nagar',
-    city: 'Delhi',
-    gender: 'Female',
-    department: 'Quality Assurance',
-    designation: 'QA Lead',
-    dateOfJoining: '2024-02-15',
-    emergencyContact: '+91 98888 00002',
-    documents: [
-      { id: 'doc_2', name: 'PAN_Card.jpg', size: '820 KB', date: '2026-06-12' }
+  {
+    "id": "usr_sarah",
+    "username": "sarah",
+    "employeeId": "EMP104",
+    "name": "Sarah Connor",
+    "password": "SarahPassword123!",
+    "role": "employee",
+    "managerId": "usr_manager",
+    "scheduleId": "sch_mfl8wvv",
+    "baseSalary": 62000,
+    "allowanceHRA": 9300,
+    "allowanceTravel": 3000,
+    "deductionPF": 4960,
+    "deductionPT": 200,
+    "deductionTDS": 10,
+    "phone": "+91 9888822222",
+    "email": "sarah.c@surya.group",
+    "dob": "1994-11-04",
+    "address": "Plot 102, Gali No 3, Laxmi Nagar",
+    "city": "Delhi",
+    "gender": "Female",
+    "department": "Quality Assurance",
+    "designation": "QA Lead",
+    "dateOfJoining": "2024-02-15",
+    "emergencyContact": "+91 98888 00002",
+    "documents": [
+      {
+        "id": "doc_2",
+        "name": "PAN_Card.jpg",
+        "size": "820 KB",
+        "date": "2026-06-12"
+      }
     ],
-    resume: null,
-    aadhar: null
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "omaxe Office",
+    "assignedById": "usr_admin"
   },
-  { 
-    id: 'usr_david', 
-    username: 'david', 
-    employeeId: 'EMP105',
-    name: 'David Lightman', 
-    password: 'DavidPassword123!', 
-    role: 'employee', 
-    assignedById: 'usr_admin',
-    scheduleId: 'sch_3', 
-    baseSalary: 48000,
-    allowanceHRA: 7200,
-    allowanceTravel: 3000,
-    deductionPF: 3840,
-    deductionPT: 200,
-    deductionTDS: 5,
-    phone: '+91 9777733333',
-    email: 'david.l@surya.group',
-    dob: '1997-03-15',
-    address: 'B-4, Block C, Rohini Sector 8',
-    city: 'Delhi',
-    gender: 'Male',
-    department: 'Engineering',
-    designation: 'Junior Developer',
-    dateOfJoining: '2025-01-20',
-    emergencyContact: '+91 97777 00003',
-    documents: [],
-    resume: null,
-    aadhar: null
+  {
+    "id": "usr_david",
+    "username": "david",
+    "employeeId": "EMP105",
+    "name": "David Lightman",
+    "password": "DavidPassword123!",
+    "role": "employee",
+    "managerId": "usr_manager",
+    "scheduleId": "sch_bgpyqv3",
+    "baseSalary": 48000,
+    "allowanceHRA": 7200,
+    "allowanceTravel": 3000,
+    "deductionPF": 3840,
+    "deductionPT": 200,
+    "deductionTDS": 5,
+    "phone": "+91 9777733333",
+    "email": "david.l@surya.group",
+    "dob": "1997-03-15",
+    "address": "B-4, Block C, Rohini Sector 8",
+    "city": "Delhi",
+    "gender": "Male",
+    "department": "Engineering",
+    "designation": "Junior Developer",
+    "dateOfJoining": "2025-01-20",
+    "emergencyContact": "+91 97777 00003",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "chandani chowk",
+    "assignedById": "usr_admin"
+  },
+  {
+    "id": "usr_t42n6xh",
+    "employeeId": "EMP-190",
+    "scheduleId": "sch_q8jji9v",
+    "baseSalary": 50000,
+    "allowanceHRA": 7500,
+    "allowanceTravel": 3000,
+    "deductionPF": 4000,
+    "deductionPT": 200,
+    "deductionTDS": 5,
+    "phone": "+918533920083",
+    "email": "rahulsharma090@gmail.com",
+    "dob": "1990-06-19",
+    "address": "",
+    "city": "",
+    "gender": "Male",
+    "department": "Testing",
+    "designation": "QA Lead",
+    "dateOfJoining": "2026-07-17",
+    "emergencyContact": "+91 97777 00003",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "bankDetails": null,
+    "name": "Rahul Sharma",
+    "username": "rahulsharma",
+    "password": "Surya@123",
+    "role": "employee",
+    "preferredLocation": "Noida sector 61",
+    "managerId": "usr_manager",
+    "assignedById": "usr_admin"
+  },
+  {
+    "id": "usr_7kek2wc",
+    "employeeId": "HR123",
+    "scheduleId": "sch_1",
+    "baseSalary": 50000,
+    "allowanceHRA": 7500,
+    "allowanceTravel": 3000,
+    "deductionPF": 4000,
+    "deductionPT": 200,
+    "deductionTDS": 5,
+    "phone": "9536885675",
+    "email": "hemantupadhyay900@gmail.com",
+    "dob": "",
+    "address": "",
+    "city": "",
+    "gender": "Male",
+    "department": "HR Administrator",
+    "designation": "HR Administrator",
+    "dateOfJoining": "2026-07-22",
+    "emergencyContact": "",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "bankDetails": null,
+    "name": "Hemant upadhyay",
+    "username": "HR123",
+    "mobile": "9536885675",
+    "role": "hr",
+    "status": "Active",
+    "password": "Hemant@123"
+  },
+  {
+    "id": "usr_finance",
+    "username": "finance",
+    "employeeId": "EMP106",
+    "name": "Finance Manager",
+    "password": "FinancePassword123!",
+    "role": "finance_manager",
+    "scheduleId": "sch_1",
+    "baseSalary": 78000,
+    "allowanceHRA": 11700,
+    "allowanceTravel": 3000,
+    "deductionPF": 6240,
+    "deductionPT": 200,
+    "deductionTDS": 10,
+    "phone": "+91 9876543213",
+    "email": "finance@surya.group",
+    "dob": "1990-09-15",
+    "address": "48, Surya Bhavan, Connaught Place",
+    "city": "Delhi",
+    "gender": "Male",
+    "department": "Finance",
+    "designation": "Finance Manager",
+    "dateOfJoining": "2023-01-10",
+    "emergencyContact": "+91 98765 43204",
+    "documents": [],
+    "resume": null,
+    "aadhar": null
   }
 ];
 
@@ -456,6 +561,11 @@ export const DB = {
       if (s.halfDayLimit === undefined) { s.halfDayLimit = 120; modified = true; }
     });
 
+    if (!this.data.customRoles) {
+      this.data.customRoles = [];
+      modified = true;
+    }
+
     if (modified) {
       this.save();
     }
@@ -626,7 +736,7 @@ export const DB = {
     const nextEmpId = 'EMP' + (maxId + 1);
     const newUser = {
       id: newId,
-      employeeId: nextEmpId,
+      employeeId: user.employeeId || nextEmpId,
       scheduleId: 'sch_1',
       baseSalary: 50000,
       allowanceHRA: Math.round(50000 * 0.15),
@@ -689,6 +799,54 @@ export const DB = {
     this.save();
   },
 
+  getCustomRoles() {
+    if (!this.data.customRoles) {
+      this.data.customRoles = [];
+    }
+    return this.data.customRoles;
+  },
+
+  getUserBaseRole(roleId) {
+    if (!roleId) return 'employee';
+    if (roleId === 'hr' || roleId === 'manager' || roleId === 'finance_manager' || roleId === 'employee') {
+      return roleId;
+    }
+    const customRoles = this.getCustomRoles();
+    const custom = customRoles.find(r => r.id === roleId);
+    if (custom) {
+      return this.getUserBaseRole(custom.parentRole);
+    }
+    return 'employee';
+  },
+
+  addCustomRole(name, parentRole) {
+    if (!this.data.customRoles) {
+      this.data.customRoles = [];
+    }
+    const id = name.toLowerCase().replace(/\s+/g, '_');
+    if (this.data.customRoles.some(r => r.id === id)) {
+      return null;
+    }
+    const newRole = { id, name, parentRole };
+    this.data.customRoles.push(newRole);
+    this.save();
+    return newRole;
+  },
+
+  deleteCustomRole(id) {
+    if (!this.data.customRoles) {
+      this.data.customRoles = [];
+      return false;
+    }
+    const initialLength = this.data.customRoles.length;
+    this.data.customRoles = this.data.customRoles.filter(r => r.id !== id);
+    if (this.data.customRoles.length < initialLength) {
+      this.save();
+      return true;
+    }
+    return false;
+  },
+
   resetUserPassword(username, newPassword) {
     const user = this.getUserByUsername(username);
     if (user) {
@@ -723,6 +881,12 @@ export const DB = {
       if (details.deductionPF !== undefined) user.deductionPF = Number(details.deductionPF);
       if (details.deductionPT !== undefined) user.deductionPT = Number(details.deductionPT);
       if (details.deductionTDS !== undefined) user.deductionTDS = Number(details.deductionTDS);
+      if (details.state !== undefined) user.state = details.state;
+      if (details.status !== undefined) user.status = details.status;
+      if (details.profilePhoto !== undefined) user.profilePhoto = details.profilePhoto;
+      if (details.bankDetails !== undefined) user.bankDetails = details.bankDetails;
+      if (details.resume !== undefined) user.resume = details.resume;
+      if (details.aadhar !== undefined) user.aadhar = details.aadhar;
       this.save();
       return user;
     }

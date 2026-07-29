@@ -663,11 +663,12 @@ body.light-theme .content-header {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
+  color: var(--text-primary) !important;
 }
 
 .stat-label {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-secondary) !important;
   margin-top: 4px;
 }
 
@@ -2828,6 +2829,7 @@ body {
 /* Main Content Area */
 .main-content {
   background: var(--bg-gradient) !important;
+  color: var(--text-primary) !important;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -3298,6 +3300,45 @@ body.light-theme .equify-filter-select option {
 .custom-dialog-btn-prompt:hover {
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
   box-shadow: 0 10px 24px -4px rgba(99, 102, 241, 0.6) !important;
+}
+
+/* Dark Mode Safety Overrides */
+.form-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.65;
+}
+
+select option {
+  background: #3d0d0a !important;
+  color: #ffffff !important;
+}
+
+body.light-theme select option {
+  background: #ffffff !important;
+  color: #1f0504 !important;
+}
+
+.role-portal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.22s ease-in-out;
+}
+
+.role-portal-btn:hover {
+  background: rgba(137, 32, 27, 0.05) !important;
+  border-color: rgba(251, 191, 36, 0.25) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 

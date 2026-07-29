@@ -2,9 +2,10 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const app = express();
-const PORT = process.env.PORT || 8081;
+const PORT = parseInt(process.env.PORT || 8080, 10);
 const MONGO_URL = 'mongodb://127.0.0.1:27017';
 const DB_NAME = 'attendance_system';
 const COLLECTION_NAME = 'state';
@@ -30,6 +31,12 @@ app.use((req, res, next) => {
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+// Serve static frontend files and uploads
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
@@ -179,10 +186,42 @@ function getLocalNetworkIP() {
   return '127.0.0.1';
 }
 
-let DEFAULT_PORT = parseInt(process.env.PORT || 8080, 10);
 const localIP = getLocalNetworkIP();
 
+function freePort(port) {
+  if (process.platform === 'win32') {
+    try {
+      const stdout = execSync(`netstat -ano | findstr :${port}`, { encoding: 'utf8' });
+      const pids = new Set();
+      const currentPid = process.pid;
+      
+      stdout.split('\n').forEach(line => {
+        if (line.includes('LISTENING')) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[parts.length - 1];
+          if (pid && !isNaN(pid) && parseInt(pid, 10) !== currentPid) {
+            pids.add(pid);
+          }
+        }
+      });
+      
+      pids.forEach(pid => {
+        console.log(`🧹 Clearing stale process (PID ${pid}) on Port ${port}...`);
+        try {
+          execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+        } catch (e) {}
+      });
+      
+      // Give the OS a brief moment to release the socket
+      try { execSync('timeout /t 1 /nobreak', { stdio: 'ignore' }); } catch (e) {}
+    } catch (err) {
+      // netstat exits with code 1 if no match is found, which is fine
+    }
+  }
+}
+
 function startExpressServer(portToTry) {
+  freePort(portToTry);
   const serverInstance = app.listen(portToTry, '0.0.0.0', () => {
     console.log(`===================================================`);
     console.log(`  HS GROUP DELHI EXPRESS LIVE SERVER ACTIVE `);
@@ -212,4 +251,4 @@ function print_urls(port, ip) {
   console.log(`  Mobile / LAN:  http://${ip}:${port}`);
 }
 
-startExpressServer(DEFAULT_PORT);
+startExpressServer(PORT);

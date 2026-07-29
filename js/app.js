@@ -156,7 +156,7 @@ window.prompt = function(msg, defaultVal) {
 
 let activeTimer = null;
 const AUTH_REQUIRE_ID_MANDATORY = false; // Change to true to make ID verification mandatory
-const getInitials = (name) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
 // Convert 24-hour time string (e.g. "08:00", "16:30") to 12-hour AM/PM format (e.g. "08:00 AM", "04:30 PM")
 function formatTime12h(timeStr) {
@@ -392,7 +392,8 @@ function setupRouter() {
       }
 
       // STRICT EMPLOYEE ROLE PERMISSIONS ENFORCEMENT
-      if (user.role === 'employee') {
+      const baseRole = DB.getUserBaseRole(user.role);
+      if (baseRole === 'employee') {
         const allowedEmployeeRoutes = [
           '#dashboard',
           '#leaves',
@@ -412,7 +413,7 @@ function setupRouter() {
 
       const isManagementRoute = hash.startsWith('#admin-');
       const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
-      const isManagementRole = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
+      const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager';
 
       if (isManagementRoute && !isManagementRole) {
         window.location.hash = '#dashboard';
@@ -575,50 +576,29 @@ function renderLoginView() {
   const root = document.getElementById('app-root');
 
   const allUsers = DB.getUsers();
-  const hrUsers = allUsers.filter(u => u.role === 'hr');
-  const managerUsers = allUsers.filter(u => u.role === 'manager' || u.role === 'finance_manager');
-  const employeeUsers = allUsers.filter(u => u.role === 'employee');
+  const hrUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'hr');
+  const managerUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'finance_manager');
+  const employeeUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
 
-  const getInitials = (name) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
-  const hrItems = hrUsers.map(u => `
-    <button class="staff-item" data-username="${Utils.escape(u.username)}">
-      <div class="staff-item-avatar">${getInitials(u.name)}</div>
-      <div class="staff-item-info">
-        <div class="staff-item-name">${Utils.escape(u.name)}</div>
-        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'HR / Admin')}</div>
-      </div>
-      <div class="staff-item-arrow">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-    </button>
-  `).join('');
-
-  const managerItems = managerUsers.map(u => `
-    <button class="staff-item" data-username="${Utils.escape(u.username)}">
-      <div class="staff-item-avatar">${getInitials(u.name)}</div>
-      <div class="staff-item-info">
-        <div class="staff-item-name">${Utils.escape(u.name)}</div>
-        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'Operations Manager')}</div>
-      </div>
-      <div class="staff-item-arrow">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-    </button>
-  `).join('');
-
-  const employeeItems = employeeUsers.map(u => `
-    <button class="staff-item" data-username="${Utils.escape(u.username)}">
-      <div class="staff-item-avatar">${getInitials(u.name)}</div>
-      <div class="staff-item-info">
-        <div class="staff-item-name">${Utils.escape(u.name)}</div>
-        <div class="staff-item-subtitle">${Utils.escape(u.designation || 'Employee')}</div>
-      </div>
-      <div class="staff-item-arrow">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </div>
-    </button>
-  `).join('');
+  const getRoleItemsHTML = (users, defaultSubtitle) => {
+    return users.map(u => {
+      const nameVal = u.name || u.username || '';
+      return `
+        <button class="staff-item" data-username="${Utils.escape(u.username)}">
+          <div class="staff-item-avatar">${Utils.escape(getInitials(nameVal))}</div>
+          <div class="staff-item-info">
+            <div class="staff-item-name">${Utils.escape(nameVal)}</div>
+            <div class="staff-item-subtitle">${Utils.escape(u.designation || defaultSubtitle)}</div>
+          </div>
+          <div class="staff-item-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </button>
+      `;
+    }).join('');
+  };
 
   root.innerHTML = `
     <div class="auth-wrapper">
@@ -668,59 +648,147 @@ function renderLoginView() {
         </div>
       </div>
       <div class="auth-form-column">
-        <div class="auth-card auth-card-wide" id="auth-box">
-          <div id="role-selector-section">
-            <div class="auth-header" style="position:relative; margin-bottom: 20px;">
-              <div class="auth-logo" style="margin-bottom: 8px; justify-content: center;">
-                <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25));">
-              </div>
-              <div class="auth-title" style="text-align: center; font-size: 20px; font-weight: 700; color: var(--primary);">House of Surya</div>
-              <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 4px;">Workforce Operations Portal</div>
-              <div class="auth-sub-desc" style="text-align: center; font-size: 13px;">Select your account to access your dashboard</div>
-            </div>
-            <div class="staff-columns-grid">
-              <div class="staff-column">
-                <div class="staff-column-header">
-                  <div class="staff-column-icon" style="background:rgba(239, 68, 68, 0.1); color:var(--error);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                  </div>
-                  <h3 class="staff-column-title">HR / Admin (${hrUsers.length})</h3>
-                </div>
-                <div class="staff-list">
-                  ${hrItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No HR registered</div>'}
-                </div>
-              </div>
-              <div class="staff-column">
-                <div class="staff-column-header">
-                  <div class="staff-column-icon" style="background:rgba(16, 185, 129, 0.1); color:var(--success);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-                  </div>
-                  <h3 class="staff-column-title">Managers (${managerUsers.length})</h3>
-                </div>
-                <div class="staff-list">
-                  ${managerItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No Managers registered</div>'}
-                </div>
-              </div>
-              <div class="staff-column">
-                <div class="staff-column-header">
-                  <div class="staff-column-icon" style="background:rgba(6, 182, 212, 0.1); color:var(--cyan);">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  </div>
-                  <h3 class="staff-column-title">Employees (${employeeUsers.length})</h3>
-                </div>
-                <div class="staff-list">
-                  ${employeeItems || '<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No Employees registered</div>'}
-                </div>
-              </div>
-            </div>
-            <div class="auth-policy-footer" style="margin-top: 24px; text-align: center; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px;">
-              By logging in, you agree to the <a href="#" id="btn-show-policy" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy & Guidelines</a>.
-            </div>
-          </div>
+        <div class="auth-card" id="auth-box" style="max-width: 480px; width: 100%; padding: 32px;">
+          <!-- Content dynamically rendered by renderRolesList() -->
         </div>
       </div>
     </div>
   `;
+
+  const renderRolesList = () => {
+    const authBox = document.getElementById('auth-box');
+    if (!authBox) return;
+
+    authBox.innerHTML = `
+      <div id="role-selector-section" style="animation: fadeIn 0.3s ease;">
+        <div class="auth-header" style="position:relative; margin-bottom: 24px; text-align: center;">
+          <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
+            <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain;">
+          </div>
+          <div class="auth-title" style="text-align: center; font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 4px;">House of Surya</div>
+          <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;">WORKFORCE OPERATIONS PORTAL</div>
+          <div class="auth-sub-desc" style="text-align: center; font-size: 13px; color: var(--text-muted);">Select your role to access your dashboard</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- HR Button -->
+          <button class="role-portal-btn" data-role="hr" style="cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">👤</div>
+              <div style="pointer-events: none;">
+                <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">HR / Admin Portal</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Manage payroll, user directories & request approvals</div>
+              </div>
+            </div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+          </button>
+
+          <!-- Manager Button -->
+          <button class="role-portal-btn" data-role="manager" style="cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">ℹ️</div>
+              <div style="pointer-events: none;">
+                <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Manager Portal</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Review shift swaps & oversee team operations</div>
+              </div>
+            </div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+          </button>
+
+          <!-- Employee Button -->
+          <button class="role-portal-btn" data-role="employee" style="cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">📋</div>
+              <div style="pointer-events: none;">
+                <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Employee Portal</div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Clock in/out, view payslips & schedules</div>
+              </div>
+            </div>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
+          </button>
+        </div>
+
+        <div class="auth-policy-footer" style="margin-top: 24px; text-align: center; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px;">
+          By logging in, you agree to the <a href="#" id="btn-show-policy" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy & Guidelines</a>.
+        </div>
+      </div>
+    `;
+
+    // Bind portal button clicks
+    authBox.querySelectorAll('.role-portal-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetBtn = e.currentTarget;
+        const role = targetBtn.getAttribute('data-role');
+        renderUsersList(role);
+      });
+    });
+
+    const policyBtn = document.getElementById('btn-show-policy');
+    if (policyBtn) {
+      policyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showCompanyPolicyModal();
+      });
+    }
+  };
+
+  const renderUsersList = (role) => {
+    const authBox = document.getElementById('auth-box');
+    if (!authBox) return;
+
+    let roleTitle = '';
+    let usersList = [];
+    let defaultSubtitle = '';
+
+    if (role === 'hr') {
+      roleTitle = 'HR / Admin';
+      usersList = hrUsers;
+      defaultSubtitle = 'HR / Admin';
+    } else if (role === 'manager') {
+      roleTitle = 'Managers';
+      usersList = managerUsers;
+      defaultSubtitle = 'Operations Manager';
+    } else {
+      roleTitle = 'Employees';
+      usersList = employeeUsers;
+      defaultSubtitle = 'Employee';
+    }
+
+    const itemsHTML = getRoleItemsHTML(usersList, defaultSubtitle) || `<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No accounts registered under this role.</div>`;
+
+    authBox.innerHTML = `
+      <div id="role-users-section" style="animation: fadeIn 0.3s ease;">
+        <div class="auth-header" style="margin-bottom: 20px; text-align: center; position: relative;">
+          <button id="btn-back-to-roles" style="position: absolute; left: 0; top: 0; background: transparent; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 0;">
+            ◀ Back
+          </button>
+          <div class="auth-logo" style="margin-bottom: 8px; justify-content: center; display: flex;">
+            <img src="surya-logo.png" alt="Surya Logo" style="height: 50px; object-fit: contain;">
+          </div>
+          <div class="auth-title" style="text-align: center; font-size: 18px; font-weight: 700; color: var(--primary);">${roleTitle} Portal</div>
+          <div class="auth-sub-desc" style="text-align: center; font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">SELECT YOUR ACCOUNT TO CONTINUE</div>
+        </div>
+        
+        <div class="staff-list" style="max-height: 320px; overflow-y: auto;">
+          ${itemsHTML}
+        </div>
+      </div>
+    `;
+
+    // Bind back button
+    authBox.querySelector('#btn-back-to-roles').addEventListener('click', renderRolesList);
+
+    // Bind user selection
+    authBox.querySelectorAll('.staff-item').forEach(userBtn => {
+      userBtn.addEventListener('click', () => {
+        const username = userBtn.getAttribute('data-username');
+        const user = DB.getUserByUsername(username);
+        if (user) {
+          showVerificationScreen(user);
+        }
+      });
+    });
+  };
 
   const showVerificationScreen = (selectedUser) => {
     const authBox = document.getElementById('auth-box');
@@ -771,7 +839,7 @@ function renderLoginView() {
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
-          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
+          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="${Utils.escape(selectedUser ? (selectedUser.employeeId || selectedUser.username || '') : '')}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
         ${isHrOrManager ? `
@@ -942,30 +1010,16 @@ function renderLoginView() {
   const proceedLogin = (user) => {
     Auth.currentUser = user;
     sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
-    if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
+    const baseRole = DB.getUserBaseRole(user.role);
+    if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
       window.location.hash = '#admin-dashboard';
     } else {
       window.location.hash = '#dashboard';
     }
   };
 
-  document.querySelectorAll('.staff-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const username = btn.getAttribute('data-username');
-      const user = DB.getUserByUsername(username);
-      if (user) {
-        showVerificationScreen(user);
-      }
-    });
-  });
-
-  const policyBtn = document.getElementById('btn-show-policy');
-  if (policyBtn) {
-    policyBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      showCompanyPolicyModal();
-    });
-  }
+  // Bootstrap login view with Role Selector list
+  renderRolesList();
 }
 
 
@@ -977,7 +1031,8 @@ function renderAppShell() {
   const labels = Translations[currentLang] || Translations.en;
 
   let menuHTML = '';
-  if (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') {
+  const baseRole = DB.getUserBaseRole(user.role);
+  if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
     menuHTML = `
       <li class="menu-item" id="nav-admin-dashboard"><a href="#admin-dashboard">
         <svg viewBox="0 0 24 24"><path d="M10 20H5v-7H2l10-9 10 9h-3v7h-5v-6h-2v6z"/></svg> ${labels.monitor}
@@ -1079,9 +1134,22 @@ function renderAppShell() {
           <input type="text" placeholder="Search..." id="global-header-search">
         </div>
         <div class="top-nav-right">
-          <button class="top-nav-icon-btn" title="Messages">
-            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-          </button>
+          <div class="messages-widget" style="position:relative">
+            <button id="btn-messages-toggle" class="top-nav-icon-btn" title="Messages">
+              <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              <span class="top-nav-badge" id="messages-count" style="display:none">0</span>
+            </button>
+            
+            <div id="messages-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);z-index:1001;margin-top:10px;animation:fadeIn 0.2s ease">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                <strong style="font-size:13.5px;color:var(--text-primary)">Messages & Emails</strong>
+                <button id="btn-compose-message" style="background:var(--primary);border:none;color:#ffffff;cursor:pointer;font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px">New Message</button>
+              </div>
+              <div id="messages-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
+                <!-- populated dynamically -->
+              </div>
+            </div>
+          </div>
           
           <div class="notification-widget" style="position:relative">
             <button id="btn-notifications-toggle" class="top-nav-icon-btn" title="Notifications">
@@ -1091,9 +1159,9 @@ function renderAppShell() {
               <span class="top-nav-badge" id="notification-count" style="display:none">6</span>
             </button>
             
-            <div id="notifications-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);z-index:1001;margin-top:10px;animation:fadeIn 0.2s ease">
-              <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-                <strong style="font-size:13.5px;color:#0f172a">Alerts & Notifications</strong>
+            <div id="notifications-dropdown" style="display:none;position:absolute;top:100%;right:0;width:340px;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.5);z-index:1001;margin-top:10px;animation:fadeIn 0.2s ease">
+              <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                <strong style="font-size:13.5px;color:var(--text-primary)">Alerts & Notifications</strong>
                 <button id="btn-delete-all-dropdown" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-size:11px;text-decoration:underline;padding:0">Delete All</button>
               </div>
               <div id="notifications-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column">
@@ -1239,6 +1307,10 @@ function renderAppShell() {
   const dropdown = document.getElementById('notifications-dropdown');
   const clearBtn = document.getElementById('btn-delete-all-dropdown');
 
+  const msgToggleBtn = document.getElementById('btn-messages-toggle');
+  const msgDropdown = document.getElementById('messages-dropdown');
+  const composeBtn = document.getElementById('btn-compose-message');
+
   // Bind Global Real-Time Header Search
   const globalSearchInput = document.getElementById('global-header-search');
   if (globalSearchInput) {
@@ -1291,10 +1363,35 @@ function renderAppShell() {
       }
     });
 
+    if (msgToggleBtn && msgDropdown) {
+      msgToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = msgDropdown.style.display === 'block';
+        msgDropdown.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+          updateMessagesInbox();
+        }
+      });
+    }
+
+    if (composeBtn) {
+      composeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (msgDropdown) msgDropdown.style.display = 'none';
+        openComposeMessageModal();
+      });
+    }
+
+    // Initial update of Messages inbox
+    updateMessagesInbox();
+
     // Close dropdown on click outside
     document.addEventListener('click', (e) => {
       if (!dropdown.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
         dropdown.style.display = 'none';
+      }
+      if (msgDropdown && !msgDropdown.contains(e.target) && e.target !== msgToggleBtn && !msgToggleBtn.contains(e.target)) {
+        msgDropdown.style.display = 'none';
       }
     });
 
@@ -5874,11 +5971,8 @@ function renderAdminUsers() {
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
   const dlProfilesBtn = document.getElementById('btn-download-profiles-users');
   if (dlProfilesBtn) dlProfilesBtn.addEventListener('click', () => openProfileDownloadModal());
-  document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
-  document.querySelectorAll('.btn-download-user-profile').forEach(btn => btn.addEventListener('click', (e) => openProfileDownloadModal(e.target.closest('.btn-download-user-profile').dataset.id)));
-  
-  document.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => {
-    const id = e.target.closest('.btn-approve-profile-direct').dataset.id;
+
+  const handleApproveProfile = (id) => {
     const u = DB.getUser(id);
     if (u && u.pendingProfileEdits) {
       Object.assign(u, u.pendingProfileEdits);
@@ -5888,10 +5982,9 @@ function renderAdminUsers() {
       DB.save();
       renderAdminUsers();
     }
-  }));
+  };
 
-  document.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', async (e) => {
-    const id = e.target.closest('.btn-reject-profile-direct').dataset.id;
+  const handleRejectProfile = async (id) => {
     const u = DB.getUser(id);
     if (u) {
       const comment = await CustomDialog.prompt('Please enter the profile issue details / reason for rejection:');
@@ -5906,7 +5999,24 @@ function renderAdminUsers() {
       DB.save();
       renderAdminUsers();
     }
-  }));
+  };
+
+  const handleDeleteUser = async (id) => {
+    const u = DB.getUser(id);
+    if (u && await CustomDialog.confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
+      DB.deleteUser(id);
+      renderAdminUsers();
+    }
+  };
+
+  const bindUserRowEvents = (container = document) => {
+    container.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
+    container.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
+    container.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleApproveProfile(e.target.closest('.btn-approve-profile-direct').dataset.id)));
+    container.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleRejectProfile(e.target.closest('.btn-reject-profile-direct').dataset.id)));
+  };
+
+  bindUserRowEvents();
 
   // Setup real-time dynamic filter listeners on dropdowns
   const setupFilterListeners = () => {
@@ -5992,8 +6102,7 @@ function renderAdminUsers() {
           `;
         }).join('');
 
-        document.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
-        document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
+        bindUserRowEvents(tbody);
       }
 
       if (pInfo) {
@@ -6007,15 +6116,6 @@ function renderAdminUsers() {
   };
 
   setupFilterListeners();
-
-  document.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', async (e) => {
-    const id = e.target.closest('.btn-delete-user').dataset.id;
-    const u = DB.getUser(id);
-    if (await CustomDialog.confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
-      DB.deleteUser(id);
-      renderAdminUsers();
-    }
-  }));
 }
 
 function openUserModal(userId = null) {
@@ -9501,6 +9601,178 @@ function updateNotificationsUI() {
   } catch (err) {
     console.error("Error updating notifications UI:", err);
   }
+}
+
+// -------------------------------------------------------------
+// INTERNAL MESSAGING SYSTEM CONTROLLERS
+// -------------------------------------------------------------
+function updateMessagesInbox() {
+  try {
+    const user = Auth.getCurrentUser();
+    if (!user) return;
+
+    if (!DB.data.messages) {
+      DB.data.messages = [];
+    }
+
+    const receivedMessages = DB.data.messages.filter(m => m.receiverId === user.id);
+    const unreadCount = receivedMessages.filter(m => !m.read).length;
+
+    const countBadge = document.getElementById('messages-count');
+    if (countBadge) {
+      if (unreadCount > 0) {
+        countBadge.textContent = unreadCount;
+        countBadge.style.display = 'flex';
+      } else {
+        countBadge.style.display = 'none';
+      }
+    }
+
+    const msgList = document.getElementById('messages-list');
+    if (msgList) {
+      if (receivedMessages.length === 0) {
+        msgList.innerHTML = `
+          <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12.5px">
+            ✉️ No messages or emails.
+          </div>
+        `;
+      } else {
+        const sorted = [...receivedMessages].sort((a, b) => new Date(b.date) - new Date(a.date));
+        msgList.innerHTML = sorted.map(m => {
+          const sender = DB.getUser(m.senderId) || { name: 'Unknown User' };
+          const timeStr = new Date(m.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+          const dateStr = new Date(m.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+          return `
+            <div class="msg-dropdown-item" data-id="${m.id}" style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:${m.read ? 'transparent' : 'rgba(137,32,27,0.06)'};transition:all 0.2s">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <strong style="font-size:12.5px;color:var(--text-primary)">${Utils.escape(sender.name)}</strong>
+                <span style="font-size:10px;color:var(--text-muted)">${dateStr} ${timeStr}</span>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${Utils.escape(m.subject)}</div>
+              <div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">${Utils.escape(m.body)}</div>
+            </div>
+          `;
+        }).join('');
+
+        // Bind click events on dropdown message list items
+        msgList.querySelectorAll('.msg-dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const msgId = item.dataset.id;
+            const msg = DB.data.messages.find(m => m.id === msgId);
+            if (msg) {
+              msg.read = true;
+              DB.save();
+              updateMessagesInbox();
+              openViewMessageModal(msg);
+            }
+          });
+          
+          item.addEventListener('mouseenter', () => {
+            item.style.background = 'rgba(137,32,27,0.1)';
+          });
+          item.addEventListener('mouseleave', () => {
+            item.style.background = item.classList.contains('read') ? 'transparent' : (DB.data.messages.find(m => m.id === item.dataset.id)?.read ? 'transparent' : 'rgba(137,32,27,0.06)');
+          });
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Error updating messages inbox:", err);
+  }
+}
+
+function openComposeMessageModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const currentUser = Auth.getCurrentUser();
+  const users = DB.getUsers().filter(u => u.id !== currentUser.id);
+  const optionsHTML = users.map(u => `<option value="${u.id}">${Utils.escape(u.name)} (${u.role.toUpperCase()})</option>`).join('');
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 480px; animation: scaleUp 0.3s ease">
+      <div class="modal-header">
+        <h3 class="modal-title">New Internal Message</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+      <form id="compose-message-form">
+        <div class="form-group">
+          <label class="form-label" for="msg-recipient">Recipient *</label>
+          <select class="form-input profile-editable-field" id="msg-recipient" required style="width:100%;height:38px;padding:8px">
+            <option value="">-- Select Recipient --</option>
+            ${optionsHTML}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="msg-subject">Subject *</label>
+          <input class="form-input profile-editable-field" type="text" id="msg-subject" required placeholder="Enter Subject">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="msg-body">Message Body *</label>
+          <textarea class="form-input profile-editable-field" id="msg-body" required placeholder="Type your message here..." rows="4" style="resize:vertical;padding:10px"></textarea>
+        </div>
+        <div class="modal-actions" style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-secondary" type="button" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
+          <button class="btn btn-success" type="submit" style="background:#89201B;color:white;font-weight:700">Send Message</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#compose-message-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const recipientId = overlay.querySelector('#msg-recipient').value;
+    const subject = overlay.querySelector('#msg-subject').value.trim();
+    const body = overlay.querySelector('#msg-body').value.trim();
+
+    const sender = Auth.getCurrentUser();
+    const newMessage = {
+      id: 'msg_' + Date.now(),
+      senderId: sender.id,
+      receiverId: recipientId,
+      subject,
+      body,
+      date: new Date().toISOString(),
+      read: false
+    };
+
+    if (!DB.data.messages) {
+      DB.data.messages = [];
+    }
+    DB.data.messages.push(newMessage);
+    DB.save();
+
+    closeModal(overlay);
+    CustomDialog.alert('✉️ Message sent successfully!');
+    updateMessagesInbox();
+  });
+}
+
+function openViewMessageModal(msg) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const sender = DB.getUser(msg.senderId) || { name: 'Unknown User' };
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 480px; animation: scaleUp 0.3s ease">
+      <div class="modal-header">
+        <h3 class="modal-title">Internal Email / Message</h3>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+      </div>
+      <div style="font-size:13px;line-height:1.6;color:var(--text-primary)">
+        <div style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
+          <div><span style="color:var(--text-muted)">From:</span> <strong>${Utils.escape(sender.name)}</strong></div>
+          <div style="margin-top:4px"><span style="color:var(--text-muted)">Subject:</span> <strong style="color:var(--text-secondary)">${Utils.escape(msg.subject)}</strong></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">${new Date(msg.date).toLocaleString('en-IN')}</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);padding:14px;border-radius:8px;border:1px solid var(--border);white-space:pre-wrap">${Utils.escape(msg.body)}</div>
+        <div style="margin-top:20px;display:flex;justify-content:flex-end">
+          <button class="btn" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto;padding:8px 20px;background:var(--primary);color:#ffffff;font-weight:700">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
 function openPayrollAdjustmentModal(userId, month, year) {

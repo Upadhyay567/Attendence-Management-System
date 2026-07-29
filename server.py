@@ -185,7 +185,7 @@ def is_port_in_use(port):
 
 def start_server():
     global PORT
-    candidate_ports = [8080, 8088, 8090, 8012, 8085]
+    candidate_ports = [8080, 8012, 8088, 8090, 8085]
     httpd = None
     active_port = None
 
