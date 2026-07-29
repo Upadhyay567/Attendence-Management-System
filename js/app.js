@@ -882,6 +882,7 @@ function renderLoginView() {
           <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
           ${skipButtonHTML}
           `}
+          <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
           <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
@@ -896,6 +897,7 @@ function renderLoginView() {
     const warningEl = authBox.querySelector('#auth-verify-warning');
     const submitBtn = authBox.querySelector('#btn-verify-id-submit');
     const skipBtn = authBox.querySelector('#btn-verify-id-skip');
+    const skipDevBtn = authBox.querySelector('#btn-verify-id-skip-dev');
     const backBtn = authBox.querySelector('#btn-verify-id-back');
     const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
     const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
@@ -1002,6 +1004,12 @@ function renderLoginView() {
 
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
+        proceedLogin(selectedUser);
+      });
+    }
+
+    if (skipDevBtn) {
+      skipDevBtn.addEventListener('click', () => {
         proceedLogin(selectedUser);
       });
     }
