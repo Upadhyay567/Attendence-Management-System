@@ -2,6 +2,7 @@
 import { DB } from './db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
+import { triggerBirthdayCelebration } from './celebration.js';
 
 // Custom dialog modal manager
 const CustomDialog = {
@@ -357,6 +358,16 @@ function closeModal(overlay) {
 window.closeModal = closeModal;
 
 // Simple Router
+function triggerCelebrationIfBirthday(user) {
+  if (user && user.dob) {
+    const today = new Date();
+    const dob = new Date(user.dob);
+    if (today.getMonth() === dob.getMonth() && today.getDate() === dob.getDate()) {
+      triggerBirthdayCelebration(user);
+    }
+  }
+}
+
 function setupRouter() {
   const handleRoute = () => {
     try {
@@ -441,6 +452,7 @@ function setupRouter() {
         // Employee Routes
         case '#dashboard':
           renderEmployeeDashboard();
+          triggerCelebrationIfBirthday(user);
           break;
         case '#leaves':
           renderEmployeeLeaves();
@@ -468,6 +480,7 @@ function setupRouter() {
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
           renderAdminDashboard();
+          triggerCelebrationIfBirthday(user);
           break;
         case '#admin-schedules':
           renderAdminSchedules();
@@ -6041,6 +6054,7 @@ function getBirthdayStatus(dobString) {
 }
 
 function getBirthdayWidgetHTML() {
+  const currentUser = Auth.getCurrentUser();
   const activeUsers = DB.getUsers().filter(u => u.status === 'Active');
   
   const todayList = [];
@@ -6064,6 +6078,11 @@ function getBirthdayWidgetHTML() {
     const highlightStyle = isToday 
       ? 'background: linear-gradient(135deg, rgba(137, 32, 27, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%) !important; border: 1.5px solid rgba(137, 32, 27, 0.4) !important;' 
       : 'background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border);';
+    
+    const isSelf = currentUser && u.id === currentUser.id;
+    const wishBtnHTML = isSelf 
+      ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap;">It's You! 🎉</span>`
+      : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>`;
     
     return `
       <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; gap:10px; transition:all 0.2s ease; ${highlightStyle}">
@@ -6090,7 +6109,7 @@ function getBirthdayWidgetHTML() {
             </div>
           </div>
         </div>
-        <button class="btn btn-birthday-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>
+        ${wishBtnHTML}
       </div>
     `;
   };
@@ -6336,15 +6355,18 @@ function openAllBirthdaysModal() {
       return;
     }
 
+    const currentUser = Auth.getCurrentUser();
     listContainer.innerHTML = filteredList.map(u => {
       const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
       let formattedDob = 'Not Specified';
       if (u.dob) {
-        const parts = u.dob.split('-');
-        if (parts.length === 3) {
-          formattedDob = `${parseInt(parts[2], 10)} ${getMonthName(parseInt(parts[1], 10) - 1)}`;
-        }
+        formattedDob = Utils.formatDate(u.dob);
       }
+
+      const isSelf = currentUser && u.id === currentUser.id;
+      const wishBtnHTML = isSelf 
+        ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap;">It's You! 🎉</span>`
+        : `<button class="btn btn-directory-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
 
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:12px; gap:10px">
@@ -6364,11 +6386,11 @@ function openAllBirthdaysModal() {
                 ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
               </span>
               <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px">
-                ID: ${Utils.escape(u.employeeId)} • Birthday: <strong>${formattedDob}</strong>
+                ID: ${Utils.escape(u.employeeId)} • DOB: <strong>${formattedDob}</strong>
               </span>
             </div>
           </div>
-          <button class="btn btn-directory-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>
+          ${wishBtnHTML}
         </div>
       `;
     }).join('');
