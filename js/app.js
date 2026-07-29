@@ -5794,6 +5794,413 @@ function openUploadDocumentModal(preselectedUserId = null) {
   });
 }
 
+// =========================================================================
+// HR DASHBOARD BIRTHDAY WIDGET HELPERS
+// =========================================================================
+function getBirthdayStatus(dobString) {
+  if (!dobString) return null;
+  const parts = dobString.split('-');
+  if (parts.length !== 3) return null;
+
+  const birthMonth = parseInt(parts[1], 10) - 1; // 0-indexed month
+  const birthDay = parseInt(parts[2], 10);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentYear = today.getFullYear();
+  const bdayThisYear = new Date(currentYear, birthMonth, birthDay);
+  bdayThisYear.setHours(0, 0, 0, 0);
+
+  const bdayNextYear = new Date(currentYear + 1, birthMonth, birthDay);
+  bdayNextYear.setHours(0, 0, 0, 0);
+
+  let bdayTarget = bdayThisYear;
+  if (bdayThisYear.getTime() < today.getTime()) {
+    bdayTarget = bdayNextYear;
+  }
+
+  const diffTime = bdayTarget.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const formattedDate = `${birthDay} ${monthNames[birthMonth]}`;
+
+  if (diffDays === 0) {
+    return { group: 'today', daysAway: 0, date: bdayTarget, formattedDate };
+  } else if (diffDays === 1) {
+    return { group: 'tomorrow', daysAway: 1, date: bdayTarget, formattedDate };
+  } else if (diffDays >= 2 && diffDays <= 8) {
+    return { group: 'upcoming', daysAway: diffDays, date: bdayTarget, formattedDate };
+  }
+
+  return null;
+}
+
+function getBirthdayWidgetHTML() {
+  const activeUsers = DB.getUsers().filter(u => u.status === 'Active');
+  
+  const todayList = [];
+  const tomorrowList = [];
+  const upcomingList = [];
+  
+  activeUsers.forEach(u => {
+    const status = getBirthdayStatus(u.dob);
+    if (status) {
+      const data = { user: u, status };
+      if (status.group === 'today') todayList.push(data);
+      else if (status.group === 'tomorrow') tomorrowList.push(data);
+      else if (status.group === 'upcoming') upcomingList.push(data);
+    }
+  });
+
+  const renderCard = (item, isToday = false) => {
+    const u = item.user;
+    const s = item.status;
+    const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const highlightStyle = isToday 
+      ? 'background: linear-gradient(135deg, rgba(137, 32, 27, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%) !important; border: 1.5px solid rgba(137, 32, 27, 0.4) !important;' 
+      : 'background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border);';
+    
+    return `
+      <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; gap:10px; transition:all 0.2s ease; ${highlightStyle}">
+        <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
+          <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; position:relative;">
+            ${u.photo ? `
+              <img src="${u.photo}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
+            ` : `
+              <div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">
+                ${initials}
+              </div>
+            `}
+          </div>
+          <div style="min-width:0; flex:1">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+              <strong style="font-size:13px; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">🎂</span>' : ''}
+            </div>
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
+            </div>
+            <div style="font-size:10px; color:var(--text-muted); margin-top:2px">
+              ID: ${Utils.escape(u.employeeId)} • Date: ${s.formattedDate}
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-birthday-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>
+      </div>
+    `;
+  };
+
+  const todayHTML = todayList.length > 0 
+    ? todayList.map(item => renderCard(item, true)).join('')
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays today 🎂</div>`;
+
+  const tomorrowHTML = tomorrowList.length > 0
+    ? tomorrowList.map(item => renderCard(item, false)).join('')
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No birthdays tomorrow 🎉</div>`;
+
+  const upcomingHTML = upcomingList.length > 0
+    ? upcomingList.map(item => renderCard(item, false)).join('')
+    : `<div style="font-size:11.5px; color:var(--text-muted); padding:10px; border:1px dashed var(--border); border-radius:10px; text-align:center">No upcoming birthdays in the next 7 days 📅</div>`;
+
+  const totalCount = todayList.length + tomorrowList.length + upcomingList.length;
+
+  return `
+    <div class="card-panel" style="margin-top:0px">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:14px">
+        <h3 class="card-panel-title" style="margin:0; font-size:14px; display:flex; align-items:center; gap:6px">
+          🎉 Company Birthdays <span style="font-size:10px; background:rgba(220,38,38,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700">${totalCount}</span>
+        </h3>
+        <button id="btn-birthday-view-all" class="btn" style="padding:4px 10px; font-size:11px; width:auto; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#ffffff">View All</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px">
+        <!-- Today's Group -->
+        <div>
+          <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
+            <span>🎂 Today</span>
+            <span>(${todayList.length})</span>
+          </div>
+          ${todayHTML}
+        </div>
+
+        <!-- Tomorrow's Group -->
+        <div>
+          <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
+            <span>🎉 Tomorrow</span>
+            <span>(${tomorrowList.length})</span>
+          </div>
+          ${tomorrowHTML}
+        </div>
+
+        <!-- Upcoming Group -->
+        <div>
+          <div style="font-size:11.5px; font-weight:800; color:var(--primary); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between">
+            <span>📅 Upcoming (Next 7 Days)</span>
+            <span>(${upcomingList.length})</span>
+          </div>
+          ${upcomingHTML}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function bindBirthdayWidgetEvents() {
+  const viewAllBtn = document.getElementById('btn-birthday-view-all');
+  if (viewAllBtn) {
+    viewAllBtn.addEventListener('click', () => {
+      openAllBirthdaysModal();
+    });
+  }
+
+  document.querySelectorAll('.btn-birthday-wish').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const userId = btn.getAttribute('data-id');
+      openSendWishModal(userId);
+    });
+  });
+}
+
+function openSendWishModal(userId) {
+  const user = DB.getUser(userId);
+  if (!user) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background: rgba(10, 15, 29, 0.85); backdrop-filter: blur(12px);
+    display:flex; justify-content:center; align-items:center; z-index:10000;
+    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content card-panel';
+  modal.style.cssText = `
+    max-width: 440px; width: 92%; padding: 24px;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+    border: 1px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+  `;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px">
+      <h3 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">🎉 Send Birthday Wishes</h3>
+      <button id="btn-close-wish-modal" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer">&times;</button>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid var(--border)">
+      <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+        ${user.photo ? `
+          <img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">
+        ` : `
+          <div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">
+            ${user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+          </div>
+        `}
+      </div>
+      <div>
+        <strong style="color:#ffffff; font-size:13.5px">${Utils.escape(user.name)}</strong>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px">${Utils.escape(user.designation || 'Staff')} (${Utils.escape(user.employeeId)})</div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">BIRTHDAY MESSAGE</label>
+      <textarea id="wish-message-text" class="form-input" rows="3" style="width:100%; box-sizing:border-box; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:12.5px; padding:10px; border-radius:10px; resize:vertical">Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, ${user.name}! 🎂🎉</textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">SENDING METHOD</label>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
+          <input type="radio" name="wish-send-method" value="email" checked style="accent-color:#dc2626"> Send by Email (${Utils.escape(user.email || 'N/A')})
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
+          <input type="radio" name="wish-send-method" value="notification" style="accent-color:#dc2626"> Send by Notification / Inbox
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
+          <input type="radio" name="wish-send-method" value="both" style="accent-color:#dc2626"> Send by Both
+        </label>
+      </div>
+    </div>
+    <button id="btn-submit-birthday-wish" class="btn" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; border-radius:10px; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.35)">Send Wish</button>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeWishModal = () => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  };
+
+  modal.querySelector('#btn-close-wish-modal').addEventListener('click', closeWishModal);
+
+  modal.querySelector('#btn-submit-birthday-wish').addEventListener('click', () => {
+    const message = modal.querySelector('#wish-message-text').value.trim();
+    const sendMethod = modal.querySelector('input[name="wish-send-method"]:checked').value;
+
+    if (sendMethod === 'notification' || sendMethod === 'both') {
+      if (!DB.data.announcements) DB.data.announcements = [];
+      DB.data.announcements.unshift({
+        id: 'ann_' + Math.random().toString(36).substring(2, 9),
+        title: '🎂 Happy Birthday Wish!',
+        content: message,
+        category: 'Urgent',
+        date: new Date().toISOString().split('T')[0],
+        author: 'HR Department',
+        targetUserId: user.id
+      });
+      DB.save();
+    }
+
+    closeWishModal();
+    if (typeof showToastNotification === 'function') {
+      showToastNotification(`✅ Birthday wishes successfully sent to ${user.name}!`, 'success');
+    }
+  });
+}
+
+function openAllBirthdaysModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    background: rgba(10, 15, 29, 0.85); backdrop-filter: blur(12px);
+    display:flex; justify-content:center; align-items:center; z-index:10000;
+    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-content card-panel';
+  modal.style.cssText = `
+    max-width: 600px; width: 92%; padding: 28px;
+    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
+    border: 1px solid rgba(220, 38, 38, 0.4) !important;
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+  `;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
+      <h3 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">📅 Company Birthday Directory</h3>
+      <button id="btn-close-all-birthdays" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer">&times;</button>
+    </div>
+    <div style="margin-bottom:16px">
+      <input type="text" id="birthday-search-input" class="form-input" placeholder="Search by name, department, or month..." style="width:100%; box-sizing:border-box; padding:10px 14px; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; border-radius:10px; font-size:13px;">
+    </div>
+    <div id="all-birthdays-list-container" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:50vh; padding-right:6px">
+      <!-- Filled dynamically -->
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeAllModal = () => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay);
+    }
+  };
+
+  modal.querySelector('#btn-close-all-birthdays').addEventListener('click', closeAllModal);
+
+  const allActive = DB.getUsers().filter(u => u.status === 'Active');
+  
+  const sortedActive = [...allActive].sort((a, b) => {
+    const parseMD = (dob) => {
+      if (!dob) return [99, 99];
+      const p = dob.split('-');
+      return [parseInt(p[1], 10), parseInt(p[2], 10)];
+    };
+    const [am, ad] = parseMD(a.dob);
+    const [bm, bd] = parseMD(b.dob);
+    if (am !== bm) return am - bm;
+    return ad - bd;
+  });
+
+  const listContainer = modal.querySelector('#all-birthdays-list-container');
+  const searchInput = modal.querySelector('#birthday-search-input');
+
+  const getMonthName = (monthIndex) => {
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return monthNames[monthIndex];
+  };
+
+  const renderList = (filteredList) => {
+    if (filteredList.length === 0) {
+      listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px">No employee records match the search.</div>`;
+      return;
+    }
+
+    listContainer.innerHTML = filteredList.map(u => {
+      const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      let formattedDob = 'Not Specified';
+      if (u.dob) {
+        const parts = u.dob.split('-');
+        if (parts.length === 3) {
+          formattedDob = `${parseInt(parts[2], 10)} ${getMonthName(parseInt(parts[1], 10) - 1)}`;
+        }
+      }
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:12px; gap:10px">
+          <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
+            <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+              ${u.photo ? `
+                <img src="${u.photo}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
+              ` : `
+                <div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">
+                  ${initials}
+                </div>
+              `}
+            </div>
+            <div style="min-width:0; flex:1">
+              <strong style="font-size:13px; color:#ffffff; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <span style="font-size:11px; color:var(--text-secondary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
+              </span>
+              <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:2px">
+                ID: ${Utils.escape(u.employeeId)} • Birthday: <strong>${formattedDob}</strong>
+              </span>
+            </div>
+          </div>
+          <button class="btn btn-directory-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>
+        </div>
+      `;
+    }).join('');
+
+    listContainer.querySelectorAll('.btn-directory-wish').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const userId = btn.getAttribute('data-id');
+        openSendWishModal(userId);
+      });
+    });
+  };
+
+  renderList(sortedActive);
+
+  searchInput.addEventListener('input', () => {
+    const val = searchInput.value.toLowerCase().trim();
+    if (!val) {
+      renderList(sortedActive);
+      return;
+    }
+
+    const filtered = sortedActive.filter(u => {
+      const parts = u.dob ? u.dob.split('-') : [];
+      const monthName = parts.length === 3 ? getMonthName(parseInt(parts[1], 10) - 1).toLowerCase() : '';
+      return u.name.toLowerCase().includes(val) ||
+             (u.department || '').toLowerCase().includes(val) ||
+             (u.designation || '').toLowerCase().includes(val) ||
+             (u.employeeId || '').toLowerCase().includes(val) ||
+             monthName.includes(val);
+    });
+
+    renderList(filtered);
+  });
+}
+
 function renderAdminDashboard() {
   const main = document.getElementById('main-view');
   const currentUser = Auth.getCurrentUser();
@@ -5959,9 +6366,19 @@ function renderAdminDashboard() {
             </table>
           </div>
         </div>
-        <div class="card-panel">
-          <div class="card-panel-header"><h3 class="card-panel-title">Leave Request Alert Inbox</h3></div>
-          <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px"></div>
+        <div style="display:flex; flex-direction:column; gap:20px; margin-top:0">
+          <!-- Leave Request Alert Inbox -->
+          <div class="card-panel" style="margin-top:0">
+            <div class="card-panel-header"><h3 class="card-panel-title">Leave Request Alert Inbox</h3></div>
+            <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px"></div>
+          </div>
+          
+          <!-- Birthday Widget (HR ONLY) -->
+          ${freshUser.role === 'hr' ? `
+            <div id="hr-birthday-widget-container">
+              ${getBirthdayWidgetHTML()}
+            </div>
+          ` : ''}
         </div>
       </div>
 
@@ -6131,6 +6548,9 @@ function renderAdminDashboard() {
     });
   }
 
+  if (freshUser.role === 'hr') {
+    bindBirthdayWidgetEvents();
+  }
 }
 
 function renderAdminUsers() {
