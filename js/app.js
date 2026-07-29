@@ -821,12 +821,7 @@ function renderLoginView() {
 
     const isHrOrManager = selectedUser && (selectedUser.role === 'hr' || selectedUser.role === 'manager' || selectedUser.role === 'finance_manager');
 
-    const createAccButtonHTML = isHrOrManager
-      ? `<button class="btn" id="btn-verify-id-create-acc" style="flex: 1; font-weight: 700; font-size: 12px; background: #ffffff; border: 1.5px solid #b91c1c; color: #1e293b; padding: 10px 0; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s ease;">
-           <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-           Create Account
-         </button>`
-      : '';
+    const createAccButtonHTML = '';
 
     const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
       ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
@@ -874,10 +869,7 @@ function renderLoginView() {
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
           ${isHrOrManager ? `
-          <div style="display: flex; gap: 10px; width: 100%;">
-            <button class="btn" id="btn-verify-id-submit" style="flex: 1; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
-            ${createAccButtonHTML}
-          </div>
+          <button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
           ` : `
           <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
           ${skipButtonHTML}
