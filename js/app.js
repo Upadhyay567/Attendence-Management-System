@@ -708,6 +708,11 @@ function renderLoginView() {
           </button>
         </div>
 
+        <!-- Create Account link -->
+        <div style="margin-top: 18px; text-align: center; font-size: 13px; color: var(--text-secondary);">
+          Don't have an HR/Manager account? <a href="#" id="btn-home-create-account" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
+        </div>
+
         <div class="auth-policy-footer" style="margin-top: 24px; text-align: center; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px;">
           By logging in, you agree to the <a href="#" id="btn-show-policy" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy & Guidelines</a>.
         </div>
@@ -734,6 +739,14 @@ function renderLoginView() {
         }
       });
     });
+
+    const homeCreateAccBtn = authBox.querySelector('#btn-home-create-account');
+    if (homeCreateAccBtn) {
+      homeCreateAccBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAccountModal();
+      });
+    }
 
     const policyBtn = document.getElementById('btn-show-policy');
     if (policyBtn) {
@@ -2968,7 +2981,7 @@ function showAccountModal(editUser = null) {
     </div>
 
     <!-- Role Selection Tabs -->
-    <div id="create-acct-role-tabs" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px">
+    <div id="create-acct-role-tabs" style="display:grid; grid-template-columns:${isEdit ? '1fr 1fr 1fr' : '1fr 1fr'}; gap:12px; margin-bottom:20px">
       <button type="button" class="acct-role-tab" data-role="hr" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
         <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">👤</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">HR / Admin</span>
@@ -2977,10 +2990,12 @@ function showAccountModal(editUser = null) {
         <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">ℹ️</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">Manager</span>
       </button>
+      ${isEdit ? `
       <button type="button" class="acct-role-tab" data-role="employee" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
         <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">📋</div>
         <span style="font-size:11.5px; font-weight:700; color:#1e293b">Employee</span>
       </button>
+      ` : ''}
     </div>
 
     <!-- Upload Photo Section -->
@@ -3041,7 +3056,7 @@ function showAccountModal(editUser = null) {
           <select id="acct-input-role-select" class="form-control" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box; cursor:pointer">
             <option value="hr" ${initialRole === 'hr' ? 'selected' : ''}>HR Administrator</option>
             <option value="manager" ${initialRole === 'manager' || initialRole === 'finance_manager' ? 'selected' : ''}>Operations Manager</option>
-            <option value="employee" ${initialRole === 'employee' ? 'selected' : ''}>Employee</option>
+            ${isEdit ? `<option value="employee" ${initialRole === 'employee' ? 'selected' : ''}>Employee</option>` : ''}
           </select>
         </div>
         <div>
