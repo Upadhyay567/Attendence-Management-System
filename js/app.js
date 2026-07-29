@@ -4400,12 +4400,15 @@ function renderEmployeeProfile() {
               
               <!-- Card Body -->
               <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden;">
+                <div id="avatar-click-zone" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; cursor: pointer; position: relative;" title="Click to change profile photo" onmouseover="const overlay = this.querySelector('.avatar-hover-overlay'); if (overlay) overlay.style.opacity = '1';" onmouseout="const overlay = this.querySelector('.avatar-hover-overlay'); if (overlay) overlay.style.opacity = '0';">
                   ${user.photo ? `
                     <img src="${user.photo}" id="my-profile-avatar" style="width: 100%; height: 100%; object-fit: cover;">
                   ` : `
                     ${getInitials(user.name)}
                   `}
+                  <div class="avatar-hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;">
+                    <span style="color: #ffffff; font-size: 14px;">📷</span>
+                  </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
                   <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${Utils.escape(user.name)}</div>
@@ -4475,13 +4478,8 @@ function renderEmployeeProfile() {
           </div>
         </div>
         
-        <!-- Change Profile Photo -->
-        <div style="display:flex; justify-content:center; margin-top:-16px; margin-bottom:24px">
-          <button id="btn-my-profile-change-photo" class="btn" style="width:auto; padding:8px 16px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#ffffff; cursor:pointer; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15)">
-            📷 Change Profile Photo
-          </button>
-          <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
-        </div>
+        <!-- Hidden Photo Upload File Input -->
+        <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
         
         ${(() => {
           if (user.assignedById) {
@@ -4630,19 +4628,23 @@ function renderEmployeeProfile() {
     });
   }
 
-  // Photo upload bindings
-  const changePhotoBtn = document.getElementById('btn-my-profile-change-photo');
+  // Photo upload bindings directly to Avatar click zone
+  const avatarClickZone = document.getElementById('avatar-click-zone');
   const photoFileInput = document.getElementById('my-profile-photo-file-input');
-  if (changePhotoBtn && photoFileInput) {
-    changePhotoBtn.addEventListener('click', () => {
+  if (avatarClickZone && photoFileInput) {
+    avatarClickZone.addEventListener('click', (e) => {
+      e.stopPropagation(); // Stop badge from flipping
       photoFileInput.click();
     });
 
     photoFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
-        changePhotoBtn.disabled = true;
-        changePhotoBtn.innerHTML = '⏳ Uploading...';
+        const hoverOverlay = avatarClickZone.querySelector('.avatar-hover-overlay');
+        if (hoverOverlay) {
+          hoverOverlay.style.opacity = '1';
+          hoverOverlay.innerHTML = '<span style="color:#ffffff; font-size:10px; font-weight:700">⏳</span>';
+        }
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -4658,14 +4660,18 @@ function renderEmployeeProfile() {
           } catch (err) {
             console.error(err);
             alert('Failed to save profile photo in database: ' + err.message);
-            changePhotoBtn.disabled = false;
-            changePhotoBtn.innerHTML = '📷 Change Profile Photo';
+            if (hoverOverlay) {
+              hoverOverlay.style.opacity = '0';
+              hoverOverlay.innerHTML = '<span style="color: #ffffff; font-size: 14px;">📷</span>';
+            }
           }
         };
         reader.onerror = () => {
           alert('Failed to read the file. Please try again.');
-          changePhotoBtn.disabled = false;
-          changePhotoBtn.innerHTML = '📷 Change Profile Photo';
+          if (hoverOverlay) {
+            hoverOverlay.style.opacity = '0';
+            hoverOverlay.innerHTML = '<span style="color: #ffffff; font-size: 14px;">📷</span>';
+          }
         };
         reader.readAsDataURL(file);
       }
