@@ -2482,7 +2482,7 @@ function showForgotPasswordModal(initialId = '') {
   const modal = document.createElement('div');
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
-    max-width: 460px; width: 92%; padding: 28px;
+    max-width: 480px; width: 92%; padding: 28px;
     background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
     border: 1px solid rgba(220, 38, 38, 0.4) !important;
     border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
@@ -2495,54 +2495,95 @@ function showForgotPasswordModal(initialId = '') {
           🔑
         </div>
         <div>
-          <h3 style="font-size:17px; font-weight:800; color:#f8fafc; margin:0">Forgot Password</h3>
-          <div style="font-size:11px; color:#94a3b8; margin-top:2px">Mobile Number Authentication</div>
+          <h3 style="font-size:17px; font-weight:800; color:#f8fafc; margin:0">Reset Password</h3>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px">Forgot credentials recovery</div>
         </div>
       </div>
       <button id="btn-close-forgot-modal" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); width:30px; height:30px; border-radius:50%; font-size:16px; color:#cbd5e1; cursor:pointer; display:flex; align-items:center; justify-content:center">&times;</button>
     </div>
 
-    <!-- Step 1: Mobile Auth Form -->
-    <form id="forgot-pwd-step1" style="display:flex; flex-direction:column; gap:16px">
+    <!-- Step 1: Identifier Entry -->
+    <div id="forgot-step-identifier" style="display:flex; flex-direction:column; gap:16px">
       <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">HR / MANAGER ID OR USERNAME *</label>
-        <input type="text" id="forgot-input-id" class="form-control" placeholder="e.g. EMP107 or admin" value="${Utils.escape(initialId)}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">USER ID / EMAIL / MOBILE NUMBER *</label>
+        <input type="text" id="forgot-input-identifier" class="form-control" placeholder="e.g. EMP107, alex@gmail.com, or 9876543210" value="${Utils.escape(initialId)}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
       </div>
 
-      <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">REGISTERED MOBILE NUMBER *</label>
-        <input type="tel" id="forgot-input-mobile" class="form-control" placeholder="e.g. +91 98765 43210" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
-        <div style="font-size:11px; color:#64748b; margin-top:4px">Enter the mobile number registered with your HR / Manager profile.</div>
-      </div>
-
-      <div id="forgot-error-msg" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+      <div id="forgot-identifier-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
 
       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
         <button type="button" id="btn-cancel-forgot-modal" style="padding:9px 18px; font-size:12.5px; font-weight:700; border-radius:10px; background:#ffffff; border:1.5px solid #b91c1c; color:#1e293b; cursor:pointer">Cancel</button>
-        <button type="submit" style="padding:9px 20px; font-size:12.5px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Verify Mobile</button>
+        <button type="button" id="btn-verify-identifier" style="padding:9px 20px; font-size:12.5px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Proceed</button>
       </div>
-    </form>
+    </div>
 
-    <!-- Step 2: New Password Form (Initially hidden) -->
-    <form id="forgot-pwd-step2" style="display:none; flex-direction:column; gap:16px">
-      <div style="padding:10px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:10px; color:#6ee7b7; font-size:12px; font-weight:600">
-        ✅ Mobile Number Authenticated! Enter your new password below:
+    <!-- Step 2A: Direct Password reset trigger (Attempts < 2) -->
+    <div id="forgot-step-direct-trigger" style="display:none; flex-direction:column; gap:16px; text-align:center; padding:10px 0;">
+      <div style="font-size:13.5px; color:#cbd5e1; line-height:1.5; margin-bottom:10px;">
+        Account identified! Since this is within your first 2 resets, no verification code is required.
+      </div>
+      <button type="button" id="btn-trigger-create-password" style="width:100%; padding:12px 0; font-size:13.5px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Create New Password</button>
+    </div>
+
+    <!-- Step 2B: Verification Options (Attempts >= 2) -->
+    <div id="forgot-step-verification-select" style="display:none; flex-direction:column; gap:16px">
+      <div style="font-size:12px; color:#94a3b8; line-height:1.5; margin-bottom:4px;">
+        Verification Required: Please select a method to receive your OTP code:
+      </div>
+
+      <div id="verification-options-container" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Filled dynamically -->
+      </div>
+
+      <div id="forgot-verification-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+
+      <button type="button" id="btn-send-verification-code" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Send Verification Code</button>
+
+      <!-- Code Entry Section (Initially Hidden) -->
+      <div id="verification-code-entry" style="display:none; flex-direction:column; gap:12px; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px; margin-top:4px;">
+        <div style="font-size:11px; color:#10b981; font-weight:600; text-align:center; background:rgba(16,185,129,0.08); padding:8px; border-radius:8px; border:1px solid rgba(16,185,129,0.2)">
+          Code Sent! For testing, use code: <strong style="font-size:12px; text-decoration:underline;">123456</strong>
+        </div>
+        <div>
+          <label style="display:block; font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px">ENTER 6-DIGIT CODE / OTP *</label>
+          <input type="text" id="forgot-input-otp" class="form-control" placeholder="e.g. 123456" maxlength="6" style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; text-align:center; letter-spacing:4px; font-weight:700">
+        </div>
+        <button type="button" id="btn-submit-otp" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Verify & Proceed</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Password Reset Input Form -->
+    <form id="forgot-step-new-pass-form" style="display:none; flex-direction:column; gap:16px">
+      <div>
+        <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">NEW PASSWORD *</label>
+        <div style="position:relative">
+          <input type="password" id="forgot-newpwd" class="form-control" placeholder="Minimum 6 characters" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+        </div>
+        
+        <!-- Strength Indicator -->
+        <div style="margin-top: 8px;">
+          <div style="display: flex; gap: 4px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden;">
+            <div id="strength-bar-1" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
+            <div id="strength-bar-2" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
+            <div id="strength-bar-3" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
+          </div>
+          <div id="strength-label" style="font-size: 10.5px; color: #94a3b8; margin-top: 5px;">Password Strength: Empty</div>
+        </div>
       </div>
 
       <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">NEW PASSWORD *</label>
-        <input type="password" id="forgot-input-newpwd" class="form-control" placeholder="Minimum 6 chars (Upper + Special)" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">CONFIRM PASSWORD *</label>
+        <div style="position:relative">
+          <input type="password" id="forgot-confirmpwd" class="form-control" placeholder="Re-enter new password" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+        </div>
       </div>
 
-      <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">CONFIRM NEW PASSWORD *</label>
-        <input type="password" id="forgot-input-confirmpwd" class="form-control" placeholder="Re-enter new password" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
-      </div>
+      <div id="forgot-step3-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
 
-      <div id="forgot-step2-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
-
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
-        <button type="submit" style="padding:10px 22px; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Update Password</button>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px">
+        <button type="submit" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Update Password</button>
       </div>
     </form>
   `;
@@ -2560,74 +2601,217 @@ function showForgotPasswordModal(initialId = '') {
 
   let verifiedUser = null;
 
-  modal.querySelector('#forgot-pwd-step1').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const errorMsg = modal.querySelector('#forgot-error-msg');
-    errorMsg.style.display = 'none';
+  const obfuscateEmail = (email) => {
+    if (!email) return 'no-email@domain.com';
+    const parts = email.split('@');
+    if (parts.length !== 2) return email;
+    const name = parts[0];
+    const domain = parts[1];
+    if (name.length <= 2) return `${name[0]}***@${domain}`;
+    return `${name[0]}***${name[name.length-1]}@${domain}`;
+  };
 
-    const loginKey = modal.querySelector('#forgot-input-id').value.trim();
-    const mobileEntered = modal.querySelector('#forgot-input-mobile').value.trim();
+  const obfuscatePhone = (phone) => {
+    if (!phone) return '******9999';
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length < 4) return '******' + cleaned;
+    return '******' + cleaned.substring(cleaned.length - 4);
+  };
 
-    if (!loginKey || !mobileEntered) {
-      errorMsg.textContent = '⚠️ Please enter both your ID and Mobile Number.';
-      errorMsg.style.display = 'block';
+  // Step 1 Click Handler: Verify Identity
+  modal.querySelector('#btn-verify-identifier').addEventListener('click', () => {
+    const errorEl = modal.querySelector('#forgot-identifier-error');
+    errorEl.style.display = 'none';
+
+    const rawInput = modal.querySelector('#forgot-input-identifier').value.trim();
+    if (!rawInput) {
+      errorEl.textContent = '⚠️ Please enter your User ID, Email, or Mobile Number.';
+      errorEl.style.display = 'block';
       return;
     }
 
-    const targetUser = DB.getUserByUsernameOrId(loginKey);
-    if (!targetUser) {
-      errorMsg.textContent = '⚠️ Account record not found for the specified ID.';
-      errorMsg.style.display = 'block';
+    const allUsers = DB.getUsers();
+    const matchedUser = allUsers.find(u => {
+      const key = rawInput.toLowerCase();
+      const cleanKey = rawInput.replace(/\D/g, '');
+      const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
+      const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+
+      return (u.username && u.username.toLowerCase() === key) ||
+             (u.email && u.email.toLowerCase() === key) ||
+             (u.employeeId && u.employeeId.toLowerCase() === key) ||
+             isPhoneMatch;
+    });
+
+    if (!matchedUser) {
+      errorEl.textContent = '⚠️ Account record not found for the entered credentials.';
+      errorEl.style.display = 'block';
       return;
     }
 
-    // Strip non-digits to compare mobile numbers flexibly
-    const cleanEntered = mobileEntered.replace(/\D/g, '');
-    const cleanUserPhone = (targetUser.phone || targetUser.mobile || targetUser.emergencyContact || '').replace(/\D/g, '');
+    verifiedUser = matchedUser;
+    const resetsCount = verifiedUser.passwordResetCount || 0;
 
-    const isPhoneMatch = cleanUserPhone && cleanEntered.length >= 7 && (cleanEntered.endsWith(cleanUserPhone) || cleanUserPhone.endsWith(cleanEntered) || cleanEntered === cleanUserPhone);
+    // Transition Step 1 Out
+    modal.querySelector('#forgot-step-identifier').style.display = 'none';
 
-    if (!isPhoneMatch) {
-      errorMsg.textContent = '⚠️ Mobile number verification failed! The entered number does not match registered HR/Manager records.';
-      errorMsg.style.display = 'block';
-      return;
+    if (resetsCount < 2) {
+      // Flow A: Direct "Create New Password" Button
+      modal.querySelector('#forgot-step-direct-trigger').style.display = 'flex';
+    } else {
+      // Flow B: Show Verification Options (OTP / Email / SMS)
+      const optionsContainer = modal.querySelector('#verification-options-container');
+      optionsContainer.innerHTML = `
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="email" checked style="accent-color:#dc2626">
+          <div>
+            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">Email Verification</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Send verification code to ${obfuscateEmail(verifiedUser.email)}</div>
+          </div>
+        </label>
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="sms" style="accent-color:#dc2626">
+          <div>
+            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">SMS Verification</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Send code to ${obfuscatePhone(verifiedUser.phone || verifiedUser.mobile)}</div>
+          </div>
+        </label>
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="otp" style="accent-color:#dc2626">
+          <div>
+            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">One-Time Passcode (OTP)</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Authenticate with dynamic temporary passcode</div>
+          </div>
+        </label>
+      `;
+      modal.querySelector('#forgot-step-verification-select').style.display = 'flex';
     }
-
-    verifiedUser = targetUser;
-    modal.querySelector('#forgot-pwd-step1').style.display = 'none';
-    modal.querySelector('#forgot-pwd-step2').style.display = 'flex';
   });
 
-  modal.querySelector('#forgot-pwd-step2').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const errorMsg = modal.querySelector('#forgot-step2-error');
-    errorMsg.style.display = 'none';
+  // Flow A Click Handler
+  modal.querySelector('#btn-trigger-create-password').addEventListener('click', () => {
+    modal.querySelector('#forgot-step-direct-trigger').style.display = 'none';
+    modal.querySelector('#forgot-step-new-pass-form').style.display = 'flex';
+  });
 
-    const newPwd = modal.querySelector('#forgot-input-newpwd').value;
-    const confirmPwd = modal.querySelector('#forgot-input-confirmpwd').value;
+  // Flow B Code Sending Handler
+  modal.querySelector('#btn-send-verification-code').addEventListener('click', () => {
+    modal.querySelector('#btn-send-verification-code').style.display = 'none';
+    modal.querySelector('#verification-code-entry').style.display = 'flex';
+  });
+
+  // Flow B Verify Code Submission
+  modal.querySelector('#btn-submit-otp').addEventListener('click', () => {
+    const errorEl = modal.querySelector('#forgot-verification-error');
+    errorEl.style.display = 'none';
+
+    const enteredOtp = modal.querySelector('#forgot-input-otp').value.trim();
+    if (enteredOtp !== '123456') {
+      errorEl.textContent = '⚠️ Invalid verification code. Please enter 123456 to bypass.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    modal.querySelector('#forgot-step-verification-select').style.display = 'none';
+    modal.querySelector('#forgot-step-new-pass-form').style.display = 'flex';
+  });
+
+  // Password Strength live calculator
+  const newPwdInput = modal.querySelector('#forgot-newpwd');
+  const confirmPwdInput = modal.querySelector('#forgot-confirmpwd');
+  
+  newPwdInput.addEventListener('input', () => {
+    const val = newPwdInput.value;
+    const bar1 = modal.querySelector('#strength-bar-1');
+    const bar2 = modal.querySelector('#strength-bar-2');
+    const bar3 = modal.querySelector('#strength-bar-3');
+    const label = modal.querySelector('#strength-label');
+
+    // Reset styles
+    bar1.style.background = '#475569';
+    bar2.style.background = '#475569';
+    bar3.style.background = '#475569';
+
+    if (!val) {
+      label.textContent = 'Password Strength: Empty';
+      return;
+    }
+
+    if (val.length < 6) {
+      bar1.style.background = '#ef4444';
+      label.textContent = 'Password Strength: Too Short (Weak)';
+      return;
+    }
+
+    const hasUpper = /[A-Z]/.test(val);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(val);
+    const hasNum = /[0-9]/.test(val);
+
+    if (hasUpper && hasSpecial && hasNum && val.length >= 8) {
+      bar1.style.background = '#10b981';
+      bar2.style.background = '#10b981';
+      bar3.style.background = '#10b981';
+      label.textContent = 'Password Strength: Strong';
+    } else if ((hasUpper || hasSpecial) && val.length >= 6) {
+      bar1.style.background = '#f97316';
+      bar2.style.background = '#f97316';
+      label.textContent = 'Password Strength: Medium';
+    } else {
+      bar1.style.background = '#ef4444';
+      label.textContent = 'Password Strength: Weak';
+    }
+  });
+
+  // Toggle Visibility triggers
+  modal.querySelector('#btn-toggle-reset-pwd-1').addEventListener('click', () => {
+    const type = newPwdInput.type === 'password' ? 'text' : 'password';
+    newPwdInput.type = type;
+    modal.querySelector('#btn-toggle-reset-pwd-1').textContent = type === 'password' ? '👁️' : '🔒';
+  });
+
+  modal.querySelector('#btn-toggle-reset-pwd-2').addEventListener('click', () => {
+    const type = confirmPwdInput.type === 'password' ? 'text' : 'password';
+    confirmPwdInput.type = type;
+    modal.querySelector('#btn-toggle-reset-pwd-2').textContent = type === 'password' ? '👁️' : '🔒';
+  });
+
+  // Password reset final submit handler
+  modal.querySelector('#forgot-step-new-pass-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const errorEl = modal.querySelector('#forgot-step3-error');
+    errorEl.style.display = 'none';
+
+    const newPwd = newPwdInput.value;
+    const confirmPwd = confirmPwdInput.value;
 
     if (newPwd.length < 6) {
-      errorMsg.textContent = '⚠️ Password must be at least 6 characters long.';
-      errorMsg.style.display = 'block';
+      errorEl.textContent = '⚠️ Password must be at least 6 characters long.';
+      errorEl.style.display = 'block';
       return;
     }
     if (!/[A-Z]/.test(newPwd) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPwd)) {
-      errorMsg.textContent = '⚠️ Password must contain at least 1 uppercase letter and 1 special character.';
-      errorMsg.style.display = 'block';
+      errorEl.textContent = '⚠️ Password must contain at least 1 uppercase letter and 1 special character.';
+      errorEl.style.display = 'block';
       return;
     }
     if (newPwd !== confirmPwd) {
-      errorMsg.textContent = '⚠️ Passwords do not match.';
-      errorMsg.style.display = 'block';
+      errorEl.textContent = '⚠️ Passwords do not match.';
+      errorEl.style.display = 'block';
       return;
     }
 
+    const currentCount = verifiedUser.passwordResetCount || 0;
     const hashed = Utils.hashPassword(newPwd);
-    DB.updateUser(verifiedUser.id, { password: hashed });
+
+    // Save counter increment and password update to database
+    DB.updateUser(verifiedUser.id, {
+      password: hashed,
+      passwordResetCount: currentCount + 1
+    });
 
     closeModal();
     if (typeof showToastNotification === 'function') {
-      showToastNotification('✅ Password updated successfully! Please log in with your new password.', 'success');
+      showToastNotification('✅ Password updated successfully! Please log in with your new credentials.', 'success');
     }
     const loginPwdInput = document.getElementById('auth-pwd-input');
     if (loginPwdInput) {
