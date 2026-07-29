@@ -5912,7 +5912,7 @@ function getBirthdayWidgetHTML() {
         <h3 class="card-panel-title" style="margin:0; font-size:14px; display:flex; align-items:center; gap:6px">
           🎉 Company Birthdays <span style="font-size:10px; background:rgba(220,38,38,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-weight:700">${totalCount}</span>
         </h3>
-        <button id="btn-birthday-view-all" class="btn" style="padding:4px 10px; font-size:11px; width:auto; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#ffffff">View All</button>
+        <button id="btn-birthday-view-all" class="btn" style="padding:4px 10px; font-size:11px; width:auto; background:rgba(137,32,27,0.06); border:1px solid var(--border); color:var(--primary); font-weight:700">View All</button>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:14px">
