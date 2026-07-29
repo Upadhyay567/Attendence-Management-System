@@ -3200,8 +3200,11 @@ function showAccountModal(editUser = null) {
 
     <!-- Upload Photo Section -->
     <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:20px">
-      <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:20px; color:#64748b">👤</div>
-      <button type="button" style="background:#fff; border:1px solid #cbd5e1; padding:6px 14px; border-radius:20px; font-size:11px; font-weight:700; color:#1e293b; cursor:pointer">Upload Photo</button>
+      <div id="acct-photo-preview" style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:20px; color:#64748b; overflow:hidden; cursor:pointer">
+        ${isEdit && editUser.photo ? `<img src="${editUser.photo}" style="width:100%; height:100%; object-fit:cover;">` : '👤'}
+      </div>
+      <input type="file" id="acct-input-photo-file" accept="image/*" style="display:none">
+      <button type="button" id="btn-acct-upload-photo" style="background:#fff; border:1px solid #cbd5e1; padding:6px 14px; border-radius:20px; font-size:11px; font-weight:700; color:#1e293b; cursor:pointer">Upload Photo</button>
     </div>
 
     <form id="acct-form" style="display:flex; flex-direction:column; gap:14px">
@@ -3294,6 +3297,31 @@ function showAccountModal(editUser = null) {
   const usernameInput = modal.querySelector('#acct-input-username');
   const emailInput = modal.querySelector('#acct-input-email');
   const addRoleBtn = modal.querySelector('#btn-add-custom-role');
+
+  let uploadedPhotoDataUrl = isEdit && editUser.photo ? editUser.photo : '';
+  const photoPreview = modal.querySelector('#acct-photo-preview');
+  const photoFileInput = modal.querySelector('#acct-input-photo-file');
+  const uploadPhotoBtn = modal.querySelector('#btn-acct-upload-photo');
+
+  if (photoFileInput && (photoPreview || uploadPhotoBtn)) {
+    const triggerFileSelect = () => photoFileInput.click();
+    if (photoPreview) photoPreview.addEventListener('click', triggerFileSelect);
+    if (uploadPhotoBtn) uploadPhotoBtn.addEventListener('click', triggerFileSelect);
+
+    photoFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          uploadedPhotoDataUrl = event.target.result;
+          if (photoPreview) {
+            photoPreview.innerHTML = `<img src="${uploadedPhotoDataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
 
   const emailStrictRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -3509,7 +3537,8 @@ function showAccountModal(editUser = null) {
       role,
       status: isEdit ? (editUser.status || 'Active') : 'Active',
       department: customRoleName || (role === 'hr' ? 'Human Resources' : 'Operations'),
-      designation: customRoleName || (role === 'hr' ? 'HR Coordinator' : 'Operations Manager')
+      designation: customRoleName || (role === 'hr' ? 'HR Coordinator' : 'Operations Manager'),
+      photo: uploadedPhotoDataUrl
     };
 
     if (password) {
@@ -4756,21 +4785,25 @@ function renderEmployeeProfile() {
     });
   }
 
-  // Photo upload bindings — Upload Photo button
+  // Photo upload bindings — Upload Photo button & Avatar click
   const uploadPhotoBtn = document.getElementById('btn-upload-profile-photo');
+  const uploadPhotoBtnReal = document.getElementById('btn-upload-profile-photo-real');
   const photoFileInput = document.getElementById('my-profile-photo-file-input');
-  if (uploadPhotoBtn && photoFileInput) {
-    uploadPhotoBtn.addEventListener('click', () => {
+  if (photoFileInput) {
+    const triggerFile = () => {
       photoFileInput.click();
-    });
+    };
+    if (uploadPhotoBtn) uploadPhotoBtn.addEventListener('click', triggerFile);
+    if (uploadPhotoBtnReal) uploadPhotoBtnReal.addEventListener('click', triggerFile);
 
     photoFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         // Show uploading state on button
-        const originalHTML = uploadPhotoBtn.innerHTML;
-        uploadPhotoBtn.disabled = true;
-        uploadPhotoBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">⏳ Uploading...</span>';
+        const targetBtn = uploadPhotoBtnReal || uploadPhotoBtn;
+        const originalHTML = targetBtn.innerHTML;
+        targetBtn.disabled = true;
+        targetBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">⏳ Uploading...</span>';
 
         const reader = new FileReader();
         reader.onload = (event) => {
