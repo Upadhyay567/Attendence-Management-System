@@ -677,7 +677,7 @@ function renderLoginView() {
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">👤</div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">HR / Admin Portal</div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Manage payroll, user directories & request approvals</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Manage payroll, user directories & request approvals</div>
               </div>
             </div>
             <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
@@ -689,7 +689,7 @@ function renderLoginView() {
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">ℹ️</div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Manager Portal</div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Review shift swaps & oversee team operations</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Review shift swaps & oversee team operations</div>
               </div>
             </div>
             <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
@@ -701,7 +701,7 @@ function renderLoginView() {
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">📋</div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Employee Portal</div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Clock in/out, view payslips & schedules</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Clock in/out, view payslips & schedules</div>
               </div>
             </div>
             <div style="font-size: 15px; color: var(--text-muted); font-weight: bold; margin-left: 10px; pointer-events: none;">➔</div>
