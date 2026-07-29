@@ -4670,15 +4670,12 @@ function renderEmployeeProfile() {
                     </div>
                     
                     <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                      <div id="btn-upload-profile-photo" title="Click to update photo" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; position: relative; cursor: pointer; transition: all 0.2s ease;">
+                      <div id="btn-upload-profile-photo" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; position: relative;">
                         ${user.photo ? `
                           <img src="${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
                         ` : `
                           ${getInitials(user.name)}
                         `}
-                        <div style="position: absolute; bottom: -2px; left: 0; right: 0; background: rgba(0,0,0,0.65); padding: 3px 0 6px; display: flex; justify-content: center; backdrop-filter: blur(2px);">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:11px; height:11px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        </div>
                       </div>
                       <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
                         <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);margin-bottom:2px;font-family:'Plus Jakarta Sans',sans-serif;">${Utils.escape(user.name)}</div>
@@ -4743,11 +4740,6 @@ function renderEmployeeProfile() {
                 </div>
               </div>
 
-              <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
-              <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:100%; padding:10px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; cursor:pointer; margin-top: 8px;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Upload Photo
-              </button>
               <div style="font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4;"><span style="opacity:0.7;">Click anywhere on the card to flip it.</span></div>
             </div>
 
