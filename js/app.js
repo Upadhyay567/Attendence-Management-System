@@ -1136,7 +1136,9 @@ function renderAppShell() {
       </ul>
       <div class="sidebar-footer">
         <div class="user-profile-summary">
-          <div class="avatar">${avatarText}</div>
+          <div class="avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+            ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
+          </div>
           <div class="user-info-text">
             <span class="user-name">${Utils.escape(user.name)}</span>
             <span class="user-role">${user.role}</span>
@@ -1194,7 +1196,9 @@ function renderAppShell() {
           <div style="position:relative" id="user-profile-menu-wrapper">
             <div class="top-nav-user" style="display:flex; align-items:center; gap:8px">
               <div id="top-user-profile-click-target" title="View Profile" style="cursor:pointer; display:flex; align-items:center; gap:8px">
-                <div class="top-nav-user-avatar">${avatarText}</div>
+                <div class="top-nav-user-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                  ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
+                </div>
                 <div class="top-nav-user-info">
                   <span class="top-nav-user-name">${Utils.escape(user.name)}</span>
                   <span class="top-nav-user-role">${user.role === 'hr' ? 'HR Admin Manager' : (user.role === 'manager' ? 'Operations Manager' : 'Employee')}</span>
@@ -4396,8 +4400,12 @@ function renderEmployeeProfile() {
               
               <!-- Card Body -->
               <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0;">
-                  ${getInitials(user.name)}
+                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden;">
+                  ${user.photo ? `
+                    <img src="${user.photo}" id="my-profile-avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                  ` : `
+                    ${getInitials(user.name)}
+                  `}
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
                   <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${Utils.escape(user.name)}</div>
@@ -4465,6 +4473,14 @@ function renderEmployeeProfile() {
             </div>
             
           </div>
+        </div>
+        
+        <!-- Change Profile Photo -->
+        <div style="display:flex; justify-content:center; margin-top:-16px; margin-bottom:24px">
+          <button id="btn-my-profile-change-photo" class="btn" style="width:auto; padding:8px 16px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:#ffffff; cursor:pointer; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15)">
+            📷 Change Profile Photo
+          </button>
+          <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
         </div>
         
         ${(() => {
@@ -4595,7 +4611,10 @@ function renderEmployeeProfile() {
                 <input class="form-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100">
               </div>
             </div>
-            <button class="btn" type="submit">Update Profile Info</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
+              <button class="btn btn-primary-equify" type="submit" id="btn-profile-save" disabled style="padding:12.5px; font-size:13px; font-weight:700">Save</button>
+              <button class="btn btn-outline-equify" type="button" id="btn-profile-update" style="padding:12.5px; font-size:13px; font-weight:700">Update</button>
+            </div>
           </form>
           <div id="profile-alert" style="display:none;margin-top:12px"></div>
         </div>
@@ -4611,8 +4630,63 @@ function renderEmployeeProfile() {
     });
   }
 
-  document.getElementById('profile-details-form').addEventListener('submit', (e) => {
-    e.preventDefault();
+  // Photo upload bindings
+  const changePhotoBtn = document.getElementById('btn-my-profile-change-photo');
+  const photoFileInput = document.getElementById('my-profile-photo-file-input');
+  if (changePhotoBtn && photoFileInput) {
+    changePhotoBtn.addEventListener('click', () => {
+      photoFileInput.click();
+    });
+
+    photoFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        changePhotoBtn.disabled = true;
+        changePhotoBtn.innerHTML = '⏳ Uploading...';
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const dataUrl = event.target.result;
+            DB.updateUser(user.id, { photo: dataUrl });
+            Auth.init();
+            renderAppShell();
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('✅ Profile photo uploaded successfully!', 'success');
+            }
+            renderEmployeeProfile();
+          } catch (err) {
+            console.error(err);
+            alert('Failed to save profile photo in database: ' + err.message);
+            changePhotoBtn.disabled = false;
+            changePhotoBtn.innerHTML = '📷 Change Profile Photo';
+          }
+        };
+        reader.onerror = () => {
+          alert('Failed to read the file. Please try again.');
+          changePhotoBtn.disabled = false;
+          changePhotoBtn.innerHTML = '📷 Change Profile Photo';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Enable Save button upon form edits
+  const detailsForm = document.getElementById('profile-details-form');
+  const saveBtn = document.getElementById('btn-profile-save');
+  const updateBtn = document.getElementById('btn-profile-update');
+  if (detailsForm && saveBtn) {
+    const enableSave = () => {
+      saveBtn.disabled = false;
+    };
+    detailsForm.querySelectorAll('input, select').forEach(input => {
+      input.addEventListener('input', enableSave);
+      input.addEventListener('change', enableSave);
+    });
+  }
+
+  const handleProfileSubmit = (actionType) => {
     const name = document.getElementById('prof-name').value.trim();
     const employeeId = document.getElementById('prof-empid').value.trim();
     const usernameInput = document.getElementById('prof-username').value.trim();
@@ -4635,7 +4709,6 @@ function renderEmployeeProfile() {
     const deductionPT = Number(document.getElementById('prof-pt').value);
     const deductionTDS = Number(document.getElementById('prof-tds').value);
 
-    // Keep existing values if fields are left empty (optional)
     const username = usernameInput || user.username;
     const password = passwordInput || user.password;
 
@@ -4662,44 +4735,72 @@ function renderEmployeeProfile() {
       return;
     }
 
-    if (isSelfAdmin || editCount < 3) {
-      DB.updateUserProfile(user.id, { 
-        name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-        baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
-      });
-      const updatedUser = DB.getUser(user.id);
-      if (!isSelfAdmin) {
-        updatedUser.profileEditCount = editCount + 1;
-      }
-      updatedUser.profileVerificationStatus = 'Approved';
-      updatedUser.profileVerificationComment = '';
-      DB.save();
-      
-      Auth.init();
-      alertEl.className = 'alert alert-success';
-      alertEl.textContent = isSelfAdmin 
-        ? 'Profile details updated successfully!'
-        : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
-    } else {
-      const updatedUser = DB.getUser(user.id);
-      updatedUser.profileVerificationStatus = 'Pending Approval';
-      updatedUser.pendingProfileEdits = {
-        name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-        allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
-      };
-      DB.save();
-      
-      Auth.init();
-      alertEl.className = 'alert alert-warning';
-      alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '⏳ Saving...';
     }
-    
-    alertEl.style.display = 'flex';
-    setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
-    
-    renderAppShell();
-    renderEmployeeProfile();
-  });
+    if (updateBtn) {
+      updateBtn.disabled = true;
+      updateBtn.innerHTML = '⏳ Updating...';
+    }
+
+    setTimeout(() => {
+      if (isSelfAdmin || editCount < 3) {
+        DB.updateUserProfile(user.id, { 
+          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+          baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+        });
+        const updatedUser = DB.getUser(user.id);
+        if (!isSelfAdmin) {
+          updatedUser.profileEditCount = editCount + 1;
+        }
+        updatedUser.profileVerificationStatus = 'Approved';
+        updatedUser.profileVerificationComment = '';
+        DB.save();
+        
+        Auth.init();
+        alertEl.className = 'alert alert-success';
+        if (actionType === 'save') {
+          alertEl.textContent = 'Profile saved successfully.';
+        } else {
+          alertEl.textContent = isSelfAdmin 
+            ? 'Profile details updated successfully!'
+            : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
+        }
+      } else {
+        const updatedUser = DB.getUser(user.id);
+        updatedUser.profileVerificationStatus = 'Pending Approval';
+        updatedUser.pendingProfileEdits = {
+          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+          allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+        };
+        DB.save();
+        
+        Auth.init();
+        alertEl.className = 'alert alert-warning';
+        alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+      }
+      
+      alertEl.style.display = 'flex';
+      setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
+      
+      renderAppShell();
+      renderEmployeeProfile();
+    }, 500);
+  };
+
+  if (detailsForm) {
+    detailsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleProfileSubmit('save');
+    });
+  }
+
+  if (updateBtn) {
+    updateBtn.addEventListener('click', () => {
+      handleProfileSubmit('update');
+    });
+  }
 }
 
 function renderAdminProfile() {
