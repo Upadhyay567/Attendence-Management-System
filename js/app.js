@@ -606,7 +606,7 @@ function renderLoginView() {
         <div class="auth-hero-overlay"></div>
         <div class="auth-hero-content">
           <div class="auth-hero-brand">
-            <img src="surya-logo.png" alt="Surya Logo" class="auth-hero-logo">
+            <img src="surya-logo.png?v=6" alt="Surya Logo" class="auth-hero-logo">
             <div class="auth-hero-brand-text">
               <div class="auth-hero-brand-title">HS Group Delhi</div>
               <div class="auth-hero-brand-subtitle">House of Surya</div>
@@ -663,7 +663,7 @@ function renderLoginView() {
       <div id="role-selector-section" style="animation: fadeIn 0.3s ease;">
         <div class="auth-header" style="position:relative; margin-bottom: 24px; text-align: center;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
-            <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain; mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 65px; object-fit: contain; mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="text-align: center; font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 4px;">House of Surya</div>
           <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;">WORKFORCE OPERATIONS PORTAL</div>
@@ -775,7 +775,7 @@ function renderLoginView() {
             ◀ Back
           </button>
           <div class="auth-logo" style="margin-bottom: 8px; justify-content: center; display: flex;">
-            <img src="surya-logo.png" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="text-align: center; font-size: 18px; font-weight: 700; color: var(--primary);">${roleTitle} Portal</div>
           <div class="auth-sub-desc" style="text-align: center; font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">SELECT YOUR ACCOUNT TO CONTINUE</div>
@@ -831,7 +831,7 @@ function renderLoginView() {
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
         <div class="auth-header" style="margin-bottom: 24px; text-align: center; position: relative;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
-            <img src="surya-logo.png" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
@@ -1118,7 +1118,7 @@ function renderAppShell() {
     <aside class="sidebar" id="sidebar-aside-el">
       <div class="sidebar-brand">
         <a href="#dashboard" class="sidebar-brand-logo" title="House of Surya">
-          <img src="assets/surya_logo_hd.png" alt="House of Surya Logo" class="surya-brand-img" />
+          <img src="assets/surya_logo_hd.png?v=6" alt="House of Surya Logo" class="surya-brand-img" />
         </a>
         <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="Toggle Navigation">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
@@ -4327,301 +4327,399 @@ function renderEmployeeProfile() {
   const editCount = user.profileEditCount || 0;
   const badgeTitle = user.role === 'hr' ? 'HR Badge' : (user.role === 'manager' || user.role === 'finance_manager' ? 'Manager Badge' : 'Employee Badge');
   
-  let statusBannerHTML = '';
+  let verificationStatusHTML = '';
   if (!isSelfAdmin) {
-    if (status === 'Approved') {
-      statusBannerHTML = `
-        <div class="card-panel" style="border-left:4px solid var(--success); background:rgba(16,185,129,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
-          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--success)">✅ Verified / Approved</strong></span>
-          <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits Used: <strong>${editCount}/3</strong></span>
-        </div>
-      `;
-    } else if (status === 'Pending Approval') {
-      statusBannerHTML = `
-        <div class="card-panel" style="border-left:4px solid var(--warning); background:rgba(251,191,36,0.02); display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 20px">
-          <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--warning)">⏳ Pending Review (Direct edit limit reached)</strong></span>
-          <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
-        </div>
-      `;
+    let statusColor = 'var(--success)';
+    let statusText = 'Verified / Approved';
+    let icon = '✅';
+    if (status === 'Pending Approval') {
+      statusColor = 'var(--warning)';
+      statusText = 'Pending Review';
+      icon = '⏳';
     } else if (status === 'Rejected') {
-      statusBannerHTML = `
-        <div class="card-panel" style="border-left:4px solid var(--error); background:rgba(239,68,68,0.02); margin-bottom:16px; padding:15px 20px; display:flex; flex-direction:column; gap:8px">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <span style="font-size:13px; color:var(--text-secondary)">Profile Status: <strong style="color:var(--error)">❌ Profile Issue Flagged</strong></span>
-            <span style="font-size:11.5px; color:var(--text-muted)">Edits: <strong>${editCount}/3</strong></span>
-          </div>
-          ${user.profileVerificationComment ? `
-          <div style="font-size:12px; color:var(--text-secondary); background:rgba(255,255,255,0.02); border:1px dashed var(--border); padding:8px 12px; border-radius:var(--radius-sm)">
-            <strong>Issue Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
-          </div>
-          ` : ''}
-        </div>
-      `;
+      statusColor = 'var(--error)';
+      statusText = 'Issue Flagged';
+      icon = '❌';
     }
+    
+    verificationStatusHTML = `
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
+          <strong style="color:${statusColor}; font-size:13px">${icon} ${statusText}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
+          <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits:</span>
+          <span style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">${editCount} / 3 used</span>
+        </div>
+        ${status === 'Rejected' && user.profileVerificationComment ? `
+          <div style="font-size:11.5px; color:var(--error); background:rgba(239,68,68,0.05); border:1.5px dashed rgba(239,68,68,0.2); padding:8px 10px; border-radius:6px; margin-top:4px; line-height:1.45;">
+            <strong>Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } else {
+    verificationStatusHTML = `
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
+          <strong style="color:var(--success); font-size:13px">✅ Verified Admin</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
+          <span style="font-size:11.5px; color:var(--text-muted)">Edit Access:</span>
+          <span style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">Unlimited Edits</span>
+        </div>
+      </div>
+    `;
   }
 
   main.innerHTML = `
+    <style>
+      .profile-layout-container {
+        display: flex;
+        gap: 24px;
+        width: 100%;
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+      .profile-left-col {
+        flex: 7;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        min-width: 0;
+      }
+      .profile-right-col {
+        flex: 3;
+        min-width: 320px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .profile-grid-2-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 992px) {
+        .profile-layout-container {
+          flex-direction: column;
+        }
+        .profile-left-col, .profile-right-col {
+          width: 100%;
+          flex: none;
+        }
+      }
+      @media (max-width: 600px) {
+        .profile-grid-2-col {
+          grid-template-columns: 1fr;
+        }
+        .profile-grid-2-col > div {
+          grid-column: auto !important;
+        }
+      }
+    </style>
+    
     <div class="content-header">
       <div>
         <h1 class="content-title">My Details</h1>
         <div class="content-subtitle">Complete your details and update your personal information.</div>
       </div>
     </div>
-    <div class="content-body">
-      <div style="max-width: 800px; margin: 0 auto;">
-        ${statusBannerHTML}
-        <!-- Profile Photo Upload Strip -->
-        <div class="card-panel" style="margin-bottom:24px; padding:16px 24px">
-          <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap">
-            <div id="profile-photo-circle" style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, #1e293b, #0f172a); border:2px solid var(--border); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:var(--primary)">
-              ${user.photo
-                ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">`
-                : getInitials(user.name)
+    
+    <div class="content-body" style="padding-top: 0;">
+      <form id="profile-details-form" style="width: 100%;">
+        <div class="profile-layout-container">
+          
+          <!-- Left Column (70%) -->
+          <div class="profile-left-col">
+            
+            <!-- Assigner Card -->
+            ${(() => {
+              if (user.assignedById) {
+                const assigner = DB.getUser(user.assignedById);
+                if (assigner) {
+                  const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
+                  const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                  const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+                  return `
+                    <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding: 16px 20px; border-left:4px solid var(--primary); background: linear-gradient(135deg, rgba(251,191,36,0.04), rgba(0,0,0,0));">
+                      <div style="display:flex; align-items:center; gap:16px;">
+                        <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, var(--primary), #f59e0b); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:#000; flex-shrink:0; box-shadow:0 4px 10px rgba(251,191,36,0.25);">
+                          ${initials}
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                          <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:2px;">Registered / Assigned By</div>
+                          <div style="font-size:15px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
+                          <div style="font-size:11.5px; color:var(--primary); font-weight:500; margin-top:1px;">${roleLabel}</div>
+                        </div>
+                        <div style="text-align:right; flex-shrink:0;">
+                          <div style="font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Date of Joining</div>
+                          <div style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">${joinedDate}</div>
+                          <div style="display:inline-block; margin-top:4px; padding:2px 8px; background:rgba(251,191,36,0.1); color:var(--primary); border-radius:20px; font-size:9.5px; font-weight:700; border:1px solid rgba(251,191,36,0.15);">✓ Verified Staff</div>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }
               }
-            </div>
-            <button id="btn-upload-profile-photo" class="btn" type="button" style="width:auto; padding:8px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; cursor:pointer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Upload Photo
-            </button>
-            <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
-          </div>
-        </div>
-        
-        <!-- Interactive Glassmorphic Digital HR ID Badge Card -->
-        <div class="id-card-wrapper" style="margin-bottom: 28px; display: flex; justify-content: center;">
-          <div class="id-card" id="employee-id-badge" style="width: 380px; height: 230px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
-            
-            <!-- FRONT SIDE -->
-            <div class="id-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
-              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 70%); pointer-events: none;"></div>
-              
-              <!-- Card Header -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <img src="surya-logo.png" alt="Surya Logo" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(251,191,36,0.2)); mix-blend-mode: multiply;">
-                  <div>
-                    <div style="font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;">HS Group Delhi</div>
-                    <div style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">House of Surya</div>
-                  </div>
-                </div>
-                <div style="font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${badgeTitle}</div>
-              </div>
-              
-              <!-- Card Body -->
-              <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                <div style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden;">
-                  ${user.photo ? `
-                    <img src="${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
-                  ` : `
-                    ${getInitials(user.name)}
-                  `}
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
-                  <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${Utils.escape(user.name)}</div>
-                  <div style="font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
-                  <div style="font-size: 10px; color: var(--text-secondary);">${Utils.escape(user.department || 'General')}</div>
-                </div>
-              </div>
-              
-              <!-- Card Footer -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9px; color: var(--text-secondary);">
-                <div>
-                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Employee ID</div>
-                  <div style="font-weight: 700; color: var(--primary); font-size: 11px;">${Utils.escape(user.employeeId)}</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Joined Date</div>
-                  <div style="font-weight: 600; color: var(--text-primary);">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- BACK SIDE -->
-            <div class="id-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; transform: rotateY(180deg);">
-              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.08), transparent 70%); pointer-events: none;"></div>
-              
-              <!-- Back Header -->
-              <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
-                Emergency & Office Info
-              </div>
-              
-              <!-- Back Details -->
-              <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
-                <div>
-                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Emergency Contact</span>
-                  <strong style="color: var(--text-primary);">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
-                </div>
-                <div>
-                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Office Location</span>
-                  <span style="font-size: 10px; line-height: 1.3; display: block; color: var(--text-primary);">${Utils.escape(locationText)}</span>
-                </div>
-              </div>
-              
-              <!-- Barcode / QR Code Container -->
-              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: var(--radius-sm);">
-                <div style="display: flex; flex-direction: column;">
-                  <span style="font-size: 7px; color: var(--text-secondary); opacity: 0.75; text-transform: uppercase;">Scan Attendance Badge</span>
-                  <span style="font-size: 9px; font-family: monospace; color: var(--primary); font-weight: 700; margin-top: 2px;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
-                </div>
-                <!-- Stylized Barcode Stripes -->
-                <div style="display: flex; gap: 2px; align-items: stretch; height: 26px; background: rgba(255,255,255,0.85); padding: 3px 6px; border-radius: 2px;">
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 3px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 4px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 3px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
+              return '';
+            })()}
 
-        ${(() => {
-          if (user.assignedById) {
-            const assigner = DB.getUser(user.assignedById);
-            if (assigner) {
-              const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
-              const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-              const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-              return `
-                <div class="card-panel" style="margin-bottom:20px; border-left:3px solid var(--primary); background: linear-gradient(135deg, rgba(251,191,36,0.04), rgba(0,0,0,0));">
-                  <div style="display:flex; align-items:center; gap:16px; padding:4px 0;">
-                    <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, var(--primary), #f59e0b); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#000; flex-shrink:0; box-shadow:0 4px 14px rgba(251,191,36,0.3);">
-                      ${initials}
+            <!-- 1. Personal Details -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:24px; background:var(--bg-surface);">
+              <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Personal Details</h3>
+              <div class="profile-grid-2-col">
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-name">Full Name <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(Letters only)</span></label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-empid">Employee ID</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-username">Username (Optional)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-username" value="${Utils.escape(user.username)}">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-password">Change Password (Optional)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-password" placeholder="Leave empty for no change">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-dob">Date of Birth</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="date" id="prof-dob" value="${user.dob || ''}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-gender">Gender</label>
+                  <select class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" id="prof-gender" required>
+                    <option value="Male" ${user.gender === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${user.gender === 'Female' ? 'selected' : ''}>Female</option>
+                    <option value="Other" ${user.gender === 'Other' ? 'selected' : ''}>Other</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Contact Information -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:24px; background:var(--bg-surface);">
+              <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Contact Information</h3>
+              <div class="profile-grid-2-col">
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-email">Email Address</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="email" id="prof-email" value="${Utils.escape(user.email)}" placeholder="username@surya.group" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-phone">Mobile Number</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" placeholder="+91 9999999999" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-emergency">Emergency Contact</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-emergency" value="${Utils.escape(user.emergencyContact || '')}" placeholder="Emergency contact phone" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-city">City</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-city" value="${Utils.escape(user.city)}" placeholder="e.g. Delhi" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px; grid-column: span 2;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-address">Address</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-address" value="${Utils.escape(user.address)}" placeholder="Street/Building info" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Work Information -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:24px; background:var(--bg-surface);">
+              <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Work Information</h3>
+              <div class="profile-grid-2-col">
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-dept">Department</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-designation">Designation</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-doj">Date of Joining</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-worksite">Worksite Location</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(255,255,255,0.05); color:var(--text-primary); opacity:0.7; cursor:not-allowed; width: 100%;" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px; grid-column: span 2;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-workshift">Work Shift</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(255,255,255,0.05); color:var(--text-primary); opacity:0.7; cursor:not-allowed; width: 100%;" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Additional / Payroll Information -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:24px; background:var(--bg-surface);">
+              <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Additional / Payroll Information</h3>
+              <div class="profile-grid-2-col">
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-salary">Base Salary (INR/Month)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required>
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-hra">HRA Allowance (INR/Month)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-travel">Travel Allowance (INR/Month)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-pf">Provident Fund (PF) (INR/Month)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-pt">Professional Tax (PT)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+                  <label class="form-label" style="font-size:12px; font-weight:600; color:var(--text-secondary);" for="prof-tds">TDS Tax Rate (%)</label>
+                  <input class="form-input" style="height:42px; border-radius:8px; border:1px solid var(--border); padding:8px 12px; font-size:13.5px; background:rgba(0,0,0,0.15); color:var(--text-primary); width: 100%;" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100">
+                </div>
+              </div>
+            </div>
+
+          </div>
+          
+          <!-- Right Column (30%) -->
+          <div class="profile-right-col">
+            
+            <!-- Profile ID Badge Card & Photo Button -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display: flex; flex-direction: column; align-items: center; gap: 16px;">
+              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; width: 100%;">Identity Card</h3>
+              
+              <div class="id-card-wrapper" style="display: flex; justify-content: center; width: 100%;">
+                <div class="id-card" id="employee-id-badge" style="width: 100%; max-width: 380px; height: 230px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
+                  
+                  <!-- FRONT SIDE -->
+                  <div class="id-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 70%); pointer-events: none;"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(251,191,36,0.2)); mix-blend-mode: multiply;">
+                        <div>
+                          <div style="font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;">HS Group Delhi</div>
+                          <div style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">House of Surya</div>
+                        </div>
+                      </div>
+                      <div style="font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${badgeTitle}</div>
                     </div>
-                    <div style="flex:1; min-width:0;">
-                      <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:3px;">Registered / Assigned By</div>
-                      <div style="font-size:16px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
-                      <div style="font-size:12px; color:var(--primary); font-weight:500; margin-top:2px;">${roleLabel}</div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
+                      <div id="btn-upload-profile-photo" title="Click to update photo" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; position: relative; cursor: pointer; transition: all 0.2s ease;">
+                        ${user.photo ? `
+                          <img src="${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
+                        ` : `
+                          ${getInitials(user.name)}
+                        `}
+                        <div style="position: absolute; bottom: -2px; left: 0; right: 0; background: rgba(0,0,0,0.65); padding: 3px 0 6px; display: flex; justify-content: center; backdrop-filter: blur(2px);">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:11px; height:11px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
+                        <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);margin-bottom:2px;font-family:'Plus Jakarta Sans',sans-serif;">${Utils.escape(user.name)}</div>
+                        <div style="font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">${Utils.escape(user.department || 'General')}</div>
+                      </div>
                     </div>
-                    <div style="text-align:right; flex-shrink:0;">
-                      <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Date of Joining</div>
-                      <div style="font-size:13px; font-weight:600; color:var(--text-secondary);">${joinedDate}</div>
-                      <div style="display:inline-block; margin-top:6px; padding:2px 10px; background:rgba(251,191,36,0.12); color:var(--primary); border-radius:20px; font-size:10px; font-weight:700; border:1px solid rgba(251,191,36,0.25);">✓ Verified Staff</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9px; color: var(--text-secondary);">
+                      <div>
+                        <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Employee ID</div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 11px;">${Utils.escape(user.employeeId)}</div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Joined Date</div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
+                      </div>
                     </div>
                   </div>
+                  
+                  <!-- BACK SIDE -->
+                  <div class="id-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; transform: rotateY(180deg);">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.08), transparent 70%); pointer-events: none;"></div>
+                    
+                    <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                      Emergency & Office Info
+                    </div>
+                    
+                    <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
+                      <div>
+                        <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Emergency Contact</span>
+                        <strong style="color: var(--text-primary);">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
+                      </div>
+                      <div>
+                        <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Office Location</span>
+                        <span style="font-size: 10px; line-height: 1.3; display: block; color: var(--text-primary);">${Utils.escape(locationText)}</span>
+                      </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: var(--radius-sm);">
+                      <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 7px; color: var(--text-secondary); opacity: 0.75; text-transform: uppercase;">Scan Attendance Badge</span>
+                        <span style="font-size: 9px; font-family: monospace; color: var(--primary); font-weight: 700; margin-top: 2px;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
+                      </div>
+                      <div style="display: flex; gap: 2px; align-items: stretch; height: 26px; background: rgba(255,255,255,0.85); padding: 3px 6px; border-radius: 2px;">
+                        <div style="width: 2px; background: #000;"></div>
+                        <div style="width: 1px; background: #000;"></div>
+                        <div style="width: 3px; background: #000;"></div>
+                        <div style="width: 1px; background: #000;"></div>
+                        <div style="width: 2px; background: #000;"></div>
+                        <div style="width: 4px; background: #000;"></div>
+                        <div style="width: 1px; background: #000;"></div>
+                        <div style="width: 2px; background: #000;"></div>
+                        <div style="width: 3px; background: #000;"></div>
+                        <div style="width: 1px; background: #000;"></div>
+                        <div style="width: 2px; background: #000;"></div>
+                        <div style="width: 1px; background: #000;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
                 </div>
-              `;
-            }
-          }
-          return '';
-        })()}
+              </div>
 
-        <div class="card-panel">
-          <div class="card-panel-header"><h3 class="card-panel-title">Personal Details</h3></div>
-          <form id="profile-details-form">
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:16px">
-              <div class="form-group">
-                <label class="form-label" for="prof-name">Full Name <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(Letters only)</span></label>
-                <input class="form-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. Rahul Sharma">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-empid">Employee ID</label>
-                <input class="form-input" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-username">Username (Optional)</label>
-                <input class="form-input" type="text" id="prof-username" value="${Utils.escape(user.username)}">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-password">Change Password (Optional)</label>
-                <input class="form-input" type="text" id="prof-password" placeholder="Leave empty for no change">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-email">Email Address</label>
-                <input class="form-input" type="email" id="prof-email" value="${Utils.escape(user.email)}" placeholder="username@surya.group" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-phone">Mobile Number</label>
-                <input class="form-input" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" placeholder="+91 9999999999" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-worksite">Worksite Location</label>
-                <input class="form-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05)">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-workshift">Work Shift</label>
-                <input class="form-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05)">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-dob">Date of Birth</label>
-                <input class="form-input" type="date" id="prof-dob" value="${user.dob || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-gender">Gender</label>
-                <select class="form-input" id="prof-gender" required>
-                  <option value="Male" ${user.gender === 'Male' ? 'selected' : ''}>Male</option>
-                  <option value="Female" ${user.gender === 'Female' ? 'selected' : ''}>Female</option>
-                  <option value="Other" ${user.gender === 'Other' ? 'selected' : ''}>Other</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-emergency">Emergency Contact</label>
-                <input class="form-input" type="text" id="prof-emergency" value="${Utils.escape(user.emergencyContact || '')}" placeholder="Emergency contact phone" required>
-              </div>
-              <div class="form-group" style="grid-column:span 2">
-                <label class="form-label" for="prof-address">Address</label>
-                <input class="form-input" type="text" id="prof-address" value="${Utils.escape(user.address)}" placeholder="Street/Building info" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-city">City</label>
-                <input class="form-input" type="text" id="prof-city" value="${Utils.escape(user.city)}" placeholder="e.g. Delhi" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-dept">Department</label>
-                <input class="form-input" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-designation">Designation</label>
-                <input class="form-input" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-doj">Date of Joining</label>
-                <input class="form-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-salary">Base Salary (INR/Month)</label>
-                <input class="form-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-hra">HRA Allowance (INR/Month)</label>
-                <input class="form-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-travel">Travel Allowance (INR/Month)</label>
-                <input class="form-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-pf">Provident Fund (PF) (INR/Month)</label>
-                <input class="form-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-pt">Professional Tax (PT)</label>
-                <input class="form-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}">
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="prof-tds">TDS Tax Rate (%)</label>
-                <input class="form-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100">
+              <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
+              <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:100%; padding:10px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; cursor:pointer; margin-top: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Photo
+              </button>
+              <div style="font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4;"><span style="opacity:0.7;">Click anywhere on the card to flip it.</span></div>
+            </div>
+
+            <!-- Account Status Card -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display:flex; flex-direction:column; gap:12px;">
+              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Account Verification</h3>
+              ${verificationStatusHTML}
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card-panel" style="border-radius:12px; border:1px solid var(--border); padding:20px; background:var(--bg-surface); display:flex; flex-direction:column; gap:16px;">
+              <h3 style="margin: 0; font-size: 13px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Quick Actions</h3>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <button class="btn btn-outline-equify" type="button" id="btn-profile-edit-focus" style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-secondary); cursor:pointer;">Edit Profile</button>
+                <button class="btn btn-primary-equify" type="submit" id="btn-profile-save" disabled style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">Save</button>
+                <button class="btn btn-outline-equify" type="button" id="btn-profile-update" style="width:100%; height:42px; font-size:13px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid var(--border); color:var(--text-primary); cursor:pointer;">Update</button>
               </div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px">
-              <button class="btn btn-primary-equify" type="submit" id="btn-profile-save" disabled style="padding:12.5px; font-size:13px; font-weight:700">Save</button>
-              <button class="btn btn-outline-equify" type="button" id="btn-profile-update" style="padding:12.5px; font-size:13px; font-weight:700">Update</button>
-            </div>
-          </form>
-          <div id="profile-alert" style="display:none;margin-top:12px"></div>
+
+          </div>
+          
         </div>
-      </div>
+      </form>
     </div>
   `;
+
+
 
 
   // Set up click listener for ID card flip

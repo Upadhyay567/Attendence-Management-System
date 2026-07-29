@@ -5,7 +5,7 @@
       "username": "admin",
       "employeeId": "HR100",
       "name": "DEEPAK SHARMA HR Admin Manager",
-      "password": "Deepak@123",
+      "password": "$hash$9b086913",
       "role": "hr",
       "scheduleId": "sch_q8jji9v",
       "baseSalary": 95000,
@@ -32,7 +32,8 @@
       "assignedById": "usr_admin",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "passwordResetCount": 2
     },
     {
       "id": "usr_hr",
@@ -119,7 +120,7 @@
       "deductionTDS": 5,
       "phone": "+91 9999911111",
       "email": "john.doe345@gmail.com",
-      "dob": "1992-08-23",
+      "dob": "1992-07-29",
       "address": "H.No. 45, Sector 15",
       "city": "Noida",
       "gender": "Male",
@@ -252,7 +253,7 @@
     {
       "id": "usr_7kek2wc",
       "employeeId": "HR123",
-      "scheduleId": "sch_1",
+      "scheduleId": "sch_q8jji9v",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -261,14 +262,14 @@
       "deductionTDS": 5,
       "phone": "9536885675",
       "email": "hemantupadhyay900@gmail.com",
-      "dob": "",
+      "dob": "2026-07-21",
       "address": "",
       "city": "",
       "gender": "Male",
       "department": "HR Administrator",
       "designation": "HR Administrator",
       "dateOfJoining": "2026-07-22",
-      "emergencyContact": "",
+      "emergencyContact": "+91 98765 43201",
       "documents": [],
       "resume": null,
       "aadhar": null,
@@ -278,7 +279,13 @@
       "mobile": "9536885675",
       "role": "hr",
       "status": "Active",
-      "password": "$hash$f9ba2513"
+      "password": "$hash$f9ba2513",
+      "preferredLocation": "Noida sector 61",
+      "managerId": "",
+      "assignedById": "usr_admin",
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     },
     {
       "id": "usr_finance",
@@ -376,6 +383,96 @@
     }
   ],
   "attendanceLogs": [
+    {
+      "id": "log_usr_john_2026-07-29",
+      "userId": "usr_john",
+      "date": "2026-07-29",
+      "checkIn": "16:08",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-07-28",
+      "userId": "usr_john",
+      "date": "2026-07-28",
+      "checkIn": "10:10",
+      "checkOut": "10:12",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-07-28",
+      "userId": "usr_sarah",
+      "date": "2026-07-28",
+      "checkIn": "12:45",
+      "checkOut": "13:29",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "omaxe Office",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-07-27",
+      "userId": "usr_john",
+      "date": "2026-07-27",
+      "checkIn": "10:13",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-07-24",
+      "userId": "usr_john",
+      "date": "2026-07-24",
+      "checkIn": "15:46",
+      "checkOut": null,
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0
+    },
+    {
+      "id": "log_usr_john_2026-07-23",
+      "userId": "usr_john",
+      "date": "2026-07-23",
+      "checkIn": "10:50",
+      "checkOut": "19:27",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_t42n6xh_2026-07-22",
+      "userId": "usr_t42n6xh",
+      "date": "2026-07-22",
+      "checkIn": "10:54",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
     {
       "id": "log_usr_john_2026-07-20",
       "userId": "usr_john",
@@ -804,86 +901,21 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
-    },
-    {
-      "id": "log_usr_t42n6xh_2026-07-22",
-      "userId": "usr_t42n6xh",
-      "date": "2026-07-22",
-      "checkIn": "10:54",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_john_2026-07-28",
-      "userId": "usr_john",
-      "date": "2026-07-28",
-      "checkIn": "10:10",
-      "checkOut": "10:12",
-      "status": "Half Day",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_sarah_2026-07-28",
-      "userId": "usr_sarah",
-      "date": "2026-07-28",
-      "checkIn": "12:45",
-      "checkOut": "13:29",
-      "status": "On Time",
-      "biometricUsed": "none",
-      "location": "omaxe Office",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_john_2026-07-27",
-      "userId": "usr_john",
-      "date": "2026-07-27",
-      "checkIn": "10:13",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_john_2026-07-24",
-      "userId": "usr_john",
-      "date": "2026-07-24",
-      "checkIn": "15:46",
-      "checkOut": null,
-      "status": "Pending Verification",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0
-    },
-    {
-      "id": "log_usr_john_2026-07-23",
-      "userId": "usr_john",
-      "date": "2026-07-23",
-      "checkIn": "10:50",
-      "checkOut": "19:27",
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
     }
   ],
   "leaveRequests": [
+    {
+      "id": "lv_t5o1ep7",
+      "userId": "usr_john",
+      "type": "Casual",
+      "startDate": "2026-07-24",
+      "endDate": "2026-07-25",
+      "reason": "sf",
+      "approverHead": "HR Admin Manager",
+      "status": "Approved",
+      "requestDate": "2026-07-23",
+      "managerComment": "ad"
+    },
     {
       "id": "lv_1",
       "userId": "usr_john",
@@ -916,18 +948,6 @@
       "status": "Approved",
       "requestDate": "2026-06-08",
       "managerComment": "Take care and recover!"
-    },
-    {
-      "id": "lv_t5o1ep7",
-      "userId": "usr_john",
-      "type": "Casual",
-      "startDate": "2026-07-24",
-      "endDate": "2026-07-25",
-      "reason": "sf",
-      "approverHead": "HR Admin Manager",
-      "status": "Approved",
-      "requestDate": "2026-07-23",
-      "managerComment": "ad"
     }
   ],
   "tickets": [
@@ -983,6 +1003,24 @@
   ],
   "announcements": [
     {
+      "id": "ann_likg7kf",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-07-29",
+      "author": "HR Department",
+      "targetUserId": "usr_john"
+    },
+    {
+      "id": "ann_0x5w3md",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-07-29",
+      "author": "HR Department",
+      "targetUserId": "usr_john"
+    },
+    {
       "id": "ann_1",
       "title": "Welcome to the New Attendance & Onboarding Portal",
       "content": "We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.",
@@ -997,15 +1035,6 @@
       "category": "General",
       "date": "2026-07-27",
       "author": "DEEPAK SHARMA HR Admin Manager",
-      "targetUserId": "usr_john"
-    },
-    {
-      "id": "ann_qm41zn7",
-      "title": "🎉 Happy Birthday, John Doe!",
-      "content": "Dear John Doe,\n\nWishing you a very Happy Birthday! Have a fantastic day and a wonderful year ahead filled with success, good health, and happiness!\n\nBest regards,\nDEEPAK SHARMA HR Admin\nHouse of Surya",
-      "category": "General",
-      "date": "2026-07-27",
-      "author": "DEEPAK SHARMA HR Admin",
       "targetUserId": "usr_john"
     }
   ],
@@ -1657,5 +1686,6 @@
       "reason": "Reassign all employee shift and location"
     }
   ],
-  "customRoles": []
+  "customRoles": [],
+  "messages": []
 }
