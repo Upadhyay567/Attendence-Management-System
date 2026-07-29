@@ -2552,10 +2552,10 @@ body {
 
 .sidebar-menu {
   list-style: none;
-  padding: 8px 12px !important;
+  padding: 12px 14px !important;
   display: flex;
   flex-direction: column;
-  gap: 4px !important;
+  gap: 10px !important;
   flex-grow: 1;
   overflow-y: auto;
 }
@@ -2564,12 +2564,12 @@ body {
   display: flex !important;
   align-items: center !important;
   gap: 14px !important;
-  padding: 10px 14px !important;
+  padding: 12px 16px !important;
   color: #fca5a5 !important;
   text-decoration: none !important;
   font-weight: 500 !important;
-  font-size: 13.5px !important;
-  border-radius: 8px !important;
+  font-size: 14px !important;
+  border-radius: 10px !important;
   transition: all 0.2s ease !important;
   border-left: none !important;
 }
