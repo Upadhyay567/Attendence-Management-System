@@ -2937,92 +2937,136 @@ function showAccountModal(editUser = null) {
   overlay.className = 'modal-overlay';
   overlay.style.cssText = `
     position: fixed; top:0; left:0; width:100vw; height:100vh;
-    background: rgba(10, 15, 29, 0.82); backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px);
     display:flex; justify-content:center; align-items:center; z-index:10000;
     animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   `;
 
   const initialRole = isEdit ? editUser.role : 'hr';
-  const initialIdLabel = (initialRole === 'hr') ? 'HR ID *' : 'Manager ID *';
-  const initialPlaceholder = (initialRole === 'hr') ? 'e.g. EMP100 or Tanya' : 'e.g. EMP102 or Manager1';
+  const initialIdLabel = (initialRole === 'hr') ? 'HR ID *' : (initialRole === 'manager' || initialRole === 'finance_manager') ? 'Manager ID *' : 'Employee ID *';
+  const initialPlaceholder = (initialRole === 'hr') ? 'e.g. HR100' : (initialRole === 'manager' || initialRole === 'finance_manager') ? 'e.g. MGR100' : 'e.g. EMP100';
 
   const modal = document.createElement('div');
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
     max-width: 520px; width: 92%; padding: 32px;
-    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
-    border: 1px solid rgba(251, 191, 36, 0.3) !important;
-    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(251, 191, 36, 0.12);
+    background: #faf7f2 !important;
+    border: 1px solid rgba(137, 32, 27, 0.15) !important;
+    border-radius: 24px; box-shadow: 0 16px 40px rgba(137,32,27,0.1);
   `;
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px">
+    <!-- Modal Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-bottom:1px solid rgba(137,32,27,0.08); padding-bottom:16px">
       <div style="display:flex; align-items:center; gap:12px">
-        <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, rgba(251,191,36,0.2), rgba(6,182,212,0.2)); border:1px solid rgba(251,191,36,0.3); display:flex; align-items:center; justify-content:center; font-size:18px">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(137,32,27,0.08); border:1px solid rgba(137,32,27,0.15); display:flex; align-items:center; justify-content:center; font-size:18px">
           ${isEdit ? '✏️' : '👤'}
         </div>
         <div>
-          <h3 style="font-size:18px; font-weight:800; color:#f8fafc; margin:0; letter-spacing:-0.01em">
+          <h3 style="font-size:18px; font-weight:800; color:#1a0504; margin:0; letter-spacing:-0.01em">
             ${isEdit ? 'Edit Account' : 'Create Account'}
           </h3>
-          <div style="font-size:11.5px; color:#94a3b8; margin-top:2px">Configure credentials and role permissions</div>
+          <div style="font-size:11.5px; color:#64748b; margin-top:2px">Configure credentials and role permissions</div>
         </div>
       </div>
-      <button class="close-modal-btn" id="btn-close-acct-modal" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); width:32px; height:32px; border-radius:50%; font-size:18px; color:#cbd5e1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease">&times;</button>
+      <button class="close-modal-btn" id="btn-close-acct-modal" style="background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); width:32px; height:32px; border-radius:50%; font-size:18px; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease">&times;</button>
     </div>
 
-    <form id="acct-form" style="display:flex; flex-direction:column; gap:18px">
+    <!-- Role Selection Tabs -->
+    <div id="create-acct-role-tabs" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px">
+      <button type="button" class="acct-role-tab" data-role="hr" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">👤</div>
+        <span style="font-size:11.5px; font-weight:700; color:#1e293b">HR / Admin</span>
+      </button>
+      <button type="button" class="acct-role-tab" data-role="manager" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">ℹ️</div>
+        <span style="font-size:11.5px; font-weight:700; color:#1e293b">Manager</span>
+      </button>
+      <button type="button" class="acct-role-tab" data-role="employee" style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px; background:#fff; border:1px solid #cbd5e1; border-radius:16px; cursor:pointer; transition:all 0.2s">
+        <div class="role-tab-icon" style="width:32px; height:32px; border-radius:50%; background:rgba(137, 32, 27, 0.1); color:#89201B; display:flex; align-items:center; justify-content:center; font-size:14px">📋</div>
+        <span style="font-size:11.5px; font-weight:700; color:#1e293b">Employee</span>
+      </button>
+    </div>
+
+    <!-- Upload Photo Section -->
+    <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:20px">
+      <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; border:1px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:20px; color:#64748b">👤</div>
+      <button type="button" style="background:#fff; border:1px solid #cbd5e1; padding:6px 14px; border-radius:20px; font-size:11px; font-weight:700; color:#1e293b; cursor:pointer">Upload Photo</button>
+    </div>
+
+    <form id="acct-form" style="display:flex; flex-direction:column; gap:14px">
+      <!-- Hidden original role select for backing state compatibility -->
+      <select id="acct-input-role" style="display:none">
+        <option value="hr">HR Administrator</option>
+        <option value="manager">Operations Manager</option>
+        <option value="employee">Employee</option>
+      </select>
+
       <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">FULL NAME *</label>
-        <input type="text" id="acct-input-name" class="form-control" placeholder="e.g. Ananya Sharma" value="${isEdit ? Utils.escape(editUser.name) : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">FULL NAME *</label>
+        <input type="text" id="acct-input-name" class="form-control" placeholder="e.g. Ananya Sharma" value="${isEdit ? Utils.escape(editUser.name) : ''}" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
         <div>
-          <label id="lbl-acct-id-type" style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">${initialIdLabel}</label>
-          <input type="text" id="acct-input-username" class="form-control" placeholder="${initialPlaceholder}" value="${isEdit ? Utils.escape(editUser.username || editUser.employeeId || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+          <label id="lbl-acct-id-type" style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">${initialIdLabel}</label>
+          <input type="text" id="acct-input-username" class="form-control" placeholder="${initialPlaceholder}" value="${isEdit ? Utils.escape(editUser.username || editUser.employeeId || '') : ''}" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
         </div>
         <div>
-          <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">EMAIL ADDRESS *</label>
-          <input type="email" id="acct-input-email" class="form-control" placeholder="e.g. alex@gmail.com or name@surya.group" value="${isEdit ? Utils.escape(editUser.email || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; transition:border-color 0.2s ease">
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">EMAIL ADDRESS *</label>
+          <input type="email" id="acct-input-email" class="form-control" placeholder="e.g. alex@gmail.com" value="${isEdit ? Utils.escape(editUser.email || '') : ''}" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box; transition:border-color 0.2s ease">
         </div>
       </div>
 
-      <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">
-          PASSWORD ${isEdit ? '(Leave blank to keep existing)' : '*'}
-        </label>
-        <div style="position:relative">
-          <input type="password" id="acct-input-password" class="form-control" placeholder="${isEdit ? '••••••••' : 'Minimum 6 chars (Upper + Special)'}" ${isEdit ? '' : 'required'} style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 42px 10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-pwd-vis" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div style="font-size:11px; color:#64748b; margin-top:5px">Must contain uppercase letter & special character. Password will be securely hashed.</div>
-      </div>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
         <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px">
-            <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; letter-spacing:0.02em; margin:0">ROLE *</label>
-            <button type="button" id="btn-add-custom-role" title="Add New Custom Department / Role" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; height:22px; padding:0 10px; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:3px; transition:all 0.2s ease">+ Role</button>
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">PASSWORD *</label>
+          <div style="position:relative">
+            <input type="password" id="acct-input-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+            <button type="button" id="btn-toggle-pwd-vis" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
-          <select id="acct-input-role" class="form-control" required style="background:#0f172a; border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; cursor:pointer">
-            <option value="hr" ${isEdit && editUser.role === 'hr' ? 'selected' : ''} style="background:#0f172a; color:#f8fafc">HR Administrator</option>
-            <option value="manager" ${isEdit && (editUser.role === 'manager' || editUser.role === 'finance_manager') ? 'selected' : ''} style="background:#0f172a; color:#f8fafc">Operations Manager</option>
+          <div style="font-size:10px; color:#64748b; margin-top:4px">Must contain uppercase & special character.</div>
+        </div>
+        <div>
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">CONFIRM PASSWORD *</label>
+          <div style="position:relative">
+            <input type="password" id="acct-input-confirm-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+            <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; letter-spacing:0.02em; margin:0">PORTAL ACCESS *</label>
+            <button type="button" id="btn-add-custom-role" title="Add New Custom Department / Role" style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; height:20px; padding:0 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:2px; transition:all 0.2s ease">+ Role</button>
+          </div>
+          <select id="acct-input-role-select" class="form-control" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box; cursor:pointer">
+            <option value="hr" ${initialRole === 'hr' ? 'selected' : ''}>HR Administrator</option>
+            <option value="manager" ${initialRole === 'manager' || initialRole === 'finance_manager' ? 'selected' : ''}>Operations Manager</option>
+            <option value="employee" ${initialRole === 'employee' ? 'selected' : ''}>Employee</option>
           </select>
         </div>
         <div>
-          <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:7px; letter-spacing:0.02em">MOBILE NUMBER *</label>
-          <input type="tel" id="acct-input-mobile" class="form-control" placeholder="e.g. +91 98765 43210" value="${isEdit ? Utils.escape(editUser.phone || editUser.mobile || '') : ''}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13.5px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">MOBILE NUMBER *</label>
+          <input type="tel" id="acct-input-mobile" class="form-control" placeholder="e.g. 9876543210" value="${isEdit ? Utils.escape(editUser.phone || editUser.mobile || '') : ''}" required style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
         </div>
       </div>
 
-      <div id="acct-form-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+      <div style="display:grid; grid-template-columns:1fr; gap:12px">
+        <div>
+          <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">MANAGER ID *</label>
+          <input type="text" id="acct-input-manager" class="form-control" placeholder="e.g. MGR102" value="${isEdit ? Utils.escape(editUser.managerId || '') : 'usr_manager'}" style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+        </div>
+      </div>
 
-      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:20px">
-        <button type="button" class="btn" id="btn-cancel-acct-modal" style="padding:10px 22px; font-size:13px; font-weight:700; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#f8fafc; cursor:pointer; transition:all 0.2s ease">Cancel</button>
-        <button type="submit" class="btn" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4); transition:all 0.2s ease">${isEdit ? 'Save Changes' : 'Create Account'}</button>
+      <div id="acct-form-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; color:#b91c1c; font-size:11.5px; font-weight:600; line-height:1.45"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:6px; border-top:1px solid rgba(137,32,27,0.08); padding-top:20px">
+        <button type="button" class="btn" id="btn-cancel-acct-modal" style="padding:10px 22px; font-size:12.5px; font-weight:700; border-radius:12px; background:#fff; border:1px solid #cbd5e1; color:#1e293b; cursor:pointer; transition:all 0.2s ease">Cancel</button>
+        <button type="submit" class="btn" style="padding:10px 24px; font-size:12.5px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.3); transition:all 0.2s ease">${isEdit ? 'Save Changes' : 'Create Account'}</button>
       </div>
     </form>
   `;
@@ -3031,8 +3075,11 @@ function showAccountModal(editUser = null) {
   document.body.appendChild(overlay);
 
   const pwdInput = modal.querySelector('#acct-input-password');
+  const confirmPwdInput = modal.querySelector('#acct-input-confirm-password');
   const togglePwdBtn = modal.querySelector('#btn-toggle-pwd-vis');
   const roleSelect = modal.querySelector('#acct-input-role');
+  const roleSelectDropdown = modal.querySelector('#acct-input-role-select');
+  const tabs = modal.querySelectorAll('.acct-role-tab');
   const idLabelEl = modal.querySelector('#lbl-acct-id-type');
   const usernameInput = modal.querySelector('#acct-input-username');
   const emailInput = modal.querySelector('#acct-input-email');
@@ -3044,11 +3091,11 @@ function showAccountModal(editUser = null) {
     emailInput.addEventListener('input', () => {
       const val = emailInput.value.trim();
       if (!val) {
-        emailInput.style.borderColor = 'rgba(255,255,255,0.12)';
+        emailInput.style.borderColor = '#cbd5e1';
       } else if (emailStrictRegex.test(val)) {
-        emailInput.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+        emailInput.style.borderColor = '#10b981';
       } else {
-        emailInput.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+        emailInput.style.borderColor = '#ef4444';
       }
     });
   }
@@ -3080,9 +3127,46 @@ function showAccountModal(editUser = null) {
     }
   };
 
-  if (roleSelect) {
-    roleSelect.addEventListener('change', updateRoleLabels);
+  const setTabActive = (role) => {
+    tabs.forEach(tab => {
+      const tabRole = tab.dataset.role;
+      if (tabRole === role) {
+        tab.style.borderColor = '#89201B';
+        tab.style.borderWidth = '2px';
+        tab.style.boxShadow = '0 4px 12px rgba(137,32,27,0.12)';
+        tab.style.opacity = '1';
+      } else {
+        tab.style.borderColor = '#cbd5e1';
+        tab.style.borderWidth = '1px';
+        tab.style.boxShadow = 'none';
+        tab.style.opacity = '0.6';
+      }
+    });
+    roleSelect.value = role;
+    if (roleSelectDropdown) {
+      roleSelectDropdown.value = role;
+    }
+    updateRoleLabels();
+  };
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      setTabActive(tab.dataset.role);
+    });
+  });
+
+  if (roleSelectDropdown) {
+    roleSelectDropdown.addEventListener('change', () => {
+      let role = roleSelectDropdown.value;
+      if (role !== 'hr' && role !== 'manager' && role !== 'employee') {
+        role = 'employee';
+      }
+      setTabActive(role);
+    });
   }
+
+  // Initialize role
+  setTabActive(initialRole);
 
   if (addRoleBtn) {
     addRoleBtn.addEventListener('click', async () => {
@@ -3094,17 +3178,17 @@ function showAccountModal(editUser = null) {
         option.value = cleanVal;
         option.textContent = cleanTitle;
         option.dataset.customName = cleanTitle;
-        option.style.background = '#0f172a';
-        option.style.color = '#f8fafc';
-        roleSelect.appendChild(option);
-        roleSelect.value = cleanVal;
-        updateRoleLabels();
+        roleSelectDropdown.appendChild(option);
+        roleSelectDropdown.value = cleanVal;
+        setTabActive('employee'); // custom roles fall under employee view for tabs
         if (typeof showToastNotification === 'function') {
           showToastNotification(`Added custom department/role "${cleanTitle}"`, "success");
         }
       }
     });
   }
+
+  // Duplicate code block removed successfully
 
   const svgEyeOpen = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const svgEyeClosed = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
