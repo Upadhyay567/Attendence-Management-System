@@ -34,8 +34,8 @@
 
 /* Light Theme overrides */
 body.light-theme {
-  --bg-app: #fdf8f8;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #fde8e8 0%, #fae1e1 50%, #fdf8f8 100%);
+  --bg-app: #FAF6EE;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #F5EDE0 0%, #FAF6EE 100%);
   --bg-surface: rgba(255, 255, 255, 0.92);
   --bg-surface-hover: rgba(137, 32, 27, 0.06);
   --border: rgba(137, 32, 27, 0.18);
