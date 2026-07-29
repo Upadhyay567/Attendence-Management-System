@@ -1496,16 +1496,11 @@ function renderEmployeeDashboard() {
 
   let alertBannerHTML = '';
 
+  const roleLabel = user.role === 'hr' ? 'HR Admin' : (user.role === 'manager' ? 'Manager' : 'Employee');
+  const idLabel = user.role === 'hr' ? 'HR ID' : (user.role === 'manager' ? 'Manager ID' : 'Employee ID');
+
   main.innerHTML = `
-    <div class="content-header">
-      <div>
-        <h1 class="content-title">Welcome, ${Utils.escape(user.name)}</h1>
-        <div class="content-subtitle">Log your hours and view daily shift metrics.</div>
-      </div>
-      <div></div>
-    </div>
-    
-    <div class="content-body">
+    <div class="content-body" style="padding-top:4px">
       ${alertBannerHTML}
 
       <div class="dashboard-split">
@@ -1648,6 +1643,72 @@ function renderEmployeeDashboard() {
 
         <!-- Right Side panels -->
         <div>
+          <!-- Premium Employee ID Card -->
+          <div class="card-panel" style="margin-bottom:20px; padding:0; overflow:hidden; border-radius:18px; border:1px solid rgba(137,32,27,0.25); box-shadow:0 8px 32px rgba(137,32,27,0.12), 0 2px 8px rgba(0,0,0,0.2)">
+            <!-- Card Top Accent -->
+            <div style="height:6px; background:linear-gradient(90deg, #89201B, #b83530, #89201B)"></div>
+            <div style="padding:20px 22px 18px; background:linear-gradient(160deg, rgba(137,32,27,0.08), rgba(255,255,255,0.02)); position:relative">
+              <!-- Verified Badge -->
+              <div style="position:absolute; top:14px; right:16px; display:flex; align-items:center; gap:4px; background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.3); padding:3px 8px; border-radius:20px; font-size:9.5px; font-weight:700; color:#22c55e; text-transform:uppercase; letter-spacing:0.5px">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                Verified
+              </div>
+              <!-- Company Logo & Branding -->
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px">
+                <img src="surya-logo.png" alt="Surya" style="height:22px; object-fit:contain; filter:drop-shadow(0 0 3px rgba(251,191,36,0.15))">
+                <div>
+                  <div style="font-size:10px; font-weight:700; color:#89201B; letter-spacing:0.8px; text-transform:uppercase; line-height:1.2">HS Group Delhi</div>
+                  <div style="font-size:7.5px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px">House of Surya</div>
+                </div>
+              </div>
+              <!-- Profile Row -->
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px">
+                <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, #1e293b, #0f172a); border:2.5px solid #89201B; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#89201B; box-shadow:0 4px 12px rgba(137,32,27,0.25)">
+                  ${user.photo ? `<img src="${user.photo}" style="width:100%;height:100%;object-fit:cover">` : getInitials(user.name)}
+                </div>
+                <div style="overflow:hidden">
+                  <div style="font-size:15px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${Utils.escape(user.name)}</div>
+                  <div style="font-size:10.5px; color:#89201B; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; margin-top:1px">${roleLabel}</div>
+                </div>
+              </div>
+              <!-- Info Grid -->
+              <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="color:var(--text-secondary); font-size:10px; min-width:75px; text-transform:uppercase; font-weight:600; letter-spacing:0.3px">${idLabel}</span>
+                  <span style="color:var(--text-primary); font-weight:600">${Utils.escape(user.employeeId)}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="color:var(--text-secondary); font-size:10px; min-width:75px; text-transform:uppercase; font-weight:600; letter-spacing:0.3px">Department</span>
+                  <span style="color:var(--text-primary); font-weight:500">${Utils.escape(user.department || 'General')}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="color:var(--text-secondary); font-size:10px; min-width:75px; text-transform:uppercase; font-weight:600; letter-spacing:0.3px">Email</span>
+                  <span style="color:var(--text-primary); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${Utils.escape(user.email || 'N/A')}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="color:var(--text-secondary); font-size:10px; min-width:75px; text-transform:uppercase; font-weight:600; letter-spacing:0.3px">Mobile</span>
+                  <span style="color:var(--text-primary); font-weight:500">${Utils.escape(user.phone || 'N/A')}</span>
+                </div>
+              </div>
+              <!-- Status Badge -->
+              <div style="margin-top:14px; display:flex; align-items:center; gap:8px">
+                <span style="display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:20px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; background:rgba(34,197,94,0.1); color:#22c55e; border:1px solid rgba(34,197,94,0.25)">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+                  Active
+                </span>
+              </div>
+            </div>
+            <!-- Barcode Footer -->
+            <div style="padding:10px 22px 14px; background:rgba(137,32,27,0.04); border-top:1px solid rgba(137,32,27,0.1); display:flex; justify-content:space-between; align-items:center">
+              <div style="display:flex; flex-direction:column">
+                <span style="font-size:7px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px">Scan Attendance Badge</span>
+                <span style="font-size:9px; font-family:monospace; color:#89201B; font-weight:700; margin-top:2px">SURYA-${user.role === 'hr' ? 'HR' : (user.role === 'manager' ? 'MGR' : 'EMP')}-${Utils.escape(user.employeeId)}</span>
+              </div>
+              <div style="display:flex; gap:2px; align-items:stretch; height:24px; background:rgba(255,255,255,0.85); padding:3px 6px; border-radius:2px">
+                <div style="width:2px;background:#89201B"></div><div style="width:1px;background:#89201B"></div><div style="width:3px;background:#89201B"></div><div style="width:1px;background:#89201B"></div><div style="width:2px;background:#89201B"></div><div style="width:4px;background:#89201B"></div><div style="width:1px;background:#89201B"></div><div style="width:2px;background:#89201B"></div><div style="width:3px;background:#89201B"></div><div style="width:1px;background:#89201B"></div><div style="width:2px;background:#89201B"></div><div style="width:1px;background:#89201B"></div>
+              </div>
+            </div>
+          </div>
           <div class="card-panel" style="margin-bottom:20px">
             <h3 class="card-panel-title" style="margin-bottom:15px">Today's Duration Clock</h3>
             <div class="clock-timer" style="font-size:32px;color:var(--cyan);text-align:center" id="active-work-timer">00h 00m 00s</div>
