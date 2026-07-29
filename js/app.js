@@ -6599,6 +6599,12 @@ function renderAdminDashboard() {
             <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px"></div>
           </div>
           
+          <!-- Birthday Widget (HR/Manager) -->
+          ${(freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager') ? `
+            <div id="hr-birthday-widget-container">
+              ${getBirthdayWidgetHTML()}
+            </div>
+          ` : ''}
 
         </div>
       </div>
@@ -6769,7 +6775,9 @@ function renderAdminDashboard() {
     });
   }
 
-
+  if (freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager') {
+    bindBirthdayWidgetEvents();
+  }
 }
 
 function renderAdminUsers() {
