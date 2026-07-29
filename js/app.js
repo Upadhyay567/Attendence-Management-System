@@ -688,7 +688,11 @@ function renderLoginView() {
           <!-- HR Button -->
           <button class="role-portal-btn" data-role="hr" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
-              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">👤</div>
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">HR / Admin Portal</div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Manage payroll, user directories & request approvals</div>
@@ -700,7 +704,11 @@ function renderLoginView() {
           <!-- Manager Button -->
           <button class="role-portal-btn" data-role="manager" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
-              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">ℹ️</div>
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+              </div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Manager Portal</div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Review shift swaps & oversee team operations</div>
@@ -712,7 +720,11 @@ function renderLoginView() {
           <!-- Employee Button -->
           <button class="role-portal-btn" data-role="employee" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
-              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; pointer-events: none;">📋</div>
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
+                  <path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-4 5a3 3 0 0 0-3 3v9a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-9a3 3 0 0 0-3-3H8zm4 3a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm4 8H8v-.5c0-1.33 2.67-2 4-2s4 .67 4 2v.5z"/>
+                </svg>
+              </div>
               <div style="pointer-events: none;">
                 <div style="font-size: 14.5px; font-weight: 700; color: var(--text-primary);">Employee Portal</div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Clock in/out, view payslips & schedules</div>
