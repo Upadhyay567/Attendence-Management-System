@@ -452,7 +452,9 @@ function setupRouter() {
         // Employee Routes
         case '#dashboard':
           renderEmployeeDashboard();
-          triggerCelebrationIfBirthday(user);
+          if (DB.getUserBaseRole(user.role) === 'employee') {
+            triggerCelebrationIfBirthday(user);
+          }
           break;
         case '#leaves':
           renderEmployeeLeaves();
@@ -480,7 +482,6 @@ function setupRouter() {
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
           renderAdminDashboard();
-          triggerCelebrationIfBirthday(user);
           break;
         case '#admin-schedules':
           renderAdminSchedules();
