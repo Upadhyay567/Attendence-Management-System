@@ -6382,12 +6382,12 @@ function openAllBirthdaysModal() {
               `}
             </div>
             <div style="min-width:0; flex:1">
-              <strong style="font-size:13px; color:#f1f5f9; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
-              <span style="font-size:11px; color:#94a3b8; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
+              <strong style="font-size:13px; color:#ffffff; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <span style="font-size:11px; color:#ffffff; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
                 ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
               </span>
-              <span style="font-size:10px; color:#64748b; display:block; margin-top:3px">
-                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:#cbd5e1">${formattedDob}</strong>
+              <span style="font-size:10px; color:#a0aec0; display:block; margin-top:3px">
+                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:#ffffff">${formattedDob}</strong>
               </span>
             </div>
           </div>
