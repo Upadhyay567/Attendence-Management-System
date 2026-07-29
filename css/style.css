@@ -2527,6 +2527,15 @@ body {
   box-shadow: 0 6px 20px rgba(137, 32, 27, 0.45), 0 0 0 1.5px #89201B !important;
 }
 
+body.light-theme .sidebar-brand-logo {
+  background: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(137, 32, 27, 0.08), 0 0 0 1px rgba(137, 32, 27, 0.12) !important;
+}
+
+body.light-theme .sidebar-brand-logo:hover {
+  box-shadow: 0 6px 16px rgba(137, 32, 27, 0.15), 0 0 0 1.5px #89201B !important;
+}
+
 .surya-brand-img {
   height: 48px !important;
   width: auto !important;
