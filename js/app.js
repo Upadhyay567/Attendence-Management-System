@@ -4377,109 +4377,22 @@ function renderEmployeeProfile() {
     <div class="content-body">
       <div style="max-width: 800px; margin: 0 auto;">
         ${statusBannerHTML}
-        
-        <!-- Interactive Glassmorphic Digital HR ID Badge Card -->
-        <div class="id-card-wrapper" style="margin-bottom: 28px; display: flex; justify-content: center;">
-          <div class="id-card" id="employee-id-badge" style="width: 380px; height: 230px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;">
-            
-            <!-- FRONT SIDE -->
-            <div class="id-card-front" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)); border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between;">
-              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at top right, rgba(251, 191, 36, 0.15), transparent 70%); pointer-events: none;"></div>
-              
-              <!-- Card Header -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <img src="surya-logo.png" alt="Surya Logo" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(251,191,36,0.2)); mix-blend-mode: multiply;">
-                  <div>
-                    <div style="font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;">HS Group Delhi</div>
-                    <div style="font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">House of Surya</div>
-                  </div>
-                </div>
-                <div style="font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.25); padding: 2px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">${badgeTitle}</div>
-              </div>
-              
-              <!-- Card Body -->
-              <div style="display: flex; gap: 16px; align-items: center; margin: 12px 0;">
-                <div id="avatar-click-zone" style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #1e293b, #0f172a); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: var(--primary); border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.35); flex-shrink: 0; overflow: hidden; cursor: pointer; position: relative;" title="Click to change profile photo" onmouseover="const overlay = this.querySelector('.avatar-hover-overlay'); if (overlay) overlay.style.opacity = '1';" onmouseout="const overlay = this.querySelector('.avatar-hover-overlay'); if (overlay) overlay.style.opacity = '0';">
-                  ${user.photo ? `
-                    <img src="${user.photo}" id="my-profile-avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                  ` : `
-                    ${getInitials(user.name)}
-                  `}
-                  <div class="avatar-hover-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease;">
-                    <span style="color: #ffffff; font-size: 14px;">📷</span>
-                  </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden;">
-                  <div style="font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">${Utils.escape(user.name)}</div>
-                  <div style="font-size: 11px; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
-                  <div style="font-size: 10px; color: var(--text-secondary);">${Utils.escape(user.department || 'General')}</div>
-                </div>
-              </div>
-              
-              <!-- Card Footer -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 9px; color: var(--text-secondary);">
-                <div>
-                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Employee ID</div>
-                  <div style="font-weight: 700; color: var(--primary); font-size: 11px;">${Utils.escape(user.employeeId)}</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="color: var(--text-secondary); opacity: 0.75; text-transform: uppercase; font-size: 7.5px; letter-spacing: 0.5px; margin-bottom: 1px;">Joined Date</div>
-                  <div style="font-weight: 600; color: var(--text-primary);">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
-                </div>
-              </div>
+        <!-- Profile Photo Upload Strip -->
+        <div class="card-panel" style="margin-bottom:24px; padding:16px 24px">
+          <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap">
+            <div id="profile-photo-circle" style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, #1e293b, #0f172a); border:2px solid var(--border); overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:var(--primary)">
+              ${user.photo
+                ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">`
+                : getInitials(user.name)
+              }
             </div>
-            
-            <!-- BACK SIDE -->
-            <div class="id-card-back" style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: var(--radius-md); padding: 20px; overflow: hidden; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; justify-content: space-between; transform: rotateY(180deg);">
-              <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.08), transparent 70%); pointer-events: none;"></div>
-              
-              <!-- Back Header -->
-              <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 6px; font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
-                Emergency & Office Info
-              </div>
-              
-              <!-- Back Details -->
-              <div style="font-size: 10.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 6px; margin: 10px 0;">
-                <div>
-                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Emergency Contact</span>
-                  <strong style="color: var(--text-primary);">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
-                </div>
-                <div>
-                  <span style="color: var(--text-secondary); opacity: 0.75; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 1px;">Office Location</span>
-                  <span style="font-size: 10px; line-height: 1.3; display: block; color: var(--text-primary);">${Utils.escape(locationText)}</span>
-                </div>
-              </div>
-              
-              <!-- Barcode / QR Code Container -->
-              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: var(--radius-sm);">
-                <div style="display: flex; flex-direction: column;">
-                  <span style="font-size: 7px; color: var(--text-secondary); opacity: 0.75; text-transform: uppercase;">Scan Attendance Badge</span>
-                  <span style="font-size: 9px; font-family: monospace; color: var(--primary); font-weight: 700; margin-top: 2px;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
-                </div>
-                <!-- Stylized Barcode Stripes -->
-                <div style="display: flex; gap: 2px; align-items: stretch; height: 26px; background: rgba(255,255,255,0.85); padding: 3px 6px; border-radius: 2px;">
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 3px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 4px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 3px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                  <div style="width: 2px; background: #000;"></div>
-                  <div style="width: 1px; background: #000;"></div>
-                </div>
-              </div>
-            </div>
-            
+            <button id="btn-upload-profile-photo" class="btn" type="button" style="width:auto; padding:8px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text-primary); border-radius:10px; cursor:pointer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload Photo
+            </button>
+            <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
           </div>
         </div>
-        
-        <!-- Hidden Photo Upload File Input -->
-        <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
         
         ${(() => {
           if (user.assignedById) {
@@ -4620,31 +4533,23 @@ function renderEmployeeProfile() {
     </div>
   `;
 
-  // Set up click listener for ID card flip
-  const idBadge = document.getElementById('employee-id-badge');
-  if (idBadge) {
-    idBadge.addEventListener('click', () => {
-      idBadge.classList.toggle('flipped');
-    });
-  }
 
-  // Photo upload bindings directly to Avatar click zone
-  const avatarClickZone = document.getElementById('avatar-click-zone');
+
+  // Photo upload bindings — Upload Photo button
+  const uploadPhotoBtn = document.getElementById('btn-upload-profile-photo');
   const photoFileInput = document.getElementById('my-profile-photo-file-input');
-  if (avatarClickZone && photoFileInput) {
-    avatarClickZone.addEventListener('click', (e) => {
-      e.stopPropagation(); // Stop badge from flipping
+  if (uploadPhotoBtn && photoFileInput) {
+    uploadPhotoBtn.addEventListener('click', () => {
       photoFileInput.click();
     });
 
     photoFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
-        const hoverOverlay = avatarClickZone.querySelector('.avatar-hover-overlay');
-        if (hoverOverlay) {
-          hoverOverlay.style.opacity = '1';
-          hoverOverlay.innerHTML = '<span style="color:#ffffff; font-size:10px; font-weight:700">⏳</span>';
-        }
+        // Show uploading state on button
+        const originalHTML = uploadPhotoBtn.innerHTML;
+        uploadPhotoBtn.disabled = true;
+        uploadPhotoBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">⏳ Uploading...</span>';
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -4659,19 +4564,15 @@ function renderEmployeeProfile() {
             renderEmployeeProfile();
           } catch (err) {
             console.error(err);
-            alert('Failed to save profile photo in database: ' + err.message);
-            if (hoverOverlay) {
-              hoverOverlay.style.opacity = '0';
-              hoverOverlay.innerHTML = '<span style="color: #ffffff; font-size: 14px;">📷</span>';
-            }
+            alert('Failed to save profile photo: ' + err.message);
+            uploadPhotoBtn.disabled = false;
+            uploadPhotoBtn.innerHTML = originalHTML;
           }
         };
         reader.onerror = () => {
           alert('Failed to read the file. Please try again.');
-          if (hoverOverlay) {
-            hoverOverlay.style.opacity = '0';
-            hoverOverlay.innerHTML = '<span style="color: #ffffff; font-size: 14px;">📷</span>';
-          }
+          uploadPhotoBtn.disabled = false;
+          uploadPhotoBtn.innerHTML = originalHTML;
         };
         reader.readAsDataURL(file);
       }
