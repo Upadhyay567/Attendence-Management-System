@@ -5797,7 +5797,8 @@ function openUploadDocumentModal(preselectedUserId = null) {
 function renderAdminDashboard() {
   const main = document.getElementById('main-view');
   const currentUser = Auth.getCurrentUser();
-  const isManager = currentUser.role === 'manager';
+  const freshUser = DB.getUser(currentUser.id) || currentUser;
+  const isManager = freshUser.role === 'manager';
 
   let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager');
   if (isManager) {
@@ -5906,6 +5907,57 @@ function renderAdminDashboard() {
       </div>
     </div>
     <div class="content-body">
+      ${freshUser.role === 'hr' ? `
+        <!-- HR Profile Card -->
+        <div class="card-panel hr-profile-card" style="margin-bottom: 24px; padding: 24px; background: linear-gradient(145deg, #1e1b4b 0%, #1a0504 100%) !important; border: 1px solid rgba(137, 32, 27, 0.4) !important;">
+          <div style="display: flex; gap: 24px; align-items: center; flex-wrap: wrap;">
+            <!-- Avatar Section -->
+            <div style="position: relative; width: 96px; height: 96px; flex-shrink: 0;">
+              ${freshUser.photo ? `
+                <img src="${freshUser.photo}" id="hr-profile-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: 0 4px 14px rgba(137, 32, 27, 0.4);">
+              ` : `
+                <div id="hr-profile-img-placeholder" style="width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; border: 3px solid var(--primary); box-shadow: 0 4px 14px rgba(137, 32, 27, 0.4);">
+                  ${freshUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                </div>
+              `}
+              <input type="file" id="hr-photo-file-input" accept="image/*" style="display: none;">
+            </div>
+
+            <!-- Info Section -->
+            <div style="flex: 1; min-width: 240px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <h2 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 0;">${Utils.escape(freshUser.name)}</h2>
+                <span class="badge ${freshUser.status === 'Active' ? 'badge-on-time' : 'badge-late'}" style="font-size: 10px; padding: 2px 8px;">
+                  ${freshUser.status || 'Active'}
+                </span>
+              </div>
+              
+              <!-- Metadata Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 12px; font-size: 12.5px; color: var(--text-secondary);">
+                <div><strong>HR ID:</strong> <span style="color:#ffffff">${Utils.escape(freshUser.employeeId || 'USR_ADMIN')}</span></div>
+                <div><strong>Designation:</strong> <span style="color:#ffffff">${Utils.escape(freshUser.designation || 'HR Administrator')}</span></div>
+                <div><strong>Department:</strong> <span style="color:#ffffff">${Utils.escape(freshUser.department || 'Human Resources')}</span></div>
+                <div><strong>Email:</strong> <span style="color:#ffffff">${Utils.escape(freshUser.email || '-')}</span></div>
+                <div><strong>Mobile:</strong> <span style="color:#ffffff">${Utils.escape(freshUser.phone || '-')}</span></div>
+                <div><strong>Joining Date:</strong> <span style="color:#ffffff">${Utils.formatDate(freshUser.dateOfJoining) || '-'}</span></div>
+              </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; min-width: 150px;">
+              <button class="btn" id="btn-hr-view-profile" style="padding: 8px 16px; font-size: 12px; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                🔍 View Profile
+              </button>
+              <button class="btn" id="btn-hr-edit-profile" style="padding: 8px 16px; font-size: 12px; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 1.5px solid var(--primary); color: var(--primary);">
+                ✏️ Edit Profile
+              </button>
+              <button class="btn" id="btn-hr-change-photo" style="padding: 8px 16px; font-size: 12px; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); color: #ffffff;">
+                📷 Change Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      ` : ''}
       <div class="stats-grid">
         <!-- Total Employees -->
         <div class="stat-card">
@@ -6128,6 +6180,47 @@ function renderAdminDashboard() {
         renderAdminAnnouncementsList();
       }
     });
+  }
+
+  // Bind HR Dashboard Profile Card actions if HR
+  if (freshUser.role === 'hr') {
+    const viewProfileBtn = document.getElementById('btn-hr-view-profile');
+    if (viewProfileBtn) {
+      viewProfileBtn.addEventListener('click', () => {
+        openStaffDetailModal(freshUser.id);
+      });
+    }
+
+    const editProfileBtn = document.getElementById('btn-hr-edit-profile');
+    if (editProfileBtn) {
+      editProfileBtn.addEventListener('click', () => {
+        openUserModal(freshUser.id);
+      });
+    }
+
+    const changePhotoBtn = document.getElementById('btn-hr-change-photo');
+    const photoFileInput = document.getElementById('hr-photo-file-input');
+    if (changePhotoBtn && photoFileInput) {
+      changePhotoBtn.addEventListener('click', () => {
+        photoFileInput.click();
+      });
+
+      photoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            DB.updateUser(freshUser.id, { photo: dataUrl });
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('✅ Profile photo updated successfully!', 'success');
+            }
+            renderAdminDashboard();
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
   }
 }
 
@@ -6760,7 +6853,11 @@ function openUserModal(userId = null) {
       DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById });
     }
     closeModal(overlay);
-    renderAdminUsers();
+    if (window.location.hash === '#admin-dashboard') {
+      renderAdminDashboard();
+    } else {
+      renderAdminUsers();
+    }
   });
 }
 
