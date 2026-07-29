@@ -2515,25 +2515,25 @@ body {
   justify-content: center;
   text-decoration: none;
   flex: 1;
-}
-
-.surya-brand-img {
-  height: 64px !important;
-  width: auto !important;
-  max-width: 190px !important;
-  object-fit: contain !important;
   border-radius: 10px !important;
   background: #FDF8F2 !important;
   padding: 6px 12px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(137, 32, 27, 0.4) !important;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  image-rendering: -webkit-optimize-contrast !important;
-  mix-blend-mode: multiply !important;
 }
 
-.surya-brand-img:hover {
+.sidebar-brand-logo:hover {
   transform: scale(1.03) translateY(-1px) !important;
   box-shadow: 0 6px 20px rgba(137, 32, 27, 0.45), 0 0 0 1.5px #89201B !important;
+}
+
+.surya-brand-img {
+  height: 48px !important;
+  width: auto !important;
+  max-width: 170px !important;
+  object-fit: contain !important;
+  image-rendering: -webkit-optimize-contrast !important;
+  mix-blend-mode: multiply !important;
 }
 
 .sidebar-toggle-btn {
