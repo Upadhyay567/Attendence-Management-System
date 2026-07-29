@@ -6056,7 +6056,7 @@ function getBirthdayStatus(dobString) {
 
 function getBirthdayWidgetHTML() {
   const currentUser = Auth.getCurrentUser();
-  const activeUsers = DB.getUsers().filter(u => u.status === 'Active');
+  const activeUsers = DB.getUsers().filter(u => u.status !== 'Inactive');
   
   const todayList = [];
   const tomorrowList = [];
@@ -6082,8 +6082,8 @@ function getBirthdayWidgetHTML() {
     
     const isSelf = currentUser && u.id === currentUser.id;
     const wishBtnHTML = isSelf 
-      ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap;">It's You! 🎉</span>`
-      : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>`;
+      ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! 🎉</span>`
+      : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>`;
     
     return `
       <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; gap:10px; transition:all 0.2s ease; ${highlightStyle}">
@@ -6328,7 +6328,7 @@ function openAllBirthdaysModal() {
 
   modal.querySelector('#btn-close-all-birthdays').addEventListener('click', closeAllModal);
 
-  const allActive = DB.getUsers().filter(u => u.status === 'Active');
+  const allActive = DB.getUsers().filter(u => u.status !== 'Inactive');
   
   const sortedActive = [...allActive].sort((a, b) => {
     const parseMD = (dob) => {
@@ -6366,8 +6366,8 @@ function openAllBirthdaysModal() {
 
       const isSelf = currentUser && u.id === currentUser.id;
       const wishBtnHTML = isSelf 
-        ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap;">It's You! 🎉</span>`
-        : `<button class="btn btn-directory-wish" data-id="${u.id}" style="padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
+        ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! 🎉</span>`
+        : `<button class="btn btn-directory-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
 
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:12px; gap:10px">

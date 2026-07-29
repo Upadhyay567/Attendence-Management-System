@@ -504,6 +504,7 @@ export const DB = {
     // Migration: migrate legacy admin role to hr role
     this.data.users.forEach((u, index) => {
       if (u.role === 'admin') { u.role = 'hr'; modified = true; }
+      if (!u.status) { u.status = 'Active'; modified = true; }
       if (!u.employeeId) {
         const mappedIds = { 'admin': 'EMP100', 'hr': 'EMP101', 'manager': 'EMP102', 'john': 'EMP103', 'sarah': 'EMP104', 'david': 'EMP105' };
         u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
