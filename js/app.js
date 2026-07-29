@@ -835,18 +835,11 @@ function renderLoginView() {
           </div>
           <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
-          
-          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 8px 14px; border-radius: 20px; margin-top: 10px;">
-            <div class="staff-item-avatar" style="width: 24px; height: 24px; font-size: 10px; margin: 0;">${getInitials(selectedUser.name)}</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); text-align: left;">
-              ${Utils.escape(selectedUser.name)} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(${selectedUser.role.toUpperCase()})</span>
-            </div>
-          </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
-          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="${Utils.escape(selectedUser ? (selectedUser.employeeId || selectedUser.username || '') : '')}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
+          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
         ${isHrOrManager ? `
