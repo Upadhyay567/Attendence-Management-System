@@ -4740,7 +4740,7 @@ function renderEmployeeProfile() {
                 </div>
               </div>
 
-              <div style="font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.4;"><span style="opacity:0.7;">Click anywhere on the card to flip it.</span></div>
+
             </div>
 
             <!-- Account Status Card -->
