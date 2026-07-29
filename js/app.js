@@ -3440,14 +3440,10 @@ function showAccountModal(editUser = null) {
       pwdInput.type = 'text';
       togglePwdBtn.innerHTML = svgEyeClosed;
       togglePwdBtn.style.color = '#dc2626';
-      togglePwdBtn.style.background = '#fef2f2';
-      togglePwdBtn.style.borderColor = '#dc2626';
     } else {
       pwdInput.type = 'password';
       togglePwdBtn.innerHTML = svgEyeOpen;
-      togglePwdBtn.style.color = '#b91c1c';
-      togglePwdBtn.style.background = '#ffffff';
-      togglePwdBtn.style.borderColor = '#b91c1c';
+      togglePwdBtn.style.color = '#64748b';
     }
   });
 
