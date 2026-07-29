@@ -878,7 +878,7 @@ function renderLoginView() {
 
           ${isHrOrManager ? `
           <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
-            Don't have an HR/Manager account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
+            Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
           </div>
           ` : ''}
 
