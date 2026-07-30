@@ -7236,6 +7236,7 @@ function openUserModal(userId = null) {
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;
   const schedules = DB.getSchedules();
+  let editorPhotoDataUrl = isEdit && user.photo ? user.photo : '';
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -7248,6 +7249,21 @@ function openUserModal(userId = null) {
         </button>
       </div>
       <form id="user-editor-form">
+        <!-- Profile Photo Upload & Remove Section -->
+        <div class="form-group" style="display:flex; align-items:center; gap:16px; margin-bottom:20px; background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid var(--border)">
+          <div id="editor-photo-preview" style="width:64px; height:64px; border-radius:10px; background:${isEdit && user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;">
+            ${isEdit && user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <input type="file" id="editor-photo-file-input" accept="image/*" style="display:none">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button id="btn-editor-upload-photo" class="btn btn-sm" type="button" style="width:auto; padding:8px 16px; font-size:12px; font-weight:700; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#fff; border-radius:8px; cursor:pointer;">Upload Photo</button>
+              <button id="btn-editor-remove-photo" class="btn btn-sm" type="button" style="width:auto; padding:8px 16px; font-size:12px; font-weight:700; background:#fdf2f2; border:1px solid #fecaca; color:#dc2626; border-radius:8px; cursor:pointer; display:${isEdit && user.photo ? 'block' : 'none'};">Remove Photo</button>
+            </div>
+            <div style="font-size:10px; color:var(--text-muted)">Supports PNG, JPG. Max size 2MB.</div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="editor-name">Full Name <span style="color:var(--text-muted);font-weight:normal;font-size:11px">(Letters only)</span></label>
           <input class="form-input" type="text" id="editor-name" value="${isEdit ? Utils.escape(user.name) : ''}" required placeholder="e.g. Rahul Sharma">
@@ -7274,16 +7290,26 @@ function openUserModal(userId = null) {
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
-            <label class="form-label" for="editor-username">Username (Optional)</label>
-            <input class="form-input" type="text" id="editor-username" value="${isEdit ? Utils.escape(user.username) : ''}" ${isEdit ? 'disabled' : ''}>
-          </div>
-          <div>
             <label class="form-label" for="editor-gender">Gender</label>
             <select class="form-input" id="editor-gender" required>
               <option value="Male" ${isEdit && user.gender === 'Male' ? 'selected' : ''}>Male</option>
               <option value="Female" ${isEdit && user.gender === 'Female' ? 'selected' : ''}>Female</option>
               <option value="Other" ${isEdit && user.gender === 'Other' ? 'selected' : ''}>Other</option>
             </select>
+          </div>
+          <div>
+            <!-- Visual alignment placeholder -->
+          </div>
+        </div>
+        <!-- City & State Fields -->
+        <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" for="editor-city">City <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="text" id="editor-city" value="${isEdit ? Utils.escape(user.city || '') : ''}" required placeholder="e.g. New Delhi">
+          </div>
+          <div>
+            <label class="form-label" for="editor-state">State <span style="color:var(--danger);font-size:11px">*</span></label>
+            <input class="form-input" type="text" id="editor-state" value="${isEdit ? Utils.escape(user.state || '') : ''}" required placeholder="e.g. Delhi">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
@@ -7466,6 +7492,52 @@ function openUserModal(userId = null) {
     });
   }
 
+  // Editor Photo Upload/Remove Event Handlers
+  const editorPhotoFileInput = document.getElementById('editor-photo-file-input');
+  const btnEditorUploadPhoto = document.getElementById('btn-editor-upload-photo');
+  const btnEditorRemovePhoto = document.getElementById('btn-editor-remove-photo');
+  const editorPhotoPreview = document.getElementById('editor-photo-preview');
+
+  if (editorPhotoFileInput && btnEditorUploadPhoto) {
+    btnEditorUploadPhoto.addEventListener('click', () => editorPhotoFileInput.click());
+    
+    editorPhotoFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+          alert('File size exceeds 2MB limit.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          editorPhotoDataUrl = event.target.result;
+          if (editorPhotoPreview) {
+            editorPhotoPreview.innerHTML = `<img src="${editorPhotoDataUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+            editorPhotoPreview.style.background = 'transparent';
+          }
+          if (btnEditorRemovePhoto) {
+            btnEditorRemovePhoto.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  if (btnEditorRemovePhoto) {
+    btnEditorRemovePhoto.addEventListener('click', () => {
+      editorPhotoDataUrl = '';
+      if (editorPhotoPreview) {
+        editorPhotoPreview.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`;
+        editorPhotoPreview.style.background = 'linear-gradient(135deg,#89201B,#5c0f0a)';
+      }
+      btnEditorRemovePhoto.style.display = 'none';
+      if (editorPhotoFileInput) {
+        editorPhotoFileInput.value = '';
+      }
+    });
+  }
+
   const prefLocSelect = document.getElementById('editor-preferred-location');
   
   // Fetch Nearby button for preferred location
@@ -7491,8 +7563,10 @@ function openUserModal(userId = null) {
     const email = document.getElementById('editor-email').value.trim();
     const phone = document.getElementById('editor-phone').value.trim();
     const dob = document.getElementById('editor-dob').value;
-    const username = document.getElementById('editor-username').value.trim();
+    const username = document.getElementById('editor-username') ? document.getElementById('editor-username').value.trim() : '';
     const password = document.getElementById('editor-pass').value.trim();
+    const city = document.getElementById('editor-city').value.trim();
+    const state = document.getElementById('editor-state').value.trim();
     const baseSalary = Number(document.getElementById('editor-salary').value);
     const scheduleId = document.getElementById('editor-schedule').value;
     const role = document.getElementById('editor-role').value;
@@ -7558,6 +7632,8 @@ function openUserModal(userId = null) {
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
+        photo: editorPhotoDataUrl || null,
+        city, state,
         profileVerificationComment: '',
         pendingProfileEdits: null
       });
@@ -7580,7 +7656,7 @@ function openUserModal(userId = null) {
         alert('Username or Employee ID is already taken.');
         return;
       }
-      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById });
+      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
     closeModal(overlay);
     if (window.location.hash === '#admin-dashboard') {
