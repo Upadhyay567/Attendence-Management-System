@@ -4536,7 +4536,7 @@ function renderEmployeeProfile() {
                   <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div style="width:64px; height:64px; border-radius:50%; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
+                  <div style="width:64px; height:64px; border-radius:${user.photo ? '10px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
                     ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden;">
