@@ -357,6 +357,34 @@ function closeModal(overlay) {
 }
 window.closeModal = closeModal;
 
+function openFullScreenImageModal(imageSrc) {
+  if (!imageSrc) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(10, 15, 29, 0.95); backdrop-filter: blur(15px);
+    display: flex; justify-content: center; align-items: center; z-index: 11000;
+    cursor: zoom-out; animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+  overlay.innerHTML = `
+    <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; justify-content: center; align-items: center;" onclick="event.stopPropagation();">
+      <img src="${imageSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 2px solid rgba(251, 191, 36, 0.4); max-height: 85vh;">
+      <button id="btn-close-fullscreen-view" style="position: absolute; top: -45px; right: 0; background: none; border: none; color: #fff; font-size: 36px; cursor: pointer; font-weight: 700;">&times;</button>
+    </div>
+  `;
+  const closeView = () => {
+    overlay.classList.add('closing');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+    setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 300);
+  };
+  overlay.addEventListener('click', closeView);
+  const btnClose = overlay.querySelector('#btn-close-fullscreen-view');
+  if (btnClose) btnClose.addEventListener('click', closeView);
+  document.body.appendChild(overlay);
+}
+window.openFullScreenImageModal = openFullScreenImageModal;
+
 // Simple Router
 function triggerCelebrationIfBirthday(user) {
   if (user && user.dob) {
@@ -4536,7 +4564,7 @@ function renderEmployeeProfile() {
                   <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div style="width:64px; height:64px; border-radius:${user.photo ? '10px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
+                  <div id="profile-badge-photo-click" style="width:64px; height:64px; border-radius:${user.photo ? '10px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden; ${user.photo ? 'cursor:pointer;' : ''}" title="${user.photo ? 'Click to view full screen' : ''}">
                     ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden;">
@@ -4773,6 +4801,16 @@ function renderEmployeeProfile() {
   if (idBadge) {
     idBadge.addEventListener('click', () => {
       idBadge.classList.toggle('flipped');
+    });
+  }
+
+  const badgePhotoClick = document.getElementById('profile-badge-photo-click');
+  if (badgePhotoClick) {
+    badgePhotoClick.addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent flipping the ID card!
+      if (user.photo) {
+        openFullScreenImageModal(user.photo);
+      }
     });
   }
 
@@ -7251,7 +7289,7 @@ function openUserModal(userId = null) {
       <form id="user-editor-form">
         <!-- Profile Photo Upload & Remove Section -->
         <div class="form-group" style="display:flex; align-items:center; gap:16px; margin-bottom:20px; background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid var(--border)">
-          <div id="editor-photo-preview" style="width:64px; height:64px; border-radius:10px; background:${isEdit && user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden;">
+          <div id="editor-photo-preview" style="width:64px; height:64px; border-radius:10px; background:${isEdit && user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; ${isEdit && user.photo ? 'cursor:pointer;' : ''}" title="${isEdit && user.photo ? 'Click to view full screen' : ''}">
             ${isEdit && user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
           </div>
           <div style="display:flex; flex-direction:column; gap:8px">
@@ -7514,6 +7552,8 @@ function openUserModal(userId = null) {
           if (editorPhotoPreview) {
             editorPhotoPreview.innerHTML = `<img src="${editorPhotoDataUrl}" style="width:100%; height:100%; object-fit:contain;">`;
             editorPhotoPreview.style.background = 'transparent';
+            editorPhotoPreview.style.cursor = 'pointer';
+            editorPhotoPreview.title = 'Click to view full screen';
           }
           if (btnEditorRemovePhoto) {
             btnEditorRemovePhoto.style.display = 'block';
@@ -7524,12 +7564,23 @@ function openUserModal(userId = null) {
     });
   }
 
+  if (editorPhotoPreview) {
+    editorPhotoPreview.addEventListener('click', (e) => {
+      if (editorPhotoDataUrl) {
+        e.stopPropagation();
+        openFullScreenImageModal(editorPhotoDataUrl);
+      }
+    });
+  }
+
   if (btnEditorRemovePhoto) {
     btnEditorRemovePhoto.addEventListener('click', () => {
       editorPhotoDataUrl = '';
       if (editorPhotoPreview) {
         editorPhotoPreview.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`;
         editorPhotoPreview.style.background = 'linear-gradient(135deg,#89201B,#5c0f0a)';
+        editorPhotoPreview.style.cursor = 'default';
+        editorPhotoPreview.title = '';
       }
       btnEditorRemovePhoto.style.display = 'none';
       if (editorPhotoFileInput) {
