@@ -385,6 +385,15 @@ function openFullScreenImageModal(imageSrc) {
 }
 window.openFullScreenImageModal = openFullScreenImageModal;
 
+// Register delegated click handler for list avatars
+document.addEventListener('click', (e) => {
+  const avatarEl = e.target.closest('.clickable-list-avatar');
+  if (avatarEl && avatarEl.dataset.photo) {
+    e.stopPropagation();
+    openFullScreenImageModal(avatarEl.dataset.photo);
+  }
+});
+
 // Simple Router
 function triggerCelebrationIfBirthday(user) {
   if (user && user.dob) {
@@ -1185,7 +1194,7 @@ function renderAppShell() {
       </ul>
       <div class="sidebar-footer">
         <div class="user-profile-summary">
-          <div class="avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+          <div class="avatar clickable-list-avatar" data-photo="${user.photo || ''}" style="overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
             ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
           </div>
           <div class="user-info-text">
@@ -1245,7 +1254,7 @@ function renderAppShell() {
           <div style="position:relative" id="user-profile-menu-wrapper">
             <div class="top-nav-user" style="display:flex; align-items:center; gap:8px">
               <div id="top-user-profile-click-target" title="View Profile" style="cursor:pointer; display:flex; align-items:center; gap:8px">
-                <div class="top-nav-user-avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <div class="top-nav-user-avatar clickable-list-avatar" data-photo="${user.photo || ''}" style="overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
                   ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
                 </div>
                 <div class="top-nav-user-info">
@@ -2961,7 +2970,7 @@ function renderAccountManagementView() {
         <tr data-user-id="${u.id}">
           <td>
             <div style="display:flex; align-items:center; gap:12px">
-              <div style="width:38px; height:38px; border-radius:50%; background:${isHR ? 'rgba(251,191,36,0.15)' : 'rgba(6,182,212,0.15)'}; color:${isHR ? 'var(--primary)' : 'var(--cyan)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid ${isHR ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.3)'}; overflow:hidden; flex-shrink:0;">
+              <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:${isHR ? 'rgba(251,191,36,0.15)' : 'rgba(6,182,212,0.15)'}; color:${isHR ? 'var(--primary)' : 'var(--cyan)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid ${isHR ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.3)'}; overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
                 ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : initials}
               </div>
               <div>
@@ -6184,7 +6193,7 @@ function getBirthdayWidgetHTML() {
     return `
       <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; gap:10px; transition:all 0.2s ease; ${highlightStyle}">
         <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
-          <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; position:relative;">
+          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; position:relative; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
             ${u.photo ? `
               <img src="${u.photo}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
             ` : `
@@ -6310,7 +6319,7 @@ function openSendWishModal(userId) {
       <button id="btn-close-wish-modal" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer">&times;</button>
     </div>
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid var(--border)">
-      <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+      <div class="clickable-list-avatar" data-photo="${user.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
         ${user.photo ? `
           <img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">
         ` : `
@@ -6468,7 +6477,7 @@ function openAllBirthdaysModal() {
       return `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; gap:10px">
           <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
-            <div style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+            <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
               ${u.photo ? `
                 <img src="${u.photo}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
               ` : `
@@ -7089,7 +7098,7 @@ function renderAdminUsers() {
                 return `
                   <tr>
                     <td style="font-weight:600; display:flex; align-items:center; gap:12px">
-                      <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0;">
+                      <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
                         ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
                       </div>
                       <div>
@@ -7234,7 +7243,7 @@ function renderAdminUsers() {
           return `
             <tr>
               <td style="font-weight:600; display:flex; align-items:center; gap:12px">
-                <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0;">
+                <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
                   ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
                 </div>
                 <div>
