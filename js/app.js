@@ -4536,6 +4536,54 @@ function renderEmployeeProfile() {
       @media (max-width: 500px) {
         .prof-field-row { grid-template-columns: 1fr; }
       }
+      .staff-banner-grid {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .staff-banner-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, #5c0f0a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(137,32,27,0.15);
+      }
+      .staff-banner-main {
+        flex: 1;
+        min-width: 200px;
+      }
+      .staff-banner-meta {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-shrink: 0;
+      }
+      @media (max-width: 580px) {
+        .staff-banner-grid {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+        .staff-banner-main {
+          width: 100%;
+        }
+        .staff-banner-meta {
+          width: 100%;
+          justify-content: space-between;
+          border-top: 1px solid var(--border);
+          padding-top: 12px;
+          margin-top: 4px;
+        }
+      }
     </style>
 
     <div class="content-header">
@@ -4658,18 +4706,25 @@ function renderEmployeeProfile() {
                 const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                 const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
                 return `
-                  <div class="prof-section-card" style="padding:16px 20px; border-left:4px solid #ef4444;">
-                    <div style="display:flex; align-items:center; gap:16px;">
-                      <div style="width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#ef4444,#f97316); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; flex-shrink:0;">${initials}</div>
-                      <div style="flex:1; min-width:0;">
-                        <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-bottom:2px;">REGISTERED / ASSIGNED BY</div>
-                        <div style="font-size:14.5px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(assigner.name)}</div>
-                        <div style="font-size:11.5px; color:#ef4444; font-weight:500; margin-top:1px;">${roleLabel}</div>
+                  <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
+                    <div class="staff-banner-grid">
+                      <div class="staff-banner-avatar">${initials}</div>
+                      <div class="staff-banner-main">
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Registered / Assigned By</div>
+                        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(assigner.name)}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">${roleLabel}</div>
                       </div>
-                      <div style="text-align:right; flex-shrink:0;">
-                        <div style="font-size:9px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">DATE OF JOINING</div>
-                        <div style="font-size:13px; font-weight:700; color:#ef4444;">${joinedDate}</div>
-                        <div style="display:inline-block; margin-top:5px; padding:2px 9px; background:#fef2f2; color:#dc2626; border-radius:20px; font-size:9.5px; font-weight:700; border:1px solid #fecaca;">Verified Staff</div>
+                      <div class="staff-banner-meta">
+                        <div style="text-align: left;">
+                          <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Date of Joining</div>
+                          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${joinedDate}</div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                          <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
+                            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                            Verified Staff
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
