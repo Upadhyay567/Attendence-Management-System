@@ -4403,7 +4403,22 @@ function renderEmployeePayslip(userId, month, year) {
 }
 
 function renderEmployeeProfile() {
-  const user = DB.getUser(Auth.getCurrentUser().id);
+  const currentSession = sessionStorage.getItem('attendance_current_session');
+  let userId = null;
+  if (currentSession) {
+    try {
+      userId = JSON.parse(currentSession).id;
+    } catch (e) {}
+  }
+  if (!userId) {
+    const currentUser = Auth.getCurrentUser();
+    userId = currentUser ? currentUser.id : null;
+  }
+  if (!userId) {
+    window.location.hash = '#login';
+    return;
+  }
+  const user = DB.getUser(userId);
   const main = document.getElementById('main-view');
 
   const userSchedule = DB.data.schedules.find(s => s.id === (user.scheduleId || 'sch_1'));
@@ -5138,7 +5153,22 @@ function renderAdminProfile() {
 }
 
 function renderEmployeeVerification() {
-  const user = DB.getUser(Auth.getCurrentUser().id);
+  const currentSession = sessionStorage.getItem('attendance_current_session');
+  let userId = null;
+  if (currentSession) {
+    try {
+      userId = JSON.parse(currentSession).id;
+    } catch (e) {}
+  }
+  if (!userId) {
+    const currentUser = Auth.getCurrentUser();
+    userId = currentUser ? currentUser.id : null;
+  }
+  if (!userId) {
+    window.location.hash = '#login';
+    return;
+  }
+  const user = DB.getUser(userId);
   const main = document.getElementById('main-view');
 
   main.innerHTML = `
