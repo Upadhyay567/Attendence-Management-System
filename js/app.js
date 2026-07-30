@@ -7389,6 +7389,7 @@ function renderAdminUsers() {
 }
 
 function openUserModal(userId = null) {
+  const currentUser = Auth.getCurrentUser();
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;
   const schedules = DB.getSchedules();
@@ -7828,6 +7829,11 @@ function openUserModal(userId = null) {
       DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
     closeModal(overlay);
+    if (typeof showToastNotification === 'function') {
+      showToastNotification(isEdit ? '✅ Employee details updated successfully.' : '✅ Employee registered successfully.', 'success');
+    } else {
+      alert(isEdit ? 'Employee details updated successfully.' : 'Employee registered successfully.');
+    }
     if (window.location.hash === '#admin-dashboard') {
       renderAdminDashboard();
     } else {
