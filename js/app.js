@@ -4519,9 +4519,10 @@ function renderEmployeeProfile() {
           </div>
           `}
 
-          <!-- ID Card -->
-          <div style="display:flex; justify-content:center;">
-            <div class="id-card" id="employee-id-badge" style="width:100%; max-width:360px; height:215px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer;">
+          <!-- ID Card & Upload Section Row -->
+          <div class="profile-badge-row" style="display:flex; gap:20px; align-items:stretch; flex-wrap:wrap; justify-content:center; margin-bottom:12px;">
+            <!-- ID Card Column -->
+            <div class="id-card" id="employee-id-badge" style="width:100%; max-width:360px; height:215px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer; flex-shrink:0;">
               <!-- FRONT -->
               <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fdf6ec,#faebd7); border:1px solid #e8d5b7; box-shadow:0 8px 24px rgba(180,130,60,0.12); display:flex; flex-direction:column; justify-content:space-between;">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(180,130,60,0.2); padding-bottom:8px;">
@@ -4535,8 +4536,11 @@ function renderEmployeeProfile() {
                   <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
+                  <div id="btn-upload-profile-photo" title="Click to update photo" style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#1e293b,#0f172a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden; position:relative; cursor:pointer; transition:all 0.2s ease;">
                     ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(user.name)}
+                    <div style="position: absolute; bottom: -2px; left: 0; right: 0; background: rgba(0,0,0,0.65); padding: 3px 0 6px; display: flex; justify-content: center; backdrop-filter: blur(2px);">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:11px; height:11px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
                   </div>
                   <div style="overflow:hidden;">
                     <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name)}</div>
@@ -4577,6 +4581,27 @@ function renderEmployeeProfile() {
                     <div style="width:2px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:3px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:2px;background:#000;"></div><div style="width:4px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:2px;background:#000;"></div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Upload Control Column -->
+            <div class="prof-section-card" style="flex:1; min-width:280px; max-width:380px; display:flex; flex-direction:column; justify-content:space-between; padding:20px; margin:0;">
+              <div>
+                <h4 style="font-size:13px; font-weight:800; color:#1e293b; margin:0 0 6px 0; font-family:'Plus Jakarta Sans',sans-serif; text-transform:uppercase; letter-spacing:0.5px;">Badge Photo Control</h4>
+                <p style="font-size:11.5px; color:#64748b; margin:0; line-height:1.45;">
+                  Upload a high-quality personal photograph. This image will appear on your digital ID card, live attendance monitoring feeds, department directories, and official salary statements.
+                </p>
+                <div style="margin-top:10px; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:10.5px; color:#475569; display:flex; flex-direction:column; gap:4px; line-height:1.35;">
+                  <span style="display:flex; align-items:center; gap:5px;">💡 Click badge to flip card for emergency info.</span>
+                  <span style="display:flex; align-items:center; gap:5px;">📸 Recommended: Square image, max 2MB (PNG/JPG).</span>
+                </div>
+              </div>
+              <div style="margin-top:14px;">
+                <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
+                <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:100%; padding:10px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border:none; color:#fff; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(15,23,42,0.15); transition:all 0.2s;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Profile Photo
+                </button>
               </div>
             </div>
           </div>
@@ -4768,8 +4793,18 @@ function renderEmployeeProfile() {
     const triggerFile = () => {
       photoFileInput.click();
     };
-    if (uploadPhotoBtn) uploadPhotoBtn.addEventListener('click', triggerFile);
-    if (uploadPhotoBtnReal) uploadPhotoBtnReal.addEventListener('click', triggerFile);
+    if (uploadPhotoBtn) {
+      uploadPhotoBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent flipping the ID card!
+        triggerFile();
+      });
+    }
+    if (uploadPhotoBtnReal) {
+      uploadPhotoBtnReal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        triggerFile();
+      });
+    }
 
     photoFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
