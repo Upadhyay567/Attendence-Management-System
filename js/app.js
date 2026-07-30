@@ -785,11 +785,11 @@ function renderLoginView() {
         
         let defaultUser = null;
         if (role === 'hr') {
-          defaultUser = DB.getUsers().find(u => u.id === 'usr_admin');
+          defaultUser = DB.getUsers().find(u => u.role === 'hr') || DB.getUsers().find(u => u.id === 'usr_admin') || { role: 'hr' };
         } else if (role === 'manager') {
-          defaultUser = DB.getUsers().find(u => u.id === 'usr_manager');
+          defaultUser = DB.getUsers().find(u => u.role === 'manager') || DB.getUsers().find(u => u.id === 'usr_manager') || { role: 'manager' };
         } else {
-          defaultUser = DB.getUsers().find(u => u.id === 'usr_john');
+          defaultUser = DB.getUsers().find(u => u.role === 'employee') || DB.getUsers().find(u => u.id === 'usr_john') || { role: 'employee' };
         }
         
         if (defaultUser) {
