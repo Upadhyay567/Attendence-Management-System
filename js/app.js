@@ -4524,7 +4524,7 @@ function renderEmployeeProfile() {
             <!-- ID Card Column -->
             <div class="id-card" id="employee-id-badge" style="width:100%; max-width:360px; height:215px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer; flex-shrink:0;">
               <!-- FRONT -->
-              <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fdf6ec,#faebd7); border:1px solid #e8d5b7; box-shadow:0 8px 24px rgba(180,130,60,0.12); display:flex; flex-direction:column; justify-content:space-between;">
+              <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fff6f6,#fcebeb); border:1px solid rgba(137, 32, 27, 0.15); box-shadow:0 8px 24px rgba(137,32,27,0.08); display:flex; flex-direction:column; justify-content:space-between;">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(180,130,60,0.2); padding-bottom:8px;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <img src="surya-logo.png?v=6" alt="Surya Logo" style="height:22px; object-fit:contain;">
@@ -4536,11 +4536,8 @@ function renderEmployeeProfile() {
                   <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div id="btn-upload-profile-photo" title="Click to update photo" style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#89201B,#5c0f0a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden; position:relative; cursor:pointer; transition:all 0.2s ease;">
+                  <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#89201B,#5c0f0a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
                     ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
-                    <div style="position: absolute; bottom: -2px; left: 0; right: 0; background: rgba(0,0,0,0.65); padding: 3px 0 6px; display: flex; justify-content: center; backdrop-filter: blur(2px);">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:11px; height:11px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    </div>
                   </div>
                   <div style="overflow:hidden;">
                     <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name)}</div>
@@ -4560,7 +4557,7 @@ function renderEmployeeProfile() {
                 </div>
               </div>
               <!-- BACK -->
-              <div class="id-card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#1e293b,#0f172a); border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 24px rgba(0,0,0,0.35); display:flex; flex-direction:column; justify-content:space-between; transform:rotateY(180deg);">
+              <div class="id-card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#2a0807,#130303); border:1px solid rgba(137, 32, 27, 0.3); box-shadow:0 8px 24px rgba(0,0,0,0.35); display:flex; flex-direction:column; justify-content:space-between; transform:rotateY(180deg);">
                 <div style="border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px; font-size:9px; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Emergency &amp; Office Info</div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                   <div>
@@ -4781,12 +4778,6 @@ function renderEmployeeProfile() {
     const triggerFile = () => {
       photoFileInput.click();
     };
-    if (uploadPhotoBtn) {
-      uploadPhotoBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // prevent flipping the ID card!
-        triggerFile();
-      });
-    }
     if (uploadPhotoBtnReal) {
       uploadPhotoBtnReal.addEventListener('click', (e) => {
         e.stopPropagation();
