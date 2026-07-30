@@ -4537,7 +4537,7 @@ function renderEmployeeProfile() {
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
                   <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#89201B,#5c0f0a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
-                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:#1e0605;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden;">
                     <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name)}</div>
@@ -4582,12 +4582,18 @@ function renderEmployeeProfile() {
             </div>
 
             <!-- Upload Control Column -->
-            <div style="display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:10px;">
+            <div style="display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:10px; gap:12px; flex-wrap:wrap;">
               <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
               <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:auto; min-width:200px; padding:12px 24px; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#fff; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(137,32,27,0.2); transition:all 0.2s;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 ${user.photo ? 'Change Profile Photo' : 'Upload Profile Photo'}
               </button>
+              ${user.photo ? `
+              <button id="btn-delete-profile-photo" class="btn" type="button" style="width:auto; padding:12px 24px; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:#fdf2f2; border:1.5px solid #fecaca; color:#dc2626; border-radius:10px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.2s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                Delete Photo
+              </button>
+              ` : ''}
             </div>
           </div>
 
@@ -4749,9 +4755,9 @@ function renderEmployeeProfile() {
 
           <!-- Action Buttons -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
-            <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #e2e8f0; background:#fff; color:#475569; cursor:pointer;">Edit Profile</button>
-            <button class="btn" type="button" id="btn-profile-update" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #e2e8f0; background:#fff; color:#1e293b; cursor:pointer;">Update</button>
-            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding:10px 28px; font-size:13px; font-weight:700; border-radius:8px; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border:none; cursor:pointer; opacity:0.6;">Save Changes</button>
+            <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #89201B; background:transparent; color:#89201B; cursor:pointer; transition:all 0.2s;">Edit Profile</button>
+            <button class="btn" type="button" id="btn-profile-update" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #4a100d; background:transparent; color:#4a100d; cursor:pointer; transition:all 0.2s;">Update</button>
+            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding:10px 28px; font-size:13px; font-weight:700; border-radius:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; cursor:pointer; opacity:0.5; box-shadow:none; transition:all 0.2s;">Save Changes</button>
           </div>
 
         </div>
@@ -4822,6 +4828,22 @@ function renderEmployeeProfile() {
     });
   }
 
+  // Bind Delete Photo button listener
+  const deletePhotoBtn = document.getElementById('btn-delete-profile-photo');
+  if (deletePhotoBtn) {
+    deletePhotoBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete your profile photo?')) {
+        DB.updateUser(user.id, { photo: null });
+        Auth.init();
+        renderAppShell();
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Profile photo deleted.', 'success');
+        }
+        renderEmployeeProfile();
+      }
+    });
+  }
+
   // Enable Save button upon form edits
   const detailsForm = document.getElementById('profile-details-form');
   const saveBtn = document.getElementById('btn-profile-save');
@@ -4829,6 +4851,8 @@ function renderEmployeeProfile() {
   if (detailsForm && saveBtn) {
     const enableSave = () => {
       saveBtn.disabled = false;
+      saveBtn.style.opacity = '1';
+      saveBtn.style.boxShadow = '0 4px 12px rgba(137,32,27,0.2)';
     };
     detailsForm.querySelectorAll('input, select').forEach(input => {
       input.addEventListener('input', enableSave);
