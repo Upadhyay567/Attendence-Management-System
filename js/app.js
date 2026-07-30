@@ -2933,8 +2933,8 @@ function renderAccountManagementView() {
         <tr data-user-id="${u.id}">
           <td>
             <div style="display:flex; align-items:center; gap:12px">
-              <div style="width:38px; height:38px; border-radius:50%; background:${isHR ? 'rgba(251,191,36,0.15)' : 'rgba(6,182,212,0.15)'}; color:${isHR ? 'var(--primary)' : 'var(--cyan)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid ${isHR ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.3)'}">
-                ${initials}
+              <div style="width:38px; height:38px; border-radius:50%; background:${isHR ? 'rgba(251,191,36,0.15)' : 'rgba(6,182,212,0.15)'}; color:${isHR ? 'var(--primary)' : 'var(--cyan)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid ${isHR ? 'rgba(251,191,36,0.3)' : 'rgba(6,182,212,0.3)'}; overflow:hidden; flex-shrink:0;">
+                ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : initials}
               </div>
               <div>
                 <div style="font-weight:700; color:var(--text-primary); font-size:14px">${Utils.escape(u.name)}</div>
@@ -4536,8 +4536,8 @@ function renderEmployeeProfile() {
                   <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#89201B,#5c0f0a); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
-                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:#ffffff;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+                  <div style="width:64px; height:64px; border-radius:50%; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden;">
+                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden;">
                     <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name)}</div>
@@ -7011,7 +7011,7 @@ function renderAdminUsers() {
             <thead>
               <tr>
                 <th>Employee Name</th>
-                <th>Username</th>
+                <th>User ID</th>
                 <th>Security Password</th>
                 <th>Assigned Shift</th>
                 <th>Preferred Location</th>
@@ -7050,11 +7050,16 @@ function renderAdminUsers() {
                 
                 return `
                   <tr>
-                    <td style="font-weight:600">
-                      ${Utils.escape(u.name)}
-                      ${profileBadgeHTML}
+                    <td style="font-weight:600; display:flex; align-items:center; gap:12px">
+                      <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0;">
+                        ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+                      </div>
+                      <div>
+                        ${Utils.escape(u.name)}
+                        ${profileBadgeHTML}
+                      </div>
                     </td>
-                    <td>${Utils.escape(u.username)}</td>
+                    <td>${Utils.escape(u.employeeId)}</td>
                     <td><code>••••••••</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
                     <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
@@ -7190,11 +7195,16 @@ function renderAdminUsers() {
           
           return `
             <tr>
-              <td style="font-weight:600">
-                ${Utils.escape(u.name)}
-                ${profileBadgeHTML}
+              <td style="font-weight:600; display:flex; align-items:center; gap:12px">
+                <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0;">
+                  ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+                </div>
+                <div>
+                  ${Utils.escape(u.name)}
+                  ${profileBadgeHTML}
+                </div>
               </td>
-              <td>${Utils.escape(u.username)}</td>
+              <td>${Utils.escape(u.employeeId)}</td>
               <td><code>••••••••</code></td>
               <td>${sch ? Utils.escape(sch.name) : '-'}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
