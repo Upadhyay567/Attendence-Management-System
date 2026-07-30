@@ -6447,120 +6447,230 @@ function openAllBirthdaysModal() {
   });
 }
 
-function renderAdminDashboard() {
+async function renderAdminDashboard() {
   const main = document.getElementById('main-view');
   const currentUser = Auth.getCurrentUser();
-  const freshUser = DB.getUser(currentUser.id) || currentUser;
-  const isManager = freshUser.role === 'manager';
+  if (!currentUser) return;
 
-  let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager');
-  if (isManager) {
-    users = users.filter(u => u.managerId === currentUser.id);
-  }
-  const assignedUserIds = users.map(u => u.id);
-
-  let logs = DB.getLogs();
-  if (isManager) {
-    logs = logs.filter(l => assignedUserIds.includes(l.userId));
-  }
-
-  let leaves = DB.getLeaveRequests();
-  if (isManager) {
-    leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
-  }
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const presentToday = logs.filter(l => l.date === todayStr && l.checkIn);
-  const lateToday = presentToday.filter(l => l.status === 'Late');
-  const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate);
-  
-  const presentCount = presentToday.length;
-  const lateCount = lateToday.length;
-  const leaveCount = onLeaveToday.length;
-  const totalEmployees = users.length;
-  const absentCount = totalEmployees - presentCount - leaveCount;
-  
-  const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
-    if (s.status !== 'Pending Manager') return false;
-    if (isManager) {
-      return assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId);
-    }
-    return true;
-  }).length;
-
-  // Group today's checked-in employees by location
-  const todayLogs = logs.filter(l => l.date === todayStr);
-  const locationGroups = {};
-  
-  // Initialize with all currently registered locations from database
-  Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
-    locationGroups[loc] = [];
-  });
-
-  todayLogs.forEach(l => {
-    if (l.checkIn) {
-      const u = DB.getUser(l.userId);
-      if (u) {
-        const loc = l.location || 'Kohat Enclave, Pitampura, Delhi';
-        if (!locationGroups[loc]) {
-          locationGroups[loc] = [];
-        }
-        locationGroups[loc].push({ id: u.id, name: u.name, time: l.checkIn });
-      }
-    }
-  });
-
-  let worksitePanelHTML = '';
-  if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager')) {
-    worksitePanelHTML = `
-      <div class="card-panel" style="margin-top:20px">
-        <div class="card-panel-header">
-          <h3 class="card-panel-title">🏢 Today's Worksite Distribution (Management View)</h3>
-        </div>
-        <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
-          ${Object.entries(locationGroups).map(([locName, staffList]) => {
-            let locIcon = '📍';
-            if (locName.includes('HQ')) locIcon = '🏢';
-            else if (locName.includes('Hub')) locIcon = '🏬';
-            else if (locName.includes('Home')) locIcon = '🏠';
-
-            const staffListHTML = staffList.length === 0
-              ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No staff checked in here today.</div>`
-              : staffList.map(s => `
-                  <div class="btn-view-staff-detail" data-id="${s.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all 0.2s ease">
-                    <span style="font-weight:600;color:var(--text-primary);text-decoration:underline">${Utils.escape(s.name)}</span>
-                    <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time}</span>
-                  </div>
-                `).join('');
-
-            return `
-              <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:10px">
-                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px">
-                  <strong style="font-size:14px;color:var(--primary);display:flex;align-items:center;gap:6px">
-                    <span>${locIcon}</span> ${locName}
-                  </strong>
-                  <span class="badge badge-on-time" style="padding:2px 8px;font-size:10px">${staffList.length} Present</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto">
-                  ${staffListHTML}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  }
-
+  // Show loading placeholders in the outer template immediately
   main.innerHTML = `
     <div class="content-header">
       <div>
         <h1 class="content-title">Live Attendance Monitoring</h1>
         <div class="content-subtitle">Real-time status tracking for workspace logs.</div>
       </div>
+      <div><button class="btn btn-secondary" id="btn-admin-reset-db">Reset Demo Data</button></div>
     </div>
     <div class="content-body">
-      <div class="stats-grid">
+      <!-- Welcome Banner Loading Skeleton -->
+      <div id="dashboard-welcome-banner" style="display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; background: linear-gradient(135deg, #fffbeb 0%, #fff7ed 50%, #fef3c7 100%); border: 1px solid rgba(137, 32, 27, 0.08); border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(137, 32, 27, 0.04); position: relative; overflow: hidden; animation: fadeIn 0.3s ease;">
+        <div style="flex: 1;">
+          <div style="width: 100px; height: 12px; background: rgba(137,32,27,0.06); border-radius: 4px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+          <div style="width: 75%; max-width: 400px; height: 24px; background: rgba(26,5,4,0.06); border-radius: 4px; margin-top: 8px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+          <div style="width: 50%; max-width: 300px; height: 14px; background: rgba(124,45,18,0.06); border-radius: 4px; margin-top: 8px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+        </div>
+        <div style="display: flex; gap: 32px; align-items: center; z-index: 1;">
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 65px; height: 10px; background: rgba(71,85,105,0.06); border-radius: 3px;"></div>
+            <div style="width: 30px; height: 24px; background: rgba(15,23,42,0.06); border-radius: 4px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+          </div>
+          <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <div style="width: 50px; height: 10px; background: rgba(71,85,105,0.06); border-radius: 3px;"></div>
+            <div style="width: 30px; height: 24px; background: rgba(21,128,61,0.06); border-radius: 4px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid Loading Skeletons -->
+      <div class="stats-grid" id="dashboard-stats-grid" style="animation: fadeIn 0.3s ease;">
+        ${Array(6).fill(0).map(() => `
+          <div class="stat-card" style="position:relative; overflow:hidden;">
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.04); animation: badgePulse 1.5s infinite ease-in-out;"></div>
+            <div class="stat-info" style="display:flex; flex-direction:column; gap:6px; margin-left:12px; flex:1">
+              <div style="width:40px; height:20px; background:rgba(0,0,0,0.06); border-radius:4px; animation: badgePulse 1.5s infinite ease-in-out;"></div>
+              <div style="width:75px; height:10px; background:rgba(0,0,0,0.04); border-radius:3px;"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="dashboard-split" style="grid-template-columns: 1.8fr 1fr">
+        <div class="card-panel">
+          <div class="card-panel-header"><h3 class="card-panel-title">Today's Live Attendance Feed</h3></div>
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Shift</th>
+                  <th>Checked In</th>
+                  <th>Checked Out</th>
+                  <th>Live GPS</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="live-feed-table-body">
+                <tr><td colspan="7" style="text-align:center; padding: 20px 0; color:var(--text-muted);">Loading live feed...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:20px; margin-top:0">
+          <div class="card-panel" style="margin-top:0">
+            <div class="card-panel-header"><h3 class="card-panel-title">Leave Request Alert Inbox</h3></div>
+            <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px">
+              <div style="text-align:center; padding: 20px 0; color:var(--text-muted);">Loading requests...</div>
+            </div>
+          </div>
+          <div id="hr-birthday-widget-container"></div>
+        </div>
+      </div>
+
+      <!-- Announcements Manager Row -->
+      <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; margin-top:20px">
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <h3 class="card-panel-title">📢 Publish Company Announcement</h3>
+          </div>
+          <form id="admin-announcement-form" style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
+            <div class="form-group">
+              <label class="form-label" for="ann-title">Announcement Title</label>
+              <input class="form-input" type="text" id="ann-title" placeholder="e.g. Eid-ul-Adha Office Holiday" required style="padding:10px">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ann-category">Category</label>
+              <select class="form-input" id="ann-category" required style="padding:10px">
+                <option value="General">General News</option>
+                <option value="Holiday">Holiday Notice</option>
+                <option value="Update">System Update</option>
+                <option value="Urgent">Urgent Alert</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ann-content">Announcement Content</label>
+              <textarea class="form-input" id="ann-content" placeholder="Type announcement details here..." rows="3" required style="resize:vertical;padding:10px"></textarea>
+            </div>
+            <button class="btn btn-success" type="submit">Publish to Notice Board</button>
+          </form>
+          <div id="ann-publish-alert" style="display:none;margin-top:12px" class="alert"></div>
+        </div>
+        <div class="card-panel">
+          <div class="card-panel-header">
+            <h3 class="card-panel-title">🗂️ Active Board Notices</h3>
+          </div>
+          <div id="admin-announcements-list" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
+            <div style="text-align:center; padding: 20px 0; color:var(--text-muted);">Loading notices...</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="dashboard-worksite-panel-container"></div>
+    </div>
+  `;
+
+  // Bind minimal click events on loading shell if they exist
+  const resetDbBtn = document.getElementById('btn-admin-reset-db');
+  if (resetDbBtn) {
+    resetDbBtn.addEventListener('click', async () => {
+      if (await confirm('Reset mock database structures and clear edits?')) {
+        await DB.reset();
+        renderAdminDashboard();
+      }
+    });
+  }
+
+  // Define update function
+  function updateDashboardViews() {
+    const freshUser = DB.getUser(currentUser.id) || currentUser;
+    const isManager = freshUser.role === 'manager';
+
+    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager');
+    if (isManager) {
+      users = users.filter(u => u.managerId === currentUser.id);
+    }
+    const assignedUserIds = users.map(u => u.id);
+
+    let logs = DB.getLogs();
+    if (isManager) {
+      logs = logs.filter(l => assignedUserIds.includes(l.userId));
+    }
+
+    let leaves = DB.getLeaveRequests();
+    if (isManager) {
+      leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn);
+    const lateToday = presentToday.filter(l => l.status === 'Late');
+    const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate);
+    
+    const presentCount = presentToday.length;
+    const lateCount = lateToday.length;
+    const leaveCount = onLeaveToday.length;
+    const totalEmployees = users.length;
+    const absentCount = totalEmployees - presentCount - leaveCount;
+    
+    const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
+      if (s.status !== 'Pending Manager') return false;
+      if (isManager) {
+        return assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId);
+      }
+      return true;
+    }).length;
+
+    // Greeting calculations based on local time
+    const hour = new Date().getHours();
+    let greeting = 'GOOD MORNING';
+    if (hour >= 12 && hour < 17) {
+      greeting = 'GOOD AFTERNOON';
+    } else if (hour >= 17 || hour < 5) {
+      greeting = 'GOOD EVENING';
+    }
+
+    // Personalized welcome message (name and role)
+    let welcomeName = freshUser.name || 'User';
+    const roleLabel = freshUser.role === 'hr' ? 'HR Admin' : (freshUser.role === 'manager' ? 'Manager' : (freshUser.role === 'finance_manager' ? 'Finance Manager' : 'HR Manager'));
+    
+    const nameLower = welcomeName.toLowerCase();
+    const designationLower = (freshUser.designation || '').toLowerCase();
+    const roleLower = roleLabel.toLowerCase();
+    if (!nameLower.includes(roleLower) && !nameLower.includes(designationLower)) {
+      welcomeName = `${welcomeName} ${roleLabel}`;
+    }
+
+    const companyName = freshUser.companyName || freshUser.company || '';
+    const companyMsg = companyName 
+      ? `Here's what's happening in ${companyName} today.` 
+      : "Here's what's happening in your company today.";
+
+    // Fill Welcome Banner
+    const bannerEl = document.getElementById('dashboard-welcome-banner');
+    if (bannerEl) {
+      bannerEl.innerHTML = `
+        <div>
+          <span style="font-size: 11px; font-weight: 700; color: #89201B; letter-spacing: 0.05em; text-transform: uppercase;">${greeting}</span>
+          <h2 style="font-size: 20px; font-weight: 800; color: #1a0504; margin: 6px 0 4px;">Welcome back, ${Utils.escape(welcomeName)}!</h2>
+          <p style="font-size: 13px; color: #7c2d12; margin: 0; opacity: 0.8">${Utils.escape(companyMsg)}</p>
+        </div>
+        <div style="display: flex; gap: 32px; align-items: center; z-index: 1;">
+          <div style="text-align: center;">
+            <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">Active Staff</span>
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px;">${totalEmployees}</div>
+          </div>
+          <div style="text-align: center;">
+            <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">On Duty</span>
+            <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;">${presentCount}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fill Stats Grid
+    const statsGrid = document.getElementById('dashboard-stats-grid');
+    if (statsGrid) {
+      statsGrid.innerHTML = `
         <!-- Total Employees -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-blue">👥</div>
@@ -6591,184 +6701,174 @@ function renderAdminDashboard() {
           <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:rgb(139,92,246)">🔄</div>
           <div class="stat-info"><span class="stat-value">${pendingSwapsCount}</span><span class="stat-label">Pending Swaps</span></div>
         </div>
-      </div>
-      <div class="dashboard-split" style="grid-template-columns: 1.8fr 1fr">
-        <div class="card-panel">
-          <div class="card-panel-header"><h3 class="card-panel-title">Today's Live Attendance Feed</h3></div>
-          <div class="table-container">
-            <table class="custom-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Shift</th>
-                  <th>Checked In</th>
-                  <th>Checked Out</th>
-                  <th>Live GPS</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="live-feed-table-body"></tbody>
-            </table>
-          </div>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:20px; margin-top:0">
-          <!-- Leave Request Alert Inbox -->
-          <div class="card-panel" style="margin-top:0">
-            <div class="card-panel-header"><h3 class="card-panel-title">Leave Request Alert Inbox</h3></div>
-            <div id="admin-pending-leaves-box" style="display:flex;flex-direction:column;gap:12px"></div>
-          </div>
-          
-          <!-- Birthday Widget (HR/Manager) -->
-          ${(freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager') ? `
-            <div id="hr-birthday-widget-container">
-              ${getBirthdayWidgetHTML()}
-            </div>
-          ` : ''}
+      `;
+    }
 
-        </div>
-      </div>
+    // Group checked-in employees by location
+    const todayLogs = logs.filter(l => l.date === todayStr);
+    const locationGroups = {};
+    Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
+      locationGroups[loc] = [];
+    });
 
-      <!-- Announcements Manager Row -->
-      <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; margin-top:20px">
-        <!-- Publish Announcement Card -->
-        <div class="card-panel">
+    todayLogs.forEach(l => {
+      if (l.checkIn) {
+        const u = DB.getUser(l.userId);
+        if (u) {
+          const loc = l.location || 'Kohat Enclave, Pitampura, Delhi';
+          if (!locationGroups[loc]) {
+            locationGroups[loc] = [];
+          }
+          locationGroups[loc].push({ id: u.id, name: u.name, time: l.checkIn });
+        }
+      }
+    });
+
+    let worksitePanelHTML = '';
+    if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager')) {
+      worksitePanelHTML = `
+        <div class="card-panel" style="margin-top:20px">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">📢 Publish Company Announcement</h3>
+            <h3 class="card-panel-title">🏢 Today's Worksite Distribution (Management View)</h3>
           </div>
-          <form id="admin-announcement-form" style="display:flex;flex-direction:column;gap:12px;margin-top:10px">
-            <div class="form-group">
-              <label class="form-label" for="ann-title">Announcement Title</label>
-              <input class="form-input" type="text" id="ann-title" placeholder="e.g. Eid-ul-Adha Office Holiday" required style="padding:10px">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="ann-category">Category</label>
-              <select class="form-input" id="ann-category" required style="padding:10px">
-                <option value="General">General News</option>
-                <option value="Holiday">Holiday Notice</option>
-                <option value="Update">System Update</option>
-                <option value="Urgent">Urgent Alert</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="ann-content">Announcement Content</label>
-              <textarea class="form-input" id="ann-content" placeholder="Type announcement details here..." rows="3" required style="resize:vertical;padding:10px"></textarea>
-            </div>
-            <button class="btn btn-success" type="submit">Publish to Notice Board</button>
-          </form>
-          <div id="ann-publish-alert" style="display:none;margin-top:12px" class="alert"></div>
+          <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
+            ${Object.entries(locationGroups).map(([locName, staffList]) => {
+              let locIcon = '📍';
+              if (locName.includes('HQ')) locIcon = '🏢';
+              else if (locName.includes('Hub')) locIcon = '🏬';
+              else if (locName.includes('Home')) locIcon = '🏠';
+
+              const staffListHTML = staffList.length === 0
+                ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No staff checked in here today.</div>`
+                : staffList.map(s => `
+                    <div class="btn-view-staff-detail" data-id="${s.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all 0.2s ease">
+                      <span style="font-weight:600;color:var(--text-primary);text-decoration:underline">${Utils.escape(s.name)}</span>
+                      <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time}</span>
+                    </div>
+                  `).join('');
+
+              return `
+                <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px">
+                    <strong style="font-size:14px;color:var(--primary);display:flex;align-items:center;gap:6px">
+                      <span>${locIcon}</span> ${locName}
+                    </strong>
+                    <span class="badge badge-on-time" style="padding:2px 8px;font-size:10px">${staffList.length} Present</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto">
+                    ${staffListHTML}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>
+      `;
+    }
 
-        <!-- Active Announcements List Card -->
-        <div class="card-panel">
-          <div class="card-panel-header">
-            <h3 class="card-panel-title">🗂️ Active Board Notices</h3>
-          </div>
-          <div id="admin-announcements-list" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;max-height:320px;overflow-y:auto;padding-right:4px">
-            <!-- announcements list loaded dynamically -->
-          </div>
-        </div>
-      </div>
+    const worksiteContainer = document.getElementById('dashboard-worksite-panel-container');
+    if (worksiteContainer) {
+      worksiteContainer.innerHTML = worksitePanelHTML;
+    }
 
-      ${worksitePanelHTML}
-    </div>
-  `;
-  const feedBody = document.getElementById('live-feed-table-body');
-  // todayLogs is pre-filtered at top
-  if (todayLogs.length === 0) {
-    feedBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No check-ins logged today.</td></tr>`;
-  } else {
-    feedBody.innerHTML = todayLogs.map(l => {
-      const u = DB.getUser(l.userId);
-      const sch = DB.getSchedule(u.scheduleId);
-      let statusClass = 'badge-on-time';
-      if (l.status === 'Late') statusClass = 'badge-late';
-      if (l.status === 'Half Day') statusClass = 'badge-half-day';
-      if (l.status === 'Pending Verification') statusClass = 'badge-late';
+    // Bind worksite staff detail click actions
+    document.querySelectorAll('.btn-view-staff-detail').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const userId = el.getAttribute('data-id');
+        openStaffDetailModal(userId);
+      });
+    });
 
-      // Live GPS — distance is stored in km at check-in time
-      // 100m geofence = 0.1 km threshold
-      const distKm = parseFloat(l.distance) || 0;
-      const distM = Math.round(distKm * 1000);
-      let gpsCellHTML;
-      if (!l.location) {
-        gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">\u2014 No GPS Data</span>`;
-      } else if (distKm <= 0.1) {
-        const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
-        gpsCellHTML = `
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px rgba(16,185,129,0.7);animation:pulse 1.5s infinite"></span>
-            <span style="font-size:11px;font-weight:700;color:#10b981">IN RANGE</span>
-          </div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distLabel}</div>`;
+    // Populate Live Feed Table
+    const feedBody = document.getElementById('live-feed-table-body');
+    if (feedBody) {
+      if (todayLogs.length === 0) {
+        feedBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No check-ins logged today.</td></tr>`;
       } else {
-        gpsCellHTML = `
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px rgba(239,68,68,0.6)"></span>
-            <span style="font-size:11px;font-weight:700;color:#ef4444">OUT OF RANGE</span>
-          </div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
+        feedBody.innerHTML = todayLogs.map(l => {
+          const u = DB.getUser(l.userId);
+          const sch = DB.getSchedule(u.scheduleId);
+          let statusClass = 'badge-on-time';
+          if (l.status === 'Late') statusClass = 'badge-late';
+          if (l.status === 'Half Day') statusClass = 'badge-half-day';
+          if (l.status === 'Pending Verification') statusClass = 'badge-late';
+
+          const distKm = parseFloat(l.distance) || 0;
+          const distM = Math.round(distKm * 1000);
+          let gpsCellHTML;
+          if (!l.location) {
+            gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">— No GPS Data</span>`;
+          } else if (distKm <= 0.1) {
+            const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
+            gpsCellHTML = `
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px rgba(16,185,129,0.7);animation:pulse 1.5s infinite"></span>
+                <span style="font-size:11px;font-weight:700;color:#10b981">IN RANGE</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distLabel}</div>`;
+          } else {
+            gpsCellHTML = `
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px rgba(239,68,68,0.6)"></span>
+                <span style="font-size:11px;font-weight:700;color:#ef4444">OUT OF RANGE</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
+          }
+          return `
+            <tr>
+              <td style="font-weight:600">${Utils.escape(u.name)}</td>
+              <td>${sch ? Utils.escape(sch.name) : '-'}</td>
+              <td>${l.checkIn || '--:--'}</td>
+              <td>${l.checkOut || '--:--'}</td>
+              <td>${gpsCellHTML}</td>
+              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
+              <td><span class="badge ${statusClass}">${l.status}</span></td>
+            </tr>
+          `;
+        }).join('');
       }
-      return `
-        <tr>
-          <td style="font-weight:600">${Utils.escape(u.name)}</td>
-          <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-          <td>${l.checkIn || '--:--'}</td>
-          <td>${l.checkOut || '--:--'}</td>
-          <td>${gpsCellHTML}</td>
-          <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
-          <td><span class="badge ${statusClass}">${l.status}</span></td>
-        </tr>
-      `;
-    }).join('');
-  }
+    }
 
-  const pendingInbox = document.getElementById('admin-pending-leaves-box');
-  const pendingLeaves = leaves.filter(lv => lv.status === 'Pending');
-  if (pendingLeaves.length === 0) {
-    pendingInbox.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
-  } else {
-    pendingInbox.innerHTML = pendingLeaves.map(lv => {
-      const u = DB.getUser(lv.userId);
-      return `
-        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between">
-            <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
-            <span class="badge badge-pending">${lv.type}</span>
-          </div>
-          <div style="font-size:12px;color:var(--text-secondary)">
-            Dates: ${Utils.formatDate(lv.startDate)} to ${Utils.formatDate(lv.endDate)}
-          </div>
-          <div style="font-size:12px;color:var(--text-muted);line-height:1.4">"${Utils.escape(lv.reason)}"</div>
-          <div style="display:flex;gap:8px;margin-top:4px">
-            <a href="#admin-approvals" class="btn" style="padding:6px 12px;font-size:12px;width:auto">Process Request</a>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  const resetDbBtn = document.getElementById('btn-admin-reset-db');
-  if (resetDbBtn) {
-    resetDbBtn.addEventListener('click', async () => {
-      if (await confirm('Reset mock database structures and clear edits?')) {
-        await DB.reset();
-        renderAdminDashboard();
+    // Populate Leave request alert inbox
+    const pendingInbox = document.getElementById('admin-pending-leaves-box');
+    if (pendingInbox) {
+      const pendingLeaves = leaves.filter(lv => lv.status === 'Pending');
+      if (pendingLeaves.length === 0) {
+        pendingInbox.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
+      } else {
+        pendingInbox.innerHTML = pendingLeaves.map(lv => {
+          const u = DB.getUser(lv.userId);
+          return `
+            <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between">
+                <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
+                <span class="badge badge-pending">${lv.type}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary)">
+                Dates: ${Utils.formatDate(lv.startDate)} to ${Utils.formatDate(lv.endDate)}
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.4">"${Utils.escape(lv.reason)}"</div>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <a href="#admin-approvals" class="btn" style="padding:6px 12px;font-size:12px;width:auto">Process Request</a>
+              </div>
+            </div>
+          `;
+        }).join('');
       }
-    });
+    }
+
+    // Birthday Widget render and events bind
+    const birthdayWidgetContainer = document.getElementById('hr-birthday-widget-container');
+    if (birthdayWidgetContainer && (freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager')) {
+      birthdayWidgetContainer.innerHTML = getBirthdayWidgetHTML();
+      bindBirthdayWidgetEvents();
+    }
+
+    // Announcements setup
+    renderAdminAnnouncementsList();
   }
 
-  // Bind worksite staff detail click actions
-  document.querySelectorAll('.btn-view-staff-detail').forEach(el => {
-    el.addEventListener('click', (e) => {
-      const userId = el.getAttribute('data-id');
-      openStaffDetailModal(userId);
-    });
-  });
-
-  // Announcements setup
-  renderAdminAnnouncementsList();
-
+  // Initially bind form submit for announcement publishing since it exists in skeleton template
   const annForm = document.getElementById('admin-announcement-form');
   const annAlert = document.getElementById('ann-publish-alert');
 
@@ -6795,9 +6895,15 @@ function renderAdminDashboard() {
     });
   }
 
-  if (freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager') {
-    bindBirthdayWidgetEvents();
+  // Load database state asynchronously, showing loaders first
+  try {
+    await DB.init();
+  } catch (err) {
+    console.error("Dashboard database initial load failed, loading from cache fallback:", err);
   }
+
+  // Populate all views with the loaded state
+  updateDashboardViews();
 }
 
 function renderAdminUsers() {
