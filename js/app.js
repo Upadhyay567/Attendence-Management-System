@@ -4469,53 +4469,65 @@ function renderEmployeeProfile() {
         margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 20px;
       }
       .prof-field-row {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 16px;
+        gap: 18px;
       }
       .prof-field-row-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: 18px;
       }
       .prof-input {
-        height: 42px;
-        border-radius: 8px;
-        border: 1.5px solid #e2e8f0;
-        padding: 0 12px;
+        height: 44px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        padding: 0 14px;
         font-size: 13.5px;
-        background: #f8fafc;
-        color: #1e293b;
+        background: var(--bg-surface);
+        color: var(--text-primary);
         width: 100%;
         box-sizing: border-box;
         outline: none;
-        transition: border-color 0.2s;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.25s ease;
       }
-      .prof-input:focus { border-color: #ef4444; background: #fff; }
-      .prof-input[readonly] { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+      .prof-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        background: var(--bg-surface);
+      }
+      .prof-input[readonly] {
+        background: rgba(120, 120, 120, 0.05);
+        color: var(--text-muted);
+        cursor: not-allowed;
+        border-color: var(--border);
+        box-shadow: none;
+      }
       .prof-label {
         font-size: 12px;
         font-weight: 600;
-        color: #64748b;
-        margin-bottom: 5px;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
         display: block;
       }
       .prof-section-card {
-        background: #fff;
-        border: 1.5px solid #e8ecf0;
-        border-radius: 14px;
-        padding: 22px 24px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px 28px;
+        box-shadow: var(--shadow-sm);
       }
       .prof-section-title {
         font-size: 14px;
         font-weight: 800;
-        color: #1e293b;
+        color: var(--text-primary);
         margin: 0 0 16px 0;
         padding-bottom: 10px;
-        border-bottom: 1.5px solid #f1f5f9;
+        border-bottom: 1.5px solid var(--border);
       }
       @media (max-width: 700px) {
         .prof-field-row { grid-template-columns: 1fr 1fr; }
@@ -4668,8 +4680,11 @@ function renderEmployeeProfile() {
           })()}
 
           <!-- Personal Details -->
-          <div class="prof-section-card">
-            <h3 class="prof-section-title">Personal Details</h3>
+          <div class="prof-section-card" style="position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1.5px solid var(--border); padding-bottom:10px;">
+              <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary);">Personal Details</h3>
+              <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:8px 18px; font-size:12.5px; font-weight:700; border-radius:8px; border:1.5px solid var(--primary); background:transparent; color:var(--primary); cursor:pointer; transition:all 0.2s;">Edit Profile</button>
+            </div>
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-name">Full Name <span style="font-weight:400;color:#b0bec5;font-size:11px;">(Letters only)</span></label>
@@ -4795,8 +4810,6 @@ function renderEmployeeProfile() {
 
           <!-- Action Buttons -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
-            <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #89201B; background:transparent; color:#89201B; cursor:pointer; transition:all 0.2s;">Edit Profile</button>
-            <button class="btn" type="button" id="btn-profile-update" style="padding:10px 24px; font-size:13px; font-weight:700; border-radius:8px; border:1.5px solid #4a100d; background:transparent; color:#4a100d; cursor:pointer; transition:all 0.2s;">Update</button>
             <button class="btn" type="submit" id="btn-profile-save" disabled style="padding:10px 28px; font-size:13px; font-weight:700; border-radius:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; cursor:pointer; opacity:0.5; box-shadow:none; transition:all 0.2s;">Save Changes</button>
           </div>
 
