@@ -7726,7 +7726,7 @@ function openUserModal(userId = null) {
     });
   }
 
-  document.getElementById('user-editor-form').addEventListener('submit', (e) => {
+  document.getElementById('user-editor-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('editor-name').value.trim();
     const employeeId = document.getElementById('editor-empid').value.trim();
@@ -7767,6 +7767,12 @@ function openUserModal(userId = null) {
     if (!profileValidation.valid) {
       alert(profileValidation.message);
       return;
+    }
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Saving...';
     }
 
     const resumeFile = document.getElementById('editor-resume').files[0];
@@ -7824,10 +7830,25 @@ function openUserModal(userId = null) {
 
       if (DB.getUserByUsernameOrId(finalUsername)) {
         alert('Username or Employee ID is already taken.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = isEdit ? 'Save Changes' : 'Create User';
+        }
         return;
       }
       DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
+
+    try {
+      await fetch('/api/mutate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', data: DB.data })
+      });
+    } catch (err) {
+      console.warn('Network error synchronizing mutation with backend database:', err);
+    }
+
     closeModal(overlay);
     if (typeof showToastNotification === 'function') {
       showToastNotification(isEdit ? '✅ Employee details updated successfully.' : '✅ Employee registered successfully.', 'success');
@@ -7835,7 +7856,7 @@ function openUserModal(userId = null) {
       alert(isEdit ? 'Employee details updated successfully.' : 'Employee registered successfully.');
     }
     if (window.location.hash === '#admin-dashboard') {
-      renderAdminDashboard();
+      await renderAdminDashboard();
     } else {
       renderAdminUsers();
     }
