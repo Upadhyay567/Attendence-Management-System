@@ -4683,7 +4683,7 @@ function renderEmployeeProfile() {
           <div class="prof-section-card" style="position:relative;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1.5px solid var(--border); padding-bottom:10px;">
               <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary);">Personal Details</h3>
-              <button class="btn" type="button" id="btn-profile-edit-focus" style="padding:8px 18px; font-size:12.5px; font-weight:700; border-radius:8px; border:1.5px solid var(--primary); background:transparent; color:var(--primary); cursor:pointer; transition:all 0.2s;">Edit Profile</button>
+              <button class="btn" type="button" id="btn-profile-edit-focus" style="padding: 0 14px; height: 30px; font-size: 11.5px; font-weight: 700; border-radius: 6px; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: auto;">Edit Profile</button>
             </div>
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
@@ -4810,7 +4810,7 @@ function renderEmployeeProfile() {
 
           <!-- Action Buttons -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
-            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding:10px 28px; font-size:13px; font-weight:700; border-radius:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; cursor:pointer; opacity:0.5; box-shadow:none; transition:all 0.2s;">Save Changes</button>
+            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding: 0 20px; height: 36px; font-size: 12px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #fff; border: none; cursor: pointer; opacity: 0.5; box-shadow: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: auto;">Save Changes</button>
           </div>
 
         </div>
