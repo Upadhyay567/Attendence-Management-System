@@ -6321,36 +6321,36 @@ function getBirthdayWidgetHTML() {
     const s = item.status;
     const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     const highlightStyle = isToday 
-      ? 'background: linear-gradient(135deg, rgba(137, 32, 27, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%) !important; border: 1.5px solid rgba(137, 32, 27, 0.4) !important;' 
-      : 'background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border);';
+      ? 'background: linear-gradient(145deg, rgba(137, 32, 27, 0.12) 0%, rgba(137, 32, 27, 0.04) 100%) !important; border: 1.5px solid rgba(137, 32, 27, 0.3) !important; box-shadow: 0 4px 12px rgba(137, 32, 27, 0.1);' 
+      : 'background: var(--bg-surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);';
     
     const isSelf = currentUser && u.id === currentUser.id;
     const wishBtnHTML = isSelf 
       ? `<span style="font-size:10px; font-weight:700; color:var(--success); padding:6px 12px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); border-radius:8px; white-space:nowrap; flex-shrink:0;">It's You! 🎉</span>`
-      : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25)">Wish</button>`;
+      : `<button class="btn btn-birthday-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 14px; font-size:11.5px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer; box-shadow:0 3px 10px rgba(220,38,38,0.2); transition:all 0.2s;">Wish</button>`;
     
     return `
-      <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:12px; margin-bottom:8px; gap:10px; transition:all 0.2s ease; ${highlightStyle}">
+      <div class="birthday-card" style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-radius:12px; margin-bottom:8px; gap:12px; transition:all 0.2s ease; ${highlightStyle}">
         <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
-          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; position:relative; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
+          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:42px; height:42px; border-radius:50%; overflow:hidden; flex-shrink:0; position:relative; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
             ${u.photo ? `
               <img src="${u.photo}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
             ` : `
-              <div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">
+              <div style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; border:1px solid rgba(137,32,27,0.2)">
                 ${initials}
               </div>
             `}
           </div>
           <div style="min-width:0; flex:1">
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
-              <strong style="font-size:13px; color:#ffffff !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <strong style="font-size:13.5px; color:var(--text-primary) !important; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
               ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">🎂</span>' : ''}
             </div>
-            <div style="font-size:11px; color:#aab4c0 !important; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            <div style="font-size:11px; color:var(--text-secondary) !important; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
               ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
             </div>
-            <div style="font-size:10px; color:#8896a5 !important; margin-top:2px">
-              ID: ${Utils.escape(u.employeeId)} • Date: <strong style="color:#ffffff !important">${s.formattedDate}</strong>
+            <div style="font-size:10px; color:var(--text-muted) !important; margin-top:2px">
+              ID: ${Utils.escape(u.employeeId)} • Date: <strong style="color:var(--text-primary) !important">${s.formattedDate}</strong>
             </div>
           </div>
         </div>
