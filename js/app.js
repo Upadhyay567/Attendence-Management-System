@@ -913,7 +913,7 @@ function renderLoginView() {
           </div>
           <div style="position:relative">
             <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
-            <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary); pointer-events:none; display:flex; align-items:center;">
+            <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--primary); pointer-events:none; display:flex; align-items:center;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </span>
           </div>
@@ -7280,7 +7280,7 @@ function openUserModal(userId = null) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 700px">
       <div class="modal-header">
-        <h3 class="modal-title">${isEdit ? 'Modify Employee Profile' : 'Register New Employee'}</h3>
+        <h3 class="modal-title">${isEdit ? 'Modify Candidate Profile' : 'Register New Employee'}</h3>
         <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
