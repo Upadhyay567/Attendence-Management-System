@@ -1031,7 +1031,7 @@ function renderLoginView() {
         return;
       }
 
-      if (matchedUser.password || isHrOrManager) {
+      if (isHrOrManager) {
         if (!enteredPwd) {
           warningEl.textContent = `⚠️ Password is required to log in to this account.`;
           warningEl.style.display = 'block';
