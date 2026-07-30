@@ -913,7 +913,9 @@ function renderLoginView() {
           </div>
           <div style="position:relative">
             <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
-            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:14px">👁️</button>
+            <span style="position:absolute; right:12px; top:50%; transform:translateY(-50%); color:var(--text-secondary); pointer-events:none; display:flex; align-items:center;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </span>
           </div>
         </div>
         ` : ''}
@@ -966,19 +968,7 @@ function renderLoginView() {
       });
     }
 
-    if (toggleAuthPwdBtn && pwdEl) {
-      const svgEyeOpen = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-      const svgEyeClosed = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
-      toggleAuthPwdBtn.addEventListener('click', () => {
-        if (pwdEl.type === 'password') {
-          pwdEl.type = 'text';
-          toggleAuthPwdBtn.innerHTML = svgEyeClosed;
-        } else {
-          pwdEl.type = 'password';
-          toggleAuthPwdBtn.innerHTML = svgEyeOpen;
-        }
-      });
-    }
+    // Login page password visibility toggle removed as requested (eye remains static)
 
     if (createAccBtn) {
       createAccBtn.addEventListener('click', () => {
@@ -2545,51 +2535,51 @@ function showForgotPasswordModal(initialId = '') {
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
     max-width: 480px; width: 92%; padding: 28px;
-    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.4) !important;
-    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px; box-shadow: var(--shadow-lg) !important;
   `;
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px">
       <div style="display:flex; align-items:center; gap:10px">
-        <div style="width:36px; height:36px; border-radius:10px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:18px">
+        <div style="width:36px; height:36px; border-radius:10px; background:rgba(137,32,27,0.15); border:1px solid var(--border); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:18px">
           🔑
         </div>
         <div>
-          <h3 style="font-size:17px; font-weight:800; color:#f8fafc; margin:0">Reset Password</h3>
-          <div style="font-size:11px; color:#94a3b8; margin-top:2px">Forgot credentials recovery</div>
+          <h3 style="font-size:17px; font-weight:800; color:var(--text-primary); margin:0">Reset Password</h3>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Forgot credentials recovery</div>
         </div>
       </div>
-      <button id="btn-close-forgot-modal" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); width:30px; height:30px; border-radius:50%; font-size:16px; color:#cbd5e1; cursor:pointer; display:flex; align-items:center; justify-content:center">&times;</button>
+      <button id="btn-close-forgot-modal" style="background:var(--bg-surface-hover); border:1px solid var(--border); width:30px; height:30px; border-radius:50%; font-size:16px; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center">&times;</button>
     </div>
 
     <!-- Step 1: Identifier Entry -->
     <div id="forgot-step-identifier" style="display:flex; flex-direction:column; gap:16px">
       <div>
-        <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px">USER ID / EMAIL / MOBILE NUMBER *</label>
-        <input type="text" id="forgot-input-identifier" class="form-control" placeholder="e.g. EMP107, alex@gmail.com, or 9876543210" value="${Utils.escape(initialId)}" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
+        <label style="display:block; font-size:12px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">USER ID / EMAIL / MOBILE NUMBER *</label>
+        <input type="text" id="forgot-input-identifier" class="form-input" placeholder="e.g. EMP107, alex@gmail.com, or 9876543210" value="${Utils.escape(initialId)}" required style="font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box">
       </div>
 
-      <div id="forgot-identifier-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+      <div id="forgot-identifier-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:var(--error); font-size:12px; font-weight:600; line-height:1.45"></div>
 
       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px">
-        <button type="button" id="btn-cancel-forgot-modal" style="padding:9px 18px; font-size:12.5px; font-weight:700; border-radius:10px; background:#ffffff; border:1.5px solid #b91c1c; color:#1e293b; cursor:pointer">Cancel</button>
-        <button type="button" id="btn-verify-identifier" style="padding:9px 20px; font-size:12.5px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Proceed</button>
+        <button type="button" id="btn-cancel-forgot-modal" style="padding:9px 18px; font-size:12.5px; font-weight:700; border-radius:10px; background:transparent; border:1.5px solid var(--primary); color:var(--primary); cursor:pointer">Cancel</button>
+        <button type="button" id="btn-verify-identifier" style="padding:9px 20px; font-size:12.5px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Proceed</button>
       </div>
     </div>
 
     <!-- Step 2A: Direct Password reset trigger (Attempts < 2) -->
     <div id="forgot-step-direct-trigger" style="display:none; flex-direction:column; gap:16px; text-align:center; padding:10px 0;">
-      <div style="font-size:13.5px; color:#cbd5e1; line-height:1.5; margin-bottom:10px;">
+      <div style="font-size:13.5px; color:var(--text-primary); line-height:1.5; margin-bottom:10px;">
         Account identified! Since this is within your first 2 resets, no verification code is required.
       </div>
-      <button type="button" id="btn-trigger-create-password" style="width:100%; padding:12px 0; font-size:13.5px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Create New Password</button>
+      <button type="button" id="btn-trigger-create-password" style="width:100%; padding:12px 0; font-size:13.5px; font-weight:700; border-radius:12px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Create New Password</button>
     </div>
 
     <!-- Step 2B: Verification Options (Attempts >= 2) -->
     <div id="forgot-step-verification-select" style="display:none; flex-direction:column; gap:16px">
-      <div style="font-size:12px; color:#94a3b8; line-height:1.5; margin-bottom:4px;">
+      <div style="font-size:12px; color:var(--text-muted); line-height:1.5; margin-bottom:4px;">
         Verification Required: Please select a method to receive your OTP code:
       </div>
 
@@ -2597,18 +2587,18 @@ function showForgotPasswordModal(initialId = '') {
         <!-- Filled dynamically -->
       </div>
 
-      <div id="forgot-verification-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+      <div id="forgot-verification-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:var(--error); font-size:12px; font-weight:600; line-height:1.45"></div>
 
-      <button type="button" id="btn-send-verification-code" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(220,38,38,0.4)">Send Verification Code</button>
+      <button type="button" id="btn-send-verification-code" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Send Verification Code</button>
 
       <!-- Code Entry Section (Initially Hidden) -->
-      <div id="verification-code-entry" style="display:none; flex-direction:column; gap:12px; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px; margin-top:4px;">
-        <div style="font-size:11px; color:#10b981; font-weight:600; text-align:center; background:rgba(16,185,129,0.08); padding:8px; border-radius:8px; border:1px solid rgba(16,185,129,0.2)">
+      <div id="verification-code-entry" style="display:none; flex-direction:column; gap:12px; border-top:1px solid var(--border); padding-top:16px; margin-top:4px;">
+        <div style="font-size:11px; color:var(--success); font-weight:600; text-align:center; background:rgba(16,185,129,0.08); padding:8px; border-radius:8px; border:1px solid rgba(16,185,129,0.25)">
           Code Sent! For testing, use code: <strong style="font-size:12px; text-decoration:underline;">123456</strong>
         </div>
         <div>
-          <label style="display:block; font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px">ENTER 6-DIGIT CODE / OTP *</label>
-          <input type="text" id="forgot-input-otp" class="form-control" placeholder="e.g. 123456" maxlength="6" style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 14px; border-radius:10px; width:100%; box-sizing:border-box; text-align:center; letter-spacing:4px; font-weight:700">
+          <label style="display:block; font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">ENTER 6-DIGIT CODE / OTP *</label>
+          <input type="text" id="forgot-input-otp" class="form-input" placeholder="e.g. 123456" maxlength="6" style="width:100%; box-sizing:border-box; text-align:center; letter-spacing:4px; font-weight:700">
         </div>
         <button type="button" id="btn-submit-otp" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Verify & Proceed</button>
       </div>
@@ -2617,34 +2607,34 @@ function showForgotPasswordModal(initialId = '') {
     <!-- Step 3: Password Reset Input Form -->
     <form id="forgot-step-new-pass-form" style="display:none; flex-direction:column; gap:16px">
       <div>
-        <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">NEW PASSWORD *</label>
+        <label style="display:block; font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">NEW PASSWORD *</label>
         <div style="position:relative">
-          <input type="password" id="forgot-newpwd" class="form-control" placeholder="Minimum 6 characters" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+          <input type="password" id="forgot-newpwd" class="form-input" placeholder="Minimum 6 characters" required style="padding-right: 38px; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
         </div>
         
         <!-- Strength Indicator -->
         <div style="margin-top: 8px;">
-          <div style="display: flex; gap: 4px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden;">
+          <div style="display: flex; gap: 4px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
             <div id="strength-bar-1" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
             <div id="strength-bar-2" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
             <div id="strength-bar-3" style="flex: 1; height: 100%; background: #475569; transition: background-color 0.2s;"></div>
           </div>
-          <div id="strength-label" style="font-size: 10.5px; color: #94a3b8; margin-top: 5px;">Password Strength: Empty</div>
+          <div id="strength-label" style="font-size: 10.5px; color:var(--text-muted); margin-top: 5px;">Password Strength: Empty</div>
         </div>
       </div>
 
       <div>
-        <label style="display:block; font-size:11.5px; font-weight:700; color:#cbd5e1; margin-bottom:6px">CONFIRM PASSWORD *</label>
+        <label style="display:block; font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">CONFIRM PASSWORD *</label>
         <div style="position:relative">
-          <input type="password" id="forgot-confirmpwd" class="form-control" placeholder="Re-enter new password" required style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+          <input type="password" id="forgot-confirmpwd" class="form-input" placeholder="Re-enter new password" required style="padding-right: 38px; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
         </div>
       </div>
 
-      <div id="forgot-step3-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:12px; font-weight:600; line-height:1.45"></div>
+      <div id="forgot-step3-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:var(--error); font-size:12px; font-weight:600; line-height:1.45"></div>
 
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:16px">
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px; border-top:1px solid var(--border); padding-top:16px">
         <button type="submit" style="width:100%; padding:11px 0; font-size:13px; font-weight:700; border-radius:10px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:#ffffff; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.35)">Update Password</button>
       </div>
     </form>
@@ -2724,25 +2714,25 @@ function showForgotPasswordModal(initialId = '') {
       // Flow B: Show Verification Options (OTP / Email / SMS)
       const optionsContainer = modal.querySelector('#verification-options-container');
       optionsContainer.innerHTML = `
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="email" checked style="accent-color:#dc2626">
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="email" checked style="accent-color:var(--primary)">
           <div>
-            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">Email Verification</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Send verification code to ${obfuscateEmail(verifiedUser.email)}</div>
+            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Email Verification</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send verification code to ${obfuscateEmail(verifiedUser.email)}</div>
           </div>
         </label>
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="sms" style="accent-color:#dc2626">
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="sms" style="accent-color:var(--primary)">
           <div>
-            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">SMS Verification</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Send code to ${obfuscatePhone(verifiedUser.phone || verifiedUser.mobile)}</div>
+            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">SMS Verification</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send code to ${obfuscatePhone(verifiedUser.phone || verifiedUser.mobile)}</div>
           </div>
         </label>
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="otp" style="accent-color:#dc2626">
+        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+          <input type="radio" name="verification-method" value="otp" style="accent-color:var(--primary)">
           <div>
-            <div style="font-size:12.5px; font-weight:700; color:#f8fafc">One-Time Passcode (OTP)</div>
-            <div style="font-size:11px; color:#94a3b8; margin-top:2px">Authenticate with dynamic temporary passcode</div>
+            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">One-Time Passcode (OTP)</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Authenticate with dynamic temporary passcode</div>
           </div>
         </label>
       `;
@@ -6308,17 +6298,17 @@ function openSendWishModal(userId) {
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
     max-width: 440px; width: 92%; padding: 24px;
-    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.4) !important;
-    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px; box-shadow: var(--shadow-lg) !important;
   `;
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px">
-      <h3 style="margin:0; font-size:15px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">🎉 Send Birthday Wishes</h3>
-      <button id="btn-close-wish-modal" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer">&times;</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px">
+      <h3 style="margin:0; font-size:15px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px">🎉 Send Birthday Wishes</h3>
+      <button id="btn-close-wish-modal" style="background:none; border:none; color:var(--text-secondary); font-size:20px; cursor:pointer">&times;</button>
     </div>
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; border:1px solid var(--border)">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:var(--bg-surface-hover); padding:12px; border-radius:10px; border:1px solid var(--border)">
       <div class="clickable-list-avatar" data-photo="${user.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
         ${user.photo ? `
           <img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">
@@ -6329,25 +6319,25 @@ function openSendWishModal(userId) {
         `}
       </div>
       <div>
-        <strong style="color:#ffffff !important; font-size:13.5px">${Utils.escape(user.name)}</strong>
-        <div style="font-size:11px; color:#aab4c0 !important; margin-top:2px">${Utils.escape(user.designation || 'Staff')} (${Utils.escape(user.employeeId)})</div>
+        <strong style="color:var(--text-primary); font-size:13.5px">${Utils.escape(user.name)}</strong>
+        <div style="font-size:11px; color:var(--text-secondary); margin-top:2px">${Utils.escape(user.designation || 'Staff')} (${Utils.escape(user.employeeId)})</div>
       </div>
     </div>
     <div class="form-group" style="margin-bottom:16px">
-      <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">BIRTHDAY MESSAGE</label>
-      <textarea id="wish-message-text" class="form-input" rows="3" style="width:100%; box-sizing:border-box; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; font-size:12.5px; padding:10px; border-radius:10px; resize:vertical">Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, ${user.name}! 🎂🎉</textarea>
+      <label class="form-label" style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px; display:block">BIRTHDAY MESSAGE</label>
+      <textarea id="wish-message-text" class="form-input" rows="3" style="width:100%; box-sizing:border-box; font-size:12.5px; padding:10px; border-radius:10px; resize:vertical">Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, ${user.name}! 🎂🎉</textarea>
     </div>
     <div class="form-group" style="margin-bottom:20px">
-      <label class="form-label" style="font-size:11px; font-weight:700; color:#cbd5e1; margin-bottom:6px; display:block">SENDING METHOD</label>
+      <label class="form-label" style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px; display:block">SENDING METHOD</label>
       <div style="display:flex; flex-direction:column; gap:8px">
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
-          <input type="radio" name="wish-send-method" value="email" checked style="accent-color:#dc2626"> Send by Email (${Utils.escape(user.email || 'N/A')})
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer">
+          <input type="radio" name="wish-send-method" value="email" checked style="accent-color:var(--primary)"> Send by Email (${Utils.escape(user.email || 'N/A')})
         </label>
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
-          <input type="radio" name="wish-send-method" value="notification" style="accent-color:#dc2626"> Send by Notification / Inbox
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer">
+          <input type="radio" name="wish-send-method" value="notification" style="accent-color:var(--primary)"> Send by Notification / Inbox
         </label>
-        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#cbd5e1; cursor:pointer">
-          <input type="radio" name="wish-send-method" value="both" style="accent-color:#dc2626"> Send by Both
+        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer">
+          <input type="radio" name="wish-send-method" value="both" style="accent-color:var(--primary)"> Send by Both
         </label>
       </div>
     </div>
@@ -6404,18 +6394,18 @@ function openAllBirthdaysModal() {
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
     max-width: 600px; width: 92%; padding: 28px;
-    background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
-    border: 1px solid rgba(220, 38, 38, 0.4) !important;
-    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 30px rgba(220, 38, 38, 0.15);
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 20px; box-shadow: var(--shadow-lg) !important;
   `;
 
   modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:14px">
-      <h3 style="margin:0; font-size:16px; font-weight:800; color:#f8fafc; display:flex; align-items:center; gap:8px">📅 Company Birthday Directory</h3>
-      <button id="btn-close-all-birthdays" style="background:none; border:none; color:#cbd5e1; font-size:24px; cursor:pointer">&times;</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:14px">
+      <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px">📅 Company Birthday Directory</h3>
+      <button id="btn-close-all-birthdays" style="background:none; border:none; color:var(--text-secondary); font-size:24px; cursor:pointer">&times;</button>
     </div>
     <div style="margin-bottom:16px">
-      <input type="text" id="birthday-search-input" class="form-input" placeholder="Search by name, department, or month..." style="width:100%; box-sizing:border-box; padding:10px 14px; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.12); color:#f8fafc; border-radius:10px; font-size:13px;">
+      <input type="text" id="birthday-search-input" class="form-input" placeholder="Search by name, department, or month..." style="width:100%; box-sizing:border-box; padding:10px 14px; font-size:13px;">
     </div>
     <div id="all-birthdays-list-container" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height:50vh; padding-right:6px">
       <!-- Filled dynamically -->
@@ -6475,7 +6465,7 @@ function openAllBirthdaysModal() {
         : `<button class="btn btn-directory-wish" data-id="${u.id}" style="width:auto !important; flex-shrink:0; padding:6px 12px; font-size:11px; font-weight:700; background:linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color:#ffffff; border:none; border-radius:8px; cursor:pointer">Wish</button>`;
 
       return `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; gap:10px">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:12px; gap:10px">
           <div style="display:flex; align-items:center; gap:12px; min-width:0; flex:1">
             <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
               ${u.photo ? `
@@ -6487,12 +6477,12 @@ function openAllBirthdaysModal() {
               `}
             </div>
             <div style="min-width:0; flex:1">
-              <strong style="font-size:13px; color:#ffffff !important; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
-              <span style="font-size:11px; color:#ffffff !important; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
+              <strong style="font-size:13px; color:var(--text-primary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
+              <span style="font-size:11px; color:var(--text-secondary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
                 ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
               </span>
-              <span style="font-size:10px; color:#a0aec0 !important; display:block; margin-top:3px">
-                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:#ffffff !important">${formattedDob}</strong>
+              <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px">
+                ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:var(--text-primary)">${formattedDob}</strong>
               </span>
             </div>
           </div>
