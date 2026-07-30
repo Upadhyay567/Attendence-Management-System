@@ -4500,7 +4500,7 @@ function renderEmployeeProfile() {
         box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
         background: var(--bg-surface);
       }
-      .prof-input[readonly] {
+      .prof-input[readonly], .prof-input:disabled {
         background: rgba(120, 120, 120, 0.05);
         color: var(--text-muted);
         cursor: not-allowed;
@@ -4688,29 +4688,29 @@ function renderEmployeeProfile() {
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-name">Full Name <span style="font-weight:400;color:#b0bec5;font-size:11px;">(Letters only)</span></label>
-                <input class="prof-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. John Doe">
+                <input class="prof-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. John Doe" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-empid">Employee ID</label>
-                <input class="prof-input" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required>
+                <input class="prof-input" type="text" id="prof-empid" value="${Utils.escape(user.employeeId)}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-username">Username (Optional)</label>
-                <input class="prof-input" type="text" id="prof-username" value="${Utils.escape(user.username)}">
+                <input class="prof-input" type="text" id="prof-username" value="${Utils.escape(user.username)}" disabled>
               </div>
             </div>
             <div class="prof-field-row">
               <div>
                 <label class="prof-label" for="prof-password">Change Password (Optional)</label>
-                <input class="prof-input" type="text" id="prof-password" placeholder="Leave empty for no change">
+                <input class="prof-input" type="text" id="prof-password" placeholder="Leave empty for no change" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-email">Email Address</label>
-                <input class="prof-input" type="email" id="prof-email" value="${Utils.escape(user.email)}" required>
+                <input class="prof-input" type="email" id="prof-email" value="${Utils.escape(user.email)}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-phone">Mobile Number</label>
-                <input class="prof-input" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" required>
+                <input class="prof-input" type="text" id="prof-phone" value="${Utils.escape(user.phone)}" required disabled>
               </div>
             </div>
           </div>
@@ -4721,11 +4721,11 @@ function renderEmployeeProfile() {
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dob">Date of Birth</label>
-                <input class="prof-input" type="date" id="prof-dob" value="${user.dob || ''}" required>
+                <input class="prof-input" type="date" id="prof-dob" value="${user.dob || ''}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-gender">Gender</label>
-                <select class="prof-input" id="prof-gender" required>
+                <select class="prof-input" id="prof-gender" required disabled>
                   <option value="Male" ${user.gender === 'Male' ? 'selected' : ''}>Male</option>
                   <option value="Female" ${user.gender === 'Female' ? 'selected' : ''}>Female</option>
                   <option value="Other" ${user.gender === 'Other' ? 'selected' : ''}>Other</option>
@@ -4733,17 +4733,17 @@ function renderEmployeeProfile() {
               </div>
               <div>
                 <label class="prof-label" for="prof-emergency">Emergency Contact</label>
-                <input class="prof-input" type="text" id="prof-emergency" value="${Utils.escape(user.emergencyContact || '')}" placeholder="Emergency contact phone" required>
+                <input class="prof-input" type="text" id="prof-emergency" value="${Utils.escape(user.emergencyContact || '')}" placeholder="Emergency contact phone" required disabled>
               </div>
             </div>
             <div class="prof-field-row-2">
               <div>
                 <label class="prof-label" for="prof-city">City</label>
-                <input class="prof-input" type="text" id="prof-city" value="${Utils.escape(user.city)}" placeholder="e.g. Delhi" required>
+                <input class="prof-input" type="text" id="prof-city" value="${Utils.escape(user.city)}" placeholder="e.g. Delhi" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-address">Address</label>
-                <input class="prof-input" type="text" id="prof-address" value="${Utils.escape(user.address)}" placeholder="Street/Building info" required>
+                <input class="prof-input" type="text" id="prof-address" value="${Utils.escape(user.address)}" placeholder="Street/Building info" required disabled>
               </div>
             </div>
           </div>
@@ -4754,25 +4754,25 @@ function renderEmployeeProfile() {
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dept">Department</label>
-                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required>
+                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-designation">Designation</label>
-                <input class="prof-input" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required>
+                <input class="prof-input" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-doj">Date of Joining</label>
-                <input class="prof-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required>
+                <input class="prof-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required disabled>
               </div>
             </div>
             <div class="prof-field-row-2">
               <div>
                 <label class="prof-label" for="prof-worksite">Worksite Location</label>
-                <input class="prof-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly>
+                <input class="prof-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-workshift">Work Shift</label>
-                <input class="prof-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly>
+                <input class="prof-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly disabled>
               </div>
             </div>
           </div>
@@ -4783,27 +4783,27 @@ function renderEmployeeProfile() {
             <div class="prof-field-row">
               <div>
                 <label class="prof-label" for="prof-salary">Base Salary (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required>
+                <input class="prof-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-hra">HRA Allowance (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}">
+                <input class="prof-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-travel">Travel Allowance (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}">
+                <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-pf">PF Deduction (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}">
+                <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-pt">Professional Tax (PT)</label>
-                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}">
+                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-tds">TDS Rate (%)</label>
-                <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100">
+                <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100" disabled>
               </div>
             </div>
           </div>
@@ -4903,6 +4903,23 @@ function renderEmployeeProfile() {
           showToastNotification('✅ Profile photo deleted.', 'success');
         }
         renderEmployeeProfile();
+      }
+    });
+  }
+
+  // Bind Edit Profile button listener to enable only the Personal Details section
+  const editFocusBtn = document.getElementById('btn-profile-edit-focus');
+  if (editFocusBtn) {
+    editFocusBtn.addEventListener('click', () => {
+      const personalDetailsCard = editFocusBtn.closest('.prof-section-card');
+      if (personalDetailsCard) {
+        personalDetailsCard.querySelectorAll('input, select, textarea').forEach(input => {
+          input.removeAttribute('disabled');
+        });
+      }
+      const firstInput = document.getElementById('prof-name');
+      if (firstInput) {
+        firstInput.focus();
       }
     });
   }
