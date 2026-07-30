@@ -4907,16 +4907,37 @@ function renderEmployeeProfile() {
     });
   }
 
-  // Bind Edit Profile button listener to enable only the Personal Details section
+  // Bind Edit Profile button listener based on user role permissions
   const editFocusBtn = document.getElementById('btn-profile-edit-focus');
   if (editFocusBtn) {
     editFocusBtn.addEventListener('click', () => {
-      const personalDetailsCard = editFocusBtn.closest('.prof-section-card');
-      if (personalDetailsCard) {
-        personalDetailsCard.querySelectorAll('input, select, textarea').forEach(input => {
+      const isEmployee = user.role === 'employee';
+      
+      if (isEmployee) {
+        // Employees: only Personal Details and Additional Information sections become editable
+        const personalDetailsCard = editFocusBtn.closest('.prof-section-card');
+        if (personalDetailsCard) {
+          personalDetailsCard.querySelectorAll('input, select, textarea').forEach(input => {
+            input.removeAttribute('disabled');
+          });
+        }
+        
+        const additionalInfoCard = Array.from(document.querySelectorAll('.prof-section-card')).find(card => {
+          const title = card.querySelector('.prof-section-title, h3');
+          return title && title.textContent.trim() === 'Additional Information';
+        });
+        if (additionalInfoCard) {
+          additionalInfoCard.querySelectorAll('input, select, textarea').forEach(input => {
+            input.removeAttribute('disabled');
+          });
+        }
+      } else {
+        // HR and Managers: all profile sections become editable
+        document.querySelectorAll('.prof-input').forEach(input => {
           input.removeAttribute('disabled');
         });
       }
+      
       const firstInput = document.getElementById('prof-name');
       if (firstInput) {
         firstInput.focus();
