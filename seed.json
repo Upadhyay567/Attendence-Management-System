@@ -368,7 +368,7 @@
     },
     {
       "id": "sch_3ebecon",
-      "name": "HS Group Worksite (28.6952, 77.1860) Shift",
+      "name": "MAIN OFFICE  Shift",
       "startTime": "09:00",
       "endTime": "17:00",
       "gracePeriod": 15,
@@ -408,6 +408,19 @@
       "location": "omaxe Office",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0
+    },
+    {
+      "id": "log_usr_david_2026-07-31",
+      "userId": "usr_david",
+      "date": "2026-07-31",
+      "checkIn": "12:19",
+      "checkOut": "12:20",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695160° N, 77.186017° E",
+      "distance": 0,
+      "facePhoto": null
     },
     {
       "id": "log_usr_john_2026-07-30",
@@ -940,19 +953,6 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
-    },
-    {
-      "id": "log_usr_david_2026-07-31",
-      "userId": "usr_david",
-      "date": "2026-07-31",
-      "checkIn": "12:19",
-      "checkOut": "12:20",
-      "status": "Half Day",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695160° N, 77.186017° E",
-      "distance": 0,
-      "facePhoto": null
     }
   ],
   "leaveRequests": [

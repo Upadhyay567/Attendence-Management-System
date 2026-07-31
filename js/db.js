@@ -413,16 +413,44 @@ export const DB = {
     leaveRequests: []
   },
 
+  async resolveApiBase() {
+    if (typeof window.apiBaseUrl === 'undefined') {
+      window.apiBaseUrl = '';
+      try {
+        const configRes = await fetch('/server-config.json');
+        if (configRes.ok) {
+          const config = await configRes.json();
+          if (config && config.port) {
+            const currentPort = window.location.port;
+            if (currentPort !== String(config.port)) {
+              window.apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:${config.port}`;
+            }
+          }
+        }
+      } catch (configErr) {
+        console.warn('Failed to fetch server-config.json. Defaulting to port 8080.', configErr);
+        if (window.location.port !== '8080') {
+          window.apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:8080`;
+        }
+      }
+    }
+  },
+
   async init() {
+    await this.resolveApiBase();
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch('/api/db-state', { signal: controller.signal });
+      const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { signal: controller.signal });
       clearTimeout(timeoutId);
       if (!res.ok) throw new Error('API server returned error status');
       this.data = await res.json();
       console.log('Database state initialized from backend API.');
     } catch (e) {
+      if (window.apiBaseUrl) {
+        console.error('Failed to fetch from backend API. Mock fallback is disabled on Live Server.', e);
+        return;
+      }
       console.warn('Backend API connection failed or timed out. Falling back to local cache.', e);
       try {
         const raw = localStorage.getItem(DB_KEY);
@@ -576,21 +604,24 @@ export const DB = {
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
     window.dispatchEvent(new Event('db_updated'));
 
-    // Async push mutations to MongoDB in background
-    fetch('/api/mutate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'sync', data: this.data })
-    }).then(res => {
-      if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
-    }).catch(err => {
-      console.warn('Network error syncing mutations to MongoDB:', err);
+    this.resolveApiBase().then(() => {
+      // Async push mutations to MongoDB in background
+      fetch((window.apiBaseUrl || '') + '/api/mutate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sync', data: this.data })
+      }).then(res => {
+        if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
+      }).catch(err => {
+        console.warn('Network error syncing mutations to MongoDB:', err);
+      });
     });
   },
 
   async reset() {
     try {
-      const seedRes = await fetch('/seed.json');
+      await this.resolveApiBase();
+      const seedRes = await fetch((window.apiBaseUrl || '') + '/seed.json');
       if (seedRes.ok) {
         this.data = await seedRes.json();
         this.save();

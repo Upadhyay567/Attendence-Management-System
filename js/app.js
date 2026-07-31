@@ -5713,7 +5713,7 @@ function handleMockUpload(userId, file, type) {
     const base64Data = e.target.result;
     let uploadedUrl = '';
     try {
-      const uploadRes = await fetch('/api/upload', {
+      const uploadRes = await fetch((window.apiBaseUrl || '') + '/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, fileData: base64Data })
@@ -8083,7 +8083,7 @@ function openUserModal(userId = null) {
     }
 
     try {
-      await fetch('/api/mutate', {
+      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'sync', data: DB.data })
@@ -12842,7 +12842,7 @@ function requestsPushDBState() {
   if (typeof DB !== 'undefined' && DB.save) {
     // DB.save() already triggers localStorage save. We trigger API save manually:
     try {
-      fetch('/api/mutate', {
+      fetch((window.apiBaseUrl || '') + '/api/mutate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'sync', data: DB.data })
