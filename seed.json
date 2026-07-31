@@ -403,11 +403,12 @@
       "date": "2026-07-31",
       "checkIn": "12:12",
       "checkOut": null,
-      "status": "Pending Verification",
+      "status": "Late",
       "biometricUsed": "none",
-      "location": "omaxe Office",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695267° N, 77.185422° E",
+      "distance": 0.06,
+      "facePhoto": null
     },
     {
       "id": "log_usr_david_2026-07-31",
