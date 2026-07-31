@@ -1833,11 +1833,24 @@ function renderEmployeeDashboard() {
   // Bind Geofence Card Actions (Direct Check-In without passwords/prompts)
   const geoCheckIn = document.getElementById('btn-geofence-checkin');
   if (geoCheckIn) {
-    geoCheckIn.addEventListener('click', () => {
-      const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
-      const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
-      const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
-      
+    geoCheckIn.addEventListener('click', async () => {
+      const coords = await getOneTimeLocationPromise();
+      if (!coords) {
+        alert("❌ Check-in Rejected! Could not acquire GPS coordinates.");
+        return;
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const resolved = DB.resolveUserShiftForDate(user, todayStr);
+      const schedule = DB.getSchedule(resolved.scheduleId);
+      const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+      const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
+
+      const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
+      const inRange = distance <= 100;
+      const resolvedDistance = (distance / 1000).toFixed(2);
+      const coordsStr = `${coords.lat.toFixed(6)}° N, ${coords.lng.toFixed(6)}° E`;
+
       if (!inRange) {
         alert('❌ Check-in Rejected! You are out of range.');
         return;
@@ -1850,7 +1863,7 @@ function renderEmployeeDashboard() {
         timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
       }
       
-      DB.checkIn(user.id, 'none', officeName, false, '', resolvedCoords, resolvedDistance, null, timeOverride);
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, timeOverride);
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
       requestsPushDBState();
       renderEmployeeDashboard();
@@ -1989,6 +2002,52 @@ function renderEmployeeDashboard() {
     }
   }
 
+  function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Earth radius in meters
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+    const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // in meters
+  }
+
+  function getOneTimeLocation(callback) {
+    const mockLoc = sessionStorage.getItem('hs_mock_location') || 'real';
+    if (mockLoc === 'real') {
+      if (!navigator.geolocation) {
+        callback(null);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          callback({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (err) => {
+          console.error("One-time geolocation error:", err);
+          callback(null);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      let selectedCoords = window.OFFICE_COORDINATES[mockLoc];
+      if (!selectedCoords) {
+        const foundKey = Object.keys(window.OFFICE_COORDINATES).find(k => k.toLowerCase() === mockLoc.toLowerCase() || k.toLowerCase().includes(mockLoc.toLowerCase()));
+        selectedCoords = foundKey ? window.OFFICE_COORDINATES[foundKey] : { lat: 28.6978, lng: 77.1408 };
+      }
+      callback(selectedCoords);
+    }
+  }
+
+  function getOneTimeLocationPromise() {
+    return new Promise((resolve) => {
+      getOneTimeLocation((coords) => resolve(coords));
+    });
+  }
+
   function updateGpsUI(val) {
     const badge = document.getElementById('gps-status-badge');
     const radar = document.getElementById('gps-radar');
@@ -2005,6 +2064,137 @@ function renderEmployeeDashboard() {
     const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
     const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
     const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
+
+    const todayLog = DB.getTodayLog(user.id);
+    const isCheckedIn = todayLog && todayLog.checkIn && !todayLog.checkOut && todayLog.status !== 'Pending Verification';
+
+    if (!isCheckedIn) {
+      // Clear any active GPS watch/interval
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+      if (window.radarInterval) {
+        clearInterval(window.radarInterval);
+        window.radarInterval = null;
+      }
+
+      // Update badge to Offline (styled grey)
+      if (badge) {
+        badge.textContent = 'Offline';
+        badge.className = 'badge';
+        badge.style.background = 'rgba(255,255,255,0.08)';
+        badge.style.color = 'var(--text-secondary)';
+        badge.style.border = '1px solid rgba(255,255,255,0.1)';
+      }
+      if (radar) {
+        radar.className = 'gps-radar-indicator';
+        radar.style.background = 'var(--text-secondary)';
+        radar.style.boxShadow = 'none';
+      }
+
+      // Set other displays to offline/inactive
+      if (coordsDisplay) coordsDisplay.textContent = 'Offline';
+      if (distDisplay) distDisplay.textContent = '--';
+      
+      const statusSubDisplay = document.getElementById('gps-status-sub-display');
+      if (statusSubDisplay) {
+        statusSubDisplay.textContent = 'Tracking Inactive';
+      }
+      
+      const addressDisplay = document.getElementById('gps-address-display');
+      if (addressDisplay) {
+        addressDisplay.textContent = 'Tracking Inactive';
+      }
+
+      const timestampDisplay = document.getElementById('gps-timestamp-display');
+      if (timestampDisplay) {
+        timestampDisplay.textContent = '--';
+      }
+
+      const accuracyDisplay = document.getElementById('gps-accuracy-display');
+      if (accuracyDisplay) {
+        accuracyDisplay.textContent = '--';
+      }
+
+      const worksiteCoordsDisplay = document.getElementById('gps-worksite-coords-display');
+      if (worksiteCoordsDisplay) {
+        worksiteCoordsDisplay.textContent = `${targetCoords.lat.toFixed(6)}° N, ${targetCoords.lng.toFixed(6)}° E`;
+      }
+      const worksiteNameDisplay = document.getElementById('gps-worksite-name-display');
+      if (worksiteNameDisplay) {
+        worksiteNameDisplay.textContent = officeName;
+      }
+
+      // Clear sessionStorage items to avoid stale data
+      sessionStorage.removeItem('hs_current_resolved_coords');
+      sessionStorage.removeItem('hs_current_resolved_distance');
+      sessionStorage.removeItem('hs_current_resolved_in_range');
+      sessionStorage.removeItem('hs_pending_auto_checkin_time');
+
+      let justBlock = document.getElementById('gps-justification-block');
+      if (justBlock) {
+        justBlock.style.display = 'none';
+      }
+
+      // Enable check-in buttons so they can click to start check-in flow, disable checkout buttons
+      if (regularIn) {
+        regularIn.removeAttribute('disabled');
+        regularIn.style.opacity = '1';
+        regularIn.style.cursor = 'pointer';
+        regularIn.setAttribute('title', 'Click to check in');
+      }
+      if (geoCheckIn) {
+        geoCheckIn.removeAttribute('disabled');
+        geoCheckIn.style.opacity = '1';
+        geoCheckIn.style.cursor = 'pointer';
+        geoCheckIn.setAttribute('title', 'Click to check in');
+      }
+      if (regularOut) {
+        regularOut.setAttribute('disabled', 'true');
+        regularOut.style.opacity = '0.4';
+        regularOut.style.cursor = 'not-allowed';
+        regularOut.setAttribute('title', 'Offline');
+      }
+      if (geoCheckOut) {
+        geoCheckOut.setAttribute('disabled', 'true');
+        geoCheckOut.style.opacity = '0.4';
+        geoCheckOut.style.cursor = 'not-allowed';
+        geoCheckOut.setAttribute('title', 'Offline');
+      }
+
+      const btnGroup = document.getElementById('geofence-btn-group');
+      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
+      if (checkedOutMsg) {
+        if (todayLog && todayLog.checkOut) {
+          if (btnGroup) btnGroup.style.display = 'none';
+          checkedOutMsg.style.display = 'block';
+        } else {
+          if (btnGroup) btnGroup.style.display = 'grid';
+          checkedOutMsg.style.display = 'none';
+          if (geoCheckIn) geoCheckIn.style.display = 'block';
+          if (geoCheckOut) geoCheckOut.style.display = 'block';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+        }
+      }
+
+      // Draw static offline radar map
+      drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, null, null, null, null, officeName, true);
+      return;
+    }
+
+    // Reset inline styles to allow CSS classes to take effect
+    if (badge) {
+      badge.style.background = '';
+      badge.style.color = '';
+      badge.style.border = '';
+    }
+    if (radar) {
+      radar.style.background = '';
+      radar.style.boxShadow = '';
+    }
 
     let justBlock = document.getElementById('gps-justification-block');
     if (!justBlock) {
@@ -2038,19 +2228,7 @@ function renderEmployeeDashboard() {
       }
     }
 
-    // Helper to calculate distance (Haversine Formula)
-    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3; // Earth radius in meters
-      const phi1 = lat1 * Math.PI / 180;
-      const phi2 = lat2 * Math.PI / 180;
-      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-                Math.cos(phi1) * Math.cos(phi2) *
-                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c; // in meters
-    }
+
 
     function applyLocationState(currentLat, currentLng, coordsStr) {
       const distance = calculateHaversineDistance(currentLat, currentLng, targetCoords.lat, targetCoords.lng);
@@ -3945,15 +4123,23 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
 }
 
 async function handlePinClockIn(userId) {
-  const resolvedCoords = sessionStorage.getItem('hs_current_resolved_coords') || '28.6978° N, 77.1408° E';
-  const resolvedDistance = parseFloat(sessionStorage.getItem('hs_current_resolved_distance') || '0');
-  const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+  const coords = await getOneTimeLocationPromise();
+  if (!coords) {
+    alert("❌ Check-in Rejected! Could not acquire GPS coordinates.");
+    return;
+  }
 
   const user = DB.getUser(userId);
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr);
   const schedule = DB.getSchedule(resolved.scheduleId);
   const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+  const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
+
+  const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
+  const inRange = distance <= 100;
+  const resolvedDistance = (distance / 1000).toFixed(2);
+  const coordsStr = `${coords.lat.toFixed(6)}° N, ${coords.lng.toFixed(6)}° E`;
 
   if (!inRange) {
     alert(`❌ Check-in Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock in.`);
@@ -3969,7 +4155,7 @@ async function handlePinClockIn(userId) {
       const date = new Date(pendingTime);
       timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     }
-    DB.checkIn(userId, 'none', officeName, false, '', resolvedCoords, resolvedDistance, null, timeOverride);
+    DB.checkIn(userId, 'none', officeName, false, '', coordsStr, resolvedDistance, null, timeOverride);
     sessionStorage.removeItem('hs_pending_auto_checkin_time');
     renderEmployeeDashboard();
   } else {
@@ -12332,7 +12518,7 @@ function addSystemNotificationAlert(title, desc = '') {
 // GEOLOCATION RADAR MAP & WORKSITE LOCATION MANAGEMENT PANEL
 // =============================================================
 
-function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, distance, inRange, targetName) {
+function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, distance, inRange, targetName, isOffline = false) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   
@@ -12354,7 +12540,7 @@ function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, di
   const cy = h / 2;
   
   // Concentric radar rings
-  ctx.strokeStyle = 'rgba(251, 191, 36, 0.1)';
+  ctx.strokeStyle = isOffline ? 'rgba(255, 255, 255, 0.05)' : 'rgba(251, 191, 36, 0.1)';
   ctx.lineWidth = 1;
   for (let r = 30; r < Math.max(w, h); r += 30) {
     ctx.beginPath();
@@ -12363,7 +12549,7 @@ function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, di
   }
   
   // Crosshairs grid
-  ctx.strokeStyle = 'rgba(251, 191, 36, 0.05)';
+  ctx.strokeStyle = isOffline ? 'rgba(255, 255, 255, 0.02)' : 'rgba(251, 191, 36, 0.05)';
   ctx.beginPath();
   ctx.moveTo(0, cy);
   ctx.lineTo(w, cy);
@@ -12373,8 +12559,8 @@ function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, di
   
   // Geofence Circle (100 meters, mapped to 40px radius)
   const geofenceRadius = 40;
-  ctx.strokeStyle = inRange ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
-  ctx.fillStyle = inRange ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.02)';
+  ctx.strokeStyle = isOffline ? 'rgba(255, 255, 255, 0.15)' : (inRange ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)');
+  ctx.fillStyle = isOffline ? 'rgba(255, 255, 255, 0.02)' : (inRange ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.02)');
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, geofenceRadius, 0, 2 * Math.PI);
@@ -12382,63 +12568,73 @@ function drawRadarMap(canvasId, targetLat, targetLng, currentLat, currentLng, di
   ctx.stroke();
   
   // Sonar sweeps rotation line based on date
-  const sweepAngle = (Date.now() / 1500) % (2 * Math.PI);
-  ctx.strokeStyle = inRange ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(sweepAngle) * (Math.max(w, h)), cy + Math.sin(sweepAngle) * (Math.max(w, h)));
-  ctx.stroke();
+  if (!isOffline) {
+    const sweepAngle = (Date.now() / 1500) % (2 * Math.PI);
+    ctx.strokeStyle = inRange ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(sweepAngle) * (Math.max(w, h)), cy + Math.sin(sweepAngle) * (Math.max(w, h)));
+    ctx.stroke();
+  }
   
-  // Draw fixed worksite marker (use hex - canvas doesn't support CSS var())
-  ctx.fillStyle = '#89201B';
-  ctx.shadowColor = '#89201B';
-  ctx.shadowBlur = 10;
+  // Draw fixed worksite marker
+  ctx.fillStyle = isOffline ? '#475569' : '#89201B';
+  ctx.shadowColor = isOffline ? 'transparent' : '#89201B';
+  ctx.shadowBlur = isOffline ? 0 : 10;
   ctx.beginPath();
   ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
   ctx.fill();
   ctx.shadowBlur = 0; // reset glow
   
   // Label for worksite
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = isOffline ? 'rgba(255, 255, 255, 0.4)' : '#ffffff';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(targetName || 'Worksite', cx, cy - 10);
   
-  // Draw Employee dot marker using proper meters-to-pixel projection
-  // Convert lat/lng differences to meters (Delhi ~28.7°N latitude)
-  const cosLat = Math.cos(targetLat * Math.PI / 180);
-  const xMeters = (currentLng - targetLng) * 111139 * cosLat; // East-West offset in meters
-  const yMeters = (currentLat - targetLat) * 111139;           // North-South offset in meters
-  
-  // Scale: 100 meters = geofenceRadius (40px)
-  const metersPerPixel = 100 / geofenceRadius;
-  let exRaw = xMeters / metersPerPixel;  // positive = right (East)
-  let eyRaw = -yMeters / metersPerPixel; // negative = up (North, screen Y inverted)
-  
-  // Constrain to canvas bounds
-  const maxOffset = Math.min(w, h) / 2 - 12;
-  const rawDist = Math.sqrt(exRaw * exRaw + eyRaw * eyRaw);
-  if (rawDist > maxOffset) {
-    const scale = maxOffset / rawDist;
-    exRaw *= scale;
-    eyRaw *= scale;
+  if (isOffline) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TRACKING OFFLINE', cx, h - 10);
   }
   
-  const ex = cx + exRaw;
-  const ey = cy + eyRaw;
-  
-  const pulseR = 5 + Math.sin(Date.now() / 150) * 1.5;
-  ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
-  ctx.shadowColor = inRange ? '#10b981' : '#ef4444';
-  ctx.shadowBlur = 8;
-  ctx.beginPath();
-  ctx.arc(ex, ey, pulseR, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
-  ctx.fillText('Live GPS', ex, ey - 10);
+  // Draw Employee dot marker using proper meters-to-pixel projection
+  if (!isOffline && currentLat !== null && currentLng !== null) {
+    const cosLat = Math.cos(targetLat * Math.PI / 180);
+    const xMeters = (currentLng - targetLng) * 111139 * cosLat; // East-West offset in meters
+    const yMeters = (currentLat - targetLat) * 111139;           // North-South offset in meters
+    
+    // Scale: 100 meters = geofenceRadius (40px)
+    const metersPerPixel = 100 / geofenceRadius;
+    let exRaw = xMeters / metersPerPixel;  // positive = right (East)
+    let eyRaw = -yMeters / metersPerPixel; // negative = up (North, screen Y inverted)
+    
+    // Constrain to canvas bounds
+    const maxOffset = Math.min(w, h) / 2 - 12;
+    const rawDist = Math.sqrt(exRaw * exRaw + eyRaw * eyRaw);
+    if (rawDist > maxOffset) {
+      const scale = maxOffset / rawDist;
+      exRaw *= scale;
+      eyRaw *= scale;
+    }
+    
+    const ex = cx + exRaw;
+    const ey = cy + eyRaw;
+    
+    const pulseR = 5 + Math.sin(Date.now() / 150) * 1.5;
+    ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
+    ctx.shadowColor = inRange ? '#10b981' : '#ef4444';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(ex, ey, pulseR, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    ctx.fillStyle = inRange ? '#10b981' : '#ef4444';
+    ctx.fillText('Live GPS', ex, ey - 10);
+  }
 }
 
 function renderAdminLocations() {
