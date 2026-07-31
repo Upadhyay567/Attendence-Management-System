@@ -121,7 +121,10 @@
       "status": "Active",
       "profileEditCount": 3,
       "photo": null,
-      "state": "delhi"
+      "state": "delhi",
+      "verificationStatuses": {
+        "resume": "Rejected"
+      }
     },
     {
       "id": "usr_sarah",
@@ -1007,6 +1010,15 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_d099b81",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, shubham HR Coordinator! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-07-30",
+      "author": "HR Department",
+      "targetUserId": "usr_hr"
+    },
     {
       "id": "ann_m9lbfsf",
       "title": "🎂 Happy Birthday Wish!",
