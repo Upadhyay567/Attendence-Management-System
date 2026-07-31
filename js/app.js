@@ -7013,7 +7013,7 @@ async function renderAdminDashboard() {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn);
+    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn && !l.checkOut);
     const lateToday = presentToday.filter(l => l.status === 'Late');
     const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate);
     
@@ -7021,7 +7021,8 @@ async function renderAdminDashboard() {
     const lateCount = lateToday.length;
     const leaveCount = onLeaveToday.length;
     const totalEmployees = users.length;
-    const absentCount = totalEmployees - presentCount - leaveCount;
+    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn).length;
+    const absentCount = totalEmployees - checkedInAtAllCount - leaveCount;
     
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
       if (s.status !== 'Pending Manager') return false;
@@ -7207,7 +7208,13 @@ async function renderAdminDashboard() {
           const distKm = parseFloat(l.distance) || 0;
           const distM = Math.round(distKm * 1000);
           let gpsCellHTML;
-          if (!l.location) {
+          if (l.checkOut) {
+            gpsCellHTML = `
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;border-radius:50%;background:var(--text-secondary);flex-shrink:0;"></span>
+                <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">OFFLINE</span>
+              </div>`;
+          } else if (!l.location) {
             gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">— No GPS Data</span>`;
           } else if (distKm <= 0.1) {
             const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
@@ -7315,6 +7322,25 @@ async function renderAdminDashboard() {
 
   // Populate all views with the loaded state
   updateDashboardViews();
+
+  if (window.adminDashboardInterval) {
+    clearInterval(window.adminDashboardInterval);
+    window.adminDashboardInterval = null;
+  }
+
+  window.adminDashboardInterval = setInterval(async () => {
+    if (window.location.hash === '#admin-dashboard') {
+      try {
+        await DB.init();
+        updateDashboardViews();
+      } catch (err) {
+        console.warn("Auto-refresh DB load failed:", err);
+      }
+    } else {
+      clearInterval(window.adminDashboardInterval);
+      window.adminDashboardInterval = null;
+    }
+  }, 2000);
 }
 
 function renderAdminUsers() {

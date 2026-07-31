@@ -80,7 +80,7 @@
       "password": "JohnPassword123!",
       "role": "employee",
       "managerId": "usr_manager",
-      "scheduleId": "sch_q8jji9v",
+      "scheduleId": "sch_3ebecon",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
       "allowanceTravel": 3000,
@@ -134,7 +134,7 @@
       "password": "SarahPassword123!",
       "role": "employee",
       "managerId": "usr_manager",
-      "scheduleId": "sch_mfl8wvv",
+      "scheduleId": "sch_3ebecon",
       "baseSalary": 62000,
       "allowanceHRA": 9300,
       "allowanceTravel": 3000,
@@ -161,7 +161,7 @@
       ],
       "resume": null,
       "aadhar": null,
-      "preferredLocation": "omaxe Office",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "assignedById": "usr_manager",
       "status": "Active",
       "profileVerificationStatus": "Approved",
@@ -177,7 +177,7 @@
       "name": "David Lightman",
       "password": "DavidPassword123!",
       "role": "employee",
-      "scheduleId": "sch_bgpyqv3",
+      "scheduleId": "sch_q8jji9v",
       "baseSalary": 48000,
       "allowanceHRA": 7200,
       "allowanceTravel": 3000,
@@ -185,7 +185,7 @@
       "deductionPT": 200,
       "deductionTDS": 5,
       "phone": "+91 9777733333",
-      "email": "david.l@surya.group",
+      "email": "david.125@gmail.com",
       "dob": "1997-03-15",
       "address": "B-4, Block C, Rohini Sector 8",
       "city": "Delhi",
@@ -197,9 +197,15 @@
       "documents": [],
       "resume": null,
       "aadhar": null,
-      "preferredLocation": "chandani chowk",
-      "assignedById": "usr_admin",
-      "status": "Active"
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "assignedById": "usr_7kek2wc",
+      "status": "Active",
+      "managerId": "",
+      "profileVerificationStatus": "Approved",
+      "photo": null,
+      "state": "delhi",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     },
     {
       "id": "usr_t42n6xh",
@@ -326,7 +332,7 @@
         4,
         5
       ],
-      "location": "Noida sector 61"
+      "location": "HS Group Worksite (28.6952, 77.1860)"
     },
     {
       "id": "sch_mfl8wvv",
@@ -390,6 +396,18 @@
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-07-31",
+      "userId": "usr_sarah",
+      "date": "2026-07-31",
+      "checkIn": "12:12",
+      "checkOut": null,
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "omaxe Office",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0
     },
     {
       "id": "log_usr_john_2026-07-30",
@@ -922,6 +940,19 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_david_2026-07-31",
+      "userId": "usr_david",
+      "date": "2026-07-31",
+      "checkIn": "12:19",
+      "checkOut": "12:20",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695160° N, 77.186017° E",
+      "distance": 0,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [
@@ -1023,15 +1054,6 @@
     }
   ],
   "announcements": [
-    {
-      "id": "ann_d099b81",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, shubham HR Coordinator! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_hr"
-    },
     {
       "id": "ann_m9lbfsf",
       "title": "🎂 Happy Birthday Wish!",
