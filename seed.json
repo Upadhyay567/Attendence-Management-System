@@ -379,6 +379,19 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_john_2026-07-31",
+      "userId": "usr_john",
+      "date": "2026-07-31",
+      "checkIn": "10:53",
+      "checkOut": "11:57",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_john_2026-07-30",
       "userId": "usr_john",
       "date": "2026-07-30",
@@ -909,19 +922,6 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
-    },
-    {
-      "id": "log_usr_john_2026-07-31",
-      "userId": "usr_john",
-      "date": "2026-07-31",
-      "checkIn": "10:53",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
     }
   ],
   "leaveRequests": [

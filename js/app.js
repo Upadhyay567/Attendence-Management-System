@@ -2066,9 +2066,9 @@ function renderEmployeeDashboard() {
     const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
 
     const todayLog = DB.getTodayLog(user.id);
-    const isCheckedIn = todayLog && todayLog.checkIn && !todayLog.checkOut && todayLog.status !== 'Pending Verification';
+    const isOffline = !!(todayLog && todayLog.checkOut);
 
-    if (!isCheckedIn) {
+    if (isOffline) {
       // Clear any active GPS watch/interval
       if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
         try {
@@ -4178,6 +4178,7 @@ async function handleClockOut(userId) {
 
   if (await confirm('Clock Out?')) {
     DB.checkOut(userId);
+    requestsPushDBState();
     renderEmployeeDashboard();
   }
 }
