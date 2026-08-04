@@ -2512,7 +2512,7 @@ body {
 .sidebar-brand-logo {
   display: flex;
   align-items: center;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   text-decoration: none;
   flex: 1;
   border-radius: 10px !important;
@@ -2547,8 +2547,9 @@ body.light-theme .sidebar-brand-logo:hover {
   image-rendering: -webkit-optimize-contrast !important;
   mix-blend-mode: multiply !important;
   position: absolute !important;
-  left: 8px !important;
-  top: 0 !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
