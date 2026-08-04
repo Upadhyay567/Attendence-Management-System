@@ -27,6 +27,12 @@ export const Auth = {
   },
 
   getCurrentUser() {
+    if (this.currentUser && this.currentUser.id) {
+      const freshUser = DB.getUser(this.currentUser.id);
+      if (freshUser) {
+        this.currentUser = freshUser;
+      }
+    }
     return this.currentUser;
   },
 

@@ -314,12 +314,33 @@ const startApp = async () => {
 
   const handleLiveReRender = async () => {
     await DB.init();
+
+    // Check if the current user has been deactivated
+    const currentUser = Auth.getCurrentUser();
+    if (currentUser) {
+      const freshUser = DB.getUser(currentUser.id);
+      if (freshUser && freshUser.status === 'Inactive') {
+        Auth.logout();
+        window.location.hash = '#login';
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
+        } else {
+          alert('Your account is Inactive. Please contact HR.');
+        }
+        return;
+      }
+    }
+
     updateNotificationsUI();
     const currentHash = window.location.hash || '#dashboard';
     if (currentHash === '#dashboard') {
       renderEmployeeDashboard();
     } else if (currentHash === '#admin-schedules') {
       renderAdminSchedules();
+    } else if (currentHash === '#admin-accounts') {
+      renderAccountManagementView();
+    } else if (currentHash === '#admin-users') {
+      renderAdminUsers();
     }
   };
 
@@ -423,7 +444,20 @@ function setupRouter() {
       }
 
       const hash = window.location.hash || '#login';
-      const user = Auth.getCurrentUser();
+      let user = Auth.getCurrentUser();
+
+      if (user) {
+        const freshUser = DB.getUser(user.id);
+        if (freshUser && freshUser.status === 'Inactive') {
+          Auth.logout();
+          user = null;
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
+          } else {
+            alert('Your account is Inactive. Please contact HR.');
+          }
+        }
+      }
 
       if (hash === '#login') {
         if (user) {
@@ -3073,7 +3107,7 @@ function showForgotPasswordModal(initialId = '') {
 // ACCOUNT MANAGEMENT MODULE (HR & Manager Only)
 // =========================================================================
 function renderAccountManagementView() {
-  const root = document.getElementById('main-content');
+  const root = document.getElementById('main-view');
   if (!root) return;
 
   const currentUser = Auth.getCurrentUser();
@@ -6996,7 +7030,7 @@ async function renderAdminDashboard() {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
     const isManager = freshUser.role === 'manager';
 
-    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager');
+    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
     if (isManager) {
       users = users.filter(u => u.managerId === currentUser.id);
     }
@@ -7332,6 +7366,22 @@ async function renderAdminDashboard() {
     if (window.location.hash === '#admin-dashboard') {
       try {
         await DB.init();
+
+        // Check if the current user has been deactivated
+        const freshUser = DB.getUser(currentUser.id);
+        if (freshUser && freshUser.status === 'Inactive') {
+          Auth.logout();
+          window.location.hash = '#login';
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
+          } else {
+            alert('Your account is Inactive. Please contact HR.');
+          }
+          clearInterval(window.adminDashboardInterval);
+          window.adminDashboardInterval = null;
+          return;
+        }
+
         updateDashboardViews();
       } catch (err) {
         console.warn("Auto-refresh DB load failed:", err);

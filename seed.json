@@ -385,6 +385,18 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_john_2026-08-04",
+      "userId": "usr_john",
+      "date": "2026-08-04",
+      "checkIn": "09:55",
+      "checkOut": "11:44",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695164° N, 77.185538° E",
+      "distance": 0.05
+    },
+    {
       "id": "log_usr_john_2026-07-31",
       "userId": "usr_john",
       "date": "2026-07-31",
@@ -956,16 +968,16 @@
       "location": "Kohat Enclave, Pitampura, Delhi"
     },
     {
-      "id": "log_usr_john_2026-08-04",
-      "userId": "usr_john",
+      "id": "log_usr_david_2026-08-04",
+      "userId": "usr_david",
       "date": "2026-08-04",
-      "checkIn": "09:55",
+      "checkIn": "11:45",
       "checkOut": null,
       "status": "Pending Verification",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695164° N, 77.185538° E",
-      "distance": 0.05
+      "coords": "28.694495° N, 77.185479° E",
+      "distance": 0.09
     }
   ],
   "leaveRequests": [
