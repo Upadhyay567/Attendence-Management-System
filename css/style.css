@@ -2562,8 +2562,11 @@ body.light-theme .sidebar-brand-logo:hover {
 }
 
 @media (min-width: 769px) {
-  .sidebar-toggle-btn {
+  .sidebar {
     display: none !important;
+  }
+  .sidebar.active {
+    display: flex !important;
   }
 }
 

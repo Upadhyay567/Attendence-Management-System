@@ -1145,6 +1145,8 @@ function renderAppShell() {
   const user = Auth.getCurrentUser();
   const avatarText = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   const labels = Translations[currentLang] || Translations.en;
+  const isMobile = window.innerWidth <= 768;
+  const defaultActive = !isMobile;
 
   let menuHTML = '';
   const baseRole = DB.getUserBaseRole(user.role);
@@ -1216,20 +1218,13 @@ function renderAppShell() {
   }
 
   root.innerHTML = `
-    <div class="mobile-top-bar">
-      <button class="hamburger-menu-btn" id="mobile-hamburger-btn" title="Open Navigation">
-        <svg style="width:24px;height:24px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-      </button>
-      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;color:#ffffff;background:linear-gradient(135deg,#c93830,#89201B);-webkit-background-clip:text;-webkit-text-fill-color:transparent">HS Group Delhi</div>
-      <div style="width:36px;height:36px"></div>
-    </div>
-    <div class="sidebar-overlay" id="sidebar-overlay-el"></div>
-    <aside class="sidebar" id="sidebar-aside-el">
+    <div class="sidebar-overlay ${defaultActive ? 'active' : ''}" id="sidebar-overlay-el"></div>
+    <aside class="sidebar ${defaultActive ? 'active' : ''}" id="sidebar-aside-el">
       <div class="sidebar-brand">
         <a href="#dashboard" class="sidebar-brand-logo" title="House of Surya">
           <img src="assets/surya_logo_hd.png?v=6" alt="House of Surya Logo" class="surya-brand-img" />
         </a>
-        <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="Close Navigation">
+        <button class="sidebar-toggle-btn" id="sidebar-close-btn" title="Close Navigation">
           <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
@@ -1254,9 +1249,19 @@ function renderAppShell() {
     <main class="main-content">
       <!-- Top Dark Header Navigation Bar -->
       <header class="top-nav-bar">
-        <div class="top-nav-search">
-          <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-          <input type="text" placeholder="Search..." id="global-header-search">
+        <div style="display:flex; align-items:center; gap:12px">
+          <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="${defaultActive ? 'Close Navigation' : 'Open Navigation'}" style="margin-right: 4px; display: flex; align-items: center; justify-content: center;">
+            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
+              ${defaultActive ? 
+                `<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>` : 
+                `<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>`
+              }
+            </svg>
+          </button>
+          <div class="top-nav-search">
+            <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" placeholder="Search..." id="global-header-search">
+          </div>
         </div>
         <div class="top-nav-right">
           <div class="messages-widget" style="position:relative">
@@ -1338,23 +1343,40 @@ function renderAppShell() {
   const sidebarOverlay = document.getElementById('sidebar-overlay-el');
   const sidebarAside = document.getElementById('sidebar-aside-el');
   const mobileToggle = document.getElementById('mobile-sidebar-toggle');
+  const sidebarClose = document.getElementById('sidebar-close-btn');
+
+  const openSidebar = () => {
+    if (sidebarAside) sidebarAside.classList.add('active');
+    if (sidebarOverlay) sidebarOverlay.classList.add('active');
+    if (mobileToggle) {
+      mobileToggle.querySelector('svg').innerHTML = '<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>';
+      mobileToggle.setAttribute('title', 'Close Navigation');
+    }
+  };
 
   const closeSidebar = () => {
     if (sidebarAside) sidebarAside.classList.remove('active');
     if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    if (mobileToggle) {
+      mobileToggle.querySelector('svg').innerHTML = '<path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>';
+      mobileToggle.setAttribute('title', 'Open Navigation');
+    }
   };
-
-  const mobileHamburger = document.getElementById('mobile-hamburger-btn');
-  if (mobileHamburger) {
-    mobileHamburger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (sidebarAside) sidebarAside.classList.add('active');
-      if (sidebarOverlay) sidebarOverlay.classList.add('active');
-    });
-  }
 
   if (mobileToggle) {
     mobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = sidebarAside && sidebarAside.classList.contains('active');
+      if (isOpen) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+  }
+
+  if (sidebarClose) {
+    sidebarClose.addEventListener('click', (e) => {
       e.stopPropagation();
       closeSidebar();
     });
