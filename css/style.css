@@ -2512,14 +2512,17 @@ body {
 .sidebar-brand-logo {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start !important;
   text-decoration: none;
   flex: 1;
   border-radius: 10px !important;
   background: #FDF8F2 !important;
-  padding: 6px 12px !important;
+  padding: 6px 8px !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(137, 32, 27, 0.4) !important;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  height: 48px !important;
+  overflow: hidden !important;
 }
 
 .sidebar-brand-logo:hover {
@@ -2543,6 +2546,31 @@ body.light-theme .sidebar-brand-logo:hover {
   object-fit: contain !important;
   image-rendering: -webkit-optimize-contrast !important;
   mix-blend-mode: multiply !important;
+  position: absolute !important;
+  left: 8px !important;
+  top: 0 !important;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.surya-brand-img.full-logo {
+  opacity: 1 !important;
+}
+
+.surya-brand-img.favicon-logo {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  max-width: 48px !important;
+}
+
+/* Collapsed state */
+.sidebar:not(.active) .surya-brand-img.full-logo {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.sidebar:not(.active) .surya-brand-img.favicon-logo {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .sidebar-toggle-btn {
