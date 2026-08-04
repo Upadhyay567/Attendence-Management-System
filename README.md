@@ -67,9 +67,9 @@ Equipped with **GPS Geofence Validation**, **Multi-Threaded Dual Servers** (Pyth
 | :--- | :--- | :--- |
 | **Frontend Core** | HTML5, JavaScript (ES6+ Modules) | Modular SPA Architecture without heavy frameworks |
 | **Styling & Theme** | Vanilla CSS3 (Custom Tokens) | Glassmorphic design, HSL palette, dark theme, responsive grid |
-| **Live Server** | Python `http.server.ThreadingHTTPServer` | Multi-threaded HTTP web server listening on Port `8012` |
-| **Backend API** | Node.js + Express | RESTful backend microservice listening on Port `8013` |
-| **Database Sync** | JSON Persistence (`seed.json`) & MongoDB Sync | Real-time dual-server state synchronization |
+| **Live Server** | Python `http.server.ThreadingHTTPServer` | Multi-threaded HTTP web server listening on Port `8080` |
+| **Backend API** | Node.js + Express | RESTful backend service listening on Port `8080` |
+| **Database Sync** | JSON Persistence (`seed.json`) & MongoDB Sync | Real-time state synchronization |
 | **Security** | Custom Hashing (`$hash$`) | Dual-credential authentication & password protection |
 
 ---
@@ -93,7 +93,7 @@ Double-click **`run-server.bat`** in Windows File Explorer, or run in terminal:
 run-server.bat
 ```
 
-> **Note**: `run-server.bat` automatically launches the Python Multi-Threaded Server on `http://localhost:8012` and Node.js Express server on `http://localhost:8013`, opening your default browser after a 2-second setup delay.
+> **Note**: `run-server.bat` automatically launches the Node.js Express server on `http://localhost:8080` (if Node.js is installed), or falls back to the Python Multi-Threaded HTTP Server on `http://localhost:8080` (if Python is installed), opening your default browser after a 2-second setup delay. If neither is available, it opens `index.html` directly.
 
 ---
 
@@ -117,11 +117,11 @@ To access the platform on your **Mobile Device** or any laptop connected to the 
 1. Open `cmd` and find your computer's local IP (e.g. `192.168.1.72`).
 2. Open the mobile browser and visit:
    ```text
-   http://<YOUR_LOCAL_IP>:8012
+   http://<YOUR_LOCAL_IP>:8080
    ```
 3. *(Optional)* Add a Windows Firewall rule if mobile access is blocked:
    ```cmd
-   netsh advfirewall firewall add rule name="HS Group Live Server" dir=in action=allow protocol=TCP localport=8012
+   netsh advfirewall firewall add rule name="HS Group Live Server" dir=in action=allow protocol=TCP localport=8080
    ```
 
 ---
@@ -131,8 +131,8 @@ To access the platform on your **Mobile Device** or any laptop connected to the 
 ```text
 Attendence-Management-System/
 ├── index.html                  # Main SPA Container & Views
-├── server.py                   # Multi-Threaded Python HTTPServer (Port 8012)
-├── server.js                   # Node.js Express Backend API (Port 8013)
+├── server.py                   # Multi-Threaded Python HTTPServer (Port 8080)
+├── server.js                   # Node.js Express Backend API (Port 8080)
 ├── run-server.bat              # Concurrent Dual-Server Windows Launcher
 ├── seed.json                   # Unified State Database & Seeding Store
 ├── css/
