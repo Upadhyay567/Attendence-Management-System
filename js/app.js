@@ -1216,14 +1216,21 @@ function renderAppShell() {
   }
 
   root.innerHTML = `
+    <div class="mobile-top-bar">
+      <button class="hamburger-menu-btn" id="mobile-hamburger-btn" title="Open Navigation">
+        <svg style="width:24px;height:24px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;color:#ffffff;background:linear-gradient(135deg,#c93830,#89201B);-webkit-background-clip:text;-webkit-text-fill-color:transparent">HS Group Delhi</div>
+      <div style="width:36px;height:36px"></div>
+    </div>
     <div class="sidebar-overlay" id="sidebar-overlay-el"></div>
     <aside class="sidebar" id="sidebar-aside-el">
       <div class="sidebar-brand">
         <a href="#dashboard" class="sidebar-brand-logo" title="House of Surya">
           <img src="assets/surya_logo_hd.png?v=6" alt="House of Surya Logo" class="surya-brand-img" />
         </a>
-        <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="Toggle Navigation">
-          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        <button class="sidebar-toggle-btn" id="mobile-sidebar-toggle" title="Close Navigation">
+          <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
         </button>
       </div>
       <ul class="sidebar-menu">
@@ -1337,11 +1344,19 @@ function renderAppShell() {
     if (sidebarOverlay) sidebarOverlay.classList.remove('active');
   };
 
+  const mobileHamburger = document.getElementById('mobile-hamburger-btn');
+  if (mobileHamburger) {
+    mobileHamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (sidebarAside) sidebarAside.classList.add('active');
+      if (sidebarOverlay) sidebarOverlay.classList.add('active');
+    });
+  }
+
   if (mobileToggle) {
     mobileToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      sidebarAside.classList.add('active');
-      sidebarOverlay.classList.add('active');
+      closeSidebar();
     });
   }
 

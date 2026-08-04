@@ -2561,6 +2561,12 @@ body.light-theme .sidebar-brand-logo:hover {
   color: #ffffff !important;
 }
 
+@media (min-width: 769px) {
+  .sidebar-toggle-btn {
+    display: none !important;
+  }
+}
+
 .sidebar-menu {
   list-style: none;
   padding: 12px 14px !important;
