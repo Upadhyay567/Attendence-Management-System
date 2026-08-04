@@ -978,6 +978,18 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_sarah_2026-08-04",
+      "userId": "usr_sarah",
+      "date": "2026-08-04",
+      "checkIn": "17:56",
+      "checkOut": null,
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695139° N, 77.185915° E",
+      "distance": 0.01
     }
   ],
   "leaveRequests": [

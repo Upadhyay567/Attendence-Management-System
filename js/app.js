@@ -691,7 +691,7 @@ function renderLoginView() {
         <div class="auth-hero-overlay"></div>
         <div class="auth-hero-content">
           <div class="auth-hero-brand">
-            <img src="surya-logo.png?v=6" alt="Surya Logo" class="auth-hero-logo">
+            <img src="surya-logo.png?v=7" alt="Surya Logo" class="auth-hero-logo">
             <div class="auth-hero-brand-text">
               <div class="auth-hero-brand-title">HS Group Delhi</div>
               <div class="auth-hero-brand-subtitle">House of Surya</div>
@@ -748,7 +748,7 @@ function renderLoginView() {
       <div id="role-selector-section" style="animation: fadeIn 0.3s ease;">
         <div class="auth-header" style="position:relative; margin-bottom: 24px; text-align: center;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
-            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 65px; object-fit: contain; mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 65px; object-fit: contain; mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="text-align: center; font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 4px;">House of Surya</div>
           <div class="auth-subtitle" style="text-align: center; color: var(--text-secondary); margin-bottom: 8px; font-weight: 700; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;">WORKFORCE OPERATIONS PORTAL</div>
@@ -872,7 +872,7 @@ function renderLoginView() {
             ◀ Back
           </button>
           <div class="auth-logo" style="margin-bottom: 8px; justify-content: center; display: flex;">
-            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="text-align: center; font-size: 18px; font-weight: 700; color: var(--primary);">${roleTitle} Portal</div>
           <div class="auth-sub-desc" style="text-align: center; font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">SELECT YOUR ACCOUNT TO CONTINUE</div>
@@ -928,7 +928,7 @@ function renderLoginView() {
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
         <div class="auth-header" style="margin-bottom: 24px; text-align: center; position: relative;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
-            <img src="surya-logo.png?v=6" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
+            <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
@@ -4876,7 +4876,7 @@ function renderEmployeeProfile() {
               <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fff6f6,#fcebeb); border:1px solid rgba(137, 32, 27, 0.15); box-shadow:0 8px 24px rgba(137,32,27,0.08); display:flex; flex-direction:column; justify-content:space-between;">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(180,130,60,0.2); padding-bottom:8px;">
                   <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="surya-logo.png?v=6" alt="Surya Logo" style="height:22px; object-fit:contain;">
+                    <img src="surya-logo.png?v=7" alt="Surya Logo" style="height:22px; object-fit:contain;">
                     <div>
                       <div style="font-size:10px; font-weight:800; color:#b45309; letter-spacing:1px; text-transform:uppercase; line-height:1.2;">HS GROUP DELHI</div>
                       <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px;">HOUSE OF SURYA</div>
