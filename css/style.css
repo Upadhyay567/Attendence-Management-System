@@ -2563,10 +2563,51 @@ body.light-theme .sidebar-brand-logo:hover {
 
 @media (min-width: 769px) {
   .sidebar {
+    width: 72px !important;
+    display: flex !important;
+    overflow: hidden !important;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar:not(.active) .menu-label,
+  .sidebar:not(.active) .user-info-text {
     display: none !important;
   }
+  .sidebar:not(.active) .sidebar-brand {
+    padding: 8px 16px !important;
+    overflow: hidden !important;
+    justify-content: flex-start !important;
+  }
+  .sidebar:not(.active) .surya-brand-img {
+    height: 48px !important;
+    width: auto !important;
+    max-width: 170px !important;
+    object-fit: contain !important;
+  }
+  .sidebar:not(.active) .menu-item a {
+    padding: 12px 0 !important;
+    justify-content: center !important;
+  }
+  .sidebar:not(.active) .menu-item a svg {
+    margin-right: 0 !important;
+    min-width: 20px;
+  }
+  .sidebar:not(.active) .sidebar-footer {
+    padding: 12px 8px !important;
+    justify-content: center !important;
+  }
+  .sidebar:not(.active) .sidebar-footer .user-profile-summary {
+    justify-content: center !important;
+  }
+  .sidebar:not(.active) .sidebar-footer .logout-btn {
+    display: none !important;
+  }
+
   .sidebar.active {
-    display: flex !important;
+    width: 240px !important;
+  }
+  .sidebar.active .menu-label,
+  .sidebar.active .user-info-text {
+    display: inline !important;
   }
 }
 
