@@ -1714,11 +1714,11 @@ function renderEmployeeDashboard() {
 
               <!-- Direct Geofence Card Actions -->
               <div class="geofence-direct-actions" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px" id="geofence-btn-group">
-                  <button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600">Check In</button>
-                  <button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600">Check Out</button>
+                <div style="display:${todayLog && todayLog.checkOut ? 'none' : 'grid'}; grid-template-columns:${todayLog && todayLog.status !== 'Pending Verification' ? '1fr' : '1fr 1fr'}; gap:8px" id="geofence-btn-group">
+                  <button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600; display:${todayLog && todayLog.status !== 'Pending Verification' ? 'none' : 'block'}">Check In</button>
+                  <button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600; display:${todayLog && todayLog.checkOut ? 'none' : 'block'}">Check Out</button>
                 </div>
-                <div id="geofence-checked-out-msg" style="display:none; background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
+                <div id="geofence-checked-out-msg" style="display:${todayLog && todayLog.checkOut ? 'block' : 'none'}; background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
                   Checked Out Today
                 </div>
               </div>
@@ -1881,9 +1881,23 @@ function renderEmployeeDashboard() {
   const geoCheckIn = document.getElementById('btn-geofence-checkin');
   if (geoCheckIn) {
     geoCheckIn.addEventListener('click', async () => {
+      const regIn = document.getElementById('btn-regular-checkin');
+      if (regIn) {
+        regIn.setAttribute('disabled', 'true');
+        regIn.style.opacity = '0.4';
+      }
+      geoCheckIn.setAttribute('disabled', 'true');
+      geoCheckIn.style.opacity = '0.4';
+
       const coords = await getOneTimeLocationPromise();
       if (!coords) {
         alert("❌ Check-in Rejected! Could not acquire GPS coordinates.");
+        if (regIn) {
+          regIn.removeAttribute('disabled');
+          regIn.style.opacity = '1';
+        }
+        geoCheckIn.removeAttribute('disabled');
+        geoCheckIn.style.opacity = '1';
         return;
       }
 
@@ -1900,6 +1914,12 @@ function renderEmployeeDashboard() {
 
       if (!inRange) {
         alert('❌ Check-in Rejected! You are out of range.');
+        if (regIn) {
+          regIn.removeAttribute('disabled');
+          regIn.style.opacity = '1';
+        }
+        geoCheckIn.removeAttribute('disabled');
+        geoCheckIn.style.opacity = '1';
         return;
       }
 
@@ -2432,20 +2452,13 @@ function renderEmployeeDashboard() {
           if (btnGroup) btnGroup.style.display = 'grid';
           checkedOutMsg.style.display = 'none';
 
-          if (inRange) {
-            if (currentTodayLog && currentTodayLog.status !== 'Pending Verification') {
-              // Active clocked in state: Hide Check In, Show only Check Out (span full width)
-              if (geoCheckIn) geoCheckIn.style.display = 'none';
-              if (geoCheckOut) geoCheckOut.style.display = 'block';
-              if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
-            } else {
-              // Not clocked in: Show both buttons side-by-side
-              if (geoCheckIn) geoCheckIn.style.display = 'block';
-              if (geoCheckOut) geoCheckOut.style.display = 'block';
-              if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
-            }
+          if (currentTodayLog && currentTodayLog.status !== 'Pending Verification') {
+            // Active clocked in state: Hide Check In, Show only Check Out (span full width)
+            if (geoCheckIn) geoCheckIn.style.display = 'none';
+            if (geoCheckOut) geoCheckOut.style.display = 'block';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
           } else {
-            // Out of range: Show both buttons side-by-side (disabled)
+            // Not clocked in or pending verification: Show both buttons side-by-side
             if (geoCheckIn) geoCheckIn.style.display = 'block';
             if (geoCheckOut) geoCheckOut.style.display = 'block';
             if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
@@ -4170,9 +4183,28 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
 }
 
 async function handlePinClockIn(userId) {
+  const regIn = document.getElementById('btn-regular-checkin');
+  if (regIn) {
+    regIn.setAttribute('disabled', 'true');
+    regIn.style.opacity = '0.4';
+  }
+  const geoIn = document.getElementById('btn-geofence-checkin');
+  if (geoIn) {
+    geoIn.setAttribute('disabled', 'true');
+    geoIn.style.opacity = '0.4';
+  }
+
   const coords = await getOneTimeLocationPromise();
   if (!coords) {
     alert("❌ Check-in Rejected! Could not acquire GPS coordinates.");
+    if (regIn) {
+      regIn.removeAttribute('disabled');
+      regIn.style.opacity = '1';
+    }
+    if (geoIn) {
+      geoIn.removeAttribute('disabled');
+      geoIn.style.opacity = '1';
+    }
     return;
   }
 
@@ -4190,11 +4222,29 @@ async function handlePinClockIn(userId) {
 
   if (!inRange) {
     alert(`❌ Check-in Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock in.`);
+    if (regIn) {
+      regIn.removeAttribute('disabled');
+      regIn.style.opacity = '1';
+    }
+    if (geoIn) {
+      geoIn.removeAttribute('disabled');
+      geoIn.style.opacity = '1';
+    }
     return;
   }
 
   const pass = await prompt('Enter your Account Password to Clock In:');
-  if (pass === null) return;
+  if (pass === null) {
+    if (regIn) {
+      regIn.removeAttribute('disabled');
+      regIn.style.opacity = '1';
+    }
+    if (geoIn) {
+      geoIn.removeAttribute('disabled');
+      geoIn.style.opacity = '1';
+    }
+    return;
+  }
   if (user && user.password === pass) {
     const pendingTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
     let timeOverride = null;
@@ -4204,9 +4254,18 @@ async function handlePinClockIn(userId) {
     }
     DB.checkIn(userId, 'none', officeName, false, '', coordsStr, resolvedDistance, null, timeOverride);
     sessionStorage.removeItem('hs_pending_auto_checkin_time');
+    requestsPushDBState();
     renderEmployeeDashboard();
   } else {
     alert('Invalid Password credentials.');
+    if (regIn) {
+      regIn.removeAttribute('disabled');
+      regIn.style.opacity = '1';
+    }
+    if (geoIn) {
+      geoIn.removeAttribute('disabled');
+      geoIn.style.opacity = '1';
+    }
   }
 }
 
