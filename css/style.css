@@ -2573,18 +2573,29 @@ body.light-theme .sidebar-brand-logo:hover {
 .sidebar:not(.active) .surya-brand-img.favicon-logo {
   opacity: 1 !important;
   pointer-events: auto !important;
+  position: static !important;
+  transform: none !important;
+  max-width: 38px !important;
+  max-height: 38px !important;
+  height: auto !important;
+  width: auto !important;
 }
 
 .sidebar:not(.active) .sidebar-brand-logo {
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-body.light-theme .sidebar:not(.active) .sidebar-brand-logo {
+body.light-theme .sidebar:not(.active) .sidebar-brand {
   background: #89201B !important;
-  box-shadow: 0 4px 10px rgba(137, 32, 27, 0.25) !important;
-  border-radius: 8px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .sidebar-toggle-btn {
@@ -2619,7 +2630,7 @@ body.light-theme .sidebar:not(.active) .sidebar-brand-logo {
     overflow: hidden !important;
     justify-content: flex-start !important;
   }
-  .sidebar:not(.active) .surya-brand-img {
+  .sidebar:not(.active) .surya-brand-img.full-logo {
     height: 48px !important;
     width: auto !important;
     max-width: 170px !important;
