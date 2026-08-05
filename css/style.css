@@ -450,7 +450,7 @@ body:not(.light-theme) .bio-option-btn {
 }
 
 body.light-theme .sidebar {
-  background: rgba(253, 251, 247, 0.9);
+  background: #89201B !important;
 }
 
 .sidebar-brand {
@@ -2489,7 +2489,7 @@ body {
 /* Dark Sidebar Navigation (#89201B Brand Theme) */
 .sidebar {
   width: 240px !important;
-  background: #3d0d0a !important;
+  background: #89201B !important;
   border-right: 1px solid rgba(137, 32, 27, 0.3) !important;
   display: flex;
   flex-direction: column;
@@ -2504,7 +2504,7 @@ body {
   flex-direction: row !important;
   align-items: center !important;
   justify-content: space-between !important;
-  border-bottom: 1px solid rgba(137, 32, 27, 0.3) !important;
+  border-bottom: none !important;
   margin-bottom: 12px !important;
   background: transparent !important;
 }
