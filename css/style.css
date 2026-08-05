@@ -2561,6 +2561,7 @@ body.light-theme .sidebar-brand-logo:hover {
   opacity: 0 !important;
   pointer-events: none !important;
   max-width: 48px !important;
+  mix-blend-mode: normal !important;
 }
 
 /* Collapsed state */
@@ -2572,6 +2573,18 @@ body.light-theme .sidebar-brand-logo:hover {
 .sidebar:not(.active) .surya-brand-img.favicon-logo {
   opacity: 1 !important;
   pointer-events: auto !important;
+}
+
+.sidebar:not(.active) .sidebar-brand-logo {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+body.light-theme .sidebar:not(.active) .sidebar-brand-logo {
+  background: #89201B !important;
+  box-shadow: 0 4px 10px rgba(137, 32, 27, 0.25) !important;
+  border-radius: 8px !important;
 }
 
 .sidebar-toggle-btn {
