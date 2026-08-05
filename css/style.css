@@ -2515,11 +2515,10 @@ body {
   justify-content: center !important;
   text-decoration: none;
   flex: 1;
-  border-radius: 10px !important;
-  background: #FDF8F2 !important;
+  background: transparent !important;
   padding: 6px 8px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(137, 32, 27, 0.4) !important;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: none !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative !important;
   height: 48px !important;
   overflow: hidden !important;
@@ -2527,16 +2526,21 @@ body {
 
 .sidebar-brand-logo:hover {
   transform: scale(1.03) translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(137, 32, 27, 0.45), 0 0 0 1.5px #89201B !important;
+  box-shadow: none !important;
 }
 
 body.light-theme .sidebar-brand-logo {
-  background: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(137, 32, 27, 0.08), 0 0 0 1px rgba(137, 32, 27, 0.12) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.light-theme .sidebar-brand-logo:hover {
-  box-shadow: 0 6px 16px rgba(137, 32, 27, 0.15), 0 0 0 1.5px #89201B !important;
+  box-shadow: none !important;
+}
+
+body.light-theme .sidebar-brand {
+  background: #89201B !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .surya-brand-img {
@@ -2545,7 +2549,7 @@ body.light-theme .sidebar-brand-logo:hover {
   max-width: 170px !important;
   object-fit: contain !important;
   image-rendering: -webkit-optimize-contrast !important;
-  mix-blend-mode: multiply !important;
+  mix-blend-mode: normal !important;
   position: absolute !important;
   left: 50% !important;
   top: 50% !important;
@@ -2591,11 +2595,6 @@ body.light-theme .sidebar-brand-logo:hover {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-}
-
-body.light-theme .sidebar:not(.active) .sidebar-brand {
-  background: #89201B !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .sidebar-toggle-btn {
