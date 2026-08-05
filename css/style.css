@@ -2520,7 +2520,7 @@ body {
   box-shadow: none !important;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   position: relative !important;
-  height: 48px !important;
+  height: 60px !important;
   overflow: hidden !important;
 }
 
@@ -2544,7 +2544,7 @@ body.light-theme .sidebar-brand {
 }
 
 .surya-brand-img {
-  height: 48px !important;
+  height: 60px !important;
   width: auto !important;
   max-width: 170px !important;
   object-fit: contain !important;
@@ -2564,7 +2564,7 @@ body.light-theme .sidebar-brand {
 .surya-brand-img.favicon-logo {
   opacity: 0 !important;
   pointer-events: none !important;
-  max-width: 48px !important;
+  max-width: 60px !important;
   mix-blend-mode: normal !important;
 }
 
@@ -2579,8 +2579,8 @@ body.light-theme .sidebar-brand {
   pointer-events: auto !important;
   position: static !important;
   transform: none !important;
-  max-width: 38px !important;
-  max-height: 38px !important;
+  max-width: 46px !important;
+  max-height: 46px !important;
   height: auto !important;
   width: auto !important;
 }
@@ -2630,7 +2630,7 @@ body.light-theme .sidebar-brand {
     justify-content: flex-start !important;
   }
   .sidebar:not(.active) .surya-brand-img.full-logo {
-    height: 48px !important;
+    height: 60px !important;
     width: auto !important;
     max-width: 170px !important;
     object-fit: contain !important;
@@ -2720,8 +2720,8 @@ body.light-theme .sidebar-brand {
 
 .sidebar-footer {
   padding: 16px 20px !important;
-  border-top: 1px solid rgba(137, 32, 27, 0.25) !important;
-  background: #2b0907 !important;
+  border-top: none !important;
+  background: transparent !important;
 }
 
 .sidebar-footer .user-name {
