@@ -1948,9 +1948,13 @@ function renderEmployeeDashboard() {
         return;
       }
       
-      DB.checkOut(user.id);
+      const log = DB.checkOut(user.id);
       requestsPushDBState();
       renderEmployeeDashboard();
+      if (log) {
+        const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+        showClockOutThankYou(log.checkOut, workingHours);
+      }
     });
   }
 
@@ -4297,9 +4301,13 @@ async function handleClockOut(userId) {
   }
 
   if (await confirm('Clock Out?')) {
-    DB.checkOut(userId);
+    const log = DB.checkOut(userId);
     requestsPushDBState();
     renderEmployeeDashboard();
+    if (log) {
+      const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+      showClockOutThankYou(log.checkOut, workingHours);
+    }
   }
 }
 
@@ -13057,6 +13065,64 @@ function showToastNotification(message, type = 'info') {
       toast.remove();
     }, 400);
   }, 4500);
+}
+function showClockOutThankYou(checkOutTime, workingHours) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-dialog-overlay';
+    overlay.style.zIndex = '11000';
+
+    const card = document.createElement('div');
+    card.className = 'custom-dialog-card';
+    card.style.background = '#3D0D0A';
+    card.style.border = '1px solid rgba(255, 255, 255, 0.08)';
+    card.style.borderRadius = '16px';
+    card.style.textAlign = 'center';
+
+    card.innerHTML = `
+      <div style="font-size: 38px; margin-bottom: 12px;">🎉</div>
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #FFFFFF;">Thank You!</h2>
+      <p style="font-size: 13.5px; color: #FDF8F2; line-height: 1.5; margin-bottom: 20px; font-style: italic; opacity: 0.95;">
+        Thank you for your hard work today. Your checkout has been recorded successfully. Have a great day and see you tomorrow!
+      </p>
+      
+      <div style="background: rgba(137, 32, 27, 0.15); border: 1px solid rgba(137, 32, 27, 0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
+          <span style="color: #cbd5e1; opacity: 0.85;">Checkout Time:</span>
+          <strong style="color: #FFFFFF;">${checkOutTime}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
+          <span style="color: #cbd5e1; opacity: 0.85;">Today's Working Hours:</span>
+          <strong style="color: #FFFFFF;">${workingHours || '--:--'}</strong>
+        </div>
+      </div>
+      
+      <div class="custom-dialog-actions" style="justify-content: center; gap: 10px;">
+        <button class="custom-dialog-btn-secondary" id="btn-thankyou-close">Close</button>
+        <button class="custom-dialog-btn-thankyou" id="btn-thankyou-done">Done</button>
+      </div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      card.style.animation = 'customDialogScaleDown 0.18s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards';
+      overlay.style.animation = 'customDialogFadeOut 0.18s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards';
+      setTimeout(() => {
+        overlay.remove();
+        resolve();
+      }, 180);
+    };
+
+    overlay.querySelector('#btn-thankyou-close').addEventListener('click', close);
+    overlay.querySelector('#btn-thankyou-done').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        close();
+      }
+    });
+  });
 }
 
 export { executeExpressReassignments };
