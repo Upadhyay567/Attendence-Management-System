@@ -385,6 +385,45 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_sarah_2026-08-05",
+      "userId": "usr_sarah",
+      "date": "2026-08-05",
+      "checkIn": "10:45",
+      "checkOut": "18:50",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695211° N, 77.185967° E",
+      "distance": 0.01,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-08-05",
+      "userId": "usr_john",
+      "date": "2026-08-05",
+      "checkIn": "10:53",
+      "checkOut": "19:01",
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.694975° N, 77.185962° E",
+      "distance": 0.02,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_david_2026-08-05",
+      "userId": "usr_david",
+      "date": "2026-08-05",
+      "checkIn": "12:11",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695165° N, 77.186050° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_john_2026-08-04",
       "userId": "usr_john",
       "date": "2026-08-04",
@@ -1087,6 +1126,28 @@
       "status": "Approved",
       "date": "2026-07-20",
       "managerComment": "TAKE CARE",
+      "coworkerComment": ""
+    },
+    {
+      "id": "swap_ahok8bj",
+      "senderId": "usr_david",
+      "receiverId": "usr_john",
+      "reason": "wsd",
+      "swapType": "both",
+      "status": "Pending Manager",
+      "date": "2026-08-05",
+      "managerComment": "",
+      "coworkerComment": ""
+    },
+    {
+      "id": "swap_m0jifpo",
+      "senderId": "usr_david",
+      "receiverId": "usr_john",
+      "reason": "sdfg",
+      "swapType": "both",
+      "status": "Pending Coworker",
+      "date": "2026-08-05",
+      "managerComment": "",
       "coworkerComment": ""
     }
   ],
