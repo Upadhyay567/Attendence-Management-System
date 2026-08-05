@@ -2579,8 +2579,8 @@ body.light-theme .sidebar-brand {
   pointer-events: auto !important;
   position: static !important;
   transform: none !important;
-  max-width: 46px !important;
-  max-height: 46px !important;
+  max-width: 54px !important;
+  max-height: 54px !important;
   height: auto !important;
   width: auto !important;
 }
@@ -2625,9 +2625,9 @@ body.light-theme .sidebar-brand {
     display: none !important;
   }
   .sidebar:not(.active) .sidebar-brand {
-    padding: 8px 16px !important;
+    padding: 8px 8px !important;
     overflow: hidden !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
   }
   .sidebar:not(.active) .surya-brand-img.full-logo {
     height: 60px !important;
