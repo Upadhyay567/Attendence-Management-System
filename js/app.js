@@ -179,6 +179,7 @@ function formatTimeRange12h(start, end) {
 let currentScanner = null;
 let activeAdminApprovalsTab = 'leaves';
 window.activeGpsWatchId = null;
+window.lastAcquiredLocation = null;
 
 // Global Office Coordinates mapping
 Object.defineProperty(window, 'OFFICE_COORDINATES', {
@@ -2085,13 +2086,21 @@ function renderEmployeeDashboard() {
   function getOneTimeLocation(callback) {
     const mockLoc = sessionStorage.getItem('hs_mock_location') || 'real';
     if (mockLoc === 'real') {
+      // First, try using the last acquired location from watchPosition if available
+      if (window.lastAcquiredLocation) {
+        callback(window.lastAcquiredLocation);
+        return;
+      }
+
       if (!navigator.geolocation) {
         callback(null);
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          callback({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          window.lastAcquiredLocation = coords;
+          callback(coords);
         },
         (err) => {
           console.error("One-time geolocation error:", err);
@@ -2200,6 +2209,7 @@ function renderEmployeeDashboard() {
       sessionStorage.removeItem('hs_current_resolved_distance');
       sessionStorage.removeItem('hs_current_resolved_in_range');
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
+      window.lastAcquiredLocation = null;
 
       let justBlock = document.getElementById('gps-justification-block');
       if (justBlock) {
@@ -2298,6 +2308,7 @@ function renderEmployeeDashboard() {
 
 
     function applyLocationState(currentLat, currentLng, coordsStr) {
+      window.lastAcquiredLocation = { lat: currentLat, lng: currentLng };
       const distance = calculateHaversineDistance(currentLat, currentLng, targetCoords.lat, targetCoords.lng);
       const inRange = distance <= 100; // 100 meters geofence radius
       const resolvedDistance = (distance / 1000).toFixed(2); // in km
@@ -2491,12 +2502,15 @@ function renderEmployeeDashboard() {
         return;
       }
 
-      // Clear any previous watch
+      // If already watching in real mode, don't restart it!
       if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
-        try {
-          navigator.geolocation.clearWatch(window.activeGpsWatchId);
-        } catch (e) {}
-        window.activeGpsWatchId = null;
+        // Just trigger one update of the UI with last location if we have it
+        if (window.lastAcquiredLocation) {
+          const lat = window.lastAcquiredLocation.lat;
+          const lng = window.lastAcquiredLocation.lng;
+          applyLocationState(lat, lng, `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`);
+        }
+        return;
       }
 
       if (coordsDisplay) coordsDisplay.textContent = 'Acquiring GPS Signal...';
