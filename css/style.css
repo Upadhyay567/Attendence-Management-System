@@ -450,7 +450,7 @@ body:not(.light-theme) .bio-option-btn {
 }
 
 body.light-theme .sidebar {
-  background: #89201B !important;
+  background: #3D0D0A !important;
 }
 
 .sidebar-brand {
@@ -2489,7 +2489,7 @@ body {
 /* Dark Sidebar Navigation (#89201B Brand Theme) */
 .sidebar {
   width: 240px !important;
-  background: #89201B !important;
+  background: #3D0D0A !important;
   border-right: 1px solid rgba(137, 32, 27, 0.3) !important;
   display: flex;
   flex-direction: column;
@@ -2539,8 +2539,8 @@ body.light-theme .sidebar-brand-logo:hover {
 }
 
 body.light-theme .sidebar-brand {
-  background: #89201B !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: transparent !important;
+  border-bottom: none !important;
 }
 
 .surya-brand-img {
