@@ -2506,7 +2506,7 @@ body {
   justify-content: space-between !important;
   border-bottom: 1px solid rgba(137, 32, 27, 0.3) !important;
   margin-bottom: 12px !important;
-  background: rgba(137, 32, 27, 0.2) !important;
+  background: transparent !important;
 }
 
 .sidebar-brand-logo {
