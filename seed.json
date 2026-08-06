@@ -79,8 +79,8 @@
       "name": "John Doe",
       "password": "JohnPassword123!",
       "role": "employee",
-      "managerId": "usr_manager",
-      "scheduleId": "sch_3ebecon",
+      "managerId": "",
+      "scheduleId": "sch_mfl8wvv",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
       "allowanceTravel": 3000,
@@ -113,8 +113,8 @@
         "size": "512 KB",
         "date": "2026-06-10"
       },
-      "preferredLocation": "Noida sector 61",
-      "assignedById": "usr_manager",
+      "preferredLocation": "omaxe Office",
+      "assignedById": "usr_7kek2wc",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
@@ -332,11 +332,11 @@
         4,
         5
       ],
-      "location": "HS Group Worksite (28.6952, 77.1860)"
+      "location": "chandani chowk"
     },
     {
       "id": "sch_mfl8wvv",
-      "name": "Night  Shift",
+      "name": "Night  Shift 56",
       "startTime": "16:00",
       "endTime": "00:00",
       "gracePeriod": 15,
@@ -348,7 +348,7 @@
         4,
         5
       ],
-      "location": "omaxe Office"
+      "location": "HS Group Worksite (28.6952, 77.1860)"
     },
     {
       "id": "sch_bgpyqv3",
@@ -364,7 +364,7 @@
         4,
         5
       ],
-      "location": "chandani chowk"
+      "location": "HS Group Worksite (28.6952, 77.1860)"
     },
     {
       "id": "sch_3ebecon",
@@ -380,6 +380,22 @@
         5
       ],
       "location": "HS Group Worksite (28.6952, 77.1860)",
+      "halfDayLimit": 120
+    },
+    {
+      "id": "sch_xw5n0yv",
+      "name": "Chatarpur Shift",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "gracePeriod": 15,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Chatarpur",
       "halfDayLimit": 120
     }
   ],
@@ -1679,6 +1695,10 @@
     "HS Group Worksite (28.6952, 77.1860)": {
       "lat": 28.695159798682628,
       "lng": 77.1860166983257
+    },
+    "Chatarpur": {
+      "lat": 24.9164,
+      "lng": 79.5812
     }
   },
   "uploadHistory": [

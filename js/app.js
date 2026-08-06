@@ -3892,16 +3892,6 @@ function showAccountModal(editUser = null) {
 function registerNewLocation(name, lat, lng) {
   DB.saveOfficeCoordinate(name, lat, lng);
   
-  // Also create a matching schedule for it
-  DB.addSchedule({
-    name: name + ' Shift',
-    startTime: '09:00',
-    endTime: '17:00',
-    gracePeriod: 15,
-    workDays: [1, 2, 3, 4, 5],
-    location: name
-  });
-  
   alert('✅ Location "' + name + '" registered successfully!\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E');
 }
 
@@ -12894,16 +12884,6 @@ function renderAdminLocations() {
       }
       
       DB.saveOfficeCoordinate(name, lat, lng);
-      
-      // Also register a default shift schedule automatically for it
-      DB.addSchedule({
-        name: name + ' Shift',
-        startTime: '09:00',
-        endTime: '17:00',
-        gracePeriod: 15,
-        workDays: [1, 2, 3, 4, 5],
-        location: name
-      });
       
       showToastNotification(`✅ Worksite "${name}" registered successfully!`, "success");
       renderAdminLocations();
