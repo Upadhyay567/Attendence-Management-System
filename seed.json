@@ -1042,6 +1042,21 @@
       "coords": "28.695267° N, 77.185647° E",
       "distance": 0.04,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-08-06",
+      "userId": "usr_sarah",
+      "date": "2026-08-06",
+      "checkIn": "10:53",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.694905° N, 77.185835° E",
+      "distance": 0.03,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [

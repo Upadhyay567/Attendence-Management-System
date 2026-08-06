@@ -3479,6 +3479,33 @@ body.light-theme select option {
   background: #3D0D0A !important;
   border: 1px solid #89201B !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 35px rgba(137, 32, 27, 0.25) !important;
+  border-radius: 20px !important;
+  color: #ffffff !important;
+  padding: 32px 28px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+body.light-theme .custom-confirm-card {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(137, 32, 27, 0.2) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 35px rgba(137, 32, 27, 0.08) !important;
+  color: #1e293b !important;
+}
+
+.custom-confirm-card .custom-dialog-icon-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.4) !important;
+}
+
+.custom-confirm-card .custom-dialog-message {
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin-bottom: 24px !important;
+  color: inherit !important;
 }
 
 .custom-confirm-card .custom-dialog-actions {
@@ -3486,7 +3513,6 @@ body.light-theme select option {
   justify-content: center !important;
   gap: 16px !important;
   width: 100% !important;
-  margin-top: 24px !important;
 }
 
 .custom-confirm-card .custom-dialog-btn-secondary,
@@ -3505,6 +3531,7 @@ body.light-theme select option {
   box-sizing: border-box !important;
 }
 
+/* Secondary (Cancel) button - Dark Theme */
 .custom-confirm-card .custom-dialog-btn-secondary {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -3519,6 +3546,19 @@ body.light-theme select option {
   transform: translateY(-1px) !important;
 }
 
+/* Secondary (Cancel) button - Light Theme */
+body.light-theme .custom-confirm-card .custom-dialog-btn-secondary {
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.light-theme .custom-confirm-card .custom-dialog-btn-secondary:hover {
+  background: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+/* Primary (Confirm) button - Dark & Light Theme */
 .custom-confirm-card .custom-dialog-btn-primary {
   background: #89201B !important;
   border: none !important;
