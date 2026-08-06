@@ -3793,9 +3793,9 @@ function showAccountModal(editUser = null) {
       return;
     }
 
-    const existingUserByUsername = DB.getUserByUsername(username);
-    if (existingUserByUsername && (!isEdit || existingUserByUsername.id !== editUser.id)) {
-      errorEl.textContent = `⚠️ Username '@${username}' is already taken. Please choose another username.`;
+    const existingUser = DB.getUserByUsernameOrId(username);
+    if (existingUser && (!isEdit || existingUser.id !== editUser.id)) {
+      errorEl.textContent = `⚠️ The Employee ID / HR ID '${username.toUpperCase()}' is already taken. Please choose another one.`;
       errorEl.style.display = 'block';
       return;
     }
@@ -3837,10 +3837,16 @@ function showAccountModal(editUser = null) {
     if (isEdit) {
       DB.updateUser(editUser.id, payload);
       closeModal();
+      requestsPushDBState();
+      if (typeof renderAdminUsers === 'function') renderAdminUsers();
+      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
       await CustomDialog.alert(`Account for ${name} (${username}) updated successfully.`);
     } else {
       DB.addUser(payload);
       closeModal();
+      requestsPushDBState();
+      if (typeof renderAdminUsers === 'function') renderAdminUsers();
+      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
 
       const credModal = document.createElement('div');
       credModal.style.cssText = `
@@ -5153,35 +5159,37 @@ function renderEmployeeProfile() {
           </div>
 
           <!-- Payroll Information -->
+          ${isSelfAdmin ? `
           <div class="prof-section-card">
             <h3 class="prof-section-title">Payroll Information</h3>
             <div class="prof-field-row">
               <div>
                 <label class="prof-label" for="prof-salary">Base Salary (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined ? user.baseSalary : 50000}" required disabled>
+                <input class="prof-input" type="number" id="prof-salary" value="${user.baseSalary !== undefined && user.baseSalary !== null ? user.baseSalary : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-hra">HRA Allowance (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)}" disabled>
+                <input class="prof-input" type="number" id="prof-hra" value="${user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-travel">Travel Allowance (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined ? user.allowanceTravel : 3000}" disabled>
+                <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-pf">PF Deduction (INR/Month)</label>
-                <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)}" disabled>
+                <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-pt">Professional Tax (PT)</label>
-                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined ? user.deductionPT : 200}" disabled>
+                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-tds">TDS Rate (%)</label>
-                <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined ? user.deductionTDS : 5}" min="0" max="100" disabled>
+                <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : ''}" min="0" max="100" disabled>
               </div>
             </div>
           </div>
+          ` : ''}
 
           <!-- Action Buttons -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
@@ -5352,12 +5360,18 @@ function renderEmployeeProfile() {
     const designation = document.getElementById('prof-designation').value.trim();
     const dateOfJoining = document.getElementById('prof-doj').value;
 
-    const baseSalary = Number(document.getElementById('prof-salary').value);
-    const allowanceHRA = Number(document.getElementById('prof-hra').value);
-    const allowanceTravel = Number(document.getElementById('prof-travel').value);
-    const deductionPF = Number(document.getElementById('prof-pf').value);
-    const deductionPT = Number(document.getElementById('prof-pt').value);
-    const deductionTDS = Number(document.getElementById('prof-tds').value);
+    const baseSalaryEl = document.getElementById('prof-salary');
+    const baseSalary = baseSalaryEl ? (baseSalaryEl.value === '' ? null : Number(baseSalaryEl.value)) : (user.baseSalary || null);
+    const allowanceHRAEl = document.getElementById('prof-hra');
+    const allowanceHRA = allowanceHRAEl ? (allowanceHRAEl.value === '' ? null : Number(allowanceHRAEl.value)) : (user.allowanceHRA !== undefined ? user.allowanceHRA : null);
+    const allowanceTravelEl = document.getElementById('prof-travel');
+    const allowanceTravel = allowanceTravelEl ? (allowanceTravelEl.value === '' ? null : Number(allowanceTravelEl.value)) : (user.allowanceTravel !== undefined ? user.allowanceTravel : null);
+    const deductionPFEl = document.getElementById('prof-pf');
+    const deductionPF = deductionPFEl ? (deductionPFEl.value === '' ? null : Number(deductionPFEl.value)) : (user.deductionPF !== undefined ? user.deductionPF : null);
+    const deductionPTEl = document.getElementById('prof-pt');
+    const deductionPT = deductionPTEl ? (deductionPTEl.value === '' ? null : Number(deductionPTEl.value)) : (user.deductionPT !== undefined ? user.deductionPT : null);
+    const deductionTDSEl = document.getElementById('prof-tds');
+    const deductionTDS = deductionTDSEl ? (deductionTDSEl.value === '' ? null : Number(deductionTDSEl.value)) : (user.deductionTDS !== undefined ? user.deductionTDS : null);
 
     const username = usernameInput || user.username;
     const password = passwordInput || user.password;
@@ -7596,7 +7610,7 @@ function renderAdminUsers() {
                     <td><code>••••••••</code></td>
                     <td>${sch ? Utils.escape(sch.name) : '-'}</td>
                     <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
-                    <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
+                    <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
                     <td>
                       ${actionsHTML}
                     </td>
@@ -7741,7 +7755,7 @@ function renderAdminUsers() {
               <td><code>••••••••</code></td>
               <td>${sch ? Utils.escape(sch.name) : '-'}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
-              <td style="font-weight:700;color:var(--primary)">₹${(u.baseSalary || 50000).toLocaleString()}</td>
+              <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
               <td>
                 ${actionsHTML}
               </td>
@@ -7853,31 +7867,31 @@ function openUserModal(userId = null) {
           </div>
           <div>
             <label class="form-label" for="editor-salary">Base Salary (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-salary" value="${isEdit ? (user.baseSalary || 50000) : 50000}" required>
+            <input class="form-input" type="number" id="editor-salary" value="${isEdit ? (user.baseSalary !== undefined && user.baseSalary !== null ? user.baseSalary : '') : ''}">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-hra" style="font-size:11px">HRA (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)) : Math.round(50000 * 0.15)}">
+            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}">
           </div>
           <div>
             <label class="form-label" for="editor-travel" style="font-size:11px">Travel (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined ? user.allowanceTravel : 3000) : 3000}">
+            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}">
           </div>
           <div>
             <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)) : Math.round(50000 * 0.08)}">
+            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-pt" style="font-size:11px">Professional Tax (PT)</label>
-            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined ? user.deductionPT : 200) : 200}">
+            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}">
           </div>
           <div>
             <label class="form-label" for="editor-tds" style="font-size:11px">TDS Tax Rate (%)</label>
-            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined ? user.deductionTDS : 5) : 5}" min="0" max="100">
+            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : '') : ''}" min="0" max="100">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
@@ -8114,7 +8128,8 @@ function openUserModal(userId = null) {
     const password = document.getElementById('editor-pass').value.trim();
     const city = document.getElementById('editor-city').value.trim();
     const state = document.getElementById('editor-state').value.trim();
-    const baseSalary = Number(document.getElementById('editor-salary').value);
+    const baseSalaryVal = document.getElementById('editor-salary').value.trim();
+    const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
     const scheduleId = document.getElementById('editor-schedule').value;
     const role = document.getElementById('editor-role').value;
     const preferredLocation = document.getElementById('editor-preferred-location').value;
@@ -8124,11 +8139,16 @@ function openUserModal(userId = null) {
     const dateOfJoining = document.getElementById('editor-doj').value;
     const emergencyContact = document.getElementById('editor-emergency').value.trim();
 
-    const allowanceHRA = Number(document.getElementById('editor-hra').value);
-    const allowanceTravel = Number(document.getElementById('editor-travel').value);
-    const deductionPF = Number(document.getElementById('editor-pf').value);
-    const deductionPT = Number(document.getElementById('editor-pt').value);
-    const deductionTDS = Number(document.getElementById('editor-tds').value);
+    const hraVal = document.getElementById('editor-hra').value.trim();
+    const allowanceHRA = hraVal === '' ? null : Number(hraVal);
+    const travelVal = document.getElementById('editor-travel').value.trim();
+    const allowanceTravel = travelVal === '' ? null : Number(travelVal);
+    const pfVal = document.getElementById('editor-pf').value.trim();
+    const deductionPF = pfVal === '' ? null : Number(pfVal);
+    const ptVal = document.getElementById('editor-pt').value.trim();
+    const deductionPT = ptVal === '' ? null : Number(ptVal);
+    const tdsVal = document.getElementById('editor-tds').value.trim();
+    const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
     if (password) {
       const rules = Auth.validatePassword(password);
@@ -8205,8 +8225,12 @@ function openUserModal(userId = null) {
       const finalUsername = username || name.toLowerCase().replace(/\s+/g, '') || nextEmpId.toLowerCase();
       const finalPassword = password || 'Surya@123';
 
-      if (DB.getUserByUsernameOrId(finalUsername)) {
-        alert('Username or Employee ID is already taken.');
+      const enteredId = employeeId.trim();
+      const existingUserById = DB.getUserByUsernameOrId(enteredId);
+      const existingUserByUsername = DB.getUserByUsernameOrId(finalUsername);
+      if ((existingUserById && (!isEdit || existingUserById.id !== user.id)) ||
+          (existingUserByUsername && (!isEdit || existingUserByUsername.id !== user.id))) {
+        await CustomDialog.alert('Employee ID / HR ID or Username is already taken.');
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = isEdit ? 'Save Changes' : 'Create User';
@@ -9129,11 +9153,11 @@ function openProfileDownloadModal(preSelectedUserId) {
         'Designation': u.designation || 'N/A',
         'Date of Joining': u.dateOfJoining || 'N/A',
         'Base Salary (INR)': u.baseSalary || 0,
-        'HRA Allowance (INR)': u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round((u.baseSalary || 50000) * 0.15),
-        'Travel Allowance (INR)': u.allowanceTravel !== undefined ? u.allowanceTravel : 3000,
-        'PF Deduction (INR)': u.deductionPF !== undefined ? u.deductionPF : Math.round((u.baseSalary || 50000) * 0.08),
-        'PT Deduction (INR)': u.deductionPT !== undefined ? u.deductionPT : 200,
-        'TDS Deduction (%)': u.deductionTDS !== undefined ? u.deductionTDS : ((u.baseSalary || 50000) > 60000 ? 10 : 5),
+        'HRA Allowance (INR)': u.allowanceHRA !== undefined && u.allowanceHRA !== null ? u.allowanceHRA : 0,
+        'Travel Allowance (INR)': u.allowanceTravel !== undefined && u.allowanceTravel !== null ? u.allowanceTravel : 0,
+        'PF Deduction (INR)': u.deductionPF !== undefined && u.deductionPF !== null ? u.deductionPF : 0,
+        'PT Deduction (INR)': u.deductionPT !== undefined && u.deductionPT !== null ? u.deductionPT : 0,
+        'TDS Deduction (%)': u.deductionTDS !== undefined && u.deductionTDS !== null ? u.deductionTDS : 0,
         'Assigned Shift': schedule.name || 'N/A',
         'Shift Timings': schedule.startTime && schedule.endTime ? formatTimeRange12h(schedule.startTime, schedule.endTime) : 'N/A',
         'Preferred Location': u.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi',
@@ -9297,12 +9321,12 @@ function openProfileDownloadModal(preSelectedUserId) {
       const cardsHTML = targetUsers.map(u => {
         const schedule = DB.getSchedule(u.scheduleId) || {};
         const p = DB.calculateMonthlyPayroll(u.id, today.getMonth(), today.getFullYear()) || {};
-        const base = u.baseSalary || 50000;
-        const hra = u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round(base * 0.15);
-        const travel = u.allowanceTravel !== undefined ? u.allowanceTravel : 3000;
-        const pf = u.deductionPF !== undefined ? u.deductionPF : Math.round(base * 0.08);
-        const pt = u.deductionPT !== undefined ? u.deductionPT : 200;
-        const tds = u.deductionTDS !== undefined ? u.deductionTDS : (base > 60000 ? 10 : 5);
+        const base = u.baseSalary || 0;
+        const hra = u.allowanceHRA !== undefined && u.allowanceHRA !== null ? u.allowanceHRA : 0;
+        const travel = u.allowanceTravel !== undefined && u.allowanceTravel !== null ? u.allowanceTravel : 0;
+        const pf = u.deductionPF !== undefined && u.deductionPF !== null ? u.deductionPF : 0;
+        const pt = u.deductionPT !== undefined && u.deductionPT !== null ? u.deductionPT : 0;
+        const tds = u.deductionTDS !== undefined && u.deductionTDS !== null ? u.deductionTDS : 0;
 
         return `
           <div class="profile-card">
@@ -10966,6 +10990,8 @@ function openStaffDetailModal(userId) {
   const user = DB.getUser(userId);
   if (!user) return;
   const schedule = DB.getSchedule(user.scheduleId);
+  const currentUser = Auth.getCurrentUser();
+  const showPayroll = currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager' || currentUser.role === 'finance_manager');
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -11095,17 +11121,19 @@ function openStaffDetailModal(userId) {
         <!-- Column 2: Payroll & Documents -->
         <div style="display:flex; flex-direction:column; gap:16px">
           
+          ${showPayroll ? `
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Corporate Payroll Settings</h4>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px; color:var(--text-secondary)">
-              <div><strong>Base Salary:</strong> <span style="color:var(--text-primary)">₹${(user.baseSalary || 50000).toLocaleString()}</span></div>
-              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(user.baseSalary * 0.15)).toLocaleString()}</span></div>
-              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceTravel !== undefined ? user.allowanceTravel : 3000).toLocaleString()}</span></div>
-              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">₹${(user.deductionPF !== undefined ? user.deductionPF : Math.round(user.baseSalary * 0.08)).toLocaleString()}</span></div>
-              <div><strong>Professional Tax:</strong> <span style="color:var(--text-primary)">₹${(user.deductionPT !== undefined ? user.deductionPT : 200).toLocaleString()}</span></div>
-              <div><strong>TDS Tax Rate:</strong> <span style="color:var(--text-primary)">${user.deductionTDS !== undefined ? user.deductionTDS : 5}%</span></div>
+              <div><strong>Base Salary:</strong> <span style="color:var(--text-primary)">₹${(user.baseSalary || 0).toLocaleString()}</span></div>
+              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : 0).toLocaleString()}</span></div>
+              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : 0).toLocaleString()}</span></div>
+              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">₹${(user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0).toLocaleString()}</span></div>
+              <div><strong>Professional Tax:</strong> <span style="color:var(--text-primary)">₹${(user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0).toLocaleString()}</span></div>
+              <div><strong>TDS Tax Rate:</strong> <span style="color:var(--text-primary)">${user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0}%</span></div>
             </div>
           </div>
+          ` : ''}
  
 
  

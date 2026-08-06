@@ -406,6 +406,7 @@ const defaultLeaves = [
 ];
 
 export const DB = {
+  lastLocalWrite: null,
   data: {
     users: [],
     schedules: [],
@@ -438,32 +439,43 @@ export const DB = {
 
   async init() {
     await this.resolveApiBase();
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!res.ok) throw new Error('API server returned error status');
-      this.data = await res.json();
-      console.log('Database state initialized from backend API.');
-    } catch (e) {
-      if (window.apiBaseUrl) {
-        console.error('Failed to fetch from backend API. Mock fallback is disabled on Live Server.', e);
-        return;
-      }
-      console.warn('Backend API connection failed or timed out. Falling back to local cache.', e);
+    
+    // Skip server fetch if a local write occurred recently (to prevent race conditions with async mutations)
+    const isRecentLocalWrite = this.lastLocalWrite && (Date.now() - this.lastLocalWrite < 2500);
+    
+    if (!isRecentLocalWrite) {
       try {
-        const raw = localStorage.getItem(DB_KEY);
-        if (raw) {
-          this.data = JSON.parse(raw);
-        } else {
-          await this.reset();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error('API server returned error status');
+        this.data = await res.json();
+        console.log('Database state initialized from backend API.');
+        return;
+      } catch (e) {
+        if (window.apiBaseUrl) {
+          console.error('Failed to fetch from backend API. Mock fallback is disabled on Live Server.', e);
+          return;
         }
-      } catch (err) {
-        console.error('Failed to parse local storage cache, resetting to defaults.', err);
+        console.warn('Backend API connection failed or timed out. Falling back to local cache.', e);
+      }
+    } else {
+      console.log('Skipping backend API fetch due to recent local write.');
+    }
+
+    try {
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        this.data = JSON.parse(raw);
+      } else {
         await this.reset();
       }
+    } catch (err) {
+      console.error('Failed to parse local storage cache, resetting to defaults.', err);
+      await this.reset();
     }
+    
     try {
       this.validateAndMigrateState();
     } catch (migErr) {
@@ -601,6 +613,7 @@ export const DB = {
   },
 
   save() {
+    this.lastLocalWrite = Date.now();
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
     window.dispatchEvent(new Event('db_updated'));
 
@@ -769,13 +782,13 @@ export const DB = {
     const newUser = {
       id: newId,
       employeeId: user.employeeId || nextEmpId,
-      scheduleId: 'sch_1',
-      baseSalary: 50000,
-      allowanceHRA: Math.round(50000 * 0.15),
-      allowanceTravel: 3000,
-      deductionPF: Math.round(50000 * 0.08),
-      deductionPT: 200,
-      deductionTDS: 5,
+      scheduleId: user.scheduleId || 'sch_1',
+      baseSalary: null,
+      allowanceHRA: null,
+      allowanceTravel: null,
+      deductionPF: null,
+      deductionPT: null,
+      deductionTDS: null,
       phone: '',
       email: '',
       dob: '',
@@ -806,7 +819,7 @@ export const DB = {
       password,
       role,
       scheduleId: 'sch_1',
-      baseSalary: 50000
+      baseSalary: null
     };
     if (employeeId) {
       userData.employeeId = employeeId.trim();
@@ -1310,12 +1323,12 @@ export const DB = {
     const user = this.getUser(userId);
     if (!user) return null;
 
-    const baseSalary = user.baseSalary || 50000;
-    const allowanceHRA = user.allowanceHRA !== undefined ? user.allowanceHRA : Math.round(baseSalary * 0.15);
-    const allowanceTravel = user.allowanceTravel !== undefined ? user.allowanceTravel : 3000;
-    const deductionPF = user.deductionPF !== undefined ? user.deductionPF : Math.round(baseSalary * 0.08);
-    const deductionPT = user.deductionPT !== undefined ? user.deductionPT : 200;
-    const deductionTDS = user.deductionTDS !== undefined ? user.deductionTDS : (baseSalary > 60000 ? 10 : 5);
+    const baseSalary = user.baseSalary || 0;
+    const allowanceHRA = user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : 0;
+    const allowanceTravel = user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : 0;
+    const deductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0;
+    const deductionPT = user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0;
+    const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
 
     const totalDays = new Date(year, month + 1, 0).getDate();
     let workingDays = 0;
