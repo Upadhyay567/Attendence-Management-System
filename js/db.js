@@ -782,7 +782,8 @@ export const DB = {
     const newUser = {
       id: newId,
       employeeId: user.employeeId || nextEmpId,
-      scheduleId: user.scheduleId || 'sch_1',
+      scheduleId: user.scheduleId || null,
+      preferredLocation: user.preferredLocation || null,
       baseSalary: null,
       allowanceHRA: null,
       allowanceTravel: null,
@@ -818,7 +819,8 @@ export const DB = {
       name,
       password,
       role,
-      scheduleId: 'sch_1',
+      scheduleId: null,
+      preferredLocation: null,
       baseSalary: null
     };
     if (employeeId) {

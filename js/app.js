@@ -4732,9 +4732,9 @@ function renderEmployeeProfile() {
   const user = DB.getUser(userId);
   const main = document.getElementById('main-view');
 
-  const userSchedule = DB.data.schedules.find(s => s.id === (user.scheduleId || 'sch_1'));
-  const shiftText = userSchedule ? `${userSchedule.name} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'N/A';
-  const locationText = user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+  const userSchedule = user.scheduleId ? DB.data.schedules.find(s => s.id === user.scheduleId) : null;
+  const shiftText = userSchedule ? `${userSchedule.name} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'Not Assigned';
+  const locationText = user.preferredLocation || 'Not Assigned';
 
   const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
   const status = user.profileVerificationStatus || 'Approved';
@@ -7608,8 +7608,8 @@ function renderAdminUsers() {
                     </td>
                     <td>${Utils.escape(u.employeeId)}</td>
                     <td><code>••••••••</code></td>
-                    <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
+                    <td>${sch ? Utils.escape(sch.name) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</td>
+                    <td style="font-size:12px;color:var(--text-secondary)">${u.preferredLocation ? Utils.escape(u.preferredLocation) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</td>
                     <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
                     <td>
                       ${actionsHTML}
@@ -7753,8 +7753,8 @@ function renderAdminUsers() {
               </td>
               <td>${Utils.escape(u.employeeId)}</td>
               <td><code>••••••••</code></td>
-              <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(u.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</td>
+              <td>${sch ? Utils.escape(sch.name) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</td>
+              <td style="font-size:12px;color:var(--text-secondary)">${u.preferredLocation ? Utils.escape(u.preferredLocation) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</td>
               <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
               <td>
                 ${actionsHTML}
@@ -7965,13 +7965,15 @@ function openUserModal(userId = null) {
         </div>
         <div class="form-group">
           <label class="form-label" for="editor-schedule">Assigned Shift Schedule</label>
-          <select class="form-input" id="editor-schedule" required>
+          <select class="form-input" id="editor-schedule">
+            <option value="" ${(!isEdit || !user.scheduleId) ? 'selected' : ''}>-- Not Assigned --</option>
             ${schedules.map(s => `<option value="${s.id}" ${isEdit && user.scheduleId === s.id ? 'selected' : ''}>${Utils.escape(s.name)} (${formatTimeRange12h(s.startTime, s.endTime)})</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label class="form-label" for="editor-preferred-location">Preferred Work Location</label>
-          <select class="form-input" id="editor-preferred-location" required>
+          <select class="form-input" id="editor-preferred-location">
+            <option value="" ${(!isEdit || !user.preferredLocation) ? 'selected' : ''}>-- Not Assigned --</option>
             ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
               <option value="${loc}" ${isEdit && user.preferredLocation === loc ? 'selected' : ''}>${loc}</option>
             `).join('')}
@@ -8130,9 +8132,9 @@ function openUserModal(userId = null) {
     const state = document.getElementById('editor-state').value.trim();
     const baseSalaryVal = document.getElementById('editor-salary').value.trim();
     const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
-    const scheduleId = document.getElementById('editor-schedule').value;
+    const scheduleId = document.getElementById('editor-schedule').value || null;
     const role = document.getElementById('editor-role').value;
-    const preferredLocation = document.getElementById('editor-preferred-location').value;
+    const preferredLocation = document.getElementById('editor-preferred-location').value || null;
     const gender = document.getElementById('editor-gender').value;
     const department = document.getElementById('editor-dept').value.trim();
     const designation = document.getElementById('editor-desg').value.trim();
@@ -11089,11 +11091,11 @@ function openStaffDetailModal(userId) {
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Shift Schedule</h4>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--text-secondary)">
-              <div><strong>Shift Name:</strong> ${Utils.escape(schedule.name)}</div>
-              <div><strong>Working Hours:</strong> ${formatTime12h(schedule.startTime)} to ${formatTime12h(schedule.endTime)}</div>
-              <div><strong>Grace Period:</strong> ${schedule.gracePeriod} minutes</div>
-              <div><strong>Working Days:</strong> ${workDaysStr}</div>
-              <div><strong>Preferred Location:</strong> ${Utils.escape(user.preferredLocation || 'Delhi HQ Office')}</div>
+              <div><strong>Shift Name:</strong> ${schedule ? Utils.escape(schedule.name) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</div>
+              <div><strong>Working Hours:</strong> ${schedule ? `${formatTime12h(schedule.startTime)} to ${formatTime12h(schedule.endTime)}` : '<span style="color:var(--text-muted)">Not Assigned</span>'}</div>
+              <div><strong>Grace Period:</strong> ${schedule ? `${schedule.gracePeriod} minutes` : '<span style="color:var(--text-muted)">Not Assigned</span>'}</div>
+              <div><strong>Working Days:</strong> ${schedule ? workDaysStr : '<span style="color:var(--text-muted)">Not Assigned</span>'}</div>
+              <div><strong>Preferred Location:</strong> ${user.preferredLocation ? Utils.escape(user.preferredLocation) : '<span style="color:var(--text-muted)">Not Assigned</span>'}</div>
             </div>
           </div>
  
@@ -11197,7 +11199,7 @@ function renderEmployeeSwapsView() {
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Request a Shift Swap</h3></div>
           <div style="background:rgba(251,191,36,0.05);border-left:4px solid var(--primary);padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;line-height:1.4">
-            <strong>My Current Shift:</strong> ${userSchedule ? Utils.escape(userSchedule.name) : 'None'} (${userSchedule ? formatTime12h(userSchedule.startTime) : ''} - ${userSchedule ? formatTime12h(userSchedule.endTime) : ''}) at <span style="color:var(--primary);font-weight:600">${userSchedule && userSchedule.location ? Utils.escape(userSchedule.location) : 'Kohat Enclave, Pitampura, Delhi'}</span>
+            <strong>My Current Shift:</strong> ${userSchedule ? `${Utils.escape(userSchedule.name)} (${formatTime12h(userSchedule.startTime)} - ${formatTime12h(userSchedule.endTime)}) at <span style="color:var(--primary);font-weight:600">${Utils.escape(userSchedule.location || 'Not Assigned')}</span>` : '<span style="color:var(--text-muted)">Not Assigned</span>'}
           </div>
           <form id="shift-swap-request-form">
             <div class="form-group">
@@ -11280,12 +11282,12 @@ function renderEmployeeSwapsView() {
       }
       validatedCoworkerId = coworker.id;
       const s = DB.getSchedule(coworker.scheduleId);
-      const coworkerLoc = s && s.location ? s.location : (coworker.preferredLocation || 'Kohat Enclave, Pitampura, Delhi');
+      const coworkerLoc = s && s.location ? s.location : (coworker.preferredLocation || 'Not Assigned');
       
       previewDiv.style.display = 'block';
       previewDiv.innerHTML = `
         <h4 style="margin:0 0 8px 0;font-size:13px;color:var(--success)">✅ Coworker ID Verified</h4>
-        <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'No Shift'} (${s ? formatTime12h(s.startTime) : ''} - ${s ? formatTime12h(s.endTime) : ''})</div>
+        <div><strong>Current Shift:</strong> ${s ? Utils.escape(s.name) : 'Not Assigned'} (${s ? formatTime12h(s.startTime) : ''} - ${s ? formatTime12h(s.endTime) : ''})</div>
         <div><strong>Work Location:</strong> <span style="color:var(--primary);font-weight:600">${Utils.escape(coworkerLoc)}</span></div>
       `;
     });
