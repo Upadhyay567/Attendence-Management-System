@@ -2579,8 +2579,8 @@ body.light-theme .sidebar-brand {
   pointer-events: auto !important;
   position: static !important;
   transform: none !important;
-  max-width: 54px !important;
-  max-height: 54px !important;
+  max-width: 66px !important;
+  max-height: 66px !important;
   height: auto !important;
   width: auto !important;
 }
@@ -2625,7 +2625,7 @@ body.light-theme .sidebar-brand {
     display: none !important;
   }
   .sidebar:not(.active) .sidebar-brand {
-    padding: 8px 8px !important;
+    padding: 8px 3px !important;
     overflow: hidden !important;
     justify-content: center !important;
   }

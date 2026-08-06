@@ -385,6 +385,34 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_john_2026-08-06",
+      "userId": "usr_john",
+      "date": "2026-08-06",
+      "checkIn": "10:19",
+      "checkOut": "12:04",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695267° N, 77.185647° E",
+      "distance": 0.04,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-08-06",
+      "userId": "usr_sarah",
+      "date": "2026-08-06",
+      "checkIn": "10:53",
+      "checkOut": "10:59",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.694905° N, 77.185835° E",
+      "distance": 0.03,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_sarah_2026-08-05",
       "userId": "usr_sarah",
       "date": "2026-08-05",
@@ -1029,34 +1057,6 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
-    },
-    {
-      "id": "log_usr_john_2026-08-06",
-      "userId": "usr_john",
-      "date": "2026-08-06",
-      "checkIn": "10:19",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695267° N, 77.185647° E",
-      "distance": 0.04,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_sarah_2026-08-06",
-      "userId": "usr_sarah",
-      "date": "2026-08-06",
-      "checkIn": "10:53",
-      "checkOut": "10:59",
-      "status": "Half Day",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "deviationFlag": false,
-      "justification": "",
-      "coords": "28.694905° N, 77.185835° E",
-      "distance": 0.03,
-      "facePhoto": null
     }
   ],
   "leaveRequests": [
@@ -1180,15 +1180,6 @@
     }
   ],
   "announcements": [
-    {
-      "id": "ann_m9lbfsf",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Sarah Connor! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_sarah"
-    },
     {
       "id": "ann_jhvgbep",
       "title": "🎂 Happy Birthday Wish!",
