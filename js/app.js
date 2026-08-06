@@ -49,7 +49,7 @@ const CustomDialog = {
       overlay.className = 'custom-dialog-overlay';
       
       const modal = document.createElement('div');
-      modal.className = 'custom-dialog-card';
+      modal.className = 'custom-dialog-card custom-confirm-card';
       
       modal.innerHTML = `
         <div class="custom-dialog-icon-wrapper">
