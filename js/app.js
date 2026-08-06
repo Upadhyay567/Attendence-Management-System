@@ -13073,31 +13073,31 @@ function showClockOutThankYou(checkOutTime, workingHours) {
     overlay.style.zIndex = '11000';
 
     const card = document.createElement('div');
-    card.className = 'custom-dialog-card';
-    card.style.background = '#3D0D0A';
-    card.style.border = '1px solid rgba(255, 255, 255, 0.08)';
-    card.style.borderRadius = '16px';
-    card.style.textAlign = 'center';
+    card.className = 'custom-dialog-card custom-thankyou-card';
 
     card.innerHTML = `
-      <div style="font-size: 38px; margin-bottom: 12px;">🎉</div>
-      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #FFFFFF;">Thank You!</h2>
-      <p style="font-size: 13.5px; color: #FDF8F2; line-height: 1.5; margin-bottom: 20px; font-style: italic; opacity: 0.95;">
+      <div class="custom-dialog-icon-wrapper" style="animation: popperPulse 1.2s ease-in-out infinite alternate; position: relative; z-index: 10;">
+        <div class="custom-dialog-icon-badge custom-thankyou-icon">
+          🎉
+        </div>
+      </div>
+      <h2 style="position: relative; z-index: 10;">Thank You!</h2>
+      <p class="thankyou-msg" style="position: relative; z-index: 10;">
         Thank you for your hard work today. Your checkout has been recorded successfully. Have a great day and see you tomorrow!
       </p>
       
-      <div style="background: rgba(137, 32, 27, 0.15); border: 1px solid rgba(137, 32, 27, 0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-        <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
-          <span style="color: #cbd5e1; opacity: 0.85;">Checkout Time:</span>
-          <strong style="color: #FFFFFF;">${checkOutTime}</strong>
+      <div class="details-card" style="position: relative; z-index: 10;">
+        <div style="display: flex; justify-content: space-between; font-size: 14px; align-items: center;">
+          <span class="detail-label">Checkout Time:</span>
+          <strong class="detail-val">${checkOutTime}</strong>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
-          <span style="color: #cbd5e1; opacity: 0.85;">Today's Working Hours:</span>
-          <strong style="color: #FFFFFF;">${workingHours || '--:--'}</strong>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; align-items: center;">
+          <span class="detail-label">Today's Working Hours:</span>
+          <strong class="detail-val">${workingHours || '--:--'}</strong>
         </div>
       </div>
       
-      <div class="custom-dialog-actions" style="justify-content: center; gap: 10px;">
+      <div class="custom-dialog-actions" style="position: relative; z-index: 10;">
         <button class="custom-dialog-btn-secondary" id="btn-thankyou-close">Close</button>
         <button class="custom-dialog-btn-thankyou" id="btn-thankyou-done">Done</button>
       </div>
@@ -13106,7 +13106,80 @@ function showClockOutThankYou(checkOutTime, workingHours) {
     overlay.appendChild(card);
     document.body.appendChild(overlay);
 
+    // Particle/Celebration Container
+    const particleContainer = document.createElement('div');
+    particleContainer.className = 'celebration-particles-container';
+    card.appendChild(particleContainer);
+
+    const colors = ['#ff2c55', '#ff9500', '#4cd964', '#5ac8fa', '#007aff', '#5856d6', '#ffcc00', '#89201B'];
+    const icons = ['🎉', '✨', '🎊', '⭐️', '🍬', '🎈'];
+    
+    // Spawn falling confetti
+    for (let i = 0; i < 35; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'celebration-particle';
+      
+      const isIcon = Math.random() > 0.6;
+      if (isIcon) {
+        particle.textContent = icons[Math.floor(Math.random() * icons.length)];
+        particle.style.fontSize = `${Math.floor(Math.random() * 10) + 12}px`;
+      } else {
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.width = `${Math.floor(Math.random() * 5) + 5}px`;
+        particle.style.height = `${Math.floor(Math.random() * 10) + 5}px`;
+        particle.style.borderRadius = '2px';
+      }
+      
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `-25px`;
+      particle.style.opacity = (Math.random() * 0.7 + 0.3).toFixed(2);
+      
+      const duration = (Math.random() * 2.5 + 2).toFixed(2);
+      const delay = (Math.random() * 1.5).toFixed(2);
+      particle.style.animation = `confettiFall ${duration}s linear ${delay}s infinite`;
+      
+      particleContainer.appendChild(particle);
+    }
+
+    // Spawn Fireworks bursts in the background
+    function spawnFirework() {
+      const burst = document.createElement('div');
+      burst.className = 'fireworks-burst';
+      burst.style.left = `${Math.random() * 80 + 10}%`;
+      burst.style.top = `${Math.random() * 50 + 10}%`;
+      
+      const burstColors = ['#ffcc00', '#ff2c55', '#4cd964', '#5ac8fa', '#007aff', '#ff9500'];
+      const color = burstColors[Math.floor(Math.random() * burstColors.length)];
+      
+      for (let i = 0; i < 8; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'firework-spark';
+        spark.style.background = color;
+        
+        const angle = (i * 45) * Math.PI / 180;
+        const dist = 25 + Math.random() * 15;
+        const x = (Math.cos(angle) * dist).toFixed(1);
+        const y = (Math.sin(angle) * dist).toFixed(1);
+        
+        spark.style.setProperty('--spark-x', `${x}px`);
+        spark.style.setProperty('--spark-y', `${y}px`);
+        spark.style.animation = `sparkExplode 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards`;
+        
+        burst.appendChild(spark);
+      }
+      
+      particleContainer.appendChild(burst);
+      setTimeout(() => burst.remove(), 1300);
+    }
+    
+    // Spawn initial fireworks
+    for (let i = 0; i < 3; i++) {
+      setTimeout(spawnFirework, i * 400);
+    }
+    const fireworkInterval = setInterval(spawnFirework, 1500);
+
     const close = () => {
+      clearInterval(fireworkInterval);
       card.style.animation = 'customDialogScaleDown 0.18s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards';
       overlay.style.animation = 'customDialogFadeOut 0.18s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards';
       setTimeout(() => {
