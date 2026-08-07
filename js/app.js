@@ -4725,17 +4725,8 @@ function renderEmployeeReports() {
           <select class="form-input" id="emp-report-year" style="width:100px;padding:8px">
             ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
           </select>
-
-          <label class="form-label" style="margin:0;margin-left:16px" for="emp-payslip-format-select">File Format:</label>
-          <select class="form-input" id="emp-payslip-format-select" style="width:180px;padding:8px;background:rgba(255,255,255,0.02)">
-            <option value="pdf">PDF Document (.pdf)</option>
-            <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
-          </select>
         </div>
-        <div style="margin-left:auto;display:flex;gap:10px">
-          <button class="btn btn-cyan" id="btn-emp-print-payslip" style="padding:10px 18px;width:auto;font-size:13px">🖨️ Print Statement</button>
-          <button class="btn btn-secondary" id="btn-emp-download-payslip" style="padding:10px 18px;width:auto;font-size:13px">📥 Download</button>
-        </div>
+        <button class="btn btn-cyan" id="btn-emp-print-payslip" style="margin-left:auto;padding:10px 18px;width:auto;font-size:13px">🖨️ Print Statement</button>
       </div>
       <div id="payslip-render-container"></div>
     </div>
@@ -4745,14 +4736,6 @@ function renderEmployeeReports() {
   document.getElementById('emp-report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshPayslip(); });
   document.getElementById('btn-emp-print-payslip').addEventListener('click', () => {
     printSinglePayslipPDF(user.id, selectedMonth, selectedYear);
-  });
-  document.getElementById('btn-emp-download-payslip').addEventListener('click', () => {
-    const format = document.getElementById('emp-payslip-format-select').value;
-    if (format === 'pdf') {
-      printSinglePayslipPDF(user.id, selectedMonth, selectedYear);
-    } else {
-      downloadSinglePayslipExcel(user.id, selectedMonth, selectedYear);
-    }
   });
   refreshPayslip();
 }
