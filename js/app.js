@@ -6,7 +6,7 @@ import { triggerBirthdayCelebration } from './celebration.js';
 
 // Custom dialog modal manager
 const CustomDialog = {
-  alert(message) {
+  alert(message, title = null) {
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
       overlay.className = 'custom-dialog-overlay';
@@ -16,10 +16,11 @@ const CustomDialog = {
       
       modal.innerHTML = `
         <div class="custom-dialog-icon-wrapper">
-          <div class="custom-dialog-icon-badge custom-dialog-icon-alert">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <div class="custom-dialog-icon-badge custom-dialog-icon-alert" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
           </div>
         </div>
+        ${title ? `<h3 style="margin: 10px 0 6px 0; font-size: 16px; font-weight: 700; color: var(--text-primary); text-align: center;">${Utils.escape(title)}</h3>` : ''}
         <div class="custom-dialog-message">${message.replace(/\n/g, '<br>')}</div>
         <div class="custom-dialog-actions" style="justify-content: center;">
           <button class="custom-dialog-btn-primary" style="min-width: 120px;" id="btn-custom-alert-ok">OK</button>
@@ -137,11 +138,38 @@ const CustomDialog = {
 };
 
 // Global overrides of native browser dialogs to show beautiful mid-screen popup modals instead of ugly native browser bars
-window.alert = function(msg) {
+window.alert = function(msg, title = null) {
   if (msg !== undefined && msg !== null) {
-    CustomDialog.alert(String(msg));
+    CustomDialog.alert(String(msg), title);
   }
 };
+
+function getCheckInTimeStatus(user) {
+  if (!user) return { allowed: false, reason: 'Authentication required.' };
+  
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const resolved = DB.resolveUserShiftForDate(user, todayStr);
+  
+  if (!resolved || !resolved.scheduleId) {
+    return { allowed: false, reason: 'No shift assigned today. Please contact your manager or HR to assign a shift schedule.', type: 'NoShift' };
+  }
+  
+  const schedule = DB.getSchedule(resolved.scheduleId);
+  if (!schedule || !schedule.startTime) {
+    return { allowed: false, reason: 'No shift assigned today. Please contact your manager or HR to assign a shift schedule.', type: 'NoShift' };
+  }
+  
+  const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+  const shiftStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startHour, startMinute, 0, 0);
+  const allowedStartTime = new Date(shiftStart.getTime() - 30 * 60 * 1000);
+  
+  if (today.getTime() < allowedStartTime.getTime()) {
+    return { allowed: false, reason: 'Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.', type: 'TooEarly' };
+  }
+  
+  return { allowed: true };
+}
 
 // Override native confirm() — returns a Promise, so callers must use `await`
 const _nativeConfirm = window.confirm;
@@ -420,9 +448,13 @@ document.addEventListener('click', (e) => {
 function triggerCelebrationIfBirthday(user) {
   if (user && user.dob) {
     const today = new Date();
-    const dob = new Date(user.dob);
-    if (today.getMonth() === dob.getMonth() && today.getDate() === dob.getDate()) {
-      triggerBirthdayCelebration(user);
+    const parts = user.dob.split('-');
+    if (parts.length === 3) {
+      const birthMonth = parseInt(parts[1], 10) - 1; // 0-indexed
+      const birthDay = parseInt(parts[2], 10);
+      if (today.getMonth() === birthMonth && today.getDate() === birthDay) {
+        triggerBirthdayCelebration(user);
+      }
     }
   }
 }
@@ -524,9 +556,7 @@ function setupRouter() {
         // Employee Routes
         case '#dashboard':
           renderEmployeeDashboard();
-          if (DB.getUserBaseRole(user.role) === 'employee') {
-            triggerCelebrationIfBirthday(user);
-          }
+          triggerCelebrationIfBirthday(user);
           break;
         case '#leaves':
           renderEmployeeLeaves();
@@ -554,6 +584,7 @@ function setupRouter() {
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
           renderAdminDashboard();
+          triggerCelebrationIfBirthday(user);
           break;
         case '#admin-schedules':
           renderAdminSchedules();
@@ -1872,7 +1903,20 @@ function renderEmployeeDashboard() {
   // Dashboard Check-in actions
   if (!todayLog || todayLog.status === 'Pending Verification') {
     const regIn = document.getElementById('btn-regular-checkin');
-    if (regIn) regIn.addEventListener('click', () => handlePinClockIn(user.id));
+    if (regIn) {
+      regIn.addEventListener('click', async () => {
+        const checkInStatus = getCheckInTimeStatus(user);
+        if (!checkInStatus.allowed) {
+          if (checkInStatus.type === 'TooEarly') {
+            await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
+          } else {
+            await CustomDialog.alert(checkInStatus.reason, "Check In Blocked");
+          }
+          return;
+        }
+        handlePinClockIn(user.id);
+      });
+    }
   } else if (!todayLog.checkOut) {
     const regOut = document.getElementById('btn-regular-checkout');
     if (regOut) regOut.addEventListener('click', () => handleClockOut(user.id));
@@ -1882,6 +1926,16 @@ function renderEmployeeDashboard() {
   const geoCheckIn = document.getElementById('btn-geofence-checkin');
   if (geoCheckIn) {
     geoCheckIn.addEventListener('click', async () => {
+      const checkInStatus = getCheckInTimeStatus(user);
+      if (!checkInStatus.allowed) {
+        if (checkInStatus.type === 'TooEarly') {
+          await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
+        } else {
+          await CustomDialog.alert(checkInStatus.reason, "Check In Blocked");
+        }
+        return;
+      }
+
       const regIn = document.getElementById('btn-regular-checkin');
       if (regIn) {
         regIn.setAttribute('disabled', 'true');
@@ -2221,17 +2275,32 @@ function renderEmployeeDashboard() {
       }
 
       // Enable check-in buttons so they can click to start check-in flow, disable checkout buttons
+      const checkInStatus = getCheckInTimeStatus(user);
+      const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+
       if (regularIn) {
-        regularIn.removeAttribute('disabled');
-        regularIn.style.opacity = '1';
-        regularIn.style.cursor = 'pointer';
-        regularIn.setAttribute('title', 'Click to check in');
+        if (isEarly) {
+          regularIn.style.opacity = '0.4';
+          regularIn.style.cursor = 'not-allowed';
+          regularIn.setAttribute('title', 'Too Early');
+        } else {
+          regularIn.removeAttribute('disabled');
+          regularIn.style.opacity = '1';
+          regularIn.style.cursor = 'pointer';
+          regularIn.setAttribute('title', 'Click to check in');
+        }
       }
       if (geoCheckIn) {
-        geoCheckIn.removeAttribute('disabled');
-        geoCheckIn.style.opacity = '1';
-        geoCheckIn.style.cursor = 'pointer';
-        geoCheckIn.setAttribute('title', 'Click to check in');
+        if (isEarly) {
+          geoCheckIn.style.opacity = '0.4';
+          geoCheckIn.style.cursor = 'not-allowed';
+          geoCheckIn.setAttribute('title', 'Too Early');
+        } else {
+          geoCheckIn.removeAttribute('disabled');
+          geoCheckIn.style.opacity = '1';
+          geoCheckIn.style.cursor = 'pointer';
+          geoCheckIn.setAttribute('title', 'Click to check in');
+        }
       }
       if (regularOut) {
         regularOut.setAttribute('disabled', 'true');
@@ -2426,12 +2495,21 @@ function renderEmployeeDashboard() {
           radar.className = 'gps-radar-indicator in-range';
         }
         // Enable regular check-in/out + geofence direct action buttons
+        const checkInStatus = getCheckInTimeStatus(user);
+        const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+
         [regularIn, regularOut, geoCheckIn, geoCheckOut].forEach(btn => {
           if (btn) {
-            btn.removeAttribute('disabled');
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-            btn.setAttribute('title', 'Geofence validated');
+            if ((btn === regularIn || btn === geoCheckIn) && isEarly) {
+              btn.style.opacity = '0.4';
+              btn.style.cursor = 'not-allowed';
+              btn.setAttribute('title', 'Too Early');
+            } else {
+              btn.removeAttribute('disabled');
+              btn.style.opacity = '1';
+              btn.style.cursor = 'pointer';
+              btn.setAttribute('title', 'Geofence validated');
+            }
           }
         });
       } else {
@@ -2444,12 +2522,21 @@ function renderEmployeeDashboard() {
           radar.className = 'gps-radar-indicator out-of-range';
         }
         // Disable regular check-in/out + geofence direct action buttons
+        const checkInStatus = getCheckInTimeStatus(user);
+        const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+
         [regularIn, regularOut, geoCheckIn, geoCheckOut].forEach(btn => {
           if (btn) {
-            btn.setAttribute('disabled', 'true');
-            btn.style.opacity = '0.4';
-            btn.style.cursor = 'not-allowed';
-            btn.setAttribute('title', `Action requires being within 100m of ${officeName}`);
+            if ((btn === regularIn || btn === geoCheckIn) && isEarly) {
+              btn.style.opacity = '0.4';
+              btn.style.cursor = 'not-allowed';
+              btn.setAttribute('title', 'Too Early');
+            } else {
+              btn.setAttribute('disabled', 'true');
+              btn.style.opacity = '0.4';
+              btn.style.cursor = 'not-allowed';
+              btn.setAttribute('title', `Action requires being within 100m of ${officeName}`);
+            }
           }
         });
       }
@@ -6087,6 +6174,58 @@ function startLiveClock() {
     const now = new Date();
     if (timeEl) timeEl.textContent = now.toTimeString().split(' ')[0];
     if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    
+    // Periodically update Check In button enabled states
+    const currentUser = Auth.getCurrentUser();
+    if (currentUser) {
+      const checkInStatus = getCheckInTimeStatus(currentUser);
+      const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+      const regularIn = document.getElementById('btn-regular-checkin');
+      const geoCheckIn = document.getElementById('btn-geofence-checkin');
+      
+      if (regularIn) {
+        if (isEarly) {
+          if (regularIn.style.opacity !== '0.4') {
+            regularIn.style.opacity = '0.4';
+            regularIn.style.cursor = 'not-allowed';
+            regularIn.setAttribute('title', 'Too Early');
+          }
+        } else {
+          if (regularIn.style.opacity === '0.4') {
+            regularIn.style.opacity = '1';
+            regularIn.style.cursor = 'pointer';
+            regularIn.setAttribute('title', 'Click to check in');
+          }
+        }
+      }
+      
+      if (geoCheckIn) {
+        const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+        if (isEarly) {
+          if (geoCheckIn.style.opacity !== '0.4') {
+            geoCheckIn.style.opacity = '0.4';
+            geoCheckIn.style.cursor = 'not-allowed';
+            geoCheckIn.setAttribute('title', 'Too Early');
+          }
+        } else {
+          if (inRange) {
+            if (geoCheckIn.style.opacity === '0.4') {
+              geoCheckIn.removeAttribute('disabled');
+              geoCheckIn.style.opacity = '1';
+              geoCheckIn.style.cursor = 'pointer';
+              geoCheckIn.setAttribute('title', 'Geofence validated');
+            }
+          } else {
+            if (geoCheckIn.style.opacity !== '0.4') {
+              geoCheckIn.setAttribute('disabled', 'true');
+              geoCheckIn.style.opacity = '0.4';
+              geoCheckIn.style.cursor = 'not-allowed';
+              geoCheckIn.setAttribute('title', 'Action requires being within 100m');
+            }
+          }
+        }
+      }
+    }
   };
   tick();
   if (activeTimer) clearInterval(activeTimer);
