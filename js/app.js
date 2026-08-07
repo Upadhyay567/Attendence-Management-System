@@ -4756,15 +4756,6 @@ function renderEmployeePayslip(userId, month, year) {
     return;
   }
 
-  const sched = DB.getSchedule(user.scheduleId) || {
-    name: 'Standard Day Shift',
-    startTime: '09:00',
-    endTime: '17:00',
-    gracePeriod: 15,
-    workDays: [1, 2, 3, 4, 5],
-    location: 'Kohat Enclave, Pitampura, Delhi'
-  };
-
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   container.innerHTML = `
     <div class="payslip-wrapper">
@@ -4780,7 +4771,7 @@ function renderEmployeePayslip(userId, month, year) {
           <div><strong>Employee Name:</strong> ${Utils.escape(user.name)}</div>
           <div><strong>Employee ID:</strong> ${Utils.escape(user.employeeId || user.id)}</div>
           <div><strong>Department:</strong> ${Utils.escape(user.department || 'N/A')}</div>
-          <div><strong>Role:</strong> ${Utils.escape(user.designation || 'Staff')}</div>
+          <div><strong>Role / Designation:</strong> ${Utils.escape(user.designation || 'Staff Associate')}</div>
         </div>
         <div class="payslip-meta-block">
           <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
@@ -4788,12 +4779,6 @@ function renderEmployeePayslip(userId, month, year) {
           <div><strong>Present Days:</strong> ${payroll.presentDays} days</div>
           <div><strong>Leave Days:</strong> ${payroll.approvedLeaveDays} days</div>
         </div>
-      </div>
-      
-      <!-- Check-In and Check-Out Summary -->
-      <div style="font-size:11px; margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); line-height:1.5">
-        <strong>Check-In / Out Summary:</strong> Present: <strong>${payroll.presentDays}</strong>d (On Time: ${payroll.presentDays - payroll.lateDays - payroll.halfDays}d, Late: ${payroll.lateDays}d, Half-Day: ${payroll.halfDays}d) | Absent: <strong>${payroll.absentDays}</strong>d | Overtime: <strong>${payroll.overtimeText}</strong><br>
-        <strong>Assigned Shift:</strong> ${Utils.escape(sched.name)} (${formatTimeRange12h(sched.startTime, sched.endTime)}) | <strong>Office Location:</strong> ${Utils.escape(sched.location || 'Kohat Enclave, Pitampura, Delhi')}
       </div>
 
       <table class="payslip-table">
@@ -4881,8 +4866,8 @@ function renderEmployeePayslip(userId, month, year) {
       </div>
       ` : ''}
       <div style="display:flex;justify-content:space-between;margin-top:40px;font-size:11px;color:#64748b">
-        <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:120px;text-align:center">HR Dept Seal</div>
-        <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:120px;text-align:center">Signature of Recipient</div>
+        <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:180px;text-align:center">HR Dept Seal</div>
+        <div style="border-top:1.5px solid #cbd5e1;padding-top:6px;width:180px;text-align:center">Signature of Recipient</div>
       </div>
     </div>
   `;
@@ -9263,7 +9248,7 @@ function openProfileDownloadModal(preSelectedUserId) {
       <div class="form-group">
         <label class="form-label" for="profile-format-select" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">File Format</label>
         <select id="profile-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
-          <option value="pdf">PDF Document (.pdf)</option>
+          
           <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
         </select>
       </div>
@@ -9760,7 +9745,7 @@ function openAttendanceReportModal() {
       <div class="form-group">
         <label class="form-label" for="rpt-format-select" style="font-size:11.5px;font-weight:700;color:var(--text-secondary)">Export Format</label>
         <select id="rpt-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
-          <option value="pdf">PDF Document (.pdf)</option>
+          
           <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
           <option value="csv">CSV (Comma Separated Values) (.csv)</option>
         </select>
@@ -11144,9 +11129,7 @@ function renderAdminReports() {
         <div class="content-subtitle">Inspect aggregated logs, salary deductions, and print payslips.</div>
       </div>
       <div>
-        <button class="btn btn-secondary btn-sm" id="btn-download-report-payroll" style="width:auto; font-weight:600; font-size:12px; display:flex; align-items:center; gap:6px; padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:rgba(255,255,255,0.02)">
-          📊 Download Report
-        </button>
+        
       </div>
     </div>
     <div class="content-body">
@@ -11188,7 +11171,16 @@ function renderAdminReports() {
   document.getElementById('report-month').addEventListener('change', (e) => { selectedMonth = Number(e.target.value); refreshReports(); });
   document.getElementById('report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshReports(); });
   document.getElementById('btn-export-csv').addEventListener('click', () => exportReportCSV(selectedMonth, selectedYear));
-  document.getElementById('btn-print-report').addEventListener('click', () => window.print());
+  document.getElementById('btn-print-report').addEventListener('click', () => {
+    const drawer = document.getElementById('admin-payslip-preview-drawer');
+    if (drawer && drawer.style.display !== 'none' && drawer.dataset.activeUserId) {
+      printSinglePayslipPDF(drawer.dataset.activeUserId, selectedMonth, selectedYear);
+    } else if (typeof users !== 'undefined' && users.length > 0) {
+      printSinglePayslipPDF(users[0].id, selectedMonth, selectedYear);
+    } else {
+      alert('No employee record available to print.');
+    }
+  });
   refreshReports();
 }
 
@@ -11250,6 +11242,7 @@ function compileReports(month, year) {
       const uId = e.target.closest('.btn-view-payslip-admin').dataset.id;
       const drawer = document.getElementById('admin-payslip-preview-drawer');
       drawer.style.display = 'block';
+      drawer.dataset.activeUserId = uId;
       
       // Ensure we resolve user correctly via ID, employeeId, email, or username
       const uDetails = DB.getUser(uId);
@@ -11265,15 +11258,6 @@ function compileReports(month, year) {
         return;
       }
 
-      const sched = DB.getSchedule(uDetails.scheduleId) || {
-        name: 'Standard Day Shift',
-        startTime: '09:00',
-        endTime: '17:00',
-        gracePeriod: 15,
-        workDays: [1, 2, 3, 4, 5],
-        location: 'Kohat Enclave, Pitampura, Delhi'
-      };
-
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const loggedInUser = Auth.getCurrentUser();
       const editBtnHTML = loggedInUser.role === 'manager'
@@ -11287,7 +11271,6 @@ function compileReports(month, year) {
             <div style="display:flex;gap:10px">
               ${editBtnHTML}
               <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
-              <button class="btn btn-secondary" id="btn-admin-download-pdf-single" style="padding:6px 12px;width:auto;font-size:12px">📄 Download PDF</button>
               <button class="btn btn-secondary" onclick="document.getElementById('admin-payslip-preview-drawer').style.display='none'" style="padding:6px 12px;width:auto;font-size:12px">Close</button>
             </div>
           </div>
@@ -11304,7 +11287,7 @@ function compileReports(month, year) {
                 <div><strong>Employee Name:</strong> ${Utils.escape(uDetails.name)}</div>
                 <div><strong>Employee ID:</strong> ${Utils.escape(uDetails.employeeId || uDetails.id)}</div>
                 <div><strong>Department:</strong> ${Utils.escape(uDetails.department || 'N/A')}</div>
-                <div><strong>Role:</strong> ${Utils.escape(uDetails.designation || 'Staff')}</div>
+                <div><strong>Role / Designation:</strong> ${Utils.escape(uDetails.designation || 'Staff Associate')}</div>
               </div>
               <div class="payslip-meta-block">
                 <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
@@ -11312,12 +11295,6 @@ function compileReports(month, year) {
                 <div><strong>Present Days:</strong> ${p.presentDays} days</div>
                 <div><strong>Leave Days:</strong> ${p.approvedLeaveDays} days</div>
               </div>
-            </div>
-
-            <!-- Check-In and Check-Out Summary -->
-            <div style="font-size:11px; margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); line-height:1.5">
-              <strong>Check-In / Out Summary:</strong> Present: <strong>${p.presentDays}</strong>d (On Time: ${p.presentDays - p.lateDays - p.halfDays}d, Late: ${p.lateDays}d, Half-Day: ${p.halfDays}d) | Absent: <strong>${p.absentDays}</strong>d | Overtime: <strong>${p.overtimeText}</strong><br>
-              <strong>Assigned Shift:</strong> ${Utils.escape(sched.name)} (${formatTimeRange12h(sched.startTime, sched.endTime)}) | <strong>Office Location:</strong> ${Utils.escape(sched.location || 'Kohat Enclave, Pitampura, Delhi')}
             </div>
 
             <table class="payslip-table">
@@ -11407,11 +11384,12 @@ function compileReports(month, year) {
           </div>
         </div>
       `;
-      document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => printSinglePayslipPDF(uDetails.id, month, year));
-      document.getElementById('btn-admin-download-pdf-single').addEventListener('click', () => printSinglePayslipPDF(uDetails.id, month, year));
+      document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => {
+        printSinglePayslipPDF(uDetails.id, month, year);
+      });
       if (loggedInUser.role === 'manager') {
         document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
-          openPayrollAdjustmentModal(uDetails.id, month, year); // Safe lookup using resolved database user id
+          openPayrollAdjustmentModal(uDetails.id, month, year);
         });
       }
       drawer.scrollIntoView({ behavior: 'smooth' });
@@ -13733,6 +13711,7 @@ export { executeExpressReassignments };
 
 
 // ── Global Print & PDF Payslip Document Generator ──────────────────────────
+// ── Global Print & PDF Payslip Document Generator ──────────────────────────
 function printSinglePayslipPDF(userId, month, year) {
   const user = DB.getUser(userId);
   if (!user) {
@@ -13746,22 +13725,13 @@ function printSinglePayslipPDF(userId, month, year) {
     return;
   }
 
-  const sched = DB.getSchedule(user.scheduleId) || {
-    name: 'Standard Day Shift',
-    startTime: '09:00',
-    endTime: '17:00',
-    gracePeriod: 15,
-    workDays: [1, 2, 3, 4, 5],
-    location: 'Kohat Enclave, Pitampura, Delhi'
-  };
-
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const period = `${monthNames[month]} ${year}`;
   const generatedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Popup blocker active. Please allow popups for this site to generate/print the PDF.');
+    alert('Popup blocker active. Please allow popups for this site to generate/print the statement.');
     return;
   }
 
@@ -13892,17 +13862,6 @@ function printSinglePayslipPDF(userId, month, year) {
       flex: 1;
     }
 
-    .summary-box {
-      font-size: 11px;
-      margin-top: 10px;
-      padding: 10px 14px;
-      background: #fff8f8;
-      border: 1px solid #fecdd3;
-      border-radius: 6px;
-      color: #334155;
-      line-height: 1.5;
-    }
-
     .tbl {
       width: 100%;
       border-collapse: collapse;
@@ -13981,7 +13940,7 @@ function printSinglePayslipPDF(userId, month, year) {
     .signatures {
       display: flex;
       justify-content: space-between;
-      margin-top: 35px;
+      margin-top: 40px;
       padding-top: 10px;
       font-size: 11px;
       color: #64748b;
@@ -14038,20 +13997,14 @@ function printSinglePayslipPDF(userId, month, year) {
       <div class="info-item"><span class="info-lbl">Employee ID:</span><span class="info-val">${Utils.escape(user.employeeId || user.id || 'N/A')}</span></div>
       <div class="info-item"><span class="info-lbl">Department:</span><span class="info-val">${Utils.escape(user.department || 'N/A')}</span></div>
       <div class="info-item"><span class="info-lbl">Role / Designation:</span><span class="info-val">${Utils.escape(user.designation || 'Staff Associate')}</span></div>
-      <div class="info-item"><span class="info-lbl">Assigned Shift:</span><span class="info-val">${Utils.escape(sched.name || 'Standard Shift')} (${formatTimeRange12h(sched.startTime || '09:00', sched.endTime || '17:00')})</span></div>
-      <div class="info-item"><span class="info-lbl">Worksite Location:</span><span class="info-val">${Utils.escape(sched.location || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</span></div>
     </div>
 
-    <div class="sec-title">Attendance & Metric Summary</div>
+    <div class="sec-title">Attendance & Days Summary</div>
     <div class="emp-grid" style="grid-template-columns: repeat(4, 1fr);">
       <div class="info-item" style="flex-direction:column"><span class="info-lbl">Working Days</span><span class="info-val" style="font-size:13px">${payroll.workingDays ?? 0} Days</span></div>
       <div class="info-item" style="flex-direction:column"><span class="info-lbl">Present Days</span><span class="info-val" style="font-size:13px;color:#16a34a">${payroll.presentDays ?? 0} Days</span></div>
       <div class="info-item" style="flex-direction:column"><span class="info-lbl">Absent Days</span><span class="info-val" style="font-size:13px;color:${(payroll.absentDays || 0) > 0 ? '#dc2626' : '#0f172a'}">${payroll.absentDays ?? 0} Days</span></div>
-      <div class="info-item" style="flex-direction:column"><span class="info-lbl">Approved Leaves</span><span class="info-val" style="font-size:13px;color:#2563eb">${payroll.approvedLeaveDays ?? 0} Days</span></div>
-    </div>
-
-    <div class="summary-box">
-      <strong>Check-In / Check-Out Log Summary:</strong> Present: <strong>${payroll.presentDays ?? 0}</strong> days (On-Time: ${ (payroll.presentDays||0) - (payroll.lateDays||0) - (payroll.halfDays||0) }, Late Check-Ins: ${payroll.lateDays ?? 0}, Half-Days: ${payroll.halfDays ?? 0}) | Absent: <strong>${payroll.absentDays ?? 0}</strong> days | Total Overtime: <strong>${payroll.overtimeText || '0h 0m'}</strong>
+      <div class="info-item" style="flex-direction:column"><span class="info-lbl">Leave Days</span><span class="info-val" style="font-size:13px;color:#2563eb">${payroll.approvedLeaveDays ?? 0} Days</span></div>
     </div>
 
     <div class="sec-title">Salary Breakdown (Earnings & Deductions)</div>
