@@ -1626,6 +1626,11 @@ function renderEmployeeDashboard() {
   }
   const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
 
+  const checkInStatus = getCheckInTimeStatus(user);
+  const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+  const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
+  sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
+
   // Dynamic GPS Mock Selector options
   let optionsHTML = '';
   optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
@@ -1663,15 +1668,31 @@ function renderEmployeeDashboard() {
 
               <!-- Fixed clock actions row -->
               <div class="clock-actions-row">
-                ${!todayLog || todayLog.status === 'Pending Verification'
+                ${isNoShift 
                   ? `
-                    <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
-                  ` 
-                  : (todayLog.checkOut 
-                      ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
-                      : `
-                        <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
+                    <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(255, 149, 0, 0.06); border: 1px solid rgba(255, 149, 0, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                      <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⚠️ No Shift Assigned</div>
+                      No shift assigned today. Please contact your manager or HR.
+                    </div>
+                  `
+                  : (isEarly 
+                      ? `
+                        <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                        </div>
                       `
+                      : (!todayLog || todayLog.status === 'Pending Verification'
+                          ? `
+                            <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
+                          ` 
+                          : (todayLog.checkOut 
+                              ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
+                              : `
+                                <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
+                              `
+                            )
+                        )
                     )
                 }
               </div>
@@ -1746,13 +1767,41 @@ function renderEmployeeDashboard() {
 
               <!-- Direct Geofence Card Actions -->
               <div class="geofence-direct-actions" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px">
-                <div style="display:${todayLog && todayLog.checkOut ? 'none' : 'grid'}; grid-template-columns:${todayLog && todayLog.status !== 'Pending Verification' ? '1fr' : '1fr 1fr'}; gap:8px" id="geofence-btn-group">
-                  <button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600; display:${todayLog && todayLog.status !== 'Pending Verification' ? 'none' : 'block'}">Check In</button>
-                  <button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600; display:${todayLog && todayLog.checkOut ? 'none' : 'block'}">Check Out</button>
-                </div>
-                <div id="geofence-checked-out-msg" style="display:${todayLog && todayLog.checkOut ? 'block' : 'none'}; background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
-                  Checked Out Today
-                </div>
+                ${isNoShift 
+                  ? `
+                    <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(255, 149, 0, 0.06); border: 1px solid rgba(255, 149, 0, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                      <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⚠️ No Shift Assigned</div>
+                      No shift assigned today. Please contact your manager or HR.
+                    </div>
+                  `
+                  : (isEarly 
+                      ? `
+                        <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                        </div>
+                      `
+                      : (todayLog && todayLog.checkOut
+                          ? `
+                            <div id="geofence-checked-out-msg" style="background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
+                              Checked Out Today
+                            </div>
+                          `
+                          : `
+                            <div style="display: grid; grid-template-columns: ${todayLog && todayLog.status !== 'Pending Verification' ? '1fr' : '1fr 1fr'}; gap:8px" id="geofence-btn-group">
+                              ${!todayLog || todayLog.status === 'Pending Verification'
+                                ? `<button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600;">Check In</button>`
+                                : ''
+                              }
+                              ${todayLog && !todayLog.checkOut
+                                ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600; grid-column: span ${todayLog && todayLog.status !== 'Pending Verification' ? '1' : '1'}">Check Out</button>`
+                                : ''
+                              }
+                            </div>
+                          `
+                        )
+                    )
+                }
               </div>
             </div>
           </div>
@@ -6180,6 +6229,17 @@ function startLiveClock() {
     if (currentUser) {
       const checkInStatus = getCheckInTimeStatus(currentUser);
       const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+      
+      // Auto re-render dashboard if early status transitions
+      const wasEarly = sessionStorage.getItem('hs_last_was_early') === 'true';
+      if (isEarly !== wasEarly) {
+        sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
+        if (window.location.hash === '#dashboard') {
+          renderEmployeeDashboard();
+          return;
+        }
+      }
+
       const regularIn = document.getElementById('btn-regular-checkin');
       const geoCheckIn = document.getElementById('btn-geofence-checkin');
       

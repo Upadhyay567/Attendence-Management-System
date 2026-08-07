@@ -210,7 +210,7 @@
     {
       "id": "usr_t42n6xh",
       "employeeId": "EMP-190",
-      "scheduleId": "sch_q8jji9v",
+      "scheduleId": "sch_mfl8wvv",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -221,7 +221,7 @@
       "email": "rahulsharma090@gmail.com",
       "dob": "1990-06-19",
       "address": "",
-      "city": "",
+      "city": "Delhi",
       "gender": "Male",
       "department": "Testing",
       "designation": "QA Lead",
@@ -235,10 +235,15 @@
       "username": "rahulsharma",
       "password": "Surya@123",
       "role": "employee",
-      "preferredLocation": "Noida sector 61",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "",
-      "assignedById": "usr_admin",
-      "status": "Active"
+      "assignedById": "usr_manager",
+      "status": "Active",
+      "profileVerificationStatus": "Approved",
+      "photo": null,
+      "state": "delhi",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     },
     {
       "id": "usr_7kek2wc",
@@ -435,6 +440,18 @@
       "coords": "28.695175° N, 77.186028° E",
       "distance": 0,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-08-07",
+      "userId": "usr_sarah",
+      "date": "2026-08-07",
+      "checkIn": "11:16",
+      "checkOut": null,
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695364° N, 77.185857° E",
+      "distance": 0.03
     },
     {
       "id": "log_usr_john_2026-08-06",
@@ -1109,6 +1126,18 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
+    },
+    {
+      "id": "log_usr_t42n6xh_2026-08-07",
+      "userId": "usr_t42n6xh",
+      "date": "2026-08-07",
+      "checkIn": "11:18",
+      "checkOut": "11:18",
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695053° N, 77.185937° E",
+      "distance": 0.01
     }
   ],
   "leaveRequests": [
@@ -1232,6 +1261,24 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_jazi9yb",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Abhishek Sharma! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-08-07",
+      "author": "HR Department",
+      "targetUserId": "usr_6af1y3c"
+    },
+    {
+      "id": "ann_cz2rk4b",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Abhishek Sharma! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-08-07",
+      "author": "HR Department",
+      "targetUserId": "usr_6af1y3c"
+    },
     {
       "id": "ann_3mdv3jd",
       "title": "🎂 Happy Birthday Wish!",
