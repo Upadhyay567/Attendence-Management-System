@@ -11485,8 +11485,6 @@ function compileReports(month, year) {
                 <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
               </select>
               <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
-              <button class="btn btn-secondary" id="btn-admin-download-payslip" style="padding:6px 12px;width:auto;font-size:12px">📥 Download</button>
-              <button class="btn btn-secondary" onclick="document.getElementById('admin-payslip-preview-drawer').style.display='none'" style="padding:6px 12px;width:auto;font-size:12px">Close</button>
             </div>
           </div>
           <div class="payslip-wrapper">
@@ -11601,14 +11599,6 @@ function compileReports(month, year) {
       `;
       document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => {
         printSinglePayslipPDF(uDetails.id, month, year);
-      });
-      document.getElementById('btn-admin-download-payslip').addEventListener('click', () => {
-        const format = document.getElementById('admin-payslip-format-select').value;
-        if (format === 'pdf') {
-          printSinglePayslipPDF(uDetails.id, month, year);
-        } else {
-          downloadSinglePayslipExcel(uDetails.id, month, year);
-        }
       });
       if (loggedInUser.role === 'manager') {
         document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
