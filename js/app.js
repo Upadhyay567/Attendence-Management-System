@@ -4717,7 +4717,7 @@ function renderEmployeeReports() {
     </div>
     <div class="content-body">
       <div class="card-panel report-filter-bar" style="margin-bottom:24px">
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <label class="form-label" style="margin:0" for="emp-report-month">Select Period:</label>
           <select class="form-input" id="emp-report-month" style="width:130px;padding:8px">
             ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, idx) => `<option value="${idx}" ${idx === selectedMonth ? 'selected' : ''}>${m}</option>`).join('')}
@@ -4725,8 +4725,17 @@ function renderEmployeeReports() {
           <select class="form-input" id="emp-report-year" style="width:100px;padding:8px">
             ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === selectedYear ? 'selected' : ''}>${y}</option>`).join('')}
           </select>
+
+          <label class="form-label" style="margin:0;margin-left:16px" for="emp-payslip-format-select">File Format:</label>
+          <select class="form-input" id="emp-payslip-format-select" style="width:180px;padding:8px;background:rgba(255,255,255,0.02)">
+            <option value="pdf">PDF Document (.pdf)</option>
+            <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+          </select>
         </div>
-        <button class="btn btn-cyan" id="btn-emp-print-payslip" style="margin-left:auto;padding:10px 18px;width:auto;font-size:13px">🖨️ Print Payslip</button>
+        <div style="margin-left:auto;display:flex;gap:10px">
+          <button class="btn btn-cyan" id="btn-emp-print-payslip" style="padding:10px 18px;width:auto;font-size:13px">🖨️ Print Statement</button>
+          <button class="btn btn-secondary" id="btn-emp-download-payslip" style="padding:10px 18px;width:auto;font-size:13px">📥 Download</button>
+        </div>
       </div>
       <div id="payslip-render-container"></div>
     </div>
@@ -4734,7 +4743,17 @@ function renderEmployeeReports() {
   const refreshPayslip = () => renderEmployeePayslip(user.id, selectedMonth, selectedYear);
   document.getElementById('emp-report-month').addEventListener('change', (e) => { selectedMonth = Number(e.target.value); refreshPayslip(); });
   document.getElementById('emp-report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshPayslip(); });
-  document.getElementById('btn-emp-print-payslip').addEventListener('click', () => window.print());
+  document.getElementById('btn-emp-print-payslip').addEventListener('click', () => {
+    printSinglePayslipPDF(user.id, selectedMonth, selectedYear);
+  });
+  document.getElementById('btn-emp-download-payslip').addEventListener('click', () => {
+    const format = document.getElementById('emp-payslip-format-select').value;
+    if (format === 'pdf') {
+      printSinglePayslipPDF(user.id, selectedMonth, selectedYear);
+    } else {
+      downloadSinglePayslipExcel(user.id, selectedMonth, selectedYear);
+    }
+  });
   refreshPayslip();
 }
 
@@ -9745,7 +9764,7 @@ function openAttendanceReportModal() {
       <div class="form-group">
         <label class="form-label" for="rpt-format-select" style="font-size:11.5px;font-weight:700;color:var(--text-secondary)">Export Format</label>
         <select id="rpt-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
-          
+          <option value="pdf">PDF Document (.pdf)</option>
           <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
           <option value="csv">CSV (Comma Separated Values) (.csv)</option>
         </select>
@@ -11268,9 +11287,14 @@ function compileReports(month, year) {
         <div class="card-panel">
           <div class="card-panel-header" id="employee-payslip-tab-header">
             <h3 class="card-panel-title">Employee Payslip Preview</h3>
-            <div style="display:flex;gap:10px">
+            <div style="display:flex;gap:10px;align-items:center">
               ${editBtnHTML}
+              <select id="admin-payslip-format-select" class="form-input" style="width:160px;padding:6px;font-size:12px;background:rgba(255,255,255,0.02)">
+                <option value="pdf">PDF Document (.pdf)</option>
+                <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+              </select>
               <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
+              <button class="btn btn-secondary" id="btn-admin-download-payslip" style="padding:6px 12px;width:auto;font-size:12px">📥 Download</button>
               <button class="btn btn-secondary" onclick="document.getElementById('admin-payslip-preview-drawer').style.display='none'" style="padding:6px 12px;width:auto;font-size:12px">Close</button>
             </div>
           </div>
@@ -11386,6 +11410,14 @@ function compileReports(month, year) {
       `;
       document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => {
         printSinglePayslipPDF(uDetails.id, month, year);
+      });
+      document.getElementById('btn-admin-download-payslip').addEventListener('click', () => {
+        const format = document.getElementById('admin-payslip-format-select').value;
+        if (format === 'pdf') {
+          printSinglePayslipPDF(uDetails.id, month, year);
+        } else {
+          downloadSinglePayslipExcel(uDetails.id, month, year);
+        }
       });
       if (loggedInUser.role === 'manager') {
         document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
@@ -14122,4 +14154,71 @@ function printSinglePayslipPDF(userId, month, year) {
 
   printWindow.document.write(html);
   printWindow.document.close();
+}
+
+
+
+// ── Single Employee Payroll Slip Excel Exporter ────────────────────────────
+function downloadSinglePayslipExcel(userId, month, year) {
+  const user = DB.getUser(userId);
+  if (!user) {
+    alert('Employee record not found.');
+    return;
+  }
+  const payroll = DB.calculateMonthlyPayroll(user.id, month, year);
+  if (!payroll) {
+    alert('No payroll data recorded for this month.');
+    return;
+  }
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const period = `${monthNames[month]} ${year}`;
+
+  const excelData = [
+    { "Category": "Company Details", "Parameter": "Company Name", "Value": "HS GROUP DELHI" },
+    { "Category": "Company Details", "Parameter": "Company Subtitle", "Value": "House of Surya" },
+    { "Category": "Employee Details", "Parameter": "Employee Name", "Value": user.name || 'N/A' },
+    { "Category": "Employee Details", "Parameter": "Employee ID", "Value": user.employeeId || user.id || 'N/A' },
+    { "Category": "Employee Details", "Parameter": "Department", "Value": user.department || 'N/A' },
+    { "Category": "Employee Details", "Parameter": "Role / Designation", "Value": user.designation || 'N/A' },
+    { "Category": "Statement Period", "Parameter": "Statement Period", "Value": period },
+    { "Category": "Attendance Summary", "Parameter": "Total Working Days", "Value": payroll.workingDays ?? 0 },
+    { "Category": "Attendance Summary", "Parameter": "Present Days", "Value": payroll.presentDays ?? 0 },
+    { "Category": "Attendance Summary", "Parameter": "Leave Days", "Value": payroll.approvedLeaveDays ?? 0 },
+    { "Category": "Earnings", "Parameter": "Basic Salary (INR)", "Value": payroll.baseSalary ?? 0 },
+    { "Category": "Earnings", "Parameter": "HRA Allowance (INR)", "Value": payroll.allowanceHRA ?? 0 },
+    { "Category": "Earnings", "Parameter": "Travel Allowance (INR)", "Value": payroll.allowanceTravel ?? 0 },
+    { "Category": "Earnings", "Parameter": "Overtime Pay (INR)", "Value": payroll.overtimePay ?? 0 },
+    { "Category": "Earnings", "Parameter": "Overtime Duration", "Value": payroll.overtimeText || '0h 0m' },
+    { "Category": "Earnings", "Parameter": "Bonus / Rewards (INR)", "Value": payroll.bonus ?? 0 },
+    { "Category": "Deductions", "Parameter": "Absent Penalties (INR)", "Value": payroll.absentDeduction ?? 0 },
+    { "Category": "Deductions", "Parameter": "Half-day Deductions (INR)", "Value": payroll.halfDayDeduction ?? 0 },
+    { "Category": "Deductions", "Parameter": "Provident Fund (PF) (INR)", "Value": payroll.deductionPF ?? 0 },
+    { "Category": "Deductions", "Parameter": "Employees State Insurance (ESI) (INR)", "Value": payroll.deductionESI ?? 0 },
+    { "Category": "Deductions", "Parameter": "Professional Tax (PT) (INR)", "Value": payroll.deductionPT ?? 0 },
+    { "Category": "Deductions", "Parameter": "TDS Rate (%)", "Value": payroll.deductionTDS ?? 0 },
+    { "Category": "Deductions", "Parameter": "TDS Amount (INR)", "Value": payroll.deductionTDSVal ?? 0 },
+    { "Category": "Deductions", "Parameter": "Manager Ad-hoc Deductions (INR)", "Value": payroll.adhocDeduction ?? 0 },
+    { "Category": "Net Payout", "Parameter": "Net Disbursed Take-home Salary (INR)", "Value": payroll.netSalary ?? 0 },
+    { "Category": "Remarks", "Parameter": "Remarks", "Value": payroll.remarks || 'None' }
+  ];
+
+  const doExport = () => {
+    try {
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Payslip');
+      XLSX.writeFile(wb, `payslip_${user.employeeId || user.id}_${monthNames[month]}_${year}.xlsx`);
+    } catch (err) {
+      alert('Error generating Excel file.');
+      console.error(err);
+    }
+  };
+
+  if (window.XLSX) {
+    doExport();
+  } else {
+    loadSheetJS(doExport, () => {
+      alert('Failed to load SheetJS library.');
+    });
+  }
 }
