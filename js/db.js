@@ -743,7 +743,18 @@ export const DB = {
   },
   
   getUser(id) {
-    return this.data.users.find(u => u.id === id);
+    if (!id) return null;
+    const cleanId = id.toString().trim();
+    let found = this.data.users.find(u => u.id === cleanId);
+    if (!found) {
+      const lower = cleanId.toLowerCase();
+      found = this.data.users.find(u => 
+        (u.employeeId && u.employeeId.toLowerCase() === lower) ||
+        (u.username && u.username.toLowerCase() === lower) ||
+        (u.email && u.email.toLowerCase() === lower)
+      );
+    }
+    return found;
   },
 
   getUserByUsername(username) {
@@ -1331,6 +1342,9 @@ export const DB = {
     const deductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0;
     const deductionPT = user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0;
     const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
+    
+    // ESI contribution fallback to 0.75% of basic salary if not defined
+    const deductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : Math.round(baseSalary * 0.0075);
 
     const totalDays = new Date(year, month + 1, 0).getDate();
     let workingDays = 0;
@@ -1345,13 +1359,13 @@ export const DB = {
       }
     }
 
-    const allLogs = this.getLogs(userId);
+    const allLogs = this.getLogs(user.id); // Safe lookup using resolved user id
     const monthlyLogs = allLogs.filter(l => {
       const [lY, lM] = l.date.split('-').map(Number);
       return lY === year && (lM - 1) === month;
     });
 
-    const allLeaves = this.getLeaveRequests(userId);
+    const allLeaves = this.getLeaveRequests(user.id); // Safe lookup
     const approvedLeaves = allLeaves.filter(lv => {
       if (lv.status !== 'Approved') return false;
       const start = new Date(lv.startDate);
@@ -1384,33 +1398,65 @@ export const DB = {
     if (absentDays < 0) absentDays = 0;
 
     // Load custom payroll adjustments
-    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === userId && a.month === month && a.year === year);
+    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === user.id && a.month === month && a.year === year);
     const bonus = adj ? (adj.bonus || 0) : 0;
     const adhocDeduction = adj ? (adj.deduction || 0) : 0;
     const remarks = adj ? (adj.remarks || '') : '';
 
-    const dailyRate = Math.round(baseSalary / workingDays);
+    const dailyRate = Math.round(baseSalary / (workingDays || 22));
     const absentDeduction = absentDays * dailyRate;
     const halfDayDeduction = Math.round(halfDays * 0.5 * dailyRate);
     
+    // Dynamic Overtime calculation
+    let totalOvertimeMins = 0;
+    const sched = this.getSchedule(user.scheduleId) || {
+      name: 'Standard Day Shift',
+      startTime: '09:00',
+      endTime: '17:00',
+      gracePeriod: 15,
+      workDays: [1, 2, 3, 4, 5],
+      location: 'Kohat Enclave, Pitampura, Delhi'
+    };
+
+    monthlyLogs.forEach(log => {
+      if (log.checkIn && log.checkOut) {
+        const [sH, sM] = sched.startTime.split(':').map(Number);
+        const [eH, eM] = sched.endTime.split(':').map(Number);
+        const shiftMins = (eH * 60 + eM) - (sH * 60 + sM);
+        const [iH, iM] = log.checkIn.split(':').map(Number);
+        const [oH, oM] = log.checkOut.split(':').map(Number);
+        const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
+        if (workedMins > shiftMins) {
+          totalOvertimeMins += (workedMins - shiftMins);
+        }
+      }
+    });
+
+    const overtimeHours = Math.floor(totalOvertimeMins / 60);
+    const overtimeMins = totalOvertimeMins % 60;
+    const overtimeText = `${overtimeHours}h ${overtimeMins}m`;
+    const hourlyRate = (baseSalary / (workingDays || 22) / 8);
+    const overtimePay = Math.round(overtimeHours * hourlyRate * 1.5);
+
     const attendanceDeductions = absentDeduction + halfDayDeduction;
-    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + bonus;
+    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + bonus + overtimePay;
     const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel) - attendanceDeductions;
     const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
     const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
-    const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal;
+    const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal + deductionESI;
     
     const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
     const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;
 
     return {
-      userId,
+      userId: user.id,
       employeeName: user.name,
       baseSalary,
       allowanceHRA,
       allowanceTravel,
       deductionPF,
       deductionPT,
+      deductionESI,
       deductionTDS,
       deductionTDSVal,
       workingDays,
@@ -1430,7 +1476,10 @@ export const DB = {
       bonus,
       adhocDeduction,
       remarks,
-      netSalary: netSalary < 0 ? 0 : netSalary
+      netSalary: netSalary < 0 ? 0 : netSalary,
+      overtimeHours,
+      overtimeText,
+      overtimePay
     };
   },
 

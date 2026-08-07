@@ -4740,11 +4740,31 @@ function renderEmployeeReports() {
 
 function renderEmployeePayslip(userId, month, year) {
   const container = document.getElementById('payslip-render-container');
-  const payroll = DB.calculateMonthlyPayroll(userId, month, year);
+  if (!container) return;
+  
+  // Ensure we resolve user correctly via ID, employeeId, email, or username
+  const user = DB.getUser(userId);
+  if (!user) {
+    container.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">Employee record not found.</div>`;
+    return;
+  }
+
+  // Fetch the latest database values dynamically on every call
+  const payroll = DB.calculateMonthlyPayroll(user.id, month, year);
   if (!payroll) {
     container.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">No payroll data recorded for this month.</div>`;
     return;
   }
+
+  const sched = DB.getSchedule(user.scheduleId) || {
+    name: 'Standard Day Shift',
+    startTime: '09:00',
+    endTime: '17:00',
+    gracePeriod: 15,
+    workDays: [1, 2, 3, 4, 5],
+    location: 'Kohat Enclave, Pitampura, Delhi'
+  };
+
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   container.innerHTML = `
     <div class="payslip-wrapper">
@@ -4757,16 +4777,25 @@ function renderEmployeePayslip(userId, month, year) {
       </div>
       <div class="payslip-grid">
         <div class="payslip-meta-block">
-          <div><strong>Employee Name:</strong> ${Utils.escape(payroll.employeeName)}</div>
-          <div><strong>Account Code:</strong> ${userId}</div>
-          <div><strong>Designation:</strong> Staff Associate</div>
+          <div><strong>Employee Name:</strong> ${Utils.escape(user.name)}</div>
+          <div><strong>Employee ID:</strong> ${Utils.escape(user.employeeId || user.id)}</div>
+          <div><strong>Department:</strong> ${Utils.escape(user.department || 'N/A')}</div>
+          <div><strong>Role:</strong> ${Utils.escape(user.designation || 'Staff')}</div>
         </div>
         <div class="payslip-meta-block">
           <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
           <div><strong>Total Working Days:</strong> ${payroll.workingDays} days</div>
           <div><strong>Present Days:</strong> ${payroll.presentDays} days</div>
+          <div><strong>Leave Days:</strong> ${payroll.approvedLeaveDays} days</div>
         </div>
       </div>
+      
+      <!-- Check-In and Check-Out Summary -->
+      <div style="font-size:11px; margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); line-height:1.5">
+        <strong>Check-In / Out Summary:</strong> Present: <strong>${payroll.presentDays}</strong>d (On Time: ${payroll.presentDays - payroll.lateDays - payroll.halfDays}d, Late: ${payroll.lateDays}d, Half-Day: ${payroll.halfDays}d) | Absent: <strong>${payroll.absentDays}</strong>d | Overtime: <strong>${payroll.overtimeText}</strong><br>
+        <strong>Assigned Shift:</strong> ${Utils.escape(sched.name)} (${formatTimeRange12h(sched.startTime, sched.endTime)}) | <strong>Office Location:</strong> ${Utils.escape(sched.location || 'Kohat Enclave, Pitampura, Delhi')}
+      </div>
+
       <table class="payslip-table">
         <thead>
           <tr>
@@ -4792,6 +4821,11 @@ function renderEmployeePayslip(userId, month, year) {
             <td style="text-align:right">-</td>
           </tr>
           <tr>
+            <td>Overtime Allowance (${payroll.overtimeText})</td>
+            <td style="text-align:right;color:var(--success)">₹${payroll.overtimePay.toLocaleString()}</td>
+            <td style="text-align:right">-</td>
+          </tr>
+          <tr>
             <td>Absent Penalties (${payroll.absentDays} days absent)</td>
             <td style="text-align:right">-</td>
             <td style="text-align:right;color:#ef4444">₹${payroll.absentDeduction.toLocaleString()}</td>
@@ -4810,6 +4844,11 @@ function renderEmployeePayslip(userId, month, year) {
             <td>Professional Tax (PT)</td>
             <td style="text-align:right">-</td>
             <td style="text-align:right;color:#ef4444">₹${payroll.deductionPT.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td>Employees' State Insurance (ESI)</td>
+            <td style="text-align:right">-</td>
+            <td style="text-align:right;color:#ef4444">₹${payroll.deductionESI.toLocaleString()}</td>
           </tr>
           <tr>
             <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS}%)</td>
@@ -11211,8 +11250,30 @@ function compileReports(month, year) {
       const uId = e.target.closest('.btn-view-payslip-admin').dataset.id;
       const drawer = document.getElementById('admin-payslip-preview-drawer');
       drawer.style.display = 'block';
-      const p = DB.calculateMonthlyPayroll(uId, month, year);
+      
+      // Ensure we resolve user correctly via ID, employeeId, email, or username
       const uDetails = DB.getUser(uId);
+      if (!uDetails) {
+        drawer.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">Employee record not found.</div>`;
+        return;
+      }
+
+      // Fetch latest payroll calculations dynamically on click
+      const p = DB.calculateMonthlyPayroll(uDetails.id, month, year);
+      if (!p) {
+        drawer.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">No payroll data recorded for this month.</div>`;
+        return;
+      }
+
+      const sched = DB.getSchedule(uDetails.scheduleId) || {
+        name: 'Standard Day Shift',
+        startTime: '09:00',
+        endTime: '17:00',
+        gracePeriod: 15,
+        workDays: [1, 2, 3, 4, 5],
+        location: 'Kohat Enclave, Pitampura, Delhi'
+      };
+
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       const loggedInUser = Auth.getCurrentUser();
       const editBtnHTML = loggedInUser.role === 'manager'
@@ -11239,16 +11300,25 @@ function compileReports(month, year) {
             </div>
             <div class="payslip-grid">
               <div class="payslip-meta-block">
-                <div><strong>Employee Name:</strong> ${Utils.escape(p.employeeName)}</div>
-                <div><strong>Account Code:</strong> ${p.userId}</div>
-                <div><strong>Designation:</strong> ${Utils.escape(uDetails.designation || 'Staff Associate')}</div>
+                <div><strong>Employee Name:</strong> ${Utils.escape(uDetails.name)}</div>
+                <div><strong>Employee ID:</strong> ${Utils.escape(uDetails.employeeId || uDetails.id)}</div>
+                <div><strong>Department:</strong> ${Utils.escape(uDetails.department || 'N/A')}</div>
+                <div><strong>Role:</strong> ${Utils.escape(uDetails.designation || 'Staff')}</div>
               </div>
               <div class="payslip-meta-block">
                 <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
                 <div><strong>Total Working Days:</strong> ${p.workingDays} days</div>
                 <div><strong>Present Days:</strong> ${p.presentDays} days</div>
+                <div><strong>Leave Days:</strong> ${p.approvedLeaveDays} days</div>
               </div>
             </div>
+
+            <!-- Check-In and Check-Out Summary -->
+            <div style="font-size:11px; margin-bottom:15px; padding:10px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-secondary); line-height:1.5">
+              <strong>Check-In / Out Summary:</strong> Present: <strong>${p.presentDays}</strong>d (On Time: ${p.presentDays - p.lateDays - p.halfDays}d, Late: ${p.lateDays}d, Half-Day: ${p.halfDays}d) | Absent: <strong>${p.absentDays}</strong>d | Overtime: <strong>${p.overtimeText}</strong><br>
+              <strong>Assigned Shift:</strong> ${Utils.escape(sched.name)} (${formatTimeRange12h(sched.startTime, sched.endTime)}) | <strong>Office Location:</strong> ${Utils.escape(sched.location || 'Kohat Enclave, Pitampura, Delhi')}
+            </div>
+
             <table class="payslip-table">
               <thead>
                 <tr>
@@ -11274,6 +11344,11 @@ function compileReports(month, year) {
                   <td style="text-align:right">-</td>
                 </tr>
                 <tr>
+                  <td>Overtime Allowance (${p.overtimeText})</td>
+                  <td style="text-align:right;color:var(--success)">₹${p.overtimePay.toLocaleString()}</td>
+                  <td style="text-align:right">-</td>
+                </tr>
+                <tr>
                   <td>Absent Penalties (${p.absentDays} days absent)</td>
                   <td style="text-align:right">-</td>
                   <td style="text-align:right;color:#ef4444">₹${p.absentDeduction.toLocaleString()}</td>
@@ -11292,6 +11367,11 @@ function compileReports(month, year) {
                   <td>Professional Tax (PT)</td>
                   <td style="text-align:right">-</td>
                   <td style="text-align:right;color:#ef4444">₹${p.deductionPT.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td>Employees' State Insurance (ESI)</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right;color:#ef4444">₹${p.deductionESI.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Tax Deducted at Source (TDS) (${p.deductionTDS}%)</td>
@@ -11329,7 +11409,7 @@ function compileReports(month, year) {
       document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => window.print());
       if (loggedInUser.role === 'manager') {
         document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
-          openPayrollAdjustmentModal(uId, month, year);
+          openPayrollAdjustmentModal(uDetails.id, month, year); // Safe lookup using resolved database user id
         });
       }
       drawer.scrollIntoView({ behavior: 'smooth' });
