@@ -355,17 +355,17 @@ export function triggerBirthdayCelebration(user) {
       </div>
       
       <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); box-shadow: 0 0 15px rgba(137,32,27,0.4); flex-shrink: 0; margin-top: 6px;">
-        \${user.photo ? `
-          <img src="\${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
+        ${user.photo ? `
+          <img src="${user.photo}" style="width: 100%; height: 100%; object-fit: cover;">
         ` : `
           <div style="width: 100%; height: 100%; background: linear-gradient(135deg, var(--primary) 0%, rgba(137,32,27,0.3) 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800">
-            \${user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+            ${user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
           </div>
         `}
       </div>
 
       <div style="margin-top: 4px;">
-        <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary);">Happy Birthday, \${Utils.escape(user.name)}! 🎉</h3>
+        <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary);">Happy Birthday, ${Utils.escape(user.name)}! 🎉</h3>
         <p style="margin: 10px 0 0 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
           Wishing you a wonderful day filled with joy, prosperity, and memorable celebrations! Thank you for your dedication and for being a key member of our organization. 🥳🎈✨
         </p>
