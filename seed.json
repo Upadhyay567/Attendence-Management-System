@@ -209,8 +209,8 @@
     },
     {
       "id": "usr_t42n6xh",
-      "employeeId": "EMP-190",
-      "scheduleId": "sch_mfl8wvv",
+      "employeeId": "EMP190",
+      "scheduleId": "sch_q8jji9v",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -365,9 +365,9 @@
     {
       "id": "sch_q8jji9v",
       "name": "Morning Shift",
-      "startTime": "09:00",
+      "startTime": "11:15",
       "endTime": "16:00",
-      "gracePeriod": 15,
+      "gracePeriod": 20,
       "halfDayLimit": 120,
       "workDays": [
         1,
@@ -452,6 +452,18 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695364° N, 77.185857° E",
       "distance": 0.03
+    },
+    {
+      "id": "log_usr_t42n6xh_2026-08-07",
+      "userId": "usr_t42n6xh",
+      "date": "2026-08-07",
+      "checkIn": "11:18",
+      "checkOut": "11:18",
+      "status": "Pending Verification",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.695053° N, 77.185937° E",
+      "distance": 0.01
     },
     {
       "id": "log_usr_john_2026-08-06",
@@ -1128,16 +1140,17 @@
       "location": "Kohat Enclave, Pitampura, Delhi"
     },
     {
-      "id": "log_usr_t42n6xh_2026-08-07",
-      "userId": "usr_t42n6xh",
+      "id": "log_usr_david_2026-08-07",
+      "userId": "usr_david",
       "date": "2026-08-07",
-      "checkIn": "11:18",
-      "checkOut": "11:18",
-      "status": "Pending Verification",
+      "checkIn": "11:30",
+      "checkOut": null,
+      "status": "On Time",
       "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695053° N, 77.185937° E",
-      "distance": 0.01
+      "location": "chandani chowk",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [

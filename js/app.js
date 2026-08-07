@@ -9651,15 +9651,20 @@ function openProfileDownloadModal(preSelectedUserId) {
 // ─────────────────────────────────────────────────────────────────────────────
 function openAttendanceReportModal() {
   const loggedInUser = Auth.getCurrentUser() || {};
-  let reportUsers = DB.getUsers().filter(u => {
-    if (loggedInUser.role === 'hr') {
-      return u.role === 'employee';
-    } else if (loggedInUser.role === 'manager') {
-      return u.role === 'employee' && u.managerId === loggedInUser.id;
-    }
-    return false;
-  });
+  
+  // Show all active employees. HR, Admin, Finance Manager see all; Manager sees managed employees.
+  let getFilteredReportUsers = () => {
+    return DB.getUsers().filter(u => {
+      if (DB.getUserBaseRole(u.role) !== 'employee') return false;
+      if (u.status === 'Inactive') return false;
+      if (loggedInUser.role === 'manager') {
+        return u.managerId === loggedInUser.id;
+      }
+      return true;
+    });
+  };
 
+  let reportUsers = getFilteredReportUsers();
   const today = new Date();
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -9669,7 +9674,7 @@ function openAttendanceReportModal() {
     <div class="modal-content" style="max-width:500px;padding:24px;display:flex;flex-direction:column;gap:16px">
       <div class="modal-header" style="margin-bottom:0">
         <h3 class="modal-title">📊 Export Attendance & Payroll Report</h3>
-        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
+        <button class="close-modal-btn" id="btn-rpt-close">✕</button>
       </div>
       <div style="font-size:12px;color:var(--text-muted)">
         Exports attendance summary, check-in/out logs, working hours, overtime, leave details, and payroll data for the selected period.
@@ -9718,6 +9723,7 @@ function openAttendanceReportModal() {
         <select id="rpt-format-select" class="form-input" style="background:rgba(255,255,255,0.02)">
           <option value="pdf">PDF Document (.pdf)</option>
           <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+          <option value="csv">CSV (Comma Separated Values) (.csv)</option>
         </select>
       </div>
 
@@ -9726,7 +9732,7 @@ function openAttendanceReportModal() {
 
       <!-- Actions -->
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px">
-        <button class="btn btn-secondary" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto;padding:8px 16px;font-size:12.5px">Cancel</button>
+        <button class="btn btn-secondary" id="btn-rpt-cancel" style="width:auto;padding:8px 16px;font-size:12.5px">Cancel</button>
         <button class="btn btn-cyan" id="btn-rpt-export-action" style="width:auto;padding:8px 20px;font-size:12.5px;font-weight:700">Download</button>
       </div>
     </div>
@@ -9766,6 +9772,41 @@ function openAttendanceReportModal() {
     selCount.textContent = `${ids.length} selected`;
   };
 
+  // Auto update employee selector list if DB updates in the background
+  const handleRptDbUpdate = () => {
+    const freshUsers = getFilteredReportUsers();
+    
+    // Save current checked state
+    const currentChecked = new Set(getCheckedIds());
+    
+    checkboxList.innerHTML = freshUsers.map(u => {
+      const isChecked = currentChecked.has(u.id) || selectAllChk.checked;
+      return `
+        <label class="rpt-chk-item" data-name="${u.name.toLowerCase()}" data-empid="${(u.employeeId||'').toLowerCase()}" data-id="${u.id}" style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:4px 6px;border-radius:var(--radius-sm);transition:background 0.15s ease">
+          <input type="checkbox" class="rpt-user-checkbox" value="${u.id}" style="cursor:pointer" ${isChecked ? 'checked' : ''}>
+          <span style="font-weight:600;color:var(--text-primary)">${Utils.escape(u.name)}</span>
+          <span style="color:var(--text-muted);font-size:11px">(${Utils.escape(u.employeeId||u.id)})</span>
+        </label>
+      `;
+    }).join('');
+    
+    reportUsers = freshUsers;
+    validate();
+  };
+  window.addEventListener('db_updated', handleRptDbUpdate);
+
+  const close = () => {
+    window.removeEventListener('db_updated', handleRptDbUpdate);
+    overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+    overlay.querySelector('.modal-content').style.animation = 'customDialogScaleDown 0.18s ease forwards';
+    setTimeout(() => {
+      if (overlay.parentNode) document.body.removeChild(overlay);
+    }, 180);
+  };
+
+  overlay.querySelector('#btn-rpt-close').addEventListener('click', close);
+  overlay.querySelector('#btn-rpt-cancel').addEventListener('click', close);
+
   checkboxList.addEventListener('change', e => {
     if (e.target.classList.contains('rpt-user-checkbox')) {
       const visible = Array.from(checkboxList.querySelectorAll('.rpt-chk-item'))
@@ -9787,83 +9828,161 @@ function openAttendanceReportModal() {
     selectAllChk.checked = visible.length > 0 && visible.every(cb => cb.checked);
   });
 
+  // Select All selects EVERY employee in the system (per requirements)
   selectAllChk.addEventListener('change', () => {
     checkboxList.querySelectorAll('.rpt-chk-item').forEach(item => {
-      if (item.style.display !== 'none') {
-        const cb = item.querySelector('.rpt-user-checkbox');
-        if (cb) cb.checked = selectAllChk.checked;
-      }
+      const cb = item.querySelector('.rpt-user-checkbox');
+      if (cb) cb.checked = selectAllChk.checked;
     });
     validate();
   });
 
   validate();
 
-  // ── Excel export ──────────────────────────────────────────────────────────
-  const REPORT_HEADERS = [
-    'Employee ID','Full Name','Department','Designation',
-    'Period','Working Days','Present Days','Absent Days','Late Days','Half Days',
-    'Overtime Days','Leave Balance',
-    'Check-In Time (Typical)','Check-Out Time (Typical)',
-    'Base Salary (INR)','Gross Earnings (INR)','Absent Deduction (INR)',
-    'PF Deduction (INR)','PT Deduction (INR)','TDS Deduction (INR)',
-    'Total Deductions (INR)','Net Payout (INR)'
-  ];
-
-  const buildReportData = (checkedIds, month, year) => {
-    const names = monthNames;
-    return reportUsers
-      .filter(u => checkedIds.includes(u.id))
-      .map(u => {
-        const p = DB.calculateMonthlyPayroll(u.id, month, year) || {};
-        const sched = DB.getSchedule(u.scheduleId) || {};
-        const startT = sched.startTime || '09:00';
-        const endT   = sched.endTime   || '18:00';
-        const overtimeDays = p.presentDays > (p.workingDays || 22) ? p.presentDays - (p.workingDays || 22) : 0;
-        return {
-          'Employee ID': u.employeeId || u.id || 'N/A',
-          'Full Name': u.name || 'N/A',
-          'Department': u.department || 'N/A',
-          'Designation': u.designation || 'N/A',
-          'Period': `${names[month]} ${year}`,
-          'Working Days': p.workingDays ?? 0,
-          'Present Days': p.presentDays ?? 0,
-          'Absent Days': p.absentDays ?? 0,
-          'Late Days': p.lateDays ?? 0,
-          'Half Days': p.halfDays ?? 0,
-          'Overtime Days': overtimeDays,
-          'Leave Balance': u.leaveBalance ?? 0,
-          'Check-In Time (Typical)': formatTimeRange12h(startT,'') || startT,
-          'Check-Out Time (Typical)': formatTimeRange12h('',endT) || endT,
-          'Base Salary (INR)': p.baseSalary ?? 0,
-          'Gross Earnings (INR)': p.grossEarnings ?? 0,
-          'Absent Deduction (INR)': p.absentDeduction ?? 0,
-          'PF Deduction (INR)': p.deductionPF ?? 0,
-          'PT Deduction (INR)': p.deductionPT ?? 0,
-          'TDS Deduction (INR)': p.deductionTDSVal ?? 0,
-          'Total Deductions (INR)': p.totalDeductions ?? 0,
-          'Net Payout (INR)': p.netSalary ?? 0
-        };
-      });
+  // ── Excel/CSV Export Headers ──────────────────────────────────────────────
+  const getHeadersList = () => {
+    const headers = [
+      'Date', 'Employee ID', 'Employee Name', 'Department', 'Role', 
+      'Assigned Shift', 'Worksite Location', 'Attendance Status', 
+      'Check-In Time', 'Check-Out Time', 'Total Working Hours', 
+      'Late Entry', 'Early Check-Out', 'Overtime', 'Break Time', 
+      'Leave Details', 'Weekly Off', 'Holiday'
+    ];
+    if (['hr', 'manager', 'finance_manager'].includes(loggedInUser.role)) {
+      headers.push('Base Salary (INR)', 'Net Payout (INR)');
+    }
+    return headers;
   };
 
-  const downloadReportExcel = (data, filename) => {
+  // Builds daily logs for Excel/CSV spreadsheet format
+  const buildReportData = (checkedIds, month, year) => {
+    const targetUsers = reportUsers.filter(u => checkedIds.includes(u.id));
+    const data = [];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const showPayroll = ['hr', 'manager', 'finance_manager'].includes(loggedInUser.role);
+
+    targetUsers.forEach(u => {
+      const sched = DB.getSchedule(u.scheduleId) || {
+        name: 'Standard Day Shift',
+        startTime: '09:00',
+        endTime: '17:00',
+        gracePeriod: 15,
+        workDays: [1, 2, 3, 4, 5],
+        location: 'Kohat Enclave, Pitampura, Delhi'
+      };
+      const p = DB.calculateMonthlyPayroll(u.id, month, year) || {};
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayStatus = getAttendanceStatusForDate(u.id, dateStr);
+        const log = dayStatus.log;
+
+        let checkIn = 'No Attendance Record';
+        let checkOut = 'No Attendance Record';
+        let workHours = '—';
+        let lateEntry = 'No';
+        let earlyCheckOut = 'No';
+        let overtime = '0h 0m';
+        let breakTime = '—';
+        let leaveDetails = '—';
+        let weeklyOff = 'No';
+        let holiday = 'No';
+
+        if (dayStatus.status === 'Leave') {
+          leaveDetails = 'Approved Leave';
+        } else if (dayStatus.status === 'Holiday') {
+          const isWeekend = !sched.workDays.includes(new Date(dateStr).getDay());
+          if (isWeekend) {
+            weeklyOff = 'Yes';
+          } else {
+            holiday = 'Yes';
+          }
+        }
+
+        if (log) {
+          checkIn = log.checkIn ? formatTime12h(log.checkIn) : 'No Attendance Record';
+          checkOut = log.checkOut ? formatTime12h(log.checkOut) : 'No Attendance Record';
+          if (log.checkIn && log.checkOut) {
+            workHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+
+            // Overtime Calculation
+            const [sH, sM] = sched.startTime.split(':').map(Number);
+            const [eH, eM] = sched.endTime.split(':').map(Number);
+            const shiftDurationMins = (eH * 60 + eM) - (sH * 60 + sM);
+            const [iH, iM] = log.checkIn.split(':').map(Number);
+            const [oH, oM] = log.checkOut.split(':').map(Number);
+            const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
+            if (workedMins > shiftDurationMins) {
+              const otMins = workedMins - shiftDurationMins;
+              overtime = `${Math.floor(otMins / 60)}h ${otMins % 60}m`;
+            }
+          }
+          if (log.status === 'Late') lateEntry = 'Yes';
+          if (log.status === 'Half Day') earlyCheckOut = 'Yes';
+          if (log.breakTime) breakTime = log.breakTime;
+        }
+
+        const rowItem = {
+          'Date': dateStr,
+          'Employee ID': u.employeeId || u.id || 'N/A',
+          'Employee Name': u.name || 'N/A',
+          'Department': u.department || 'N/A',
+          'Role': u.designation || 'N/A',
+          'Assigned Shift': sched.name || 'N/A',
+          'Worksite Location': sched.location || 'N/A',
+          'Attendance Status': dayStatus.status,
+          'Check-In Time': checkIn,
+          'Check-Out Time': checkOut,
+          'Total Working Hours': workHours,
+          'Late Entry': lateEntry,
+          'Early Check-Out': earlyCheckOut,
+          'Overtime': overtime,
+          'Break Time': breakTime,
+          'Leave Details': leaveDetails,
+          'Weekly Off': weeklyOff,
+          'Holiday': holiday
+        };
+
+        if (showPayroll) {
+          rowItem['Base Salary (INR)'] = p.baseSalary ?? 0;
+          rowItem['Net Payout (INR)'] = p.netSalary ?? 0;
+        }
+
+        data.push(rowItem);
+      }
+    });
+    return data;
+  };
+
+  const downloadReportExcel = (data, filename, format) => {
     const doExport = () => {
       try {
-        const ws = XLSX.utils.json_to_sheet(data, { header: REPORT_HEADERS });
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
-        XLSX.writeFile(wb, filename);
-        closeModal(overlay);
+        const ws = XLSX.utils.json_to_sheet(data, { header: getHeadersList() });
+        if (format === 'csv') {
+          const csvContent = XLSX.utils.sheet_to_csv(ws);
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } else {
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+          XLSX.writeFile(wb, filename);
+        }
+        close();
       } catch (err) {
-        alert('Error generating Excel file.');
+        alert(`Error generating ${format === 'csv' ? 'CSV' : 'Excel'} file.`);
         console.error(err);
         downloadBtn.removeAttribute('disabled');
         downloadBtn.textContent = 'Download';
       }
     };
     if (window.XLSX) { doExport(); }
-    else { loadSheetJS(doExport, () => { alert('Failed to load Excel library.'); downloadBtn.removeAttribute('disabled'); downloadBtn.textContent = 'Download'; }); }
+    else { loadSheetJS(doExport, () => { alert('Failed to load SheetJS library.'); downloadBtn.removeAttribute('disabled'); downloadBtn.textContent = 'Download'; }); }
   };
 
   // ── PDF export ───────────────────────────────────────────────────────────
@@ -9875,36 +9994,132 @@ function openAttendanceReportModal() {
 
       const styles = `<style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#1e1b18;margin:0;padding:30px;}
-        .rpt-card{border:2px solid #1e1b18;border-radius:12px;padding:24px;margin-bottom:40px;page-break-inside:avoid;box-shadow:0 4px 6px rgba(0,0,0,0.05);}
-        .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #f3f4f6;padding-bottom:16px;margin-bottom:20px;}
-        .logo-t{font-size:22px;font-weight:800;color:#ef4444;} .logo-s{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#b45309;}
-        .doc-t{text-align:right;font-size:14px;color:#6b7280;font-weight:600;}
-        .emp-name{font-size:20px;font-weight:700;margin:0 0 10px 0;color:#111827;}
-        .sec-title{font-size:12px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px 0;border-left:3px solid #ef4444;padding-left:8px;}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-        .ib{display:flex;flex-direction:column;border-bottom:1px solid #f3f4f6;padding-bottom:8px;}
-        .lbl{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:4px;}
-        .val{font-size:13px;font-weight:600;color:#1f2937;}
-        .footer{margin-top:24px;font-size:11px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:12px;}
-        @media print{body{padding:0;}.rpt-card{border:1px solid #e5e7eb;box-shadow:none;margin-bottom:0;page-break-after:always;}.rpt-card:last-child{page-break-after:avoid;}}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#1e1b18;margin:0;padding:20px;}
+        .rpt-card{border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:30px;page-break-inside:avoid;box-shadow:0 4px 6px rgba(0,0,0,0.02);position:relative;}
+        .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #f3f4f6;padding-bottom:12px;margin-bottom:15px;}
+        .logo-t{font-size:20px;font-weight:800;color:#ef4444;} .logo-s{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#b45309;}
+        .doc-t{text-align:right;font-size:12px;color:#6b7280;font-weight:600;}
+        .emp-name{font-size:18px;font-weight:700;margin:0 0 6px 0;color:#111827;}
+        .sec-title{font-size:11px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px 0;border-left:3px solid #ef4444;padding-left:8px;}
+        .grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:12px;}
+        .ib{display:flex;flex-direction:column;border-bottom:1px solid #f3f4f6;padding-bottom:6px;}
+        .lbl{font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:2px;}
+        .val{font-size:12px;font-weight:600;color:#1f2937;}
+        .tbl{width:100%;border-collapse:collapse;margin-top:10px;font-size:10px;text-align:left;}
+        .tbl th{background:#f8fafc;color:#475569;font-weight:700;text-transform:uppercase;font-size:8.5px;padding:6px 8px;border:1px solid #e2e8f0;}
+        .tbl td{padding:6px 8px;border:1px solid #e2e8f0;color:#334155;}
+        .footer{margin-top:20px;font-size:10px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:10px;}
+        @media print{
+          body{padding:0;}
+          .rpt-card{border:none;box-shadow:none;margin-bottom:0;page-break-after:always;}
+          .rpt-card:last-child{page-break-after:avoid;}
+        }
       </style>`;
+
+      const showPayroll = ['hr', 'manager', 'finance_manager'].includes(loggedInUser.role);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
       const cardsHTML = targetUsers.map(u => {
         const p = DB.calculateMonthlyPayroll(u.id, month, year) || {};
-        const sched = DB.getSchedule(u.scheduleId) || {};
+        const sched = DB.getSchedule(u.scheduleId) || {
+          name: 'Standard Day Shift',
+          startTime: '09:00',
+          endTime: '17:00',
+          gracePeriod: 15,
+          workDays: [1, 2, 3, 4, 5],
+          location: 'Kohat Enclave, Pitampura, Delhi'
+        };
         const period = `${monthNames[month]} ${year}`;
         const startT = sched.startTime || '09:00';
         const endT   = sched.endTime   || '18:00';
         const overtimeDays = (p.presentDays||0) > (p.workingDays||22) ? (p.presentDays||0) - (p.workingDays||22) : 0;
+        
+        let dailyRowsHTML = '';
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const dayStatus = getAttendanceStatusForDate(u.id, dateStr);
+          const log = dayStatus.log;
+          
+          let checkIn = 'No Attendance Record';
+          let checkOut = 'No Attendance Record';
+          let workHours = '—';
+          let lateEntry = 'No';
+          let earlyCheckOut = 'No';
+          let overtime = '0h 0m';
+          let breakTime = '—';
+          let statusText = dayStatus.status;
+          
+          if (dayStatus.status === 'Leave') {
+            statusText = 'Approved Leave';
+          } else if (dayStatus.status === 'Holiday') {
+            const isWeekend = !sched.workDays.includes(new Date(dateStr).getDay());
+            statusText = isWeekend ? 'Weekly Off' : 'Holiday';
+          }
+          
+          let statusColor = '#475569';
+          if (dayStatus.status === 'Present') statusColor = '#16a34a';
+          if (dayStatus.status === 'Late') statusColor = '#d97706';
+          if (dayStatus.status === 'Half Day') statusColor = '#2563eb';
+          if (dayStatus.status === 'Absent') statusColor = '#dc2626';
+          if (dayStatus.status === 'Leave') statusColor = '#7c3aed';
+          if (statusText === 'Weekly Off') statusColor = '#94a3b8';
+          if (statusText === 'Holiday') statusColor = '#0284c7';
+
+          if (log) {
+            checkIn = log.checkIn ? formatTime12h(log.checkIn) : 'No Attendance Record';
+            checkOut = log.checkOut ? formatTime12h(log.checkOut) : 'No Attendance Record';
+            if (log.checkIn && log.checkOut) {
+              workHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+              
+              // Overtime Calculation
+              const [shH, shM] = sched.startTime.split(':').map(Number);
+              const [ehH, ehM] = sched.endTime.split(':').map(Number);
+              const shiftMins = (ehH * 60 + ehM) - (shH * 60 + shM);
+              const [iH, iM] = log.checkIn.split(':').map(Number);
+              const [oH, oM] = log.checkOut.split(':').map(Number);
+              const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
+              if (workedMins > shiftMins) {
+                const otMins = workedMins - shiftMins;
+                overtime = `${Math.floor(otMins / 60)}h ${otMins % 60}m`;
+              }
+            }
+            if (log.status === 'Late') lateEntry = 'Yes';
+            if (log.status === 'Half Day') earlyCheckOut = 'Yes';
+            if (log.breakTime) breakTime = log.breakTime;
+          }
+          
+          dailyRowsHTML += `
+            <tr>
+              <td>${dateStr}</td>
+              <td style="font-weight:600; color:${statusColor}">${statusText}</td>
+              <td>${checkIn}</td>
+              <td>${checkOut}</td>
+              <td>${workHours}</td>
+              <td style="color:${lateEntry === 'Yes' ? '#d97706' : '#475569'}">${lateEntry}</td>
+              <td style="color:${earlyCheckOut === 'Yes' ? '#dc2626' : '#475569'}">${earlyCheckOut}</td>
+              <td>${overtime}</td>
+              <td>${breakTime}</td>
+            </tr>
+          `;
+        }
+
         return `
           <div class="rpt-card">
             <div class="hdr">
               <div><span class="logo-t">HS GROUP DELHI</span><br><span class="logo-s">House of Surya</span></div>
-              <div class="doc-t">ATTENDANCE &amp; PAYROLL REPORT<br><span style="font-size:11px;font-weight:normal">Period: ${period} &nbsp;|&nbsp; Generated: ${today.toLocaleDateString()}</span></div>
+              <div class="doc-t">MONTHLY ATTENDANCE REPORT<br><span style="font-size:10px;font-weight:normal">Period: ${period} &nbsp;|&nbsp; Generated: ${today.toLocaleDateString()}</span></div>
             </div>
-            <div class="emp-name">${Utils.escape(u.name)}</div>
-            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${Utils.escape(u.employeeId||u.id)} &nbsp;·&nbsp; ${Utils.escape(u.department||'N/A')} &nbsp;·&nbsp; ${Utils.escape(u.designation||'N/A')}</div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+              <div>
+                <div class="emp-name">${Utils.escape(u.name)}</div>
+                <div style="font-size:11px;color:#6b7280">${Utils.escape(u.employeeId||u.id)} &nbsp;·&nbsp; ${Utils.escape(u.department||'N/A')} &nbsp;·&nbsp; ${Utils.escape(u.designation||'N/A')}</div>
+              </div>
+              <div style="text-align:right; font-size:11px; color:#475569;">
+                <strong>Assigned Shift:</strong> ${Utils.escape(sched.name)} (${formatTimeRange12h(sched.startTime, sched.endTime)})<br>
+                <strong>Worksite Location:</strong> ${Utils.escape(sched.location || 'Kohat Enclave, Pitampura, Delhi')}
+              </div>
+            </div>
 
             <div class="sec-title">Attendance Summary – ${period}</div>
             <div class="grid">
@@ -9917,31 +10132,45 @@ function openAttendanceReportModal() {
               <div class="ib"><span class="lbl">Leave Balance</span><span class="val">${u.leaveBalance??0} days</span></div>
             </div>
 
-            <div class="sec-title">Check-In / Check-Out Details</div>
-            <div class="grid">
-              <div class="ib"><span class="lbl">Typical Check-In</span><span class="val">${startT}</span></div>
-              <div class="ib"><span class="lbl">Typical Check-Out</span><span class="val">${endT}</span></div>
-              <div class="ib"><span class="lbl">Assigned Shift</span><span class="val">${Utils.escape(sched.name||'N/A')}</span></div>
-              <div class="ib"><span class="lbl">Grace Period</span><span class="val">${sched.gracePeriod??0} min</span></div>
-            </div>
+            <div class="sec-title">Daily Attendance Logs</div>
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Working Hours</th>
+                  <th>Late</th>
+                  <th>Early Out</th>
+                  <th>Overtime</th>
+                  <th>Break Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dailyRowsHTML}
+              </tbody>
+            </table>
 
-            <div class="sec-title">Payroll & Deductions (INR) – ${period}</div>
-            <div class="grid">
-              <div class="ib"><span class="lbl">Base Salary</span><span class="val">₹${(p.baseSalary??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Gross Earnings</span><span class="val">₹${(p.grossEarnings??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Absent Deduction</span><span class="val">₹${(p.absentDeduction??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">PF / PT / TDS</span><span class="val">₹${(p.deductionPF??0).toLocaleString()} / ₹${(p.deductionPT??0).toLocaleString()} / ₹${(p.deductionTDSVal??0).toLocaleString()}</span></div>
-              <div class="ib"><span class="lbl">Total Deductions</span><span class="val">₹${(p.totalDeductions??0).toLocaleString()}</span></div>
-              <div class="ib" style="border-bottom:2px solid #ef4444"><span class="lbl" style="color:#ef4444;font-weight:800">Net Payout</span><span class="val" style="color:#ef4444;font-size:15px;font-weight:800">₹${(p.netSalary??0).toLocaleString()}</span></div>
-            </div>
+            ${showPayroll ? `
+              <div class="sec-title">Payroll &amp; Deductions Overview (INR)</div>
+              <div class="grid" style="margin-top:5px;">
+                <div class="ib"><span class="lbl">Base Salary</span><span class="val">₹${(p.baseSalary??0).toLocaleString()}</span></div>
+                <div class="ib"><span class="lbl">Gross Earnings</span><span class="val">₹${(p.grossEarnings??0).toLocaleString()}</span></div>
+                <div class="ib"><span class="lbl">Absent Deduction</span><span class="val">₹${(p.absentDeduction??0).toLocaleString()}</span></div>
+                <div class="ib"><span class="lbl">PF / PT / TDS</span><span class="val">₹${(p.deductionPF??0).toLocaleString()} / ₹${(p.deductionPT??0).toLocaleString()} / ₹${(p.deductionTDSVal??0).toLocaleString()}</span></div>
+                <div class="ib"><span class="lbl">Total Deductions</span><span class="val">₹${(p.totalDeductions??0).toLocaleString()}</span></div>
+                <div class="ib" style="border-bottom:2px solid #ef4444"><span class="lbl" style="color:#ef4444;font-weight:800">Net Payout</span><span class="val" style="color:#ef4444;font-size:13px;font-weight:800">₹${(p.netSalary??0).toLocaleString()}</span></div>
+              </div>
+            ` : ''}
 
-            <div class="footer">This document is an auto-generated Attendance &amp; Payroll Report for ${period} — HS Group Delhi.</div>
+            <div class="footer">This document is an official auto-generated report for ${period} — HS Group Delhi. Page-break optimized.</div>
           </div>`;
       }).join('');
 
       printWindow.document.write(`<!DOCTYPE html><html><head><title>Attendance Report – HS Group ${monthNames[month]} ${year}</title>${styles}</head><body>${cardsHTML}<script>window.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{window.print();window.close();},500);});<\/script></body></html>`);
       printWindow.document.close();
-      closeModal(overlay);
+      close();
     } catch(e) {
       alert('Error printing PDF. Please try again.');
       console.error(e);
@@ -9954,15 +10183,24 @@ function openAttendanceReportModal() {
     const year  = Number(yearSel.value);
     const format = formatSel.value;
     if (checkedIds.length === 0) { alert('Please select at least one employee.'); return; }
-    if (format === 'pdf') {
-      downloadReportPDF(checkedIds, month, year);
-    } else {
-      const data = buildReportData(checkedIds, month, year);
-      const filename = checkedIds.length === 1
-        ? `attendance_report_${checkedIds[0]}_${monthNames[month]}_${year}.xlsx`
-        : `attendance_report_${monthNames[month]}_${year}.xlsx`;
-      downloadReportExcel(data, filename);
-    }
+    
+    downloadBtn.setAttribute('disabled', 'true');
+    downloadBtn.textContent = 'Generating...';
+
+    setTimeout(() => {
+      if (format === 'pdf') {
+        downloadReportPDF(checkedIds, month, year);
+        downloadBtn.removeAttribute('disabled');
+        downloadBtn.textContent = 'Download';
+      } else {
+        const data = buildReportData(checkedIds, month, year);
+        const fileExt = format === 'csv' ? 'csv' : 'xlsx';
+        const filename = checkedIds.length === 1
+          ? `attendance_report_${checkedIds[0]}_${monthNames[month]}_${year}.${fileExt}`
+          : `attendance_report_${monthNames[month]}_${year}.${fileExt}`;
+        downloadReportExcel(data, filename, format);
+      }
+    }, 100);
   });
 }
 
