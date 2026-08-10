@@ -1086,26 +1086,95 @@ export const DB = {
     return false;
   },
 
-  resolveUserShiftForDate(user, dateStr) {
-    if (!user) return { scheduleId: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi' };
+  resolveUserShiftForDate(user, dateStr, preferShiftId = null) {
+    if (!user) return { scheduleId: null, schedule: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi', allSchedules: [], candidateSchedules: [] };
     
-    let activeScheduleId = user.scheduleId;
-    let activeLocation = user.preferredLocation;
+    // Collect all assigned schedule IDs
+    let assignedIds = [];
+    if (user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
+      assignedIds = [...user.scheduleIds];
+    } else if (user.scheduleId) {
+      assignedIds = [user.scheduleId];
+    }
 
     if (user.futureReassignments && user.futureReassignments.length > 0) {
-      // Sort future assignments by effectiveDate ascending
       const sorted = [...user.futureReassignments].sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
       for (const reassignment of sorted) {
         if (dateStr >= reassignment.effectiveDate) {
-          activeScheduleId = reassignment.scheduleId;
-          activeLocation = reassignment.preferredLocation;
+          assignedIds = [reassignment.scheduleId];
         }
       }
     }
 
+    const allSchedules = assignedIds.map(id => this.getSchedule(id)).filter(Boolean);
+    if (allSchedules.length === 0) {
+      return { scheduleId: null, schedule: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi', allSchedules: [], candidateSchedules: [] };
+    }
+
+    const targetDate = new Date(dateStr);
+    const dayOfWeek = targetDate.getDay();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isToday = (dateStr === todayStr);
+
+    // Filter schedules configured for this day of week
+    const activeForDay = allSchedules.filter(s => !s.workDays || s.workDays.length === 0 || s.workDays.includes(dayOfWeek));
+    const candidateList = activeForDay.length > 0 ? activeForDay : allSchedules;
+
+    let selectedSchedule = null;
+
+    if (preferShiftId) {
+      selectedSchedule = candidateList.find(s => String(s.id) === String(preferShiftId)) || allSchedules.find(s => String(s.id) === String(preferShiftId));
+    }
+
+    if (!selectedSchedule && isToday) {
+      // 1. Check if there is an active clocked-in session today without checkout
+      for (const s of candidateList) {
+        const log = this.getTodayLog(user.id, s.id);
+        if (log && log.checkIn && !log.checkOut) {
+          selectedSchedule = s;
+          break;
+        }
+      }
+
+      // 2. If not clocked in, match by current time window
+      if (!selectedSchedule) {
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+
+        for (const s of candidateList) {
+          if (s.startTime && s.endTime) {
+            const [sH, sM] = s.startTime.split(':').map(Number);
+            const [eH, eM] = s.endTime.split(':').map(Number);
+            let startMins = sH * 60 + sM - 30; // 30 min before shift
+            let endMins = eH * 60 + eM;
+            
+            if (endMins < startMins) {
+              // overnight shift
+              if (nowMins >= startMins || nowMins <= endMins) {
+                selectedSchedule = s;
+                break;
+              }
+            } else {
+              if (nowMins >= startMins && nowMins <= endMins + 120) {
+                selectedSchedule = s;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!selectedSchedule) {
+      selectedSchedule = candidateList[0] || allSchedules[0];
+    }
+
     return {
-      scheduleId: activeScheduleId,
-      preferredLocation: activeLocation || 'Kohat Enclave, Pitampura, Delhi'
+      scheduleId: selectedSchedule ? selectedSchedule.id : null,
+      schedule: selectedSchedule,
+      preferredLocation: (selectedSchedule && selectedSchedule.location) ? selectedSchedule.location : 'Kohat Enclave, Pitampura, Delhi',
+      allSchedules: allSchedules,
+      candidateSchedules: candidateList
     };
   },
 
@@ -1114,7 +1183,8 @@ export const DB = {
   },
 
   getSchedule(id) {
-    return this.data.schedules.find(s => String(s.id) === String(id)) || defaultSchedules[0];
+    if (!id) return this.data.schedules[0] || null;
+    return this.data.schedules.find(s => String(s.id) === String(id)) || this.data.schedules[0] || null;
   },
 
   addSchedule(schedule, skipSave = false) {
@@ -1141,6 +1211,10 @@ export const DB = {
     const fallbackId = this.data.schedules.length > 0 ? this.data.schedules[0].id : null;
     this.data.users.forEach(u => {
       if (String(u.scheduleId) === String(id)) u.scheduleId = fallbackId;
+      if (u.scheduleIds && Array.isArray(u.scheduleIds)) {
+        u.scheduleIds = u.scheduleIds.filter(sid => String(sid) !== String(id));
+        if (u.scheduleIds.length === 0 && fallbackId) u.scheduleIds = [fallbackId];
+      }
     });
     this.save();
     return true;
@@ -1154,8 +1228,22 @@ export const DB = {
     return this.data.attendanceLogs.sort((a, b) => b.date.localeCompare(a.date));
   },
 
-  getTodayLog(userId) {
+  getTodayLog(userId, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
+    if (shiftId) {
+      return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (l.shiftId === shiftId || (!l.shiftId && (!this.getUser(userId) || this.getUser(userId).scheduleId === shiftId))));
+    }
+    // If shiftId is not specified, prefer active open session, or match current resolved shift
+    const openLog = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);
+    if (openLog) return openLog;
+    
+    const user = this.getUser(userId);
+    const resolved = user ? this.resolveUserShiftForDate(user, todayStr) : null;
+    if (resolved && resolved.scheduleId) {
+      const match = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (l.shiftId === resolved.scheduleId || (!l.shiftId && user.scheduleId === resolved.scheduleId)));
+      if (match) return match;
+    }
+
     return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr);
   },
 
@@ -1174,18 +1262,21 @@ export const DB = {
     return false;
   },
 
-  checkIn(userId, method = 'none', location = 'Kohat Enclave, Pitampura, Delhi', deviationFlag = false, justification = '', coords = '', distance = 0, facePhoto = null, timeOverride = null) {
+  checkIn(userId, method = 'none', location = null, deviationFlag = false, justification = '', coords = '', distance = 0, facePhoto = null, timeOverride = null, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
+    const user = this.getUser(userId);
+    const resolved = user ? this.resolveUserShiftForDate(user, todayStr, shiftId) : null;
+    const resolvedShiftId = shiftId || (resolved ? resolved.scheduleId : (user ? user.scheduleId : null));
+    const schedule = this.getSchedule(resolvedShiftId);
     
-    let existing = this.getTodayLog(userId);
+    const effectiveLocation = location || (schedule && schedule.location ? schedule.location : 'Kohat Enclave, Pitampura, Delhi');
+    
+    let existing = this.getTodayLog(userId, resolvedShiftId);
     if (existing && existing.checkIn && existing.status !== 'Pending Verification') {
       return existing;
     }
 
     const timeStr = timeOverride || new Date().toTimeString().split(' ')[0].substring(0, 5);
-
-    const user = this.getUser(userId);
-    const schedule = this.getSchedule(user ? user.scheduleId : null);
     let status = 'On Time';
     
     if (schedule && schedule.startTime) {
@@ -1208,23 +1299,26 @@ export const DB = {
       existing.checkIn = timeStr;
       existing.status = status;
       existing.biometricUsed = method;
-      existing.location = location;
+      existing.location = effectiveLocation;
       existing.coords = coords;
       existing.distance = Number(distance);
       existing.facePhoto = facePhoto;
+      existing.shiftId = resolvedShiftId;
       this.save();
       return existing;
     }
 
+    const logId = resolvedShiftId ? `log_${userId}_${todayStr}_${resolvedShiftId}` : `log_${userId}_${todayStr}`;
     const newLog = {
-      id: `log_${userId}_${todayStr}`,
+      id: logId,
       userId,
       date: todayStr,
+      shiftId: resolvedShiftId,
       checkIn: timeStr,
       checkOut: null,
       status,
       biometricUsed: method,
-      location: location,
+      location: effectiveLocation,
       deviationFlag,
       justification,
       coords,
@@ -1237,24 +1331,24 @@ export const DB = {
     return newLog;
   },
 
-  checkOut(userId, method = 'none', facePhoto = null) {
+  checkOut(userId, method = 'none', facePhoto = null, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
 
-    const log = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr);
+    const log = this.getTodayLog(userId, shiftId);
     if (!log || log.checkOut) return log;
 
     log.checkOut = timeStr;
     if (method !== 'none') {
-      log.biometricUsed = method; // Log checkout biometric type
+      log.biometricUsed = method;
     }
     if (facePhoto) {
-      log.facePhotoOut = facePhoto; // Store checkout photo
+      log.facePhotoOut = facePhoto;
     }
 
-    const user = this.getUser(userId);
-    const schedule = this.getSchedule(user.scheduleId);
-    if (schedule) {
+    const resolvedShiftId = log.shiftId || shiftId || (this.getUser(userId) ? this.getUser(userId).scheduleId : null);
+    const schedule = this.getSchedule(resolvedShiftId);
+    if (schedule && schedule.startTime && schedule.endTime) {
       const [startHour, startMin] = log.checkIn.split(':').map(Number);
       const [endHour, endMin] = timeStr.split(':').map(Number);
       const totalWorkMins = (endHour * 60 + endMin) - (startHour * 60 + startMin);
@@ -1263,7 +1357,7 @@ export const DB = {
       const [schEndHour, schEndMin] = schedule.endTime.split(':').map(Number);
       const expectedWorkMins = (schEndHour * 60 + schEndMin) - (schStartHour * 60 + schStartMin);
       
-      if (totalWorkMins < expectedWorkMins / 2) {
+      if (expectedWorkMins > 0 && totalWorkMins < expectedWorkMins / 2) {
         log.status = 'Half Day';
       }
     }
