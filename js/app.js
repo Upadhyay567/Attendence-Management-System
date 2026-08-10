@@ -9757,6 +9757,102 @@ function openProfileDownloadModal(preSelectedUserId) {
         const payroll = DB.calculateMonthlyPayroll(u.id, month, year);
         if (!payroll) return '';
 
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        const allUserLogs = DB.getLogs(u.id) || [];
+        const allLeaves = DB.getLeaveRequests(u.id) || [];
+        const approvedLeaves = allLeaves.filter(lv => lv.status === 'Approved');
+
+        const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+          ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+          : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+
+        let dailyLogsRows = [];
+        for (let day = 1; day <= totalDays; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const dateVal = new Date(year, month, day);
+          const dayOfWeek = dateVal.getDay();
+
+          const logsForDay = allUserLogs.filter(l => l.date === dateStr);
+
+          const isOnLeave = approvedLeaves.some(lv => {
+            const start = new Date(lv.startDate);
+            const end = new Date(lv.endDate);
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+            return dateVal >= start && dateVal <= end;
+          });
+
+          let isWorkingDay = true;
+          let daySchedule = null;
+          if (assignedSchedules.length > 0) {
+            const activeSched = assignedSchedules.find(sch => sch.workDays && sch.workDays.includes(dayOfWeek));
+            if (activeSched) {
+              daySchedule = activeSched;
+            } else {
+              isWorkingDay = false;
+            }
+          } else {
+            isWorkingDay = (dayOfWeek !== 0 && dayOfWeek !== 6);
+            daySchedule = DB.getSchedule(u.scheduleId) || (schedules && schedules[0]);
+          }
+
+          if (logsForDay.length > 0) {
+            logsForDay.forEach(log => {
+              const logSched = DB.getSchedule(log.shiftId) || daySchedule || {};
+              const checkInVal = log.checkIn ? formatTime12h(log.checkIn) : '--:--';
+              const checkOutVal = log.checkOut ? formatTime12h(log.checkOut) : '--:--';
+              let statusText = log.status || 'Present';
+              let statusColor = '#16a34a';
+              if (statusText === 'Late') statusColor = '#d97706';
+              if (statusText === 'Half Day') statusColor = '#2563eb';
+              if (statusText === 'Absent') statusColor = '#dc2626';
+              if (statusText === 'Deviation Logged') statusColor = '#f59e0b';
+              
+              dailyLogsRows.push(`
+                <tr>
+                  <td style="padding: 4px 8px;">${dateStr}</td>
+                  <td style="padding: 4px 8px;">${Utils.escape(logSched.name || 'General Shift')}</td>
+                  <td style="padding: 4px 8px; text-align: center; font-family: monospace;">${checkInVal}</td>
+                  <td style="padding: 4px 8px; text-align: center; font-family: monospace;">${checkOutVal}</td>
+                  <td style="padding: 4px 8px; text-align: center; font-weight: 700; color: ${statusColor};">${statusText}</td>
+                </tr>
+              `);
+            });
+          } else {
+            let statusText = '';
+            let statusColor = '#64748b';
+            if (isOnLeave) {
+              statusText = 'Approved Leave';
+              statusColor = '#7c3aed';
+            } else if (!isWorkingDay) {
+              statusText = 'Weekly Off';
+              statusColor = '#94a3b8';
+            } else {
+              const todayDate = new Date();
+              todayDate.setHours(0,0,0,0);
+              if (dateVal > todayDate) {
+                statusText = 'Scheduled';
+                statusColor = '#0284c7';
+              } else {
+                statusText = 'Absent';
+                statusColor = '#dc2626';
+              }
+            }
+
+            const schedName = daySchedule ? daySchedule.name : (isWorkingDay ? 'General Shift' : 'Weekly Off');
+            dailyLogsRows.push(`
+              <tr>
+                <td style="padding: 4px 8px;">${dateStr}</td>
+                <td style="padding: 4px 8px; color: #64748b;">${Utils.escape(schedName)}</td>
+                <td style="padding: 4px 8px; text-align: center; color: #94a3b8; font-family: monospace;">--:--</td>
+                <td style="padding: 4px 8px; text-align: center; color: #94a3b8; font-family: monospace;">--:--</td>
+                <td style="padding: 4px 8px; text-align: center; font-weight: 600; color: ${statusColor};">${statusText}</td>
+              </tr>
+            `);
+          }
+        }
+        const dailyLogsHTML = dailyLogsRows.join('');
+
         return `
           <div class="payslip-card">
             <div class="hdr">
@@ -9783,12 +9879,28 @@ function openProfileDownloadModal(preSelectedUserId) {
             </div>
 
             <div class="sec-title">Attendance & Days Summary</div>
-            <div class="emp-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="emp-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 12px;">
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Working Days</span><span class="info-val" style="font-size:13px">${payroll.workingDays ?? 0} Days</span></div>
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Present Days</span><span class="info-val" style="font-size:13px;color:#16a34a">${payroll.presentDays ?? 0} Days</span></div>
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Absent Days</span><span class="info-val" style="font-size:13px;color:${(payroll.absentDays || 0) > 0 ? '#dc2626' : '#0f172a'}">${payroll.absentDays ?? 0} Days</span></div>
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Leave Days</span><span class="info-val" style="font-size:13px;color:#2563eb">${payroll.approvedLeaveDays ?? 0} Days</span></div>
             </div>
+
+            <div class="sec-title">Daily Attendance Logs (Check-In & Check-Out)</div>
+            <table class="tbl" style="margin-top: 6px; margin-bottom: 16px; font-size: 11px;">
+              <thead>
+                <tr>
+                  <th style="padding: 6px 8px;">Date</th>
+                  <th style="padding: 6px 8px;">Shift / Schedule</th>
+                  <th style="padding: 6px 8px; text-align: center;">Check-In</th>
+                  <th style="padding: 6px 8px; text-align: center;">Check-Out</th>
+                  <th style="padding: 6px 8px; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dailyLogsHTML}
+              </tbody>
+            </table>
 
             <div class="sec-title">Salary Breakdown (Earnings & Deductions)</div>
             <table class="tbl">
