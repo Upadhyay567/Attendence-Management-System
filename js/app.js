@@ -1643,30 +1643,72 @@ function renderEmployeeDashboard() {
   let multiShiftHTML = '';
   if (resolved.allSchedules && resolved.allSchedules.length > 1) {
     multiShiftHTML = `
-      <div class="card-panel" style="margin-bottom:20px; padding:12px 16px; border:1px solid var(--border); background:rgba(255,255,255,0.015);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
-          <strong style="font-size:13px; color:var(--primary); display:flex; align-items:center; gap:6px;">
-            <span>🕒</span> Assigned Shifts (${resolved.allSchedules.length})
-          </strong>
-          <span style="font-size:11px; color:var(--text-secondary)">Click to switch active shift and location</span>
+      <div class="card-panel" style="margin-bottom:20px; padding:14px 18px; border:1px solid var(--border); background:rgba(255,255,255,0.015); border-radius:var(--radius-md);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🕒</span>
+            <strong style="font-size:13.5px; color:var(--primary); font-weight:700;">Assigned Shift Schedules & Work Locations</strong>
+            <span style="font-size:11px; background:rgba(251,191,36,0.12); color:var(--primary); padding:2px 8px; border-radius:12px; font-weight:600; border:1px solid rgba(251,191,36,0.25);">${resolved.allSchedules.length} Assigned</span>
+          </div>
+          <span style="font-size:11.5px; color:var(--text-secondary);">Click any shift to switch active session & geofence</span>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">
           ${resolved.allSchedules.map(s => {
             const isSel = String(s.id) === String(schedule.id);
             const sLog = DB.getTodayLog(user.id, s.id);
             const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi';
-            let statusBadge = '';
+            
+            let statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 7px; background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08);">⚪ Not Started</span>`;
             if (sLog && sLog.checkIn && !sLog.checkOut) {
-              statusBadge = `<span class="badge badge-on-time" style="font-size:9px; padding:1px 5px; margin-left:6px;">🟢 In Session</span>`;
+              statusBadge = `<span class="badge badge-on-time" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3);">🟢 In Session</span>`;
             } else if (sLog && sLog.checkOut) {
-              statusBadge = `<span class="badge" style="font-size:9px; padding:1px 5px; margin-left:6px; background:rgba(255,255,255,0.08); color:var(--text-muted);">🏁 Checked Out</span>`;
+              statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid rgba(255,255,255,0.15);">🏁 Checked Out</span>`;
             }
+
+            const activeBadge = isSel 
+              ? `<span style="font-size:9.5px; font-weight:700; background:linear-gradient(135deg, var(--cyan) 0%, #2563eb 100%); color:#ffffff; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(6,182,212,0.3);">Active Shift</span>` 
+              : '';
+
             return `
-              <button type="button" class="btn btn-sm btn-switch-shift ${isSel ? 'btn-primary' : 'btn-secondary'}" data-shift-id="${s.id}" style="padding:6px 12px; font-size:12px; font-weight:600; border-radius:var(--radius-sm); cursor:pointer; display:inline-flex; align-items:center; width:auto; gap:6px;">
-                <span>${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})</span>
-                <span class="badge" style="font-size:9.5px; padding:1px 6px; background:rgba(6,182,212,0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3);">📍 ${Utils.escape(sLoc)}</span>
-                ${statusBadge}
-              </button>
+              <div class="btn-switch-shift" data-shift-id="${s.id}" style="
+                background: ${isSel ? 'linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(251,191,36,0.05) 100%)' : 'rgba(255,255,255,0.02)'};
+                border: 1.5px solid ${isSel ? 'var(--primary)' : 'rgba(255,255,255,0.08)'};
+                border-radius: var(--radius-sm);
+                padding: 10px 14px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                transition: all 0.2s ease;
+                box-shadow: ${isSel ? '0 4px 14px rgba(251,191,36,0.12), inset 0 0 10px rgba(6,182,212,0.06)' : 'none'};
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="if (!${isSel}) { this.style.borderColor='rgba(251,191,36,0.5)'; this.style.background='rgba(255,255,255,0.04)'; }"
+              onmouseout="if (!${isSel}) { this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.02)'; }"
+              >
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <div style="font-weight:700; font-size:13px; color:${isSel ? 'var(--primary)' : 'var(--text-primary)'}; display:flex; align-items:center; gap:6px;">
+                    <span>${isSel ? '👉' : '⏳'}</span>
+                    <span>${Utils.escape(s.name)}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    ${activeBadge}
+                    ${statusBadge}
+                  </div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; border-top:1px dashed rgba(255,255,255,0.06); padding-top:6px; margin-top:2px;">
+                  <div style="color:var(--text-secondary); display:flex; align-items:center; gap:4px;">
+                    <span>⏰</span>
+                    <strong style="color:var(--text-primary); font-weight:600;">${formatTimeRange12h(s.startTime, s.endTime)}</strong>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:4px; font-size:11.5px;">
+                    <span style="color:var(--text-muted);">→</span>
+                    <span style="background:rgba(6,182,212,0.12); color:var(--cyan); padding:2px 8px; border-radius:4px; border:1px solid rgba(6,182,212,0.25); font-weight:600;">📍 ${Utils.escape(sLoc)}</span>
+                  </div>
+                </div>
+              </div>
             `;
           }).join('')}
         </div>
