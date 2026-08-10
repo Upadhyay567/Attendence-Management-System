@@ -1624,7 +1624,7 @@ function renderEmployeeDashboard() {
       location: 'Kohat Enclave, Pitampura, Delhi'
     };
   }
-  const officeName = user.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
   const todayLog = DB.getTodayLog(user.id, schedule.id);
 
   const checkInStatus = getCheckInTimeStatus(user, schedule.id);
@@ -1648,12 +1648,13 @@ function renderEmployeeDashboard() {
           <strong style="font-size:13px; color:var(--primary); display:flex; align-items:center; gap:6px;">
             <span>🕒</span> Assigned Shifts (${resolved.allSchedules.length})
           </strong>
-          <span style="font-size:11px; color:var(--text-secondary)">Click to switch active shift</span>
+          <span style="font-size:11px; color:var(--text-secondary)">Click to switch active shift and location</span>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           ${resolved.allSchedules.map(s => {
             const isSel = String(s.id) === String(schedule.id);
             const sLog = DB.getTodayLog(user.id, s.id);
+            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi';
             let statusBadge = '';
             if (sLog && sLog.checkIn && !sLog.checkOut) {
               statusBadge = `<span class="badge badge-on-time" style="font-size:9px; padding:1px 5px; margin-left:6px;">🟢 In Session</span>`;
@@ -1661,8 +1662,10 @@ function renderEmployeeDashboard() {
               statusBadge = `<span class="badge" style="font-size:9px; padding:1px 5px; margin-left:6px; background:rgba(255,255,255,0.08); color:var(--text-muted);">🏁 Checked Out</span>`;
             }
             return `
-              <button type="button" class="btn btn-sm btn-switch-shift ${isSel ? 'btn-primary' : 'btn-secondary'}" data-shift-id="${s.id}" style="padding:6px 12px; font-size:12px; font-weight:600; border-radius:var(--radius-sm); cursor:pointer; display:inline-flex; align-items:center; width:auto;">
-                ${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)}) ${statusBadge}
+              <button type="button" class="btn btn-sm btn-switch-shift ${isSel ? 'btn-primary' : 'btn-secondary'}" data-shift-id="${s.id}" style="padding:6px 12px; font-size:12px; font-weight:600; border-radius:var(--radius-sm); cursor:pointer; display:inline-flex; align-items:center; width:auto; gap:6px;">
+                <span>${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})</span>
+                <span class="badge" style="font-size:9.5px; padding:1px 6px; background:rgba(6,182,212,0.15); color:var(--cyan); border:1px solid rgba(6,182,212,0.3);">📍 ${Utils.escape(sLoc)}</span>
+                ${statusBadge}
               </button>
             `;
           }).join('')}
@@ -2274,7 +2277,7 @@ function renderEmployeeDashboard() {
     const geoCheckOut = document.getElementById('btn-geofence-checkout');
 
     const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
-    const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
+    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
     const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
 
     const todayLog = DB.getTodayLog(user.id);
@@ -4310,7 +4313,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
         ${showShiftInfo ? `
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-primary)">${Utils.escape(schedule.name)}</strong></div>
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-primary)">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape((DB.getUser(userId) && DB.getUser(userId).preferredLocation) || 'Kohat Enclave, Pitampura, Delhi')}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(DB.getUserShiftLocation(DB.getUser(userId), schedule ? schedule.id : null))}</strong></div>
         ` : `
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-muted)">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</strong></div>
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
@@ -4361,7 +4364,7 @@ async function handlePinClockIn(userId, shiftId = null) {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
   const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
-  const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
   const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
 
   const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
@@ -4418,7 +4421,7 @@ async function handleClockOut(userId, shiftId = null) {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
   const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
-  const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
 
   if (!inRange) {
     alert(`❌ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);
@@ -7770,7 +7773,9 @@ function renderAdminUsers() {
                   ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
                   : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-                const workLocation = u.preferredLocation || (assignedSchedules.length > 0 ? assignedSchedules[0].location : null) || 'Not Assigned';
+                const workLocation = assignedSchedules.length > 0
+                  ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
+                  : (u.preferredLocation || 'Not Assigned');
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
@@ -7926,7 +7931,9 @@ function renderAdminUsers() {
             ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
             : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-          const workLocation = u.preferredLocation || (assignedSchedules.length > 0 ? assignedSchedules[0].location : null) || 'Not Assigned';
+          const workLocation = assignedSchedules.length > 0
+            ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
+            : (u.preferredLocation || 'Not Assigned');
 
           const profileStatus = u.profileVerificationStatus || 'Approved';
           let profileBadgeHTML = '';
@@ -8175,33 +8182,34 @@ function openUserModal(userId = null) {
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select one or more shifts)</span></label>
-          <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;max-height:180px;overflow-y:auto;">
+          <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) & Separate Work Locations <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select shifts and assign each shift its own location)</span></label>
+          <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;max-height:280px;overflow-y:auto;">
             ${schedules.map(s => {
               const isChecked = (isEdit && user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.includes(s.id)) || (isEdit && user.scheduleId === s.id) || (!isEdit && s.id === schedules[0].id);
+              const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || 'Kohat Enclave, Pitampura, Delhi';
               return `
-                <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" name="editor_shift_select" value="${s.id}" ${isChecked ? 'checked' : ''}>
-                    <span><strong>${Utils.escape(s.name)}</strong> (${formatTimeRange12h(s.startTime, s.endTime)})</span>
+                <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;margin:0;">
+                      <input type="checkbox" name="editor_shift_select" value="${s.id}" class="editor-shift-checkbox" data-shift-id="${s.id}" ${isChecked ? 'checked' : ''}>
+                      <span><strong>${Utils.escape(s.name)}</strong> (${formatTimeRange12h(s.startTime, s.endTime)})</span>
+                    </label>
+                    <span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px;">⏱️ ${s.gracePeriod || 15}m Grace</span>
                   </div>
-                  <span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px;">⏱️ ${s.gracePeriod || 15}m Grace</span>
-                </label>
+                  <div class="shift-loc-picker-block" id="shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'};flex-direction:column;gap:4px;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.06);margin-left:24px;">
+                    <span style="font-size:11px;font-weight:600;color:var(--primary);">📍 Work Location for ${Utils.escape(s.name)}:</span>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                      <select class="form-input editor-shift-location-select" data-shift-id="${s.id}" id="editor-shift-loc-${s.id}" style="font-size:12px;padding:6px 10px;height:auto;flex:1;">
+                        ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+                          <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
+                        `).join('')}
+                      </select>
+                      <button type="button" class="btn btn-sm btn-shift-custom-loc" data-shift-id="${s.id}" style="padding:5px 8px;font-size:11px;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;">✏️ Custom</button>
+                    </div>
+                  </div>
+                </div>
               `;
             }).join('')}
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="editor-preferred-location" style="font-weight:700;">Employee Work Location</label>
-          <select class="form-input" id="editor-preferred-location">
-            <option value="" ${(!isEdit || !user.preferredLocation) ? 'selected' : ''}>-- Select Work Location --</option>
-            ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
-              <option value="${loc}" ${(isEdit && user.preferredLocation === loc) || (!isEdit && loc === 'Kohat Enclave, Pitampura, Delhi') ? 'selected' : ''}>${loc}</option>
-            `).join('')}
-          </select>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="button" id="btn-pref-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
-            <button type="button" id="btn-pref-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
           </div>
         </div>
         <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px">
@@ -8322,23 +8330,27 @@ function openUserModal(userId = null) {
     });
   }
 
-  const prefLocSelect = document.getElementById('editor-preferred-location');
-  
-  // Fetch Nearby button for preferred location
-  const btnPrefFetchNearby = document.getElementById('btn-pref-fetch-nearby');
-  if (btnPrefFetchNearby && prefLocSelect) {
-    btnPrefFetchNearby.addEventListener('click', () => {
-      fetchNearbyAndAddLocation(prefLocSelect);
+  // Toggle location picker when shift checkbox is checked/unchecked
+  overlay.querySelectorAll('.editor-shift-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const sid = cb.getAttribute('data-shift-id');
+      const block = document.getElementById(`shift-loc-block-${sid}`);
+      if (block) {
+        block.style.display = cb.checked ? 'flex' : 'none';
+      }
     });
-  }
-  
-  // Enter Any Location button for preferred location
-  const btnPrefAddCustom = document.getElementById('btn-pref-add-custom');
-  if (btnPrefAddCustom && prefLocSelect) {
-    btnPrefAddCustom.addEventListener('click', () => {
-      enterCustomLocation(prefLocSelect);
+  });
+
+  // Custom location buttons per shift
+  overlay.querySelectorAll('.btn-shift-custom-loc').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sid = btn.getAttribute('data-shift-id');
+      const locSelect = document.getElementById(`editor-shift-loc-${sid}`);
+      if (locSelect) {
+        enterCustomLocation(locSelect);
+      }
     });
-  }
+  });
 
   document.getElementById('user-editor-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -8354,13 +8366,23 @@ function openUserModal(userId = null) {
     const baseSalaryVal = document.getElementById('editor-salary').value.trim();
     const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
     
-    // Multiple shift schedules
+    // Multiple shift schedules & their separate locations
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
     const scheduleIds = selectedShiftCheckboxes.map(cb => cb.value);
     const scheduleId = scheduleIds.length > 0 ? scheduleIds[0] : (schedules[0] ? schedules[0].id : null);
     
-    // Location selected from dropdown
-    const preferredLocation = document.getElementById('editor-preferred-location').value || 'Kohat Enclave, Pitampura, Delhi';
+    const shiftLocations = {};
+    selectedShiftCheckboxes.forEach(cb => {
+      const sid = cb.value;
+      const locSelect = overlay.querySelector(`.editor-shift-location-select[data-shift-id="${sid}"]`);
+      if (locSelect) {
+        shiftLocations[sid] = locSelect.value.trim() || 'Kohat Enclave, Pitampura, Delhi';
+      } else {
+        shiftLocations[sid] = 'Kohat Enclave, Pitampura, Delhi';
+      }
+    });
+
+    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations)[0] || 'Kohat Enclave, Pitampura, Delhi');
 
     const role = document.getElementById('editor-role').value;
     const gender = document.getElementById('editor-gender').value;
@@ -8431,7 +8453,7 @@ function openUserModal(userId = null) {
     if (isEdit) {
       const finalPassword = password || user.password;
       DB.updateUser(userId, { 
-        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, scheduleIds, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -8467,7 +8489,7 @@ function openUserModal(userId = null) {
         }
         return;
       }
-      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
 
     try {
@@ -11803,16 +11825,17 @@ function openStaffDetailModal(userId) {
  
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Location & Assigned Shift(s)</h4>
-            <div style="margin-bottom:12px; font-size:12px; color:var(--text-secondary)">
-              <strong>Worksite Location:</strong> <span style="color:var(--cyan); font-weight:600;">${Utils.escape(user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</span>
-            </div>
             ${assignedSchedules.length === 0 ? `<div style="font-size:12px; color:var(--text-muted)">No Shift Assigned</div>` : `
               <div style="display:flex; flex-direction:column; gap:10px;">
                 ${assignedSchedules.map(sch => {
                   const schWorkDays = sch.workDays && sch.workDays.length > 0 ? sch.workDays.map(d => dayNames[d]).join(', ') : 'All Days';
+                  const schLoc = (user.shiftLocations && user.shiftLocations[sch.id]) || user.preferredLocation || sch.location || 'Kohat Enclave, Pitampura, Delhi';
                   return `
                     <div style="padding:10px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; display:flex; flex-direction:column; gap:4px;">
-                      <div style="font-weight:700; color:var(--primary); font-size:13px;">${Utils.escape(sch.name)}</div>
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:700; color:var(--primary); font-size:13px;">${Utils.escape(sch.name)}</div>
+                        <span style="font-size:11px; color:var(--cyan); font-weight:600; background:rgba(6,182,212,0.1); padding:2px 8px; border-radius:4px; border:1px solid rgba(6,182,212,0.25);">📍 ${Utils.escape(schLoc)}</span>
+                      </div>
                       <div><strong>Working Hours:</strong> ${formatTime12h(sch.startTime)} to ${formatTime12h(sch.endTime)}</div>
                       <div><strong>Grace Period:</strong> ${sch.gracePeriod} minutes</div>
                       <div><strong>Working Days:</strong> ${schWorkDays}</div>

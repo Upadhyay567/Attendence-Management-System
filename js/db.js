@@ -1169,13 +1169,25 @@ export const DB = {
       selectedSchedule = candidateList[0] || allSchedules[0];
     }
 
+    const resolvedLocation = (user && user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) ||
+                             (user && user.preferredLocation) ||
+                             'Kohat Enclave, Pitampura, Delhi';
+
     return {
       scheduleId: selectedSchedule ? selectedSchedule.id : null,
       schedule: selectedSchedule,
-      preferredLocation: (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi',
+      preferredLocation: resolvedLocation,
       allSchedules: allSchedules,
       candidateSchedules: candidateList
     };
+  },
+
+  getUserShiftLocation(user, shiftId) {
+    if (!user) return 'Kohat Enclave, Pitampura, Delhi';
+    if (user.shiftLocations && shiftId && user.shiftLocations[shiftId]) {
+      return user.shiftLocations[shiftId];
+    }
+    return user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
   },
 
   getSchedules() {
@@ -1214,6 +1226,9 @@ export const DB = {
       if (u.scheduleIds && Array.isArray(u.scheduleIds)) {
         u.scheduleIds = u.scheduleIds.filter(sid => String(sid) !== String(id));
         if (u.scheduleIds.length === 0 && fallbackId) u.scheduleIds = [fallbackId];
+      }
+      if (u.shiftLocations && u.shiftLocations[id]) {
+        delete u.shiftLocations[id];
       }
     });
     this.save();
@@ -1269,7 +1284,10 @@ export const DB = {
     const resolvedShiftId = shiftId || (resolved ? resolved.scheduleId : (user ? user.scheduleId : null));
     const schedule = this.getSchedule(resolvedShiftId);
     
-    const effectiveLocation = location || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
+    const effectiveLocation = location || 
+                              (user && user.shiftLocations && resolvedShiftId && user.shiftLocations[resolvedShiftId]) || 
+                              (user && user.preferredLocation) || 
+                              'Kohat Enclave, Pitampura, Delhi';
     
     let existing = this.getTodayLog(userId, resolvedShiftId);
     if (existing && existing.checkIn && existing.status !== 'Pending Verification') {
