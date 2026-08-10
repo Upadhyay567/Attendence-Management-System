@@ -1624,7 +1624,7 @@ function renderEmployeeDashboard() {
       location: 'Kohat Enclave, Pitampura, Delhi'
     };
   }
-  const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = user.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi';
   const todayLog = DB.getTodayLog(user.id, schedule.id);
 
   const checkInStatus = getCheckInTimeStatus(user, schedule.id);
@@ -1636,7 +1636,7 @@ function renderEmployeeDashboard() {
   let optionsHTML = '';
   optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
   Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
-    const isPreferred = locName === (schedule.location || 'Kohat Enclave, Pitampura, Delhi');
+    const isPreferred = locName === officeName;
     optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
   });
 
@@ -1853,8 +1853,8 @@ function renderEmployeeDashboard() {
                 <strong style="color:var(--warning)">${schedule.gracePeriod} minutes</strong>
               </div>
               <div class="shift-meta-row">
-                <span>Shift Location:</span>
-                <strong style="color:var(--text-primary)">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</strong>
+                <span>Assigned Location:</span>
+                <strong style="color:var(--text-primary)">${Utils.escape(officeName)}</strong>
               </div>
               <div class="shift-days-row">
                 ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `
@@ -7754,8 +7754,8 @@ function renderAdminUsers() {
                 <th>Employee Name</th>
                 <th>User ID</th>
                 <th>Security Password</th>
-                <th>Assigned Shift</th>
-                <th>Shift Worksite Location</th>
+                <th>Assigned Shift(s)</th>
+                <th>Work Location</th>
                 <th>Base Salary</th>
                 <th>Profile Controls</th>
               </tr>
@@ -7770,9 +7770,7 @@ function renderAdminUsers() {
                   ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
                   : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-                const shiftLocations = assignedSchedules.length > 0
-                  ? [...new Set(assignedSchedules.map(s => s.location || 'Kohat Enclave, Pitampura, Delhi'))].map(loc => Utils.escape(loc)).join(', ')
-                  : '<span style="color:var(--text-muted)">Not Assigned</span>';
+                const workLocation = u.preferredLocation || (assignedSchedules.length > 0 ? assignedSchedules[0].location : null) || 'Not Assigned';
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
@@ -7813,7 +7811,7 @@ function renderAdminUsers() {
                     <td>${Utils.escape(u.employeeId)}</td>
                     <td><code>••••••••</code></td>
                     <td>${shiftNames}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">${shiftLocations}</td>
+                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
                     <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
                     <td>
                       ${actionsHTML}
@@ -7928,9 +7926,7 @@ function renderAdminUsers() {
             ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
             : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-          const shiftLocations = assignedSchedules.length > 0
-            ? [...new Set(assignedSchedules.map(s => s.location || 'Kohat Enclave, Pitampura, Delhi'))].map(loc => Utils.escape(loc)).join(', ')
-            : '<span style="color:var(--text-muted)">Not Assigned</span>';
+          const workLocation = u.preferredLocation || (assignedSchedules.length > 0 ? assignedSchedules[0].location : null) || 'Not Assigned';
 
           const profileStatus = u.profileVerificationStatus || 'Approved';
           let profileBadgeHTML = '';
@@ -7969,7 +7965,7 @@ function renderAdminUsers() {
               <td>${Utils.escape(u.employeeId)}</td>
               <td><code>••••••••</code></td>
               <td>${shiftNames}</td>
-              <td style="font-size:12px;color:var(--text-secondary)">${shiftLocations}</td>
+              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
               <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
               <td>
                 ${actionsHTML}
@@ -8179,27 +8175,33 @@ function openUserModal(userId = null) {
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" style="font-weight:700;">Assigned Shift Schedules <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select one or more shifts)</span></label>
+          <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select one or more shifts)</span></label>
           <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;max-height:180px;overflow-y:auto;">
             ${schedules.map(s => {
               const isChecked = (isEdit && user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.includes(s.id)) || (isEdit && user.scheduleId === s.id) || (!isEdit && s.id === schedules[0].id);
               return `
                 <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
                   <div style="display:flex;align-items:center;gap:8px;">
-                    <input type="checkbox" name="editor_shift_select" value="${s.id}" data-location="${Utils.escape(s.location || 'Kohat Enclave, Pitampura, Delhi')}" ${isChecked ? 'checked' : ''}>
+                    <input type="checkbox" name="editor_shift_select" value="${s.id}" ${isChecked ? 'checked' : ''}>
                     <span><strong>${Utils.escape(s.name)}</strong> (${formatTimeRange12h(s.startTime, s.endTime)})</span>
                   </div>
-                  <span style="font-size:10.5px;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;">📍 ${Utils.escape(s.location || 'Kohat Enclave, Pitampura, Delhi')}</span>
+                  <span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px;">⏱️ ${s.gracePeriod || 15}m Grace</span>
                 </label>
               `;
             }).join('')}
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label" style="font-weight:700;">Shift Worksite Location <span style="color:var(--primary);font-size:11px;font-weight:600;">(Controlled by Shift Schedule)</span></label>
-          <div id="editor-resolved-locations" style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12.5px;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
-            <span style="font-size:16px;">🏢</span>
-            <span id="editor-location-text">Loading worksite location...</span>
+          <label class="form-label" for="editor-preferred-location" style="font-weight:700;">Employee Work Location</label>
+          <select class="form-input" id="editor-preferred-location">
+            <option value="" ${(!isEdit || !user.preferredLocation) ? 'selected' : ''}>-- Select Work Location --</option>
+            ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+              <option value="${loc}" ${(isEdit && user.preferredLocation === loc) || (!isEdit && loc === 'Kohat Enclave, Pitampura, Delhi') ? 'selected' : ''}>${loc}</option>
+            `).join('')}
+          </select>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" id="btn-pref-fetch-nearby" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">📍 Fetch Nearby Location</button>
+            <button type="button" id="btn-pref-add-custom" style="flex:1;padding:6px 10px;font-size:11px;font-weight:600;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.25);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;">✏️ Enter Any Location</button>
           </div>
         </div>
         <div class="form-group" style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 15px">
@@ -8320,24 +8322,23 @@ function openUserModal(userId = null) {
     });
   }
 
-  const updateResolvedLocationsDisplay = () => {
-    const checkedBoxes = overlay.querySelectorAll('input[name="editor_shift_select"]:checked');
-    const locs = [];
-    checkedBoxes.forEach(cb => {
-      const loc = cb.getAttribute('data-location');
-      if (loc && !locs.includes(loc)) locs.push(loc);
+  const prefLocSelect = document.getElementById('editor-preferred-location');
+  
+  // Fetch Nearby button for preferred location
+  const btnPrefFetchNearby = document.getElementById('btn-pref-fetch-nearby');
+  if (btnPrefFetchNearby && prefLocSelect) {
+    btnPrefFetchNearby.addEventListener('click', () => {
+      fetchNearbyAndAddLocation(prefLocSelect);
     });
-    const locText = document.getElementById('editor-location-text');
-    if (locText) {
-      locText.innerHTML = locs.length > 0
-        ? `<strong>${locs.map(l => Utils.escape(l)).join(', ')}</strong> <span style="color:var(--text-muted);font-size:11px;">(From Assigned Shifts)</span>`
-        : `<span style="color:var(--text-muted);">No shifts selected. Default: Kohat Enclave, Pitampura, Delhi</span>`;
-    }
-  };
-  updateResolvedLocationsDisplay();
-  overlay.querySelectorAll('input[name="editor_shift_select"]').forEach(cb => {
-    cb.addEventListener('change', updateResolvedLocationsDisplay);
-  });
+  }
+  
+  // Enter Any Location button for preferred location
+  const btnPrefAddCustom = document.getElementById('btn-pref-add-custom');
+  if (btnPrefAddCustom && prefLocSelect) {
+    btnPrefAddCustom.addEventListener('click', () => {
+      enterCustomLocation(prefLocSelect);
+    });
+  }
 
   document.getElementById('user-editor-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -8357,8 +8358,9 @@ function openUserModal(userId = null) {
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
     const scheduleIds = selectedShiftCheckboxes.map(cb => cb.value);
     const scheduleId = scheduleIds.length > 0 ? scheduleIds[0] : (schedules[0] ? schedules[0].id : null);
-    const primarySchedule = DB.getSchedule(scheduleId);
-    const preferredLocation = primarySchedule && primarySchedule.location ? primarySchedule.location : 'Kohat Enclave, Pitampura, Delhi';
+    
+    // Location selected from dropdown
+    const preferredLocation = document.getElementById('editor-preferred-location').value || 'Kohat Enclave, Pitampura, Delhi';
 
     const role = document.getElementById('editor-role').value;
     const gender = document.getElementById('editor-gender').value;
@@ -11800,7 +11802,10 @@ function openStaffDetailModal(userId) {
           </div>
  
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
-            <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Shift Schedule(s)</h4>
+            <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Location & Assigned Shift(s)</h4>
+            <div style="margin-bottom:12px; font-size:12px; color:var(--text-secondary)">
+              <strong>Worksite Location:</strong> <span style="color:var(--cyan); font-weight:600;">${Utils.escape(user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi')}</span>
+            </div>
             ${assignedSchedules.length === 0 ? `<div style="font-size:12px; color:var(--text-muted)">No Shift Assigned</div>` : `
               <div style="display:flex; flex-direction:column; gap:10px;">
                 ${assignedSchedules.map(sch => {
@@ -11811,7 +11816,6 @@ function openStaffDetailModal(userId) {
                       <div><strong>Working Hours:</strong> ${formatTime12h(sch.startTime)} to ${formatTime12h(sch.endTime)}</div>
                       <div><strong>Grace Period:</strong> ${sch.gracePeriod} minutes</div>
                       <div><strong>Working Days:</strong> ${schWorkDays}</div>
-                      <div><strong>Shift Location:</strong> <span style="color:var(--cyan); font-weight:600;">${Utils.escape(sch.location || 'Kohat Enclave, Pitampura, Delhi')}</span> <span style="font-size:10px; color:var(--text-muted);">(From Shift Schedule)</span></div>
                     </div>
                   `;
                 }).join('')}

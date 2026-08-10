@@ -1172,7 +1172,7 @@ export const DB = {
     return {
       scheduleId: selectedSchedule ? selectedSchedule.id : null,
       schedule: selectedSchedule,
-      preferredLocation: (selectedSchedule && selectedSchedule.location) ? selectedSchedule.location : 'Kohat Enclave, Pitampura, Delhi',
+      preferredLocation: (user && user.preferredLocation) ? user.preferredLocation : ((selectedSchedule && selectedSchedule.location) ? selectedSchedule.location : 'Kohat Enclave, Pitampura, Delhi'),
       allSchedules: allSchedules,
       candidateSchedules: candidateList
     };
@@ -1269,7 +1269,7 @@ export const DB = {
     const resolvedShiftId = shiftId || (resolved ? resolved.scheduleId : (user ? user.scheduleId : null));
     const schedule = this.getSchedule(resolvedShiftId);
     
-    const effectiveLocation = location || (schedule && schedule.location ? schedule.location : 'Kohat Enclave, Pitampura, Delhi');
+    const effectiveLocation = location || (user && user.preferredLocation) || (schedule && schedule.location ? schedule.location : 'Kohat Enclave, Pitampura, Delhi');
     
     let existing = this.getTodayLog(userId, resolvedShiftId);
     if (existing && existing.checkIn && existing.status !== 'Pending Verification') {
