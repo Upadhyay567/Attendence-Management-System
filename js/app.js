@@ -1748,7 +1748,7 @@ function renderEmployeeDashboard() {
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
                 <div>
                   <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Fixed Worksite Location</span>
-                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</div>
+                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(officeName)}</div>
                   <div style="color:var(--text-secondary); font-size:11px" id="gps-worksite-coords-display">--</div>
                 </div>
                 <div style="border-left:1px solid var(--border); padding-left:10px">
@@ -2274,7 +2274,7 @@ function renderEmployeeDashboard() {
     const geoCheckOut = document.getElementById('btn-geofence-checkout');
 
     const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
-    const officeName = schedule.location || 'Kohat Enclave, Pitampura, Delhi';
+    const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
     const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
 
     const todayLog = DB.getTodayLog(user.id);
@@ -4310,7 +4310,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
         ${showShiftInfo ? `
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-primary)">${Utils.escape(schedule.name)}</strong></div>
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-primary)">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(schedule.location || 'Kohat Enclave, Pitampura, Delhi')}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape((DB.getUser(userId) && DB.getUser(userId).preferredLocation) || 'Kohat Enclave, Pitampura, Delhi')}</strong></div>
         ` : `
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-muted)">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</strong></div>
           <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
@@ -4331,7 +4331,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
   document.body.appendChild(overlay);
 }
 
-async function handlePinClockIn(userId) {
+async function handlePinClockIn(userId, shiftId = null) {
   const regIn = document.getElementById('btn-regular-checkin');
   if (regIn) {
     regIn.setAttribute('disabled', 'true');
@@ -4361,7 +4361,7 @@ async function handlePinClockIn(userId) {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
   const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
-  const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
   const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
 
   const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
@@ -4418,7 +4418,7 @@ async function handleClockOut(userId, shiftId = null) {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
   const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
-  const officeName = schedule ? (schedule.location || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user && user.preferredLocation) ? user.preferredLocation : 'Kohat Enclave, Pitampura, Delhi';
 
   if (!inRange) {
     alert(`❌ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);
