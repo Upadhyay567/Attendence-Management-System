@@ -1682,7 +1682,7 @@ function renderEmployeeDashboard() {
                           Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
                         </div>
                       `
-                      : (!todayLog || todayLog.status === 'Pending Verification'
+                      : (!todayLog || !todayLog.checkIn
                           ? `
                             <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
                           ` 
@@ -1788,13 +1788,13 @@ function renderEmployeeDashboard() {
                             </div>
                           `
                           : `
-                            <div style="display: grid; grid-template-columns: ${todayLog && todayLog.status !== 'Pending Verification' ? '1fr' : '1fr 1fr'}; gap:8px" id="geofence-btn-group">
-                              ${!todayLog || todayLog.status === 'Pending Verification'
+                            <div style="display: grid; grid-template-columns: 1fr; gap:8px" id="geofence-btn-group">
+                              ${!todayLog || !todayLog.checkIn
                                 ? `<button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600;">Check In</button>`
                                 : ''
                               }
-                              ${todayLog && !todayLog.checkOut
-                                ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600; grid-column: span ${todayLog && todayLog.status !== 'Pending Verification' ? '1' : '1'}">Check Out</button>`
+                              ${todayLog && todayLog.checkIn && !todayLog.checkOut
+                                ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600;">Check Out</button>`
                                 : ''
                               }
                             </div>
@@ -1950,7 +1950,7 @@ function renderEmployeeDashboard() {
   }
 
   // Dashboard Check-in actions
-  if (!todayLog || todayLog.status === 'Pending Verification') {
+  if (!todayLog || !todayLog.checkIn) {
     const regIn = document.getElementById('btn-regular-checkin');
     if (regIn) {
       regIn.addEventListener('click', async () => {
@@ -2027,15 +2027,8 @@ function renderEmployeeDashboard() {
         return;
       }
 
-      const pendingTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
-      let timeOverride = null;
-      if (pendingTime) {
-        const date = new Date(pendingTime);
-        timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-      }
-      
-      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, timeOverride);
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null);
       requestsPushDBState();
       renderEmployeeDashboard();
     });
@@ -2479,44 +2472,15 @@ function renderEmployeeDashboard() {
       // Draw custom canvas radar map
       drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, currentLat, currentLng, distance, inRange, officeName);
       
-      // Trigger Auto check-in time start if inRange (no popup shown when in range)
-      if (inRange && (!todayLog || todayLog.status === 'Pending Verification')) {
-        const activePendingLog = DB.getTodayLog(user.id);
-        if (!activePendingLog) {
-          const newLog = DB.addPendingCheckIn(user.id, officeName, coordsStr, resolvedDistance);
-          const pendingTime = new Date();
-          const [h, m] = newLog.checkIn.split(':').map(Number);
-          pendingTime.setHours(h, m, 0, 0);
-          sessionStorage.setItem('hs_pending_auto_checkin_time', pendingTime.toISOString());
-          
-          startActiveWorkTimer(null);
-          showAutoCheckinBanner(false);
-          requestsPushDBState();
-        } else if (activePendingLog.status === 'Pending Verification') {
-          const pendingTime = new Date();
-          const [h, m] = activePendingLog.checkIn.split(':').map(Number);
-          pendingTime.setHours(h, m, 0, 0);
-          sessionStorage.setItem('hs_pending_auto_checkin_time', pendingTime.toISOString());
-          
-          startActiveWorkTimer(activePendingLog);
-          showAutoCheckinBanner(false);
-        }
+      // Keep active work timer in sync with actual check-in log only
+      const currentTodayLog = DB.getTodayLog(user.id);
+      if (currentTodayLog && currentTodayLog.checkIn && !currentTodayLog.checkOut) {
+        startActiveWorkTimer(currentTodayLog);
       } else {
-        if (!inRange) {
-          // Always clean session state and reset UI timer if currently out of range
-          sessionStorage.removeItem('hs_pending_auto_checkin_time');
-          const timerEl = document.getElementById('active-work-timer');
-          if (timerEl) {
-            timerEl.textContent = '00h 00m 00s';
-            timerEl.style.color = 'var(--cyan)';
-          }
-          showAutoCheckinBanner(false);
-
-          const activePendingLog = DB.getTodayLog(user.id);
-          if (activePendingLog && activePendingLog.status === 'Pending Verification') {
-            DB.removePendingCheckIn(user.id);
-            requestsPushDBState();
-          }
+        const timerEl = document.getElementById('active-work-timer');
+        if (timerEl) {
+          timerEl.textContent = currentTodayLog && currentTodayLog.checkOut ? Utils.calculateDuration(currentTodayLog.checkIn, currentTodayLog.checkOut) : '00h 00m 00s';
+          timerEl.style.color = 'var(--cyan)';
         }
       }
 
@@ -2591,7 +2555,6 @@ function renderEmployeeDashboard() {
       }
 
       // Adjust visibility/layout of geofence action buttons dynamically based on range and status
-      const currentTodayLog = DB.getTodayLog(user.id);
       const btnGroup = document.getElementById('geofence-btn-group');
       const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       
@@ -2603,16 +2566,16 @@ function renderEmployeeDashboard() {
           if (btnGroup) btnGroup.style.display = 'grid';
           checkedOutMsg.style.display = 'none';
 
-          if (currentTodayLog && currentTodayLog.status !== 'Pending Verification') {
+          if (currentTodayLog && currentTodayLog.checkIn) {
             // Active clocked in state: Hide Check In, Show only Check Out (span full width)
             if (geoCheckIn) geoCheckIn.style.display = 'none';
             if (geoCheckOut) geoCheckOut.style.display = 'block';
             if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
           } else {
-            // Not clocked in or pending verification: Show both buttons side-by-side
+            // Not clocked in: Show Check In button only
             if (geoCheckIn) geoCheckIn.style.display = 'block';
-            if (geoCheckOut) geoCheckOut.style.display = 'block';
-            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+            if (geoCheckOut) geoCheckOut.style.display = 'none';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
           }
         }
       }
@@ -4396,14 +4359,8 @@ async function handlePinClockIn(userId) {
     return;
   }
   if (user && user.password === pass) {
-    const pendingTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
-    let timeOverride = null;
-    if (pendingTime) {
-      const date = new Date(pendingTime);
-      timeOverride = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    }
-    DB.checkIn(userId, 'none', officeName, false, '', coordsStr, resolvedDistance, null, timeOverride);
     sessionStorage.removeItem('hs_pending_auto_checkin_time');
+    DB.checkIn(userId, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null);
     requestsPushDBState();
     renderEmployeeDashboard();
   } else {
@@ -6322,34 +6279,9 @@ function startActiveWorkTimer(todayLog) {
   const timerEl = document.getElementById('active-work-timer');
   if (!timerEl) return;
 
-  const pendingAutoTime = sessionStorage.getItem('hs_pending_auto_checkin_time');
-  if (pendingAutoTime && (!todayLog || todayLog.checkOut)) {
-    const checkInDate = new Date(pendingAutoTime);
-    timerEl.style.color = 'var(--warning)'; // amber color for pending validation
-    const update = () => {
-      const diffMs = new Date() - checkInDate;
-      if (diffMs < 0) { timerEl.textContent = '00h 00m 00s'; return; }
-      const totalSecs = Math.floor(diffMs / 1000);
-      const hrs = Math.floor(totalSecs / 3600);
-      const mins = Math.floor((totalSecs % 3600) / 60);
-      const secs = totalSecs % 60;
-      timerEl.textContent = `${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
-    };
-    update();
-    const durTimer = setInterval(() => {
-      if (!document.getElementById('active-work-timer') || !sessionStorage.getItem('hs_pending_auto_checkin_time')) {
-        clearInterval(durTimer);
-        timerEl.style.color = 'var(--cyan)';
-        return;
-      }
-      update();
-    }, 1000);
-    return;
-  }
-
   timerEl.style.color = 'var(--cyan)'; // default cyan color
 
-  if (!todayLog || todayLog.checkOut) {
+  if (!todayLog || !todayLog.checkIn || todayLog.checkOut) {
     timerEl.textContent = todayLog && todayLog.checkOut ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '00h 00m 00s';
     return;
   }
@@ -6366,8 +6298,9 @@ function startActiveWorkTimer(todayLog) {
     timerEl.textContent = `${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
   };
   update();
-  const durTimer = setInterval(() => {
-    if (!document.getElementById('active-work-timer')) { clearInterval(durTimer); return; }
+  if (window.activeWorkInterval) clearInterval(window.activeWorkInterval);
+  window.activeWorkInterval = setInterval(() => {
+    if (!document.getElementById('active-work-timer')) { clearInterval(window.activeWorkInterval); return; }
     update();
   }, 1000);
 }
@@ -7474,7 +7407,7 @@ async function renderAdminDashboard() {
     }
 
     // Group checked-in employees by location
-    const todayLogs = logs.filter(l => l.date === todayStr);
+    const todayLogs = logs.filter(l => l.date === todayStr && l.checkIn);
     const locationGroups = {};
     Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
       locationGroups[loc] = [];

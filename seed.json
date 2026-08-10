@@ -429,6 +429,19 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_sarah_2026-08-10",
+      "userId": "usr_sarah",
+      "date": "2026-08-10",
+      "checkIn": "10:49",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "coords": "28.694752\u00b0 N, 77.185782\u00b0 E",
+      "distance": 0.05,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_john_2026-08-07",
       "userId": "usr_john",
       "date": "2026-08-07",
@@ -437,33 +450,9 @@
       "status": "On Time",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695175° N, 77.186028° E",
+      "coords": "28.695175\u00b0 N, 77.186028\u00b0 E",
       "distance": 0,
       "facePhoto": null
-    },
-    {
-      "id": "log_usr_sarah_2026-08-07",
-      "userId": "usr_sarah",
-      "date": "2026-08-07",
-      "checkIn": "11:16",
-      "checkOut": null,
-      "status": "Pending Verification",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695364° N, 77.185857° E",
-      "distance": 0.03
-    },
-    {
-      "id": "log_usr_t42n6xh_2026-08-07",
-      "userId": "usr_t42n6xh",
-      "date": "2026-08-07",
-      "checkIn": "11:18",
-      "checkOut": "11:18",
-      "status": "Pending Verification",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695053° N, 77.185937° E",
-      "distance": 0.01
     },
     {
       "id": "log_usr_david_2026-08-07",
@@ -474,7 +463,7 @@
       "status": "On Time",
       "biometricUsed": "none",
       "location": "chandani chowk",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -487,7 +476,7 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695267° N, 77.185647° E",
+      "coords": "28.695267\u00b0 N, 77.185647\u00b0 E",
       "distance": 0.04,
       "facePhoto": null
     },
@@ -502,7 +491,7 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
-      "coords": "28.694905° N, 77.185835° E",
+      "coords": "28.694905\u00b0 N, 77.185835\u00b0 E",
       "distance": 0.03,
       "facePhoto": null
     },
@@ -515,7 +504,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695211° N, 77.185967° E",
+      "coords": "28.695211\u00b0 N, 77.185967\u00b0 E",
       "distance": 0.01,
       "facePhoto": null
     },
@@ -528,7 +517,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.694975° N, 77.185962° E",
+      "coords": "28.694975\u00b0 N, 77.185962\u00b0 E",
       "distance": 0.02,
       "facePhoto": null
     },
@@ -541,7 +530,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695165° N, 77.186050° E",
+      "coords": "28.695165\u00b0 N, 77.186050\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -554,20 +543,8 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695164° N, 77.185538° E",
+      "coords": "28.695164\u00b0 N, 77.185538\u00b0 E",
       "distance": 0.05
-    },
-    {
-      "id": "log_usr_david_2026-08-04",
-      "userId": "usr_david",
-      "date": "2026-08-04",
-      "checkIn": "11:45",
-      "checkOut": "18:39",
-      "status": "Pending Verification",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.694495° N, 77.185479° E",
-      "distance": 0.09
     },
     {
       "id": "log_usr_sarah_2026-08-04",
@@ -578,7 +555,7 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695139° N, 77.185915° E",
+      "coords": "28.695139\u00b0 N, 77.185915\u00b0 E",
       "distance": 0.01
     },
     {
@@ -590,7 +567,7 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -603,7 +580,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695267° N, 77.185422° E",
+      "coords": "28.695267\u00b0 N, 77.185422\u00b0 E",
       "distance": 0.06,
       "facePhoto": null
     },
@@ -616,7 +593,7 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695160° N, 77.186017° E",
+      "coords": "28.695160\u00b0 N, 77.186017\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -629,7 +606,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -642,7 +619,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -655,7 +632,7 @@
       "status": "Half Day",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -668,7 +645,7 @@
       "status": "On Time",
       "biometricUsed": "none",
       "location": "omaxe Office",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -681,21 +658,9 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
-    },
-    {
-      "id": "log_usr_john_2026-07-24",
-      "userId": "usr_john",
-      "date": "2026-07-24",
-      "checkIn": "15:46",
-      "checkOut": null,
-      "status": "Pending Verification",
-      "biometricUsed": "none",
-      "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0
     },
     {
       "id": "log_usr_john_2026-07-23",
@@ -706,7 +671,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -719,7 +684,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -732,7 +697,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Noida sector 61",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -745,7 +710,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Chandni Chowk",
-      "coords": "28.656200° N, 77.231000° E",
+      "coords": "28.656200\u00b0 N, 77.231000\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -758,7 +723,7 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "omaxe Office",
-      "coords": "28.697800° N, 77.140800° E",
+      "coords": "28.697800\u00b0 N, 77.140800\u00b0 E",
       "distance": 0,
       "facePhoto": null
     },
@@ -1216,7 +1181,7 @@
       "userId": "usr_john",
       "category": "Payroll",
       "subject": "Tax Deduction details",
-      "message": "Could you please share the breakdown of this month’s professional tax leave deduction?",
+      "message": "Could you please share the breakdown of this month\u2019s professional tax leave deduction?",
       "date": "2026-06-25",
       "status": "Resolved",
       "responses": [
@@ -1276,8 +1241,8 @@
   "announcements": [
     {
       "id": "ann_likg7kf",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
+      "title": "\ud83c\udf82 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! \ud83c\udf82\ud83c\udf89",
       "category": "Urgent",
       "date": "2026-07-29",
       "author": "HR Department",

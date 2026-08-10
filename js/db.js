@@ -1160,28 +1160,7 @@ export const DB = {
   },
 
   addPendingCheckIn(userId, location = 'Kohat Enclave, Pitampura, Delhi', coords = '', distance = 0) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5); // HH:MM
-
-    const existing = this.getTodayLog(userId);
-    if (existing) return existing;
-
-    const newLog = {
-      id: `log_${userId}_${todayStr}`,
-      userId,
-      date: todayStr,
-      checkIn: timeStr,
-      checkOut: null,
-      status: 'Pending Verification',
-      biometricUsed: 'none',
-      location: location,
-      coords: coords,
-      distance: Number(distance)
-    };
-
-    this.data.attendanceLogs.push(newLog);
-    this.save();
-    return newLog;
+    return null;
   },
 
   removePendingCheckIn(userId) {
@@ -1199,24 +1178,24 @@ export const DB = {
     const todayStr = new Date().toISOString().split('T')[0];
     
     let existing = this.getTodayLog(userId);
-    if (existing && existing.status !== 'Pending Verification') {
+    if (existing && existing.checkIn && existing.status !== 'Pending Verification') {
       return existing;
     }
 
-    const timeStr = timeOverride || (existing ? existing.checkIn : new Date().toTimeString().split(' ')[0].substring(0, 5));
+    const timeStr = timeOverride || new Date().toTimeString().split(' ')[0].substring(0, 5);
 
     const user = this.getUser(userId);
-    const schedule = this.getSchedule(user.scheduleId);
+    const schedule = this.getSchedule(user ? user.scheduleId : null);
     let status = 'On Time';
     
-    if (schedule) {
+    if (schedule && schedule.startTime) {
       const [startHour, startMin] = schedule.startTime.split(':').map(Number);
       const [nowHour, nowMin] = timeStr.split(':').map(Number);
       
       const totalStartMins = startHour * 60 + startMin;
       const totalNowMins = nowHour * 60 + nowMin;
       
-      if (totalNowMins > totalStartMins + schedule.gracePeriod) {
+      if (totalNowMins > totalStartMins + (schedule.gracePeriod || 15)) {
         status = 'Late';
       }
     }
@@ -1225,7 +1204,7 @@ export const DB = {
       status = 'Deviation Logged';
     }
 
-    if (existing && existing.status === 'Pending Verification') {
+    if (existing) {
       existing.checkIn = timeStr;
       existing.status = status;
       existing.biometricUsed = method;
