@@ -8183,29 +8183,27 @@ function openUserModal(userId = null) {
         </div>
         <div class="form-group">
           <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) & Separate Work Locations <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select shifts and assign each shift its own location)</span></label>
-          <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;max-height:280px;overflow-y:auto;">
+          <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;max-height:280px;overflow-y:auto;">
             ${schedules.map(s => {
               const isChecked = (isEdit && user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.includes(s.id)) || (isEdit && user.scheduleId === s.id) || (!isEdit && s.id === schedules[0].id);
               const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || 'Kohat Enclave, Pitampura, Delhi';
               return `
-                <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;margin:0;">
-                      <input type="checkbox" name="editor_shift_select" value="${s.id}" class="editor-shift-checkbox" data-shift-id="${s.id}" ${isChecked ? 'checked' : ''}>
-                      <span><strong>${Utils.escape(s.name)}</strong> (${formatTimeRange12h(s.startTime, s.endTime)})</span>
+                <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;margin:0;user-select:none;">
+                      <input type="checkbox" name="editor_shift_select" value="${s.id}" class="editor-shift-checkbox" data-shift-id="${s.id}" ${isChecked ? 'checked' : ''} style="cursor:pointer;width:14px;height:14px;accent-color:var(--primary);">
+                      <span><strong>${Utils.escape(s.name)}</strong> <span style="color:var(--text-secondary);font-size:11.5px;">(${formatTimeRange12h(s.startTime, s.endTime)})</span></span>
                     </label>
-                    <span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px;">⏱️ ${s.gracePeriod || 15}m Grace</span>
+                    <span style="font-size:10px;color:var(--text-muted);background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,0.06);white-space:nowrap;">⏱️ ${s.gracePeriod || 15}m Grace</span>
                   </div>
-                  <div class="shift-loc-picker-block" id="shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'};flex-direction:column;gap:4px;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.06);margin-left:24px;">
-                    <span style="font-size:11px;font-weight:600;color:var(--primary);">📍 Work Location for ${Utils.escape(s.name)}:</span>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                      <select class="form-input editor-shift-location-select" data-shift-id="${s.id}" id="editor-shift-loc-${s.id}" style="font-size:12px;padding:6px 10px;height:auto;flex:1;">
-                        ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
-                          <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
-                        `).join('')}
-                      </select>
-                      <button type="button" class="btn btn-sm btn-shift-custom-loc" data-shift-id="${s.id}" style="padding:5px 8px;font-size:11px;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;">✏️ Custom</button>
-                    </div>
+                  <div class="shift-loc-picker-block" id="shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'};align-items:center;gap:8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.08);margin-left:22px;flex-wrap:wrap;">
+                    <span style="font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;display:inline-flex;align-items:center;gap:3px;">📍 Work Location:</span>
+                    <select class="editor-shift-location-select" data-shift-id="${s.id}" id="editor-shift-loc-${s.id}" style="flex:1;min-width:160px;max-width:240px;height:28px;padding:2px 8px;font-size:11.5px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-surface, #1e1e24);color:var(--text-primary);cursor:pointer;outline:none;">
+                      ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+                        <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
+                      `).join('')}
+                    </select>
+                    <button type="button" class="btn-shift-custom-loc" data-shift-id="${s.id}" style="width:auto;height:28px;padding:0 9px;font-size:11px;font-weight:600;border-radius:var(--radius-sm);background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.3);cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;box-shadow:none;transition:all 0.2s ease;">✏️ Custom</button>
                   </div>
                 </div>
               `;
