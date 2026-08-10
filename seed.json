@@ -1275,79 +1275,7 @@
   ],
   "announcements": [
     {
-      "id": "ann_jazi9yb",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Abhishek Sharma! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-07",
-      "author": "HR Department",
-      "targetUserId": "usr_6af1y3c"
-    },
-    {
-      "id": "ann_cz2rk4b",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Abhishek Sharma! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-07",
-      "author": "HR Department",
-      "targetUserId": "usr_6af1y3c"
-    },
-    {
-      "id": "ann_3mdv3jd",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Abhishek Sharma! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-07",
-      "author": "HR Department",
-      "targetUserId": "usr_6af1y3c"
-    },
-    {
-      "id": "ann_jhvgbep",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, shubham HR Coordinator! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_hr"
-    },
-    {
-      "id": "ann_qoxmm7r",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
-    {
-      "id": "ann_sxksqw9",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
-    {
-      "id": "ann_g1jj0fv",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-30",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
-    {
       "id": "ann_likg7kf",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-07-29",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
-    {
-      "id": "ann_0x5w3md",
       "title": "🎂 Happy Birthday Wish!",
       "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
       "category": "Urgent",
@@ -2017,5 +1945,16 @@
     }
   ],
   "customRoles": [],
-  "messages": []
+  "messages": [],
+  "payrollAdjustments": [
+    {
+      "id": "adj_kk04yl1",
+      "userId": "usr_sarah",
+      "month": 7,
+      "year": 2026,
+      "bonus": 2000,
+      "deduction": 0,
+      "remarks": "Extra activity"
+    }
+  ]
 }
