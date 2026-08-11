@@ -558,7 +558,10 @@ function setupRouter() {
         if (href === hash) {
           subLi.classList.add('active');
           const parentMenu = document.getElementById('nav-admin-attendance');
-          if (parentMenu) parentMenu.classList.add('active');
+          if (parentMenu) {
+            parentMenu.classList.add('active');
+            parentMenu.classList.add('open');
+          }
         }
       });
 
@@ -1450,25 +1453,17 @@ function renderAppShell() {
     });
   });
 
-  // Attendance Submenu hover logic with debounce delay
+  // Attendance Submenu click toggle logic
   const attendanceMenu = document.getElementById('nav-admin-attendance');
   if (attendanceMenu) {
-    let hideTimeout = null;
-
-    const showSubmenu = () => {
-      if (hideTimeout) clearTimeout(hideTimeout);
-      attendanceMenu.classList.add('open');
-    };
-
-    const hideSubmenu = () => {
-      if (hideTimeout) clearTimeout(hideTimeout);
-      hideTimeout = setTimeout(() => {
-        attendanceMenu.classList.remove('open');
-      }, 300); // 300ms delay is extremely robust for traversals
-    };
-
-    attendanceMenu.addEventListener('mouseenter', showSubmenu);
-    attendanceMenu.addEventListener('mouseleave', hideSubmenu);
+    const parentLink = attendanceMenu.querySelector('a');
+    if (parentLink) {
+      parentLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        attendanceMenu.classList.toggle('open');
+      });
+    }
   }
 
   const handleLogout = () => {
