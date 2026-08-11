@@ -962,10 +962,22 @@ function renderLoginView() {
 
     authBox.classList.remove('auth-card-wide');
 
-    const idLabelText = 'Employee ID';
-    const placeholderText = 'e.g. EMP100, HR100, MGR100 or username';
+    let idLabelText = 'Employee ID';
+    let placeholderText = 'e.g. EMP100';
 
-    const skipButtonHTML = `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`;
+    if (selectedUser.role === 'hr') {
+      idLabelText = 'HR ID';
+      placeholderText = 'e.g. HR100';
+    } else if (selectedUser.role === 'manager' || selectedUser.role === 'finance_manager') {
+      idLabelText = 'Manager ID';
+      placeholderText = 'e.g. MGR100';
+    }
+
+    const isHrOrManager = selectedUser && (selectedUser.role === 'hr' || selectedUser.role === 'manager' || selectedUser.role === 'finance_manager');
+
+    const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
+      ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
+      : '';
 
     authBox.innerHTML = `
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
@@ -974,7 +986,7 @@ function renderLoginView() {
             <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
-          <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize attendance dashboard</div>
+          <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
@@ -982,14 +994,43 @@ function renderLoginView() {
           <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
+        ${isHrOrManager ? `
+        <div class="form-group" style="margin-bottom: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <label class="form-label" for="auth-pwd-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0; display: block;">Password *</label>
+            <button type="button" id="btn-forgot-password-trigger" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline">Forgot Password?</button>
+          </div>
+          <div style="position:relative">
+            <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
+            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px; display:flex; align-items:center;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+        ` : ''}
+
         <!-- Warning Box -->
         <div id="auth-verify-warning" style="display: none; padding: 10px 14px; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); background: rgba(239,68,68,0.05); color: var(--error); font-size: 11.5px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
         </div>
 
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${isHrOrManager ? `
+          <button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
+          ` : `
           <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
           ${skipButtonHTML}
+          `}
+          ${(!isHrOrManager && skipButtonHTML) ? '' : `
+          <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
+          `}
+
+          ${isHrOrManager ? `
+          <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
+            Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
+          </div>
+          ` : ''}
+
           <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
@@ -999,13 +1040,47 @@ function renderLoginView() {
     `;
 
     const inputEl = authBox.querySelector('#auth-id-input');
+    const pwdEl = authBox.querySelector('#auth-pwd-input');
+    const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
     const warningEl = authBox.querySelector('#auth-verify-warning');
     const submitBtn = authBox.querySelector('#btn-verify-id-submit');
     const skipBtn = authBox.querySelector('#btn-verify-id-skip');
+    const skipDevBtn = authBox.querySelector('#btn-verify-id-skip-dev');
     const backBtn = authBox.querySelector('#btn-verify-id-back');
+    const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
+    const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
+
+    if (forgotPwdBtn) {
+      forgotPwdBtn.addEventListener('click', () => {
+        const prefilledId = inputEl ? inputEl.value.trim() : (selectedUser ? selectedUser.employeeId : '');
+        showForgotPasswordModal(prefilledId);
+      });
+    }
+
+    if (toggleAuthPwdBtn && pwdEl) {
+      const svgEyeOpen = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+      const svgEyeClosed = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+      toggleAuthPwdBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (pwdEl.type === 'password') {
+          pwdEl.type = 'text';
+          toggleAuthPwdBtn.innerHTML = svgEyeOpen;
+        } else {
+          pwdEl.type = 'password';
+          toggleAuthPwdBtn.innerHTML = svgEyeClosed;
+        }
+      });
+    }
+
+    if (createAccBtn) {
+      createAccBtn.addEventListener('click', () => {
+        showAccountModal();
+      });
+    }
 
     const handleVerification = () => {
       const enteredId = inputEl.value.trim();
+      const enteredPwd = pwdEl ? pwdEl.value : '';
 
       if (!enteredId) {
         warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
@@ -1027,10 +1102,39 @@ function renderLoginView() {
         return;
       }
 
+      // Check role match
+      const expectedRole = selectedUser.role;
+      let isRoleValid = false;
+      if (expectedRole === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
+      if ((expectedRole === 'manager' || expectedRole === 'finance_manager') && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
+      if (expectedRole === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
+
+      if (!isRoleValid) {
+        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
+        warningEl.style.display = 'block';
+        return;
+      }
+
       if (matchedUser.status === 'Inactive') {
         warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
         warningEl.style.display = 'block';
         return;
+      }
+
+      if (isHrOrManager) {
+        if (!enteredPwd) {
+          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
+          warningEl.style.display = 'block';
+          return;
+        }
+        if (matchedUser.password) {
+          const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
+          if (!isValidPwd) {
+            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
+            warningEl.style.display = 'block';
+            return;
+          }
+        }
       }
 
       proceedLogin(matchedUser);
@@ -1042,9 +1146,22 @@ function renderLoginView() {
         handleVerification();
       }
     });
+    if (pwdEl) {
+      pwdEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleVerification();
+        }
+      });
+    }
 
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
+        proceedLogin(selectedUser);
+      });
+    }
+
+    if (skipDevBtn) {
+      skipDevBtn.addEventListener('click', () => {
         proceedLogin(selectedUser);
       });
     }
@@ -1067,7 +1184,7 @@ function renderLoginView() {
     sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
     const baseRole = DB.getUserBaseRole(user.role);
     if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
-      window.location.hash = '#admin-my-attendances';
+      window.location.hash = '#admin-dashboard';
     } else {
       window.location.hash = '#dashboard';
     }
