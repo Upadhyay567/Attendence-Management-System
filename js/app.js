@@ -551,6 +551,17 @@ function setupRouter() {
         if (href === hash) li.classList.add('active');
       });
 
+      // Highlight active submenu items and parent
+      document.querySelectorAll('.submenu-item').forEach(subLi => {
+        subLi.classList.remove('active');
+        const href = subLi.querySelector('a')?.getAttribute('href');
+        if (href === hash) {
+          subLi.classList.add('active');
+          const parentMenu = document.getElementById('nav-admin-attendance');
+          if (parentMenu) parentMenu.classList.add('active');
+        }
+      });
+
       // Render Content View
       switch (hash) {
         // Employee Routes
@@ -583,6 +594,12 @@ function setupRouter() {
 
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
+        case '#admin-my-attendances':
+        case '#admin-attendances':
+        case '#admin-work-status':
+        case '#admin-checkin-log':
+        case '#admin-deviations':
+        case '#admin-time-policies':
           renderAdminDashboard();
           triggerCelebrationIfBirthday(user);
           break;
@@ -593,6 +610,7 @@ function setupRouter() {
           renderAdminAttendance();
           break;
         case '#admin-approvals':
+        case '#admin-requests':
         case '#admin-leaves':
           renderAdminApprovals();
           break;
@@ -614,6 +632,7 @@ function setupRouter() {
           renderAccountManagementView();
           break;
         case '#admin-reports':
+        case '#admin-hours-balance':
           renderAdminReports();
           break;
         case '#admin-verification':
@@ -1183,10 +1202,36 @@ function renderAppShell() {
   let menuHTML = '';
   const baseRole = DB.getUserBaseRole(user.role);
   if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
+    const isHrOrManager = baseRole === 'hr' || baseRole === 'manager';
     menuHTML = `
       <li class="menu-item" id="nav-admin-dashboard"><a href="#admin-dashboard">
         <svg viewBox="0 0 24 24"><path d="M10 20H5v-7H2l10-9 10 9h-3v7h-5v-6h-2v6z"/></svg> <span class="menu-label">${labels.monitor}</span>
       </a></li>
+      ${isHrOrManager ? `
+      <li class="menu-item menu-item-has-submenu" id="nav-admin-attendance" style="position: relative;">
+        <a href="javascript:void(0)" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span style="display: flex; align-items: center; gap: 14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;vertical-align:middle;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m7.5 12.5 2 2 4.5-4.5"></path>
+              <path d="m11.5 12.5 1.5 1.5 3-3"></path>
+            </svg>
+            <span class="menu-label">Attendance</span>
+          </span>
+          <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
+        </a>
+        <ul class="submenu-list">
+          <li class="submenu-item" id="sub-my-attendances"><a href="#admin-my-attendances">My Attendances</a></li>
+          <li class="submenu-item" id="sub-attendances"><a href="#admin-attendances">Attendances</a></li>
+          <li class="submenu-item" id="sub-requests"><a href="#admin-requests">Attendance Requests</a></li>
+          <li class="submenu-item" id="sub-hours-balance"><a href="#admin-hours-balance">Hours Balance</a></li>
+          <li class="submenu-item" id="sub-work-status"><a href="#admin-work-status">Daily Work Status</a></li>
+          <li class="submenu-item" id="sub-checkin-log"><a href="#admin-checkin-log">Check-in / Check-out Log</a></li>
+          <li class="submenu-item" id="sub-deviations"><a href="#admin-deviations">Late Arrival & Early Departure</a></li>
+          <li class="submenu-item" id="sub-time-policies"><a href="#admin-time-policies">Time Policies</a></li>
+        </ul>
+      </li>
+      ` : ''}
       ${user.role === 'finance_manager' ? `
       <li class="menu-item" id="nav-admin-finance"><a href="#admin-finance">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="20" x2="12" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg> <span class="menu-label">Finance Management</span>

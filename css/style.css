@@ -3931,4 +3931,99 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   }
 }
 
+/* Sidebar Hover Submenu styling */
+.menu-item-has-submenu {
+  position: relative;
+}
+
+.submenu-list {
+  display: block;
+  opacity: 0;
+  transform: translateX(10px) translateY(-5px);
+  pointer-events: none;
+  visibility: hidden;
+  position: absolute;
+  left: 235px; /* Sits cleanly off the sidebar edges */
+  top: 0;
+  width: 250px;
+  background: #3D0D0A; /* Matches sidebar color exactly */
+  border: 1px solid rgba(137, 32, 27, 0.4);
+  border-radius: 12px;
+  padding: 10px 8px;
+  list-style: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(137, 32, 27, 0.15);
+  z-index: 1000;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s;
+}
+
+/* Make submenu display smoothly on hover */
+.menu-item-has-submenu:hover .submenu-list {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.menu-item-has-submenu:hover .submenu-arrow {
+  transform: rotate(90deg);
+}
+
+.submenu-list li {
+  margin-bottom: 4px;
+}
+
+.submenu-list li:last-child {
+  margin-bottom: 0;
+}
+
+.submenu-list a {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 14px !important;
+  color: #fca5a5 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  border-left: 3px solid transparent !important;
+}
+
+.submenu-list a:hover {
+  background: rgba(137, 32, 27, 0.25) !important;
+  color: #ffffff !important;
+  border-left-color: #fca5a5 !important;
+}
+
+.submenu-list li.active a {
+  background: #89201B !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(137, 32, 27, 0.4) !important;
+  border-left-color: #ffffff !important;
+}
+
+/* Light theme support */
+body.light-theme .submenu-list {
+  background: #FAF6EE;
+  border-color: rgba(137, 32, 27, 0.18);
+  box-shadow: 0 8px 24px rgba(137, 32, 27, 0.12);
+}
+
+body.light-theme .submenu-list a {
+  color: #89201B !important;
+}
+
+body.light-theme .submenu-list a:hover {
+  background: rgba(137, 32, 27, 0.06) !important;
+  color: #89201B !important;
+  border-left-color: #89201B !important;
+}
+
+body.light-theme .submenu-list li.active a {
+  background: #89201B !important;
+  color: #ffffff !important;
+  border-left-color: #ffffff !important;
+}
+
 
