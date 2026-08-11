@@ -597,13 +597,16 @@ function setupRouter() {
 
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
-        case '#admin-my-attendances':
         case '#admin-attendances':
         case '#admin-work-status':
         case '#admin-checkin-log':
         case '#admin-deviations':
         case '#admin-time-policies':
           renderAdminDashboard();
+          triggerCelebrationIfBirthday(user);
+          break;
+        case '#admin-my-attendances':
+          renderAdminMyAttendances();
           triggerCelebrationIfBirthday(user);
           break;
         case '#admin-schedules':
@@ -11884,6 +11887,408 @@ function exportReportCSV(month, year) {
     return [p.employeeName, p.baseSalary, p.allowanceHRA, p.allowanceTravel, p.workingDays, p.presentDays, p.absentDays, p.halfDays, p.attendanceDeductions, p.deductionPF, p.deductionPT, p.deductionTDSVal, p.netSalary];
   });
   Utils.exportToCSV(filename, headers, rows);
+}
+
+// State variables for Admin/HR/Manager "My Attendances" page pagination, sorting, search
+let myAttendancesCurrentPage = 1;
+let myAttendancesRowsPerPage = 10;
+let myAttendancesSortField = 'date';
+let myAttendancesSortOrder = 'desc';
+let myAttendancesSearchQuery = '';
+
+function renderAdminMyAttendances() {
+  const main = document.getElementById('main-view');
+  const user = Auth.getCurrentUser();
+  if (!user) return;
+
+  main.innerHTML = `
+    <div class="content-header">
+      <div>
+        <h1 class="content-title">My Attendances</h1>
+        <div class="content-subtitle">Inspect your own attendance records, check-in/out times, and shift compliance.</div>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" id="btn-my-att-export-csv" style="padding:10px 18px;width:auto;font-size:13px">📥 Export CSV</button>
+        <button class="btn btn-cyan" id="btn-my-att-print" style="padding:10px 18px;width:auto;font-size:13px">🖨️ Print Log</button>
+      </div>
+    </div>
+    <div class="content-body">
+      <div class="card-panel" style="margin-bottom: 24px; padding: 16px 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="position:relative; width: 260px;">
+              <input type="text" id="my-att-search" class="form-input" placeholder="Search date, shift or status..." style="padding: 8px 12px 8px 36px; font-size:13px; width:100%;">
+              <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:0.5; font-size:14px;">🔍</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:13px; color:var(--text-secondary);">Show:</span>
+              <select id="my-att-rows-select" class="form-input" style="width:75px; padding:6px; font-size:13px;">
+                <option value="5" ${myAttendancesRowsPerPage === 5 ? 'selected' : ''}>5</option>
+                <option value="10" ${myAttendancesRowsPerPage === 10 ? 'selected' : ''}>10</option>
+                <option value="25" ${myAttendancesRowsPerPage === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${myAttendancesRowsPerPage === 50 ? 'selected' : ''}>50</option>
+              </select>
+              <span style="font-size:13px; color:var(--text-secondary);">entries</span>
+            </div>
+          </div>
+          <div id="my-att-totals-summary" style="font-size:13.5px; font-weight:600; color:var(--text-secondary);"></div>
+        </div>
+      </div>
+
+      <div class="card-panel">
+        <div class="table-container">
+          <table class="custom-table" id="my-att-table">
+            <thead>
+              <tr>
+                <th style="cursor:pointer;" id="th-my-att-date">Date <span id="sort-icon-date">↕</span></th>
+                <th>Shift Details</th>
+                <th style="cursor:pointer;" id="th-my-att-checkin">Check-In <span id="sort-icon-checkin">↕</span></th>
+                <th style="cursor:pointer;" id="th-my-att-checkout">Check-Out <span id="sort-icon-checkout">↕</span></th>
+                <th>At Work</th>
+                <th>GPS Location</th>
+                <th style="cursor:pointer;" id="th-my-att-status">Status <span id="sort-icon-status">↕</span></th>
+              </tr>
+            </thead>
+            <tbody id="my-att-table-body"></tbody>
+          </table>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:12px;">
+          <div id="my-att-pagination-info" style="font-size:13px; color:var(--text-secondary);"></div>
+          <div id="my-att-pagination-buttons" style="display:flex; gap:6px;"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const searchInput = document.getElementById('my-att-search');
+  searchInput.value = myAttendancesSearchQuery;
+  searchInput.addEventListener('input', (e) => {
+    myAttendancesSearchQuery = e.target.value.trim();
+    myAttendancesCurrentPage = 1;
+    updateTable();
+  });
+
+  document.getElementById('my-att-rows-select').addEventListener('change', (e) => {
+    myAttendancesRowsPerPage = Number(e.target.value);
+    myAttendancesCurrentPage = 1;
+    updateTable();
+  });
+
+  document.getElementById('btn-my-att-export-csv').addEventListener('click', () => {
+    exportMyAttendancesCSV(user);
+  });
+
+  document.getElementById('btn-my-att-print').addEventListener('click', () => {
+    printMyAttendancesLog(user);
+  });
+
+  document.getElementById('th-my-att-date').addEventListener('click', () => toggleSort('date'));
+  document.getElementById('th-my-att-checkin').addEventListener('click', () => toggleSort('checkIn'));
+  document.getElementById('th-my-att-checkout').addEventListener('click', () => toggleSort('checkOut'));
+  document.getElementById('th-my-att-status').addEventListener('click', () => toggleSort('status'));
+
+  function toggleSort(field) {
+    if (myAttendancesSortField === field) {
+      myAttendancesSortOrder = myAttendancesSortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      myAttendancesSortField = field;
+      myAttendancesSortOrder = 'asc';
+    }
+    updateTable();
+  }
+
+  function updateTable() {
+    const rawLogs = DB.getLogs(user.id);
+    const mappedLogs = rawLogs.map(log => {
+      const shift = DB.getSchedule(log.shiftId);
+      const shiftName = shift ? shift.name : 'Default Shift';
+      const shiftTimes = shift ? `${shift.startTime} - ${shift.endTime}` : '';
+      const atWork = Utils.calculateDuration(log.checkIn, log.checkOut);
+      return {
+        ...log,
+        shiftName,
+        shiftTimes,
+        atWork
+      };
+    });
+
+    let filtered = mappedLogs;
+    if (myAttendancesSearchQuery) {
+      const query = myAttendancesSearchQuery.toLowerCase();
+      filtered = mappedLogs.filter(log => {
+        const formattedDate = Utils.formatDate(log.date).toLowerCase();
+        return log.date.includes(query) ||
+               formattedDate.includes(query) ||
+               log.shiftName.toLowerCase().includes(query) ||
+               (log.status && log.status.toLowerCase().includes(query)) ||
+               (log.checkIn && log.checkIn.includes(query)) ||
+               (log.checkOut && log.checkOut.includes(query));
+      });
+    }
+
+    filtered.sort((a, b) => {
+      let valA = a[myAttendancesSortField] || '';
+      let valB = b[myAttendancesSortField] || '';
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return myAttendancesSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return myAttendancesSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    const totalPresent = rawLogs.filter(l => l.checkIn).length;
+    const totalLate = rawLogs.filter(l => l.status === 'Late').length;
+    const summaryEl = document.getElementById('my-att-totals-summary');
+    if (summaryEl) {
+      summaryEl.innerHTML = `Summary: <span style="color:var(--success)">${totalPresent} Present</span> / <span style="color:var(--primary)">${totalLate} Late Arrivals</span>`;
+    }
+
+    const totalEntries = filtered.length;
+    const totalPages = Math.ceil(totalEntries / myAttendancesRowsPerPage) || 1;
+    if (myAttendancesCurrentPage > totalPages) myAttendancesCurrentPage = totalPages;
+    if (myAttendancesCurrentPage < 1) myAttendancesCurrentPage = 1;
+
+    const startIndex = (myAttendancesCurrentPage - 1) * myAttendancesRowsPerPage;
+    const endIndex = Math.min(startIndex + myAttendancesRowsPerPage, totalEntries);
+    const paginated = filtered.slice(startIndex, endIndex);
+
+    ['date', 'checkIn', 'checkOut', 'status'].forEach(field => {
+      const iconEl = document.getElementById(`sort-icon-${field === 'checkOut' ? 'checkout' : field}`);
+      if (iconEl) {
+        if (myAttendancesSortField === field) {
+          iconEl.textContent = myAttendancesSortOrder === 'asc' ? '▲' : '▼';
+          iconEl.style.opacity = '1';
+          iconEl.style.color = 'var(--primary)';
+        } else {
+          iconEl.textContent = '↕';
+          iconEl.style.opacity = '0.4';
+          iconEl.style.color = 'inherit';
+        }
+      }
+    });
+
+    const tbody = document.getElementById('my-att-table-body');
+    if (!tbody) return;
+
+    if (paginated.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align:center; padding: 40px; color:var(--text-muted); font-size:14px;">
+            No attendance records found
+          </td>
+        </tr>
+      `;
+    } else {
+      tbody.innerHTML = paginated.map(log => {
+        let badgeClass = 'badge-on-time';
+        if (log.status === 'Late') badgeClass = 'badge-rejected';
+        if (log.status === 'Absent') badgeClass = 'badge-pending';
+        if (log.status === 'On Time') badgeClass = 'badge-approved';
+
+        const displayDate = Utils.formatDate(log.date);
+        const checkInTime = log.checkIn || '--:--';
+        const checkOutTime = log.checkOut || '--:--';
+        const atWorkStr = log.checkIn && !log.checkOut ? '<span style="color:var(--cyan);font-weight:700;">In Session</span>' : (log.atWork === '-' ? '--' : log.atWork);
+
+        return `
+          <tr>
+            <td style="font-size:13px; font-weight:600; color:var(--text-primary);">${displayDate}</td>
+            <td style="font-size:13px; color:var(--text-secondary);">
+              <strong>${Utils.escape(log.shiftName)}</strong><br>
+              <span style="font-size:11px; opacity:0.8;">(${log.shiftTimes})</span>
+            </td>
+            <td style="font-size:13px; font-weight:500; color:var(--text-primary);">${checkInTime}</td>
+            <td style="font-size:13px; font-weight:500; color:var(--text-primary);">${checkOutTime}</td>
+            <td style="font-size:13px; font-weight:600; color:var(--text-primary);">${atWorkStr}</td>
+            <td style="font-size:12px; color:var(--text-secondary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Utils.escape(log.location || 'N/A')}">
+              ${Utils.escape(log.location || 'N/A')}
+            </td>
+            <td>
+              <span class="badge ${badgeClass}" style="font-size:11px; padding:3px 8px;">${log.status || 'On Time'}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    const infoEl = document.getElementById('my-att-pagination-info');
+    if (infoEl) {
+      if (totalEntries === 0) {
+        infoEl.textContent = 'Showing 0 to 0 of 0 entries';
+      } else {
+        infoEl.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${totalEntries} entries`;
+      }
+    }
+
+    const buttonsEl = document.getElementById('my-att-pagination-buttons');
+    if (buttonsEl) {
+      let buttonsHTML = '';
+      buttonsHTML += `
+        <button class="btn btn-secondary" style="padding:5px 10px; font-size:12px; border-radius:4px; display:flex; align-items:center;" ${myAttendancesCurrentPage === 1 ? 'disabled' : ''} id="btn-my-att-prev">
+          ◀ Prev
+        </button>
+      `;
+
+      let startPage = Math.max(1, myAttendancesCurrentPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+      if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+      }
+
+      for (let pIdx = startPage; pIdx <= endPage; pIdx++) {
+        const isActive = pIdx === myAttendancesCurrentPage;
+        buttonsHTML += `
+          <button class="btn ${isActive ? 'btn-cyan' : 'btn-secondary'}" style="padding:5px 10px; font-size:12px; border-radius:4px; min-width:30px; font-weight:${isActive ? '700' : '500'};" data-page="${pIdx}">
+            ${pIdx}
+          </button>
+        `;
+      }
+
+      buttonsHTML += `
+        <button class="btn btn-secondary" style="padding:5px 10px; font-size:12px; border-radius:4px; display:flex; align-items:center;" ${myAttendancesCurrentPage === totalPages ? 'disabled' : ''} id="btn-my-att-next">
+          Next ▶
+        </button>
+      `;
+
+      buttonsEl.innerHTML = buttonsHTML;
+
+      const prevBtn = document.getElementById('btn-my-att-prev');
+      if (prevBtn && myAttendancesCurrentPage > 1) {
+        prevBtn.addEventListener('click', () => {
+          myAttendancesCurrentPage--;
+          updateTable();
+        });
+      }
+
+      const nextBtn = document.getElementById('btn-my-att-next');
+      if (nextBtn && myAttendancesCurrentPage < totalPages) {
+        nextBtn.addEventListener('click', () => {
+          myAttendancesCurrentPage++;
+          updateTable();
+        });
+      }
+
+      buttonsEl.querySelectorAll('button[data-page]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          myAttendancesCurrentPage = Number(e.target.getAttribute('data-page'));
+          updateTable();
+        });
+      });
+    }
+  }
+
+  updateTable();
+}
+
+function exportMyAttendancesCSV(user) {
+  const rawLogs = DB.getLogs(user.id);
+  if (rawLogs.length === 0) {
+    alert('No attendance records to export.');
+    return;
+  }
+  const filename = `My_Attendance_Logs_${user.name.replace(/ /g, '_')}.csv`;
+  const headers = ['Date', 'Shift Name', 'Shift Time', 'Check-In', 'Check-Out', 'Hours Worked', 'GPS Location', 'Compliance Status'];
+  const rows = rawLogs.map(log => {
+    const shift = DB.getSchedule(log.shiftId);
+    const shiftName = shift ? shift.name : 'Default Shift';
+    const shiftTimes = shift ? `${shift.startTime} - ${shift.endTime}` : '';
+    const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+    return [
+      log.date,
+      shiftName,
+      shiftTimes,
+      log.checkIn || '--:--',
+      log.checkOut || '--:--',
+      workingHours === '-' ? '--' : workingHours,
+      log.location || 'N/A',
+      log.status || 'On Time'
+    ];
+  });
+  Utils.exportToCSV(filename, headers, rows);
+}
+
+function printMyAttendancesLog(user) {
+  const rawLogs = DB.getLogs(user.id);
+  const printWindow = window.open('', '_blank');
+  const todayStr = Utils.formatDate(new Date().toISOString().split('T')[0]);
+
+  const rowsHTML = rawLogs.length === 0
+    ? `<tr><td colspan="7" style="text-align:center;padding:20px;">No attendance records found</td></tr>`
+    : rawLogs.map(log => {
+        const shift = DB.getSchedule(log.shiftId);
+        const shiftName = shift ? shift.name : 'Default Shift';
+        const shiftTimes = shift ? `${shift.startTime} - ${shift.endTime}` : '';
+        const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+        return `
+          <tr>
+            <td>${Utils.formatDate(log.date)}</td>
+            <td><strong>${shiftName}</strong><br><small>${shiftTimes}</small></td>
+            <td>${log.checkIn || '--:--'}</td>
+            <td>${log.checkOut || '--:--'}</td>
+            <td>${workingHours === '-' ? '--' : workingHours}</td>
+            <td>${log.location || 'N/A'}</td>
+            <td>${log.status || 'On Time'}</td>
+          </tr>
+        `;
+      }).join('');
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Attendance Log Statement - ${user.name}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #1a0504; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #89201B; padding-bottom: 20px; margin-bottom: 30px; }
+          .title { font-size: 22px; font-weight: 800; color: #89201B; text-transform: uppercase; letter-spacing: 1px; }
+          .meta { font-size: 13px; line-height: 1.6; color: #475569; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+          th { background: #89201B; color: white; text-align: left; padding: 10px; font-weight: 600; }
+          td { border-bottom: 1px solid #cbd5e1; padding: 10px; color: #1e293b; }
+          tr:nth-child(even) td { background: #f8fafc; }
+          .footer { text-align: center; margin-top: 50px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">HS Group Delhi</div>
+            <div style="font-size:11px;text-transform:uppercase;color:#89201B;letter-spacing:1px;">House of Surya</div>
+          </div>
+          <div class="meta" style="text-align: right;">
+            <strong>Employee Name:</strong> ${user.name}<br>
+            <strong>Role / Designation:</strong> ${user.role.toUpperCase()}<br>
+            <strong>Printed On:</strong> ${todayStr}
+          </div>
+        </div>
+        <h2 style="font-size:16px;color:#1e293b;">Personal Attendance Ledger Statement</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Shift Details</th>
+              <th>Check-In</th>
+              <th>Check-Out</th>
+              <th>Hours Worked</th>
+              <th>GPS Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHTML}
+          </tbody>
+        </table>
+        <div class="footer">
+          This statement is an official auto-generated personal attendance ledger of HS Group Delhi (House of Surya).
+        </div>
+        <script>
+          window.onload = function() { window.print(); window.close(); }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function openGuidelinesModal() {
