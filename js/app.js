@@ -962,24 +962,10 @@ function renderLoginView() {
 
     authBox.classList.remove('auth-card-wide');
 
-    let idLabelText = 'Employee ID';
-    let placeholderText = 'e.g. EMP100';
+    const idLabelText = 'Employee ID';
+    const placeholderText = 'e.g. EMP100, HR100, MGR100 or username';
 
-    if (selectedUser.role === 'hr') {
-      idLabelText = 'HR ID';
-      placeholderText = 'e.g. HR100';
-    } else if (selectedUser.role === 'manager' || selectedUser.role === 'finance_manager') {
-      idLabelText = 'Manager ID';
-      placeholderText = 'e.g. MGR100';
-    }
-
-    const isHrOrManager = selectedUser && (selectedUser.role === 'hr' || selectedUser.role === 'manager' || selectedUser.role === 'finance_manager');
-
-    const createAccButtonHTML = '';
-
-    const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
-      ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
-      : '';
+    const skipButtonHTML = `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`;
 
     authBox.innerHTML = `
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
@@ -988,7 +974,7 @@ function renderLoginView() {
             <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 65px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(251,191,36,0.25)); mix-blend-mode: multiply;">
           </div>
           <div class="auth-title" style="font-size: 20px; font-weight: 700; color: var(--primary);">Secure Portal Access</div>
-          <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
+          <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize attendance dashboard</div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
@@ -996,43 +982,14 @@ function renderLoginView() {
           <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
-        ${isHrOrManager ? `
-        <div class="form-group" style="margin-bottom: 16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-            <label class="form-label" for="auth-pwd-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0; display: block;">Password *</label>
-            <button type="button" id="btn-forgot-password-trigger" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline">Forgot Password?</button>
-          </div>
-          <div style="position:relative">
-            <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
-            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px; display:flex; align-items:center;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-            </button>
-          </div>
-        </div>
-        ` : ''}
-
         <!-- Warning Box -->
         <div id="auth-verify-warning" style="display: none; padding: 10px 14px; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); background: rgba(239,68,68,0.05); color: var(--error); font-size: 11.5px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
         </div>
 
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${isHrOrManager ? `
-          <button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
-          ` : `
           <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
           ${skipButtonHTML}
-          `}
-          ${(!isHrOrManager && skipButtonHTML) ? '' : `
-          <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
-          `}
-
-          ${isHrOrManager ? `
-          <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
-            Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
-          </div>
-          ` : ''}
-
           <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
@@ -1042,47 +999,13 @@ function renderLoginView() {
     `;
 
     const inputEl = authBox.querySelector('#auth-id-input');
-    const pwdEl = authBox.querySelector('#auth-pwd-input');
-    const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
     const warningEl = authBox.querySelector('#auth-verify-warning');
     const submitBtn = authBox.querySelector('#btn-verify-id-submit');
     const skipBtn = authBox.querySelector('#btn-verify-id-skip');
-    const skipDevBtn = authBox.querySelector('#btn-verify-id-skip-dev');
     const backBtn = authBox.querySelector('#btn-verify-id-back');
-    const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
-    const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
-
-    if (forgotPwdBtn) {
-      forgotPwdBtn.addEventListener('click', () => {
-        const prefilledId = inputEl ? inputEl.value.trim() : (selectedUser ? selectedUser.employeeId : '');
-        showForgotPasswordModal(prefilledId);
-      });
-    }
-
-    if (toggleAuthPwdBtn && pwdEl) {
-      const svgEyeOpen = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-      const svgEyeClosed = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
-      toggleAuthPwdBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (pwdEl.type === 'password') {
-          pwdEl.type = 'text';
-          toggleAuthPwdBtn.innerHTML = svgEyeOpen;
-        } else {
-          pwdEl.type = 'password';
-          toggleAuthPwdBtn.innerHTML = svgEyeClosed;
-        }
-      });
-    }
-
-    if (createAccBtn) {
-      createAccBtn.addEventListener('click', () => {
-        showAccountModal();
-      });
-    }
 
     const handleVerification = () => {
       const enteredId = inputEl.value.trim();
-      const enteredPwd = pwdEl ? pwdEl.value : '';
 
       if (!enteredId) {
         warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
@@ -1094,7 +1017,8 @@ function renderLoginView() {
       const matchedUser = allUsers.find(u => 
         (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
         (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-        (u.email && u.email.toLowerCase() === enteredId.toLowerCase())
+        (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
+        (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
       );
 
       if (!matchedUser) {
@@ -1103,39 +1027,10 @@ function renderLoginView() {
         return;
       }
 
-      // Check role mismatch
-      const expectedRole = selectedUser.role;
-      let isRoleValid = false;
-      if (expectedRole === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
-      if ((expectedRole === 'manager' || expectedRole === 'finance_manager') && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
-      if (expectedRole === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
-
-      if (!isRoleValid) {
-        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
-        warningEl.style.display = 'block';
-        return;
-      }
-
       if (matchedUser.status === 'Inactive') {
         warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
         warningEl.style.display = 'block';
         return;
-      }
-
-      if (isHrOrManager) {
-        if (!enteredPwd) {
-          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
-          warningEl.style.display = 'block';
-          return;
-        }
-        if (matchedUser.password) {
-          const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
-          if (!isValidPwd) {
-            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
-            warningEl.style.display = 'block';
-            return;
-          }
-        }
       }
 
       proceedLogin(matchedUser);
@@ -1147,22 +1042,9 @@ function renderLoginView() {
         handleVerification();
       }
     });
-    if (pwdEl) {
-      pwdEl.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          handleVerification();
-        }
-      });
-    }
 
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
-        proceedLogin(selectedUser);
-      });
-    }
-
-    if (skipDevBtn) {
-      skipDevBtn.addEventListener('click', () => {
         proceedLogin(selectedUser);
       });
     }
@@ -1185,7 +1067,7 @@ function renderLoginView() {
     sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
     const baseRole = DB.getUserBaseRole(user.role);
     if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
-      window.location.hash = '#admin-dashboard';
+      window.location.hash = '#admin-my-attendances';
     } else {
       window.location.hash = '#dashboard';
     }
@@ -4509,7 +4391,11 @@ async function handlePinClockIn(userId, shiftId = null) {
     sessionStorage.removeItem('hs_pending_auto_checkin_time');
     DB.checkIn(userId, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null);
     requestsPushDBState();
-    renderEmployeeDashboard();
+    if (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager')) {
+      renderAdminMyAttendances();
+    } else {
+      renderEmployeeDashboard();
+    }
   } else {
     alert('Invalid Password credentials.');
     if (regIn) {
@@ -4539,7 +4425,11 @@ async function handleClockOut(userId, shiftId = null) {
   if (await confirm('Clock Out?')) {
     const log = DB.checkOut(userId, 'none', null, schedule ? schedule.id : null);
     requestsPushDBState();
-    renderEmployeeDashboard();
+    if (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager')) {
+      renderAdminMyAttendances();
+    } else {
+      renderEmployeeDashboard();
+    }
     if (log) {
       const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
       showClockOutThankYou(log.checkOut, workingHours);
@@ -6366,6 +6256,9 @@ function startLiveClock() {
         sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
         if (window.location.hash === '#dashboard') {
           renderEmployeeDashboard();
+          return;
+        } else if (window.location.hash === '#admin-my-attendances') {
+          renderAdminMyAttendances();
           return;
         }
       }
@@ -11901,11 +11794,118 @@ function renderAdminMyAttendances() {
   const user = Auth.getCurrentUser();
   if (!user) return;
 
+  const selectedShiftId = sessionStorage.getItem('hs_selected_shift_id');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
+  let schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
+  if (!schedule) {
+    schedule = {
+      id: 'sch_1',
+      name: 'Standard Day Shift',
+      startTime: '09:00',
+      endTime: '17:00',
+      gracePeriod: 15,
+      workDays: [1, 2, 3, 4, 5],
+      location: 'Kohat Enclave, Pitampura, Delhi'
+    };
+  }
+  const officeName = (user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+  const todayLog = DB.getTodayLog(user.id, schedule.id);
+
+  const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+  const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+  const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
+
+  // Dynamic GPS Mock Selector options
+  let optionsHTML = '';
+  optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
+  Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
+    const isPreferred = locName === officeName;
+    optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
+  });
+
+  // Shift Switcher HTML if multiple shifts
+  let multiShiftHTML = '';
+  if (resolved.allSchedules && resolved.allSchedules.length > 1) {
+    multiShiftHTML = `
+      <div class="card-panel" style="margin-bottom:20px; padding:14px 18px; border:1px solid var(--border); background:rgba(255,255,255,0.015); border-radius:var(--radius-md);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🕒</span>
+            <strong style="font-size:13.5px; color:var(--primary); font-weight:700;">Assigned Shift Schedules & Work Locations</strong>
+            <span style="font-size:11px; background:rgba(251,191,36,0.12); color:var(--primary); padding:2px 8px; border-radius:12px; font-weight:600; border:1px solid rgba(251,191,36,0.25);">${resolved.allSchedules.length} Assigned</span>
+          </div>
+          <span style="font-size:11.5px; color:var(--text-secondary);">Click any shift to switch active session & geofence</span>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">
+          ${resolved.allSchedules.map(s => {
+            const isSel = String(s.id) === String(schedule.id);
+            const sLog = DB.getTodayLog(user.id, s.id);
+            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi';
+            
+            let statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 7px; background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08);">⚪ Not Started</span>`;
+            if (sLog && sLog.checkIn && !sLog.checkOut) {
+              statusBadge = `<span class="badge badge-on-time" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3);">🟢 In Session</span>`;
+            } else if (sLog && sLog.checkOut) {
+              statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid rgba(255,255,255,0.15);">🏁 Checked Out</span>`;
+            }
+
+            const activeBadge = isSel 
+              ? `<span style="font-size:9.5px; font-weight:700; background:linear-gradient(135deg, var(--cyan) 0%, #2563eb 100%); color:#ffffff; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(6,182,212,0.3);">Active Shift</span>` 
+              : '';
+
+            return `
+              <div class="btn-switch-shift" data-shift-id="${s.id}" style="
+                background: ${isSel ? 'linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(251,191,36,0.05) 100%)' : 'rgba(255,255,255,0.02)'};
+                border: 1.5px solid ${isSel ? 'var(--primary)' : 'rgba(255,255,255,0.08)'};
+                border-radius: var(--radius-sm);
+                padding: 10px 14px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                transition: all 0.2s ease;
+                box-shadow: ${isSel ? '0 4px 14px rgba(251,191,36,0.12), inset 0 0 10px rgba(6,182,212,0.06)' : 'none'};
+                position: relative;
+                overflow: hidden;
+              "
+              onmouseover="if (!${isSel}) { this.style.borderColor='rgba(251,191,36,0.5)'; this.style.background='rgba(255,255,255,0.04)'; }"
+              onmouseout="if (!${isSel}) { this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.02)'; }"
+              >
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <div style="font-weight:700; font-size:13px; color:${isSel ? 'var(--primary)' : 'var(--text-primary)'}; display:flex; align-items:center; gap:6px;">
+                    <span>${isSel ? '👉' : '⏳'}</span>
+                    <span>${Utils.escape(s.name)}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    ${activeBadge}
+                    ${statusBadge}
+                  </div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; border-top:1px dashed rgba(255,255,255,0.06); padding-top:6px; margin-top:2px;">
+                  <div style="color:var(--text-secondary); display:flex; align-items:center; gap:4px;">
+                    <span>⏰</span>
+                    <strong style="color:var(--text-primary); font-weight:600;">${formatTimeRange12h(s.startTime, s.endTime)}</strong>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:4px; font-size:11.5px;">
+                    <span style="color:var(--text-muted);">→</span>
+                    <span style="background:rgba(6,182,212,0.12); color:var(--cyan); padding:2px 8px; border-radius:4px; border:1px solid rgba(6,182,212,0.25); font-weight:600;">📍 ${Utils.escape(sLoc)}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   main.innerHTML = `
     <div class="content-header">
       <div>
-        <h1 class="content-title">My Attendances</h1>
-        <div class="content-subtitle">Inspect your own attendance records, check-in/out times, and shift compliance.</div>
+        <h1 class="content-title">Welcome, ${Utils.escape(user.name)}</h1>
+        <div class="content-subtitle">Log your personal attendance, monitor geofence status, and inspect your full attendance history.</div>
       </div>
       <div style="display:flex;gap:12px">
         <button class="btn btn-secondary" id="btn-my-att-export-csv" style="padding:10px 18px;width:auto;font-size:13px">📥 Export CSV</button>
@@ -11913,6 +11913,251 @@ function renderAdminMyAttendances() {
       </div>
     </div>
     <div class="content-body">
+      ${multiShiftHTML}
+
+      <div class="dashboard-split" style="margin-bottom: 24px;">
+        <!-- Left Side: Clock, GPS Geofence & Shift Cards -->
+        <div>
+          <!-- Clock Panel -->
+          <div class="card-panel" style="margin-bottom: 20px;">
+            <div class="clock-widget">
+              <div class="clock-timer" id="clock-live-time">--:--:--</div>
+              <div class="clock-date" id="clock-live-date">---</div>
+              
+              <div class="clock-status-tag ${todayLog ? (todayLog.checkOut ? 'status-clocked-out' : 'status-clocked-in') : 'status-clocked-out'}">
+                <span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block"></span>
+                <span id="clock-status-text">${todayLog ? (todayLog.checkOut ? 'Clocked Out' : 'Clocked In') : 'Clocked Out'}</span>
+              </div>
+
+              <!-- Fixed clock actions row -->
+              <div class="clock-actions-row">
+                ${isNoShift 
+                  ? `
+                    <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(255, 149, 0, 0.06); border: 1px solid rgba(255, 149, 0, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                      <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⚠️ No Shift Assigned</div>
+                      No shift assigned today. Please contact your manager or HR.
+                    </div>
+                  `
+                  : (isEarly 
+                      ? `
+                        <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                        </div>
+                      `
+                      : (!todayLog || !todayLog.checkIn
+                          ? `
+                            <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
+                          ` 
+                          : (todayLog.checkOut 
+                              ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
+                              : `
+                                <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
+                              `
+                            )
+                        )
+                    )
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- GPS Geofence Card -->
+          <div class="card-panel gps-sim-card" style="margin-bottom: 20px;">
+            <div class="card-panel-header">
+              <h3 class="card-panel-title">🛰️ Attendance Geofence Validation</h3>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <!-- Map Radar Canvas -->
+              <div style="position:relative; width:100%; border-radius:var(--radius-sm); overflow:hidden">
+                <canvas id="gps-canvas-map" style="width:100%; height:150px; background:#0f172a; display:block"></canvas>
+              </div>
+
+              <!-- Geolocation Error Display -->
+              <div id="gps-error-container" style="display:none; margin-bottom:4px"></div>
+
+              <!-- Side-by-side location verification -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
+                <div>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Fixed Worksite Location</span>
+                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(officeName)}</div>
+                  <div style="color:var(--text-secondary); font-size:11px" id="gps-worksite-coords-display">--</div>
+                </div>
+                <div style="border-left:1px solid var(--border); padding-left:10px">
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📱 Live GPS Location</span>
+                  <div style="font-weight:600; color:var(--text-primary); margin-top:2px" id="gps-coords-display">Acquiring...</div>
+                  <div style="color:var(--text-secondary); font-size:11px" id="gps-status-sub-display">--</div>
+                </div>
+              </div>
+
+              <!-- GPS Real-Time Details (Address & Timestamp) -->
+              <div style="display:flex; flex-direction:column; gap:8px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
+                <div>
+                  <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">📍 Current Address</span>
+                  <div id="gps-address-display" style="font-weight:500; color:var(--text-primary); margin-top:2px">Acquiring address...</div>
+                </div>
+                <div style="margin-top:4px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px">
+                  <div>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Last Updated</span>
+                    <div id="gps-timestamp-display" style="font-weight:500; color:var(--text-primary); margin-top:1px">--</div>
+                  </div>
+                  <div>
+                    <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🎯 Accuracy</span>
+                    <div id="gps-accuracy-display" style="font-weight:500; color:var(--text-primary); margin-top:1px; text-align:right">--</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status & Distance Info -->
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0">
+                <span style="font-size:13px; color:var(--text-secondary)">Geofence Status:</span>
+                <span style="display:flex; align-items:center; gap:8px">
+                  <span id="gps-distance-display" style="font-size:12px; font-weight:600; color:var(--text-primary)">--</span>
+                  <span id="gps-radar" class="gps-radar-indicator in-range"></span>
+                  <span id="gps-status-badge" class="badge badge-on-time">In Range</span>
+                </span>
+              </div>
+              
+              <!-- Location Simulation Selector -->
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" style="font-size:11px; margin-bottom:6px">Location Tracking Mode:</label>
+                <select class="form-input" id="gps-mock-selector" style="padding:8px 12px; font-size:13px; background:rgba(255,255,255,0.02)">
+                  ${optionsHTML}
+                </select>
+              </div>
+
+              <!-- Direct Geofence Card Actions -->
+              <div class="geofence-direct-actions" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px">
+                ${isNoShift 
+                  ? `
+                    <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(255, 149, 0, 0.06); border: 1px solid rgba(255, 149, 0, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                      <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⚠️ No Shift Assigned</div>
+                      No shift assigned today. Please contact your manager or HR.
+                    </div>
+                  `
+                  : (isEarly 
+                      ? `
+                        <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                        </div>
+                      `
+                      : (todayLog && todayLog.checkOut
+                          ? `
+                            <div id="geofence-checked-out-msg" style="background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
+                              Checked Out Today
+                            </div>
+                          `
+                          : `
+                            <div style="display: grid; grid-template-columns: 1fr; gap:8px" id="geofence-btn-group">
+                              ${!todayLog || !todayLog.checkIn
+                                ? `<button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600;">Check In</button>`
+                                : ''
+                              }
+                              ${todayLog && todayLog.checkIn && !todayLog.checkOut
+                                ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600;">Check Out</button>`
+                                : ''
+                              }
+                            </div>
+                          `
+                        )
+                    )
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Shift Details Card -->
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <h3 class="card-panel-title">Active Shift Details</h3>
+            </div>
+            <div class="shift-card" style="background:transparent;border:none;padding:0">
+              <div class="shift-card-header" style="margin-bottom:10px">
+                <span class="shift-title" style="color:var(--primary);font-size:16px">${Utils.escape(schedule.name)}</span>
+              </div>
+              <div class="shift-meta-row">
+                <span>Working Hours:</span>
+                <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(schedule.endTime)}</strong>
+              </div>
+              <div class="shift-meta-row">
+                <span>Grace Period:</span>
+                <strong style="color:var(--warning)">${schedule.gracePeriod} minutes</strong>
+              </div>
+              <div class="shift-meta-row">
+                <span>Assigned Location:</span>
+                <strong style="color:var(--text-primary)">${Utils.escape(officeName)}</strong>
+              </div>
+              <div class="shift-days-row">
+                ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `
+                  <div class="day-bubble ${schedule.workDays.includes(i) ? 'active' : ''}">${day}</div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Duration Clock, Notices & Schedule/Attendance Calendar -->
+        <div>
+          <div class="card-panel" style="margin-bottom:20px">
+            <h3 class="card-panel-title" style="margin-bottom:15px">Today's Duration Clock</h3>
+            <div class="clock-timer" style="font-size:32px;color:var(--cyan);text-align:center" id="active-work-timer">00h 00m 00s</div>
+          </div>
+
+          <!-- Notice Board Card -->
+          <div class="card-panel" style="margin-bottom:20px; min-height:220px; display:flex; flex-direction:column">
+            <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 class="card-panel-title">📢 Notifications</h3>
+              <button id="btn-delete-all-notices" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;text-decoration:underline;display:none;">Delete All</button>
+            </div>
+            <div id="employee-notices-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;flex-grow:1;max-height:320px;overflow-y:auto;padding-right:4px">
+              <!-- announcements loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Schedule & Attendance Calendar Card -->
+          <div class="card-panel" style="margin-bottom:0; display:flex; flex-direction:column; gap:16px">
+            <div class="card-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px">
+              <h3 class="card-panel-title">🗓️ Schedule & Attendance Calendar</h3>
+              <!-- Schedule Quick Tabs -->
+              <div class="calendar-tabs" style="display:flex; gap:6px; background:rgba(255,255,255,0.03); padding:4px; border-radius:var(--radius-sm); border:1px solid var(--border)">
+                <button class="cal-tab-btn active" data-tab="today" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Today</button>
+                <button class="cal-tab-btn" data-tab="next" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Next Day</button>
+                <button class="cal-tab-btn" data-tab="last" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Last Day</button>
+                <button class="cal-tab-btn" data-tab="weekly" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 8px; font-size:11.5px; cursor:pointer; font-weight:600; border-radius:4px; transition:all 0.2s">Weekly</button>
+              </div>
+            </div>
+
+            <!-- Tab Content (Schedule Card) -->
+            <div id="calendar-schedule-card" style="padding:14px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12.5px; display:flex; flex-direction:column; gap:10px">
+              <!-- Dynamically populated based on active tab -->
+            </div>
+
+            <!-- Calendar Monthly Grid Header & Grid -->
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span id="calendar-month-year" style="font-weight:700; color:var(--text-primary); font-size:13.5px"></span>
+                <div style="display:flex; gap:6px">
+                  <button id="btn-calendar-prev" class="btn btn-secondary" style="width:auto; padding:4px 8px; font-size:11px">&lt;</button>
+                  <button id="btn-calendar-next" class="btn btn-secondary" style="width:auto; padding:4px 8px; font-size:11px">&gt;</button>
+                </div>
+              </div>
+              
+              <!-- Month Grid -->
+              <div class="calendar-grid-container" style="display:flex; flex-direction:column; gap:4px">
+                <!-- Day Names -->
+                <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; font-size:10px; font-weight:700; color:var(--text-secondary); margin-bottom:4px">
+                  <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                </div>
+                <!-- Day Grid Cells -->
+                <div id="calendar-days-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Attendances Database Records Table Section -->
       <div class="card-panel" style="margin-bottom: 24px; padding: 16px 20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
@@ -11960,32 +12205,93 @@ function renderAdminMyAttendances() {
     </div>
   `;
 
+  // Live updates tick
+  startLiveClock();
+  startActiveWorkTimer(todayLog);
+
+  // Calendar Initialisation
+  let currentCalDate = new Date();
+  
+  const tabBtns = document.querySelectorAll('.cal-tab-btn');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      const activeTab = e.target.getAttribute('data-tab');
+      renderCalendarScheduleTab(user.id, activeTab);
+    });
+  });
+
+  // Render initial schedule today tab
+  renderCalendarScheduleTab(user.id, 'today');
+
+  const refreshCalendarView = () => {
+    renderCalendarGrid(user.id, currentCalDate.getFullYear(), currentCalDate.getMonth());
+  };
+  refreshCalendarView();
+
+  const btnPrev = document.getElementById('btn-calendar-prev');
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+      refreshCalendarView();
+    });
+  }
+  const btnNext = document.getElementById('btn-calendar-next');
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+      refreshCalendarView();
+    });
+  }
+  renderEmployeeNotices(user.id);
+
+  // Bind search query listener
   const searchInput = document.getElementById('my-att-search');
-  searchInput.value = myAttendancesSearchQuery;
-  searchInput.addEventListener('input', (e) => {
-    myAttendancesSearchQuery = e.target.value.trim();
-    myAttendancesCurrentPage = 1;
-    updateTable();
-  });
+  if (searchInput) {
+    searchInput.value = myAttendancesSearchQuery;
+    searchInput.addEventListener('input', (e) => {
+      myAttendancesSearchQuery = e.target.value.trim();
+      myAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
 
-  document.getElementById('my-att-rows-select').addEventListener('change', (e) => {
-    myAttendancesRowsPerPage = Number(e.target.value);
-    myAttendancesCurrentPage = 1;
-    updateTable();
-  });
+  // Bind rows select listener
+  const rowsSelect = document.getElementById('my-att-rows-select');
+  if (rowsSelect) {
+    rowsSelect.addEventListener('change', (e) => {
+      myAttendancesRowsPerPage = Number(e.target.value);
+      myAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
 
-  document.getElementById('btn-my-att-export-csv').addEventListener('click', () => {
-    exportMyAttendancesCSV(user);
-  });
+  // Bind CSV export listener
+  const exportBtn = document.getElementById('btn-my-att-export-csv');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportMyAttendancesCSV(user);
+    });
+  }
 
-  document.getElementById('btn-my-att-print').addEventListener('click', () => {
-    printMyAttendancesLog(user);
-  });
+  // Bind Print listener
+  const printBtn = document.getElementById('btn-my-att-print');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      printMyAttendancesLog(user);
+    });
+  }
 
-  document.getElementById('th-my-att-date').addEventListener('click', () => toggleSort('date'));
-  document.getElementById('th-my-att-checkin').addEventListener('click', () => toggleSort('checkIn'));
-  document.getElementById('th-my-att-checkout').addEventListener('click', () => toggleSort('checkOut'));
-  document.getElementById('th-my-att-status').addEventListener('click', () => toggleSort('status'));
+  // Bind sorting headers
+  const thDate = document.getElementById('th-my-att-date');
+  if (thDate) thDate.addEventListener('click', () => toggleSort('date'));
+  const thCheckin = document.getElementById('th-my-att-checkin');
+  if (thCheckin) thCheckin.addEventListener('click', () => toggleSort('checkIn'));
+  const thCheckout = document.getElementById('th-my-att-checkout');
+  if (thCheckout) thCheckout.addEventListener('click', () => toggleSort('checkOut'));
+  const thStatus = document.getElementById('th-my-att-status');
+  if (thStatus) thStatus.addEventListener('click', () => toggleSort('status'));
 
   function toggleSort(field) {
     if (myAttendancesSortField === field) {
@@ -11997,7 +12303,641 @@ function renderAdminMyAttendances() {
     updateTable();
   }
 
-  function updateTable() {
+  // Bind shift switcher buttons
+  document.querySelectorAll('.btn-switch-shift').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const shiftId = e.currentTarget.dataset.shiftId;
+      sessionStorage.setItem('hs_selected_shift_id', shiftId);
+      renderAdminMyAttendances();
+    });
+  });
+
+  // Bind regular Check-in actions
+  if (!todayLog || !todayLog.checkIn) {
+    const regIn = document.getElementById('btn-regular-checkin');
+    if (regIn) {
+      regIn.addEventListener('click', async () => {
+        const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+        if (!checkInStatus.allowed) {
+          if (checkInStatus.type === 'TooEarly') {
+            await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
+          } else {
+            await CustomDialog.alert(checkInStatus.reason, "Check In Blocked");
+          }
+          return;
+        }
+        handlePinClockIn(user.id, schedule.id);
+      });
+    }
+  } else if (!todayLog.checkOut) {
+    const regOut = document.getElementById('btn-regular-checkout');
+    if (regOut) regOut.addEventListener('click', () => handleClockOut(user.id, schedule.id));
+  }
+
+  // Geofencing Simulation setup
+  let mockLoc = sessionStorage.getItem('hs_mock_location') || 'real';
+  const gpsSelect = document.getElementById('gps-mock-selector');
+  if (gpsSelect) {
+    gpsSelect.value = mockLoc;
+    gpsSelect.addEventListener('change', (e) => {
+      mockLoc = e.target.value;
+      sessionStorage.setItem('hs_mock_location', mockLoc);
+      updateGpsUI(mockLoc);
+    });
+  }
+
+  // Bind Geofence Card Actions (Direct Check-In without passwords/prompts)
+  const geoCheckIn = document.getElementById('btn-geofence-checkin');
+  if (geoCheckIn) {
+    geoCheckIn.addEventListener('click', async () => {
+      const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+      if (!checkInStatus.allowed) {
+        if (checkInStatus.type === 'TooEarly') {
+          await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
+        } else {
+          await CustomDialog.alert(checkInStatus.reason, "Check In Blocked");
+        }
+        return;
+      }
+
+      const regIn = document.getElementById('btn-regular-checkin');
+      if (regIn) {
+        regIn.setAttribute('disabled', 'true');
+        regIn.style.opacity = '0.4';
+      }
+      geoCheckIn.setAttribute('disabled', 'true');
+      geoCheckIn.style.opacity = '0.4';
+
+      const coords = await getOneTimeLocationPromise();
+      if (!coords) {
+        alert("❌ Check-in Rejected! Could not acquire GPS coordinates.");
+        if (regIn) {
+          regIn.removeAttribute('disabled');
+          regIn.style.opacity = '1';
+        }
+        geoCheckIn.removeAttribute('disabled');
+        geoCheckIn.style.opacity = '1';
+        return;
+      }
+
+      const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
+      const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
+      const inRange = distance <= 100;
+      const resolvedDistance = (distance / 1000).toFixed(2);
+      const coordsStr = `${coords.lat.toFixed(6)}° N, ${coords.lng.toFixed(6)}° E`;
+
+      if (!inRange) {
+        alert('❌ Check-in Rejected! You are out of range.');
+        if (regIn) {
+          regIn.removeAttribute('disabled');
+          regIn.style.opacity = '1';
+        }
+        geoCheckIn.removeAttribute('disabled');
+        geoCheckIn.style.opacity = '1';
+        return;
+      }
+
+      sessionStorage.removeItem('hs_pending_auto_checkin_time');
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule.id);
+      requestsPushDBState();
+      renderAdminMyAttendances();
+    });
+  }
+
+  // Bind Geofence Card Actions (Direct Check-Out without confirmation/passwords/prompts)
+  const geoCheckOut = document.getElementById('btn-geofence-checkout');
+  if (geoCheckOut) {
+    geoCheckOut.addEventListener('click', () => {
+      const inRange = sessionStorage.getItem('hs_current_resolved_in_range') === 'true';
+      if (!inRange) {
+        alert('❌ Check-out Rejected! You are out of range.');
+        return;
+      }
+      
+      const log = DB.checkOut(user.id, 'none', null, schedule.id);
+      requestsPushDBState();
+      renderAdminMyAttendances();
+      if (log) {
+        const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
+        showClockOutThankYou(log.checkOut, workingHours);
+      }
+    });
+  }
+
+  // Initialize GPS state
+  if (gpsSelect) {
+    updateGpsUI(mockLoc);
+  }
+
+  let lastAddressFetchTime = 0;
+  let lastAddressLat = 0;
+  let lastAddressLng = 0;
+  let lastAddressVal = "";
+
+  function updateAddressDisplay(lat, lng, element) {
+    if (!element) return;
+    
+    function localDist(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    if (window.OFFICE_COORDINATES) {
+      for (const [name, coords] of Object.entries(window.OFFICE_COORDINATES)) {
+        if (localDist(lat, lng, coords.lat, coords.lng) <= 150) {
+          element.textContent = name;
+          return;
+        }
+      }
+    }
+
+    const now = Date.now();
+    const roundedLat = parseFloat(lat.toFixed(4));
+    const roundedLng = parseFloat(lng.toFixed(4));
+    
+    if (lastAddressLat === roundedLat && lastAddressLng === roundedLng && lastAddressVal) {
+      element.textContent = lastAddressVal;
+      return;
+    }
+
+    if (now - lastAddressFetchTime < 4000) {
+      element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+      return;
+    }
+
+    lastAddressFetchTime = now;
+    lastAddressLat = roundedLat;
+    lastAddressLng = roundedLng;
+    element.textContent = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E (Locating...)`;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
+      headers: { 'Accept-Language': 'en' }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.display_name) {
+          lastAddressVal = data.display_name;
+          element.textContent = lastAddressVal;
+        } else {
+          lastAddressVal = `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`;
+          element.textContent = lastAddressVal;
+        }
+      })
+      .catch(e => {
+        lastAddressVal = getMockAddress(lat, lng);
+        element.textContent = lastAddressVal;
+      });
+  }
+
+  function getMockAddress(lat, lng) {
+    function localDist(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    const distKohat = localDist(lat, lng, 28.6978, 77.1408);
+    if (distKohat <= 150) {
+      return "Metro Station Rd, Kohat Enclave, Pitampura, New Delhi, Delhi 110034";
+    }
+    const distCC = localDist(lat, lng, 28.6562, 77.2310);
+    if (distCC <= 150) {
+      return "Chandni Chowk Rd, Near Red Fort, Old Delhi, Delhi 110006";
+    }
+    const distOmaxe = localDist(lat, lng, 28.8130, 77.0673);
+    if (distOmaxe <= 150) {
+      return "Sector 15, Omaxe City Industrial Area, Delhi NCR, Haryana 131001";
+    }
+    
+    if (lat > 28.7) {
+      return `Sector ${Math.floor(lat * 100) % 24 + 1}, Rohini, North Delhi, Delhi 110085`;
+    } else if (lng < 77.15) {
+      return "Dwarka Sector 9, West Delhi, Delhi 110077";
+    } else {
+      return "Connaught Place, Central Delhi, New Delhi, Delhi 110001";
+    }
+  }
+
+  function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Earth radius in meters
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+    const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function getOneTimeLocation(callback) {
+    const mockLoc = sessionStorage.getItem('hs_mock_location') || 'real';
+    if (mockLoc === 'real') {
+      if (window.lastAcquiredLocation) {
+        callback(window.lastAcquiredLocation);
+        return;
+      }
+      if (!navigator.geolocation) {
+        callback(null);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          window.lastAcquiredLocation = coords;
+          callback(coords);
+        },
+        (err) => {
+          console.error("One-time geolocation error:", err);
+          callback(null);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      let selectedCoords = window.OFFICE_COORDINATES[mockLoc];
+      if (!selectedCoords) {
+        const foundKey = Object.keys(window.OFFICE_COORDINATES).find(k => k.toLowerCase() === mockLoc.toLowerCase() || k.toLowerCase().includes(mockLoc.toLowerCase()));
+        selectedCoords = foundKey ? window.OFFICE_COORDINATES[foundKey] : { lat: 28.6978, lng: 77.1408 };
+      }
+      callback(selectedCoords);
+    }
+  }
+
+  function getOneTimeLocationPromise() {
+    return new Promise((resolve) => {
+      getOneTimeLocation((coords) => resolve(coords));
+    });
+  }
+
+  function updateGpsUI(val) {
+    const badge = document.getElementById('gps-status-badge');
+    const radar = document.getElementById('gps-radar');
+    const coordsDisplay = document.getElementById('gps-coords-display');
+    const distDisplay = document.getElementById('gps-distance-display');
+    
+    const regularIn = document.getElementById('btn-regular-checkin');
+    const regularOut = document.getElementById('btn-regular-checkout');
+    const geoCheckIn = document.getElementById('btn-geofence-checkin');
+    const geoCheckOut = document.getElementById('btn-geofence-checkout');
+
+    const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
+    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
+    const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
+
+    const todayLog = DB.getTodayLog(user.id, schedule.id);
+    const isOffline = !!(todayLog && todayLog.checkOut);
+
+    if (isOffline) {
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+      if (coordsDisplay) coordsDisplay.textContent = 'Shift Completed';
+      if (distDisplay) distDisplay.textContent = '--';
+      if (badge) {
+        badge.textContent = 'Offline';
+        badge.className = 'badge';
+        badge.style.background = 'rgba(255,255,255,0.05)';
+        badge.style.color = 'var(--text-muted)';
+        badge.style.border = '1px solid rgba(255,255,255,0.08)';
+      }
+      if (radar) {
+        radar.className = 'gps-radar-indicator';
+        radar.style.background = '#475569';
+        radar.style.boxShadow = 'none';
+      }
+
+      if (geoCheckIn) {
+        geoCheckIn.setAttribute('disabled', 'true');
+        geoCheckIn.style.opacity = '0.4';
+        geoCheckIn.style.cursor = 'not-allowed';
+        geoCheckIn.setAttribute('title', 'Offline');
+      }
+      if (geoCheckOut) {
+        geoCheckOut.setAttribute('disabled', 'true');
+        geoCheckOut.style.opacity = '0.4';
+        geoCheckOut.style.cursor = 'not-allowed';
+        geoCheckOut.setAttribute('title', 'Offline');
+      }
+
+      const btnGroup = document.getElementById('geofence-btn-group');
+      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
+      if (checkedOutMsg) {
+        if (todayLog && todayLog.checkOut) {
+          if (btnGroup) btnGroup.style.display = 'none';
+          checkedOutMsg.style.display = 'block';
+        } else {
+          if (btnGroup) btnGroup.style.display = 'grid';
+          checkedOutMsg.style.display = 'none';
+          if (geoCheckIn) geoCheckIn.style.display = 'block';
+          if (geoCheckOut) geoCheckOut.style.display = 'block';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+        }
+      }
+
+      drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, null, null, null, null, officeName, true);
+      return;
+    }
+
+    if (badge) {
+      badge.style.background = '';
+      badge.style.color = '';
+      badge.style.border = '';
+    }
+    if (radar) {
+      radar.style.background = '';
+      radar.style.boxShadow = '';
+    }
+
+    let justBlock = document.getElementById('gps-justification-block');
+    if (!justBlock) {
+      justBlock = document.createElement('div');
+      justBlock.id = 'gps-justification-block';
+      justBlock.style.marginTop = '12px';
+      justBlock.style.transition = 'all 0.3s ease';
+      justBlock.style.display = 'none';
+      justBlock.innerHTML = `
+        <div style="font-size:12px; font-weight:600; color:var(--error); background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
+          ❌ Check-in Rejected! You are out of geofence range. Under company policy, you must be within 100m of your assigned work location (${officeName}) to clock in.
+          <button class="btn btn-warning btn-sm" id="btn-gps-use-worksite" style="margin-top:8px; display:block; width:100%; padding:6px; font-size:11px; font-weight:700">📍 Switch to Assigned Worksite Location</button>
+        </div>
+      `;
+      const selectEl = document.getElementById('gps-mock-selector');
+      if (selectEl) {
+        selectEl.parentNode.parentNode.appendChild(justBlock);
+      }
+
+      const btnUseWorksite = justBlock.querySelector('#btn-gps-use-worksite');
+      if (btnUseWorksite) {
+        btnUseWorksite.addEventListener('click', (e) => {
+          e.preventDefault();
+          const sel = document.getElementById('gps-mock-selector');
+          if (sel) {
+            sel.value = officeName;
+            sessionStorage.setItem('hs_mock_location', officeName);
+          }
+          updateGpsUI(officeName);
+        });
+      }
+    }
+
+    function applyLocationState(currentLat, currentLng, coordsStr) {
+      window.lastAcquiredLocation = { lat: currentLat, lng: currentLng };
+      const distance = calculateHaversineDistance(currentLat, currentLng, targetCoords.lat, targetCoords.lng);
+      const inRange = distance <= 100;
+      const resolvedDistance = (distance / 1000).toFixed(2);
+
+      const prevInRange = window.lastGpsInRangeState;
+      if (prevInRange !== undefined && prevInRange !== inRange) {
+        if (inRange) {
+          showToastNotification(`📍 Geofence Alert: You are now IN RANGE of your worksite location. Check-in unlocked!`, 'success');
+        } else {
+          showToastNotification(`⚠️ Geofence Alert: You are OUT OF RANGE of your worksite location. Check-in locked.`, 'warning');
+        }
+      } else if (prevInRange === undefined) {
+        if (inRange) {
+          showToastNotification(`📍 Geofence Active: Located at assigned worksite (${officeName}). Check-in unlocked!`, 'success');
+        } else {
+          showToastNotification(`⚠️ Geofence Active: Outside of worksite range. Check-in locked.`, 'warning');
+        }
+      }
+      window.lastGpsInRangeState = inRange;
+
+      sessionStorage.setItem('hs_current_resolved_coords', coordsStr);
+      sessionStorage.setItem('hs_current_resolved_distance', resolvedDistance);
+      sessionStorage.setItem('hs_current_resolved_in_range', inRange ? 'true' : 'false');
+
+      if (coordsDisplay) coordsDisplay.textContent = coordsStr;
+
+      if (distDisplay) {
+        const distM = Math.round(distance);
+        const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
+        distDisplay.textContent = distLabel;
+      }
+
+      if (badge) {
+        badge.textContent = inRange ? 'In Range' : 'Out of Range';
+        badge.className = inRange ? 'badge badge-on-time' : 'badge badge-rejected';
+      }
+
+      if (radar) {
+        radar.className = inRange ? 'gps-radar-indicator in-range' : 'gps-radar-indicator out-of-range';
+      }
+
+      const justBlock = document.getElementById('gps-justification-block');
+      if (justBlock) {
+        justBlock.style.display = inRange ? 'none' : 'block';
+      }
+
+      const regularIn = document.getElementById('btn-regular-checkin');
+      const geoCheckIn = document.getElementById('btn-geofence-checkin');
+
+      if (isEarly) {
+        if (regularIn) {
+          regularIn.setAttribute('disabled', 'true');
+          regularIn.style.opacity = '0.4';
+        }
+        if (geoCheckIn) {
+          geoCheckIn.setAttribute('disabled', 'true');
+          geoCheckIn.style.opacity = '0.4';
+        }
+      } else {
+        if (inRange) {
+          if (regularIn) {
+            regularIn.removeAttribute('disabled');
+            regularIn.style.opacity = '1';
+            regularIn.style.cursor = 'pointer';
+          }
+          if (geoCheckIn) {
+            geoCheckIn.removeAttribute('disabled');
+            geoCheckIn.style.opacity = '1';
+            geoCheckIn.style.cursor = 'pointer';
+          }
+        } else {
+          if (regularIn) {
+            regularIn.setAttribute('disabled', 'true');
+            regularIn.style.opacity = '0.4';
+          }
+          if (geoCheckIn) {
+            geoCheckIn.setAttribute('disabled', 'true');
+            geoCheckIn.style.opacity = '0.4';
+          }
+        }
+      }
+
+      const btnGroup = document.getElementById('geofence-btn-group');
+      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
+      if (checkedOutMsg) {
+        if (todayLog && todayLog.checkOut) {
+          if (btnGroup) btnGroup.style.display = 'none';
+          checkedOutMsg.style.display = 'block';
+        } else {
+          if (btnGroup) btnGroup.style.display = 'grid';
+          checkedOutMsg.style.display = 'none';
+
+          if (todayLog && todayLog.checkIn) {
+            if (geoCheckIn) geoCheckIn.style.display = 'none';
+            if (geoCheckOut) geoCheckOut.style.display = 'block';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+          } else {
+            if (geoCheckIn) geoCheckIn.style.display = 'block';
+            if (geoCheckOut) geoCheckOut.style.display = 'none';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+          }
+        }
+      }
+
+      drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, currentLat, currentLng, distance, inRange, officeName, false);
+    }
+
+    if (val === 'real') {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation API not available. Falling back to worksite.");
+        const selectEl = document.getElementById('gps-mock-selector');
+        if (selectEl) selectEl.value = officeName;
+        setTimeout(() => updateGpsUI(officeName), 100);
+        return;
+      }
+
+      if (coordsDisplay) coordsDisplay.textContent = 'Acquiring GPS Signal...';
+      if (distDisplay) distDisplay.textContent = 'Calculating...';
+      if (badge) {
+        badge.textContent = 'Locating...';
+        badge.className = 'badge badge-on-time';
+      }
+      if (radar) {
+        radar.className = 'gps-radar-indicator in-range';
+      }
+      
+      const errContainer = document.getElementById('gps-error-container');
+      if (errContainer) errContainer.style.display = 'none';
+
+      let triedHighAccuracy = true;
+
+      function startWatching(highAccuracy) {
+        if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+          try {
+            navigator.geolocation.clearWatch(window.activeGpsWatchId);
+          } catch (e) {}
+          window.activeGpsWatchId = null;
+        }
+
+        window.activeGpsWatchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const errContainer = document.getElementById('gps-error-container');
+            if (errContainer) errContainer.style.display = 'none';
+
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const accuracy = pos.coords.accuracy || 10;
+            const timestamp = new Date(pos.timestamp || Date.now()).toLocaleTimeString();
+
+            const accuracyDisplay = document.getElementById('gps-accuracy-display');
+            if (accuracyDisplay) {
+              accuracyDisplay.textContent = `±${Math.round(accuracy)}m (${highAccuracy ? 'GPS' : 'Network'})`;
+            }
+
+            const timestampDisplay = document.getElementById('gps-timestamp-display');
+            if (timestampDisplay) {
+              timestampDisplay.textContent = timestamp;
+            }
+
+            const addressDisplay = document.getElementById('gps-address-display');
+            if (addressDisplay) {
+              updateAddressDisplay(lat, lng, addressDisplay);
+            }
+
+            applyLocationState(lat, lng, `${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E`);
+          },
+          (err) => {
+            console.error("GPS Watch error:", err);
+            if (highAccuracy && triedHighAccuracy) {
+              triedHighAccuracy = false;
+              startWatching(false);
+              return;
+            }
+
+            const selectEl = document.getElementById('gps-mock-selector');
+            if (selectEl) {
+              selectEl.value = officeName;
+              sessionStorage.setItem('hs_mock_location', officeName);
+            }
+            
+            const errContainer = document.getElementById('gps-error-container');
+            if (errContainer) {
+              errContainer.style.display = 'block';
+              errContainer.innerHTML = `
+                <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
+                  ⚠️ Mobile Device GPS problem (Permission Denied/Unavailable). Automatically fixed location at your assigned worksite: <strong>${officeName}</strong>.
+                </div>
+              `;
+            }
+
+            if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+              try {
+                navigator.geolocation.clearWatch(window.activeGpsWatchId);
+              } catch (e) {}
+              window.activeGpsWatchId = null;
+            }
+            setTimeout(() => updateGpsUI(officeName), 100);
+          },
+          { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 8000 : 15000, maximumAge: 3000 }
+        );
+      }
+
+      startWatching(true);
+    } else {
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+      
+      const errContainer = document.getElementById('gps-error-container');
+      if (errContainer) errContainer.style.display = 'none';
+
+      const accuracyDisplay = document.getElementById('gps-accuracy-display');
+      if (accuracyDisplay) {
+        accuracyDisplay.textContent = `Simulation Mode`;
+      }
+      const timestampDisplay = document.getElementById('gps-timestamp-display');
+      if (timestampDisplay) {
+        timestampDisplay.textContent = new Date().toLocaleTimeString();
+      }
+
+      const coords = window.OFFICE_COORDINATES[val] || window.OFFICE_COORDINATES[officeName] || { lat: 28.6978, lng: 77.1408 };
+      const addressDisplay = document.getElementById('gps-address-display');
+      if (addressDisplay) {
+        addressDisplay.textContent = val;
+      }
+
+      applyLocationState(coords.lat, coords.lng, `${coords.lat.toFixed(6)}° N, ${coords.lng.toFixed(6)}° E`);
+    }
+  }
+
+  const updateTable = () => {
     const rawLogs = DB.getLogs(user.id);
     const mappedLogs = rawLogs.map(log => {
       const shift = DB.getSchedule(log.shiftId);
@@ -12177,7 +13117,7 @@ function renderAdminMyAttendances() {
         });
       });
     }
-  }
+  };
 
   updateTable();
 }
