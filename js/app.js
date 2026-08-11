@@ -597,12 +597,16 @@ function setupRouter() {
 
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
-        case '#admin-attendances':
         case '#admin-work-status':
         case '#admin-checkin-log':
         case '#admin-deviations':
         case '#admin-time-policies':
           renderAdminDashboard();
+          triggerCelebrationIfBirthday(user);
+          break;
+        case '#admin-attendances':
+        case '#admin-attendance':
+          renderAdminAttendances();
           triggerCelebrationIfBirthday(user);
           break;
         case '#admin-my-attendances':
@@ -611,9 +615,6 @@ function setupRouter() {
           break;
         case '#admin-schedules':
           renderAdminSchedules();
-          break;
-        case '#admin-attendance':
-          renderAdminAttendance();
           break;
         case '#admin-approvals':
         case '#admin-requests':
@@ -11896,6 +11897,814 @@ function exportReportCSV(month, year) {
     const p = DB.calculateMonthlyPayroll(u.id, month, year);
     return [p.employeeName, p.baseSalary, p.allowanceHRA, p.allowanceTravel, p.workingDays, p.presentDays, p.absentDays, p.halfDays, p.attendanceDeductions, p.deductionPF, p.deductionPT, p.deductionTDSVal, p.netSalary];
   });
+  Utils.exportToCSV(filename, headers, rows);
+}
+
+// State variables for Admin/HR/Manager "Attendances" page pagination, sorting, search, selection
+let adminAttendancesCurrentPage = 1;
+let adminAttendancesRowsPerPage = 10;
+let adminAttendancesSortField = 'date';
+let adminAttendancesSortOrder = 'desc';
+let adminAttendancesSearchQuery = '';
+let adminAttendancesSelectedIds = new Set();
+
+function getInitialsColor(nameOrId) {
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#64748b', '#14b8a6', '#f97316'
+  ];
+  let hash = 0;
+  for (let i = 0; i < (nameOrId || '').length; i++) {
+    hash = nameOrId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function renderAdminAttendances() {
+  const main = document.getElementById('main-view');
+  const currentUser = Auth.getCurrentUser();
+  if (!currentUser) return;
+
+  main.innerHTML = `
+    <div class="content-header" style="margin-bottom: 20px;">
+      <div>
+        <h1 class="content-title" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 0;">Attendances</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <!-- Search Input -->
+        <div style="position: relative; width: 220px;">
+          <input type="text" id="admin-att-search" class="form-input" placeholder="Search" value="${Utils.escape(adminAttendancesSearchQuery)}" style="padding: 8px 12px 8px 34px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 100%;">
+          <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+
+        <!-- Actions Dropdown Button -->
+        <div style="position: relative;">
+          <button id="admin-att-actions-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Actions
+          </button>
+          <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 150; min-width: 190px; padding: 6px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
+            <button id="btn-admin-att-bulk-delete" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--danger); cursor: pointer; text-align: left; transition: background 0.15s ease;">
+              <span>🗑️</span> Delete Selected
+            </button>
+            <button id="btn-admin-att-export-sel" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; transition: background 0.15s ease;">
+              <span>📥</span> Export Selected CSV
+            </button>
+            <button id="btn-admin-att-export-all" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; border-top: 1px solid var(--border); transition: background 0.15s ease;">
+              <span>📊</span> Export All Records CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- + Create Button -->
+        <button id="admin-att-create-btn" class="btn" style="display: flex; align-items: center; gap: 6px; padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); cursor: pointer; transition: all 0.2s ease;">
+          <span style="font-size: 16px; line-height: 1; font-weight: 700;">+</span> Create
+        </button>
+      </div>
+    </div>
+
+    <div class="content-body" style="padding-top: 0;">
+      <!-- Subheader Controls Row -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+        <!-- Left: Select (N) Button -->
+        <div>
+          <button id="admin-att-select-toggle-btn" class="btn" style="border: 1.5px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+            Select (<span id="admin-att-selected-count">0</span>)
+          </button>
+        </div>
+
+        <!-- Right: Pagination Controls matching reference layout -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button id="btn-att-first-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="First Page">&laquo;</button>
+          <button id="btn-att-prev-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Previous Page">&lt;</button>
+          
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); margin: 0 4px;">
+            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 42px; height: 28px; text-align: center; padding: 2px 4px; font-size: 12.5px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+            <span>/ <span id="span-att-total-pages">1</span></span>
+          </div>
+
+          <button id="btn-att-next-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Next Page">&gt;</button>
+          <button id="btn-att-last-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Last Page">&raquo;</button>
+        </div>
+      </div>
+
+      <!-- Main Table Card -->
+      <div class="card-panel" style="padding: 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--border);">
+        <div class="table-container" style="overflow-x: auto; margin: 0;">
+          <table class="custom-table" id="admin-attendances-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.015);">
+                <th style="width: 44px; text-align: center; padding: 12px 10px;">
+                  <input type="checkbox" id="admin-att-select-all" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ef4444;">
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-employee">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Employee
+                  </span>
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-date">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Date
+                  </span>
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-checkin">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Check-In
+                  </span>
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-checkout">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Check-Out
+                  </span>
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-shift">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Shift
+                  </span>
+                </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-atwork">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> At Work
+                  </span>
+                </th>
+                <th style="text-align: right; padding: 12px 16px; width: 100px;">
+                  <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--text-muted); font-size: 13px;">
+                    Actions
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="4" y1="21" x2="4" y2="14"></line>
+                      <line x1="4" y1="10" x2="4" y2="3"></line>
+                      <line x1="12" y1="21" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12" y2="3"></line>
+                      <line x1="20" y1="21" x2="20" y2="16"></line>
+                      <line x1="20" y1="12" x2="20" y2="3"></line>
+                      <line x1="1" y1="14" x2="7" y2="14"></line>
+                      <line x1="9" y1="8" x2="15" y2="8"></line>
+                      <line x1="17" y1="16" x2="23" y2="16"></line>
+                    </svg>
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="admin-attendances-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Actions Dropdown Toggle
+  const actionsBtn = document.getElementById('admin-att-actions-btn');
+  const actionsMenu = document.getElementById('admin-att-actions-menu');
+  if (actionsBtn && actionsMenu) {
+    actionsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', () => {
+      actionsMenu.style.display = 'none';
+    });
+  }
+
+  // + Create Attendance Button
+  const createBtn = document.getElementById('admin-att-create-btn');
+  if (createBtn) {
+    createBtn.addEventListener('click', () => {
+      showCreateAttendanceModal();
+    });
+  }
+
+  // Search input event
+  const searchInput = document.getElementById('admin-att-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      adminAttendancesSearchQuery = e.target.value.trim();
+      adminAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
+
+  // Bulk Selection Header Checkbox
+  const selectAllCb = document.getElementById('admin-att-select-all');
+  if (selectAllCb) {
+    selectAllCb.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      const visibleCbs = document.querySelectorAll('.admin-att-row-cb');
+      visibleCbs.forEach(cb => {
+        cb.checked = isChecked;
+        const logId = cb.getAttribute('data-id');
+        if (isChecked) {
+          adminAttendancesSelectedIds.add(logId);
+        } else {
+          adminAttendancesSelectedIds.delete(logId);
+        }
+      });
+      updateSelectedCountDisplay();
+    });
+  }
+
+  // Select (N) Button Click -> Toggle Select All Visible
+  const selectToggleBtn = document.getElementById('admin-att-select-toggle-btn');
+  if (selectToggleBtn) {
+    selectToggleBtn.addEventListener('click', () => {
+      const visibleCbs = document.querySelectorAll('.admin-att-row-cb');
+      if (visibleCbs.length === 0) return;
+      const allSelected = Array.from(visibleCbs).every(cb => cb.checked);
+      visibleCbs.forEach(cb => {
+        cb.checked = !allSelected;
+        const logId = cb.getAttribute('data-id');
+        if (!allSelected) {
+          adminAttendancesSelectedIds.add(logId);
+        } else {
+          adminAttendancesSelectedIds.delete(logId);
+        }
+      });
+      if (selectAllCb) selectAllCb.checked = !allSelected;
+      updateSelectedCountDisplay();
+    });
+  }
+
+  // Bulk Delete Action
+  const btnBulkDelete = document.getElementById('btn-admin-att-bulk-delete');
+  if (btnBulkDelete) {
+    btnBulkDelete.addEventListener('click', async () => {
+      if (adminAttendancesSelectedIds.size === 0) {
+        await CustomDialog.alert("Please select one or more attendance records to delete.", "No Records Selected");
+        return;
+      }
+      const count = adminAttendancesSelectedIds.size;
+      const confirmed = await CustomDialog.confirm(`Are you sure you want to delete ${count} selected attendance record${count > 1 ? 's' : ''}?`, "Confirm Bulk Deletion");
+      if (!confirmed) return;
+
+      adminAttendancesSelectedIds.forEach(logId => {
+        DB.deleteAttendanceLog(logId);
+      });
+      adminAttendancesSelectedIds.clear();
+      requestsPushDBState();
+      showToastNotification(`Successfully deleted ${count} attendance records.`, 'success');
+      updateTable();
+    });
+  }
+
+  // Export Selected CSV
+  const btnExportSel = document.getElementById('btn-admin-att-export-sel');
+  if (btnExportSel) {
+    btnExportSel.addEventListener('click', () => {
+      if (adminAttendancesSelectedIds.size === 0) {
+        CustomDialog.alert("Please select one or more attendance records to export.", "No Records Selected");
+        return;
+      }
+      exportEmployeeAttendancesCSV(Array.from(adminAttendancesSelectedIds));
+    });
+  }
+
+  // Export All CSV
+  const btnExportAll = document.getElementById('btn-admin-att-export-all');
+  if (btnExportAll) {
+    btnExportAll.addEventListener('click', () => {
+      exportEmployeeAttendancesCSV(null);
+    });
+  }
+
+  // Sort Headers Click Listeners
+  const sortMap = {
+    'th-att-employee': 'employeeName',
+    'th-att-date': 'date',
+    'th-att-checkin': 'checkIn',
+    'th-att-checkout': 'checkOut',
+    'th-att-shift': 'shiftName',
+    'th-att-atwork': 'atWorkMins'
+  };
+
+  Object.entries(sortMap).forEach(([thId, field]) => {
+    const el = document.getElementById(thId);
+    if (el) {
+      el.addEventListener('click', () => {
+        if (adminAttendancesSortField === field) {
+          adminAttendancesSortOrder = adminAttendancesSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+          adminAttendancesSortField = field;
+          adminAttendancesSortOrder = 'asc';
+        }
+        updateTable();
+      });
+    }
+  });
+
+  function updateSelectedCountDisplay() {
+    const countEl = document.getElementById('admin-att-selected-count');
+    if (countEl) {
+      countEl.textContent = adminAttendancesSelectedIds.size;
+    }
+  }
+
+  // Core Table Update Function
+  function updateTable() {
+    // 1. Fetch employee records ONLY (Excludes HR and Manager)
+    const allUsers = DB.getUsers();
+    const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+    const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+
+    const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+
+    // Map logs with rich display values
+    const mappedLogs = rawLogs.map(log => {
+      const emp = employeeMap.get(log.userId);
+      const empName = emp ? emp.name : 'Unknown Employee';
+      const empId = emp ? (emp.employeeId || emp.id) : '';
+      const shift = DB.getSchedule(log.shiftId);
+      const shiftName = shift ? shift.name : 'Regular Shift';
+      
+      let atWorkStr = '--:--';
+      let atWorkMins = 0;
+      if (log.checkIn && log.checkOut) {
+        const [inH, inM] = log.checkIn.split(':').map(Number);
+        const [outH, outM] = log.checkOut.split(':').map(Number);
+        atWorkMins = (outH * 60 + outM) - (inH * 60 + inM);
+        if (atWorkMins < 0) atWorkMins += 24 * 60;
+        const hh = String(Math.floor(atWorkMins / 60)).padStart(2, '0');
+        const mm = String(atWorkMins % 60).padStart(2, '0');
+        atWorkStr = `${hh}:${mm}`;
+      } else if (log.checkIn && !log.checkOut) {
+        atWorkStr = 'In Session';
+        atWorkMins = 9999;
+      }
+
+      return {
+        ...log,
+        emp,
+        employeeName: empName,
+        employeeId: empId,
+        shiftName,
+        atWorkStr,
+        atWorkMins
+      };
+    });
+
+    // 2. Filter by search query
+    let filtered = mappedLogs;
+    if (adminAttendancesSearchQuery) {
+      const q = adminAttendancesSearchQuery.toLowerCase();
+      filtered = mappedLogs.filter(l => {
+        return l.employeeName.toLowerCase().includes(q) ||
+               l.employeeId.toLowerCase().includes(q) ||
+               l.date.toLowerCase().includes(q) ||
+               l.shiftName.toLowerCase().includes(q) ||
+               (l.checkIn && l.checkIn.includes(q)) ||
+               (l.checkOut && l.checkOut.includes(q)) ||
+               (l.status && l.status.toLowerCase().includes(q));
+      });
+    }
+
+    // 3. Sort
+    filtered.sort((a, b) => {
+      let valA = a[adminAttendancesSortField] || '';
+      let valB = b[adminAttendancesSortField] || '';
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return adminAttendancesSortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return adminAttendancesSortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // 4. Pagination
+    const totalEntries = filtered.length;
+    const totalPages = Math.ceil(totalEntries / adminAttendancesRowsPerPage) || 1;
+    if (adminAttendancesCurrentPage > totalPages) adminAttendancesCurrentPage = totalPages;
+    if (adminAttendancesCurrentPage < 1) adminAttendancesCurrentPage = 1;
+
+    const startIndex = (adminAttendancesCurrentPage - 1) * adminAttendancesRowsPerPage;
+    const endIndex = Math.min(startIndex + adminAttendancesRowsPerPage, totalEntries);
+    const paginated = filtered.slice(startIndex, endIndex);
+
+    // Update Pagination Inputs
+    const pageInput = document.getElementById('input-att-current-page');
+    const totalPagesSpan = document.getElementById('span-att-total-pages');
+    if (pageInput) {
+      pageInput.value = adminAttendancesCurrentPage;
+      pageInput.max = totalPages;
+    }
+    if (totalPagesSpan) {
+      totalPagesSpan.textContent = totalPages;
+    }
+
+    const tbody = document.getElementById('admin-attendances-tbody');
+    if (!tbody) return;
+
+    if (paginated.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 13.5px;">
+            No employee attendance records found.
+          </td>
+        </tr>
+      `;
+    } else {
+      tbody.innerHTML = paginated.map(log => {
+        const isChecked = adminAttendancesSelectedIds.has(log.id);
+        const initials = log.employeeName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const avatarBg = getInitialsColor(log.userId || log.employeeName);
+        
+        // Format checkIn & checkOut to show full seconds if available or hh:mm:ss
+        let checkInDisplay = log.checkIn || '--:--';
+        if (checkInDisplay !== '--:--' && checkInDisplay.length === 5) checkInDisplay += ':00';
+        
+        let checkOutDisplay = log.checkOut || '--:--';
+        if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="width: 44px; text-align: center; padding: 12px 10px;">
+              <input type="checkbox" class="admin-att-row-cb" data-id="${log.id}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: #ef4444;">
+            </td>
+            <td style="padding: 12px 14px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${avatarBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                  ${initials}
+                </div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap;">
+                  ${Utils.escape(log.employeeName)} <span style="font-size: 12px; font-weight: 500; color: var(--text-secondary); opacity: 0.85;">(${Utils.escape(log.employeeId)})</span>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px 14px; font-size: 13px; color: var(--text-secondary); font-family: monospace;">${log.date}</td>
+            <td style="padding: 12px 14px; font-size: 13px; font-weight: 500; color: var(--text-primary); font-family: monospace;">${checkInDisplay}</td>
+            <td style="padding: 12px 14px; font-size: 13px; font-weight: 500; color: var(--text-primary); font-family: monospace;">${checkOutDisplay}</td>
+            <td style="padding: 12px 14px; font-size: 13px; color: var(--text-secondary);">${Utils.escape(log.shiftName)}</td>
+            <td style="padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: monospace;">${log.atWorkStr}</td>
+            <td style="padding: 12px 16px; text-align: right;">
+              <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                <button class="btn-att-edit" data-id="${log.id}" title="Edit" style="background: transparent; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; padding: 0; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button class="btn-att-delete" data-id="${log.id}" title="Delete" style="background: #ef4444; border: none; border-radius: 6px; width: 28px; height: 28px; padding: 0; color: #ffffff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); transition: all 0.15s ease;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Row Checkbox Listeners
+    tbody.querySelectorAll('.admin-att-row-cb').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const id = e.target.getAttribute('data-id');
+        if (e.target.checked) {
+          adminAttendancesSelectedIds.add(id);
+        } else {
+          adminAttendancesSelectedIds.delete(id);
+        }
+        updateSelectedCountDisplay();
+        const allVisibleChecked = Array.from(tbody.querySelectorAll('.admin-att-row-cb')).every(c => c.checked);
+        if (selectAllCb) selectAllCb.checked = allVisibleChecked;
+      });
+    });
+
+    // Row Edit Button Listeners
+    tbody.querySelectorAll('.btn-att-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const logId = btn.getAttribute('data-id');
+        showEditAttendanceModal(logId);
+      });
+    });
+
+    // Row Delete Button Listeners
+    tbody.querySelectorAll('.btn-att-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const logId = btn.getAttribute('data-id');
+        const confirmed = await CustomDialog.confirm("Are you sure you want to delete this attendance record?", "Delete Attendance Record");
+        if (confirmed) {
+          DB.deleteAttendanceLog(logId);
+          adminAttendancesSelectedIds.delete(logId);
+          requestsPushDBState();
+          showToastNotification("Attendance record deleted successfully.", 'success');
+          updateTable();
+        }
+      });
+    });
+
+    updateSelectedCountDisplay();
+  }
+
+  // Pagination navigation listeners
+  const btnFirst = document.getElementById('btn-att-first-page');
+  if (btnFirst) {
+    btnFirst.addEventListener('click', () => {
+      if (adminAttendancesCurrentPage !== 1) {
+        adminAttendancesCurrentPage = 1;
+        updateTable();
+      }
+    });
+  }
+
+  const btnPrev = document.getElementById('btn-att-prev-page');
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      if (adminAttendancesCurrentPage > 1) {
+        adminAttendancesCurrentPage--;
+        updateTable();
+      }
+    });
+  }
+
+  const btnNext = document.getElementById('btn-att-next-page');
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      const allUsers = DB.getUsers();
+      const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+      const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+      const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+      const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
+
+      if (adminAttendancesCurrentPage < totalPages) {
+        adminAttendancesCurrentPage++;
+        updateTable();
+      }
+    });
+  }
+
+  const btnLast = document.getElementById('btn-att-last-page');
+  if (btnLast) {
+    btnLast.addEventListener('click', () => {
+      const allUsers = DB.getUsers();
+      const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+      const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+      const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+      const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
+
+      if (adminAttendancesCurrentPage !== totalPages) {
+        adminAttendancesCurrentPage = totalPages;
+        updateTable();
+      }
+    });
+  }
+
+  const inputCurrentPage = document.getElementById('input-att-current-page');
+  if (inputCurrentPage) {
+    inputCurrentPage.addEventListener('change', (e) => {
+      const val = Number(e.target.value);
+      if (!isNaN(val) && val >= 1) {
+        adminAttendancesCurrentPage = val;
+        updateTable();
+      }
+    });
+  }
+
+  updateTable();
+}
+
+// Modal for Creating New Attendance Record
+function showCreateAttendanceModal() {
+  const employees = DB.getUsers().filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+  const schedules = DB.getSchedules();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  modalOverlay.style.zIndex = '9999';
+
+  modalOverlay.innerHTML = `
+    <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Create Attendance Record</h3>
+        <button class="modal-close" id="btn-close-create-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+      <form id="form-create-attendance">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Select Employee *</label>
+          <select id="modal-create-att-user" class="form-input" required style="width: 100%; font-size: 13px;">
+            ${employees.map(e => `
+              <option value="${e.id}">${Utils.escape(e.name)} (${Utils.escape(e.employeeId || e.id)})</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Date *</label>
+            <input type="date" id="modal-create-att-date" class="form-input" value="${todayStr}" required style="width: 100%; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Shift *</label>
+            <select id="modal-create-att-shift" class="form-input" style="width: 100%; font-size: 13px;">
+              ${schedules.map(s => `
+                <option value="${s.id}">${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Check-In Time *</label>
+            <input type="time" id="modal-create-att-checkin" class="form-input" value="09:00" required style="width: 100%; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Check-Out Time</label>
+            <input type="time" id="modal-create-att-checkout" class="form-input" value="18:00" style="width: 100%; font-size: 13px;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Attendance Status</label>
+          <select id="modal-create-att-status" class="form-input" style="width: 100%; font-size: 13px;">
+            <option value="On Time">On Time</option>
+            <option value="Late">Late</option>
+            <option value="Half Day">Half Day</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-create-att" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+          <button type="submit" class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">Save Record</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+
+  const closeModal = () => {
+    modalOverlay.remove();
+  };
+
+  modalOverlay.querySelector('#btn-close-create-att-modal').addEventListener('click', closeModal);
+  modalOverlay.querySelector('#btn-cancel-create-att').addEventListener('click', closeModal);
+
+  modalOverlay.querySelector('#form-create-attendance').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('modal-create-att-user').value;
+    const date = document.getElementById('modal-create-att-date').value;
+    const shiftId = document.getElementById('modal-create-att-shift').value;
+    const checkIn = document.getElementById('modal-create-att-checkin').value;
+    const checkOut = document.getElementById('modal-create-att-checkout').value || null;
+    const status = document.getElementById('modal-create-att-status').value;
+
+    DB.createManualAttendanceLog({
+      userId,
+      date,
+      shiftId,
+      checkIn,
+      checkOut,
+      status
+    });
+
+    requestsPushDBState();
+    closeModal();
+    showToastNotification("Attendance record created successfully.", 'success');
+    renderAdminAttendances();
+  });
+}
+
+// Modal for Editing Existing Attendance Record
+function showEditAttendanceModal(logId) {
+  const log = DB.data.attendanceLogs.find(l => l.id === logId);
+  if (!log) return;
+
+  const emp = DB.getUser(log.userId);
+  const schedules = DB.getSchedules();
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  modalOverlay.style.zIndex = '9999';
+
+  modalOverlay.innerHTML = `
+    <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Edit Attendance Record</h3>
+        <button class="modal-close" id="btn-close-edit-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+      <form id="form-edit-attendance">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Employee</label>
+          <input type="text" class="form-input" value="${emp ? Utils.escape(emp.name) + ' (' + Utils.escape(emp.employeeId || emp.id) + ')' : 'Employee'}" disabled style="width: 100%; font-size: 13px; background: rgba(255,255,255,0.03); opacity: 0.8;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Date *</label>
+            <input type="date" id="modal-edit-att-date" class="form-input" value="${log.date}" required style="width: 100%; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Shift *</label>
+            <select id="modal-edit-att-shift" class="form-input" style="width: 100%; font-size: 13px;">
+              ${schedules.map(s => `
+                <option value="${s.id}" ${s.id === log.shiftId ? 'selected' : ''}>${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Check-In Time</label>
+            <input type="time" id="modal-edit-att-checkin" class="form-input" value="${log.checkIn || ''}" style="width: 100%; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Check-Out Time</label>
+            <input type="time" id="modal-edit-att-checkout" class="form-input" value="${log.checkOut || ''}" style="width: 100%; font-size: 13px;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Attendance Status</label>
+          <select id="modal-edit-att-status" class="form-input" style="width: 100%; font-size: 13px;">
+            <option value="On Time" ${log.status === 'On Time' ? 'selected' : ''}>On Time</option>
+            <option value="Late" ${log.status === 'Late' ? 'selected' : ''}>Late</option>
+            <option value="Half Day" ${log.status === 'Half Day' ? 'selected' : ''}>Half Day</option>
+            <option value="Absent" ${log.status === 'Absent' ? 'selected' : ''}>Absent</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit-att" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+          <button type="submit" class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+
+  const closeModal = () => {
+    modalOverlay.remove();
+  };
+
+  modalOverlay.querySelector('#btn-close-edit-att-modal').addEventListener('click', closeModal);
+  modalOverlay.querySelector('#btn-cancel-edit-att').addEventListener('click', closeModal);
+
+  modalOverlay.querySelector('#form-edit-attendance').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const date = document.getElementById('modal-edit-att-date').value;
+    const shiftId = document.getElementById('modal-edit-att-shift').value;
+    const checkIn = document.getElementById('modal-edit-att-checkin').value || null;
+    const checkOut = document.getElementById('modal-edit-att-checkout').value || null;
+    const status = document.getElementById('modal-edit-att-status').value;
+
+    DB.updateAttendanceLog(logId, {
+      date,
+      shiftId,
+      checkIn,
+      checkOut,
+      status
+    });
+
+    requestsPushDBState();
+    closeModal();
+    showToastNotification("Attendance record updated successfully.", 'success');
+    renderAdminAttendances();
+  });
+}
+
+// Helper to export Employee Attendance records to CSV
+function exportEmployeeAttendancesCSV(specificLogIds = null) {
+  const allUsers = DB.getUsers();
+  const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+  const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+
+  let logs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+  if (specificLogIds && specificLogIds.length > 0) {
+    const idSet = new Set(specificLogIds);
+    logs = logs.filter(l => idSet.has(l.id));
+  }
+
+  const filename = `Employee_Attendances_${new Date().toISOString().split('T')[0]}.csv`;
+  const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
+  const rows = logs.map(l => {
+    const emp = employeeMap.get(l.userId);
+    const shift = DB.getSchedule(l.shiftId);
+    const atWork = Utils.calculateDuration(l.checkIn, l.checkOut);
+    return [
+      emp ? emp.name : 'Unknown',
+      emp ? (emp.employeeId || emp.id) : '',
+      l.date,
+      l.checkIn || '--',
+      l.checkOut || '--',
+      shift ? shift.name : 'Regular Shift',
+      atWork === '-' ? '--' : atWork,
+      l.status || 'On Time',
+      l.location || 'N/A'
+    ];
+  });
+
   Utils.exportToCSV(filename, headers, rows);
 }
 

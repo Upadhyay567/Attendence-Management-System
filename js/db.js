@@ -1384,6 +1384,52 @@ export const DB = {
     return log;
   },
 
+  deleteAttendanceLog(logId) {
+    if (!this.data.attendanceLogs) return false;
+    const idx = this.data.attendanceLogs.findIndex(l => l.id === logId);
+    if (idx !== -1) {
+      this.data.attendanceLogs.splice(idx, 1);
+      this.save();
+      return true;
+    }
+    return false;
+  },
+
+  updateAttendanceLog(logId, updatedFields) {
+    if (!this.data.attendanceLogs) return null;
+    const log = this.data.attendanceLogs.find(l => l.id === logId);
+    if (log) {
+      Object.assign(log, updatedFields);
+      this.save();
+      return log;
+    }
+    return null;
+  },
+
+  createManualAttendanceLog(logData) {
+    if (!this.data.attendanceLogs) this.data.attendanceLogs = [];
+    const id = logData.id || `log_${logData.userId}_${logData.date}_${Date.now()}`;
+    const newLog = {
+      id,
+      userId: logData.userId,
+      date: logData.date,
+      shiftId: logData.shiftId || null,
+      checkIn: logData.checkIn || null,
+      checkOut: logData.checkOut || null,
+      status: logData.status || 'On Time',
+      biometricUsed: logData.biometricUsed || 'manual',
+      location: logData.location || 'HS Group HQ, Pitampura, Delhi',
+      deviationFlag: !!logData.deviationFlag,
+      justification: logData.justification || '',
+      coords: logData.coords || '28.697800° N, 77.140800° E',
+      distance: logData.distance || 0,
+      facePhoto: null
+    };
+    this.data.attendanceLogs.unshift(newLog);
+    this.save();
+    return newLog;
+  },
+
   // Leave Requests API
   getLeaveRequests(userId = null) {
     if (userId) {
