@@ -3957,7 +3957,7 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   pointer-events: none;
   visibility: hidden;
   position: absolute;
-  left: 232px; /* Visual balance: sits cleanly next to the sidebar */
+  left: 226px; /* Aligns exactly with the right edge of the 240px wide sidebar */
   top: 0;
   width: 250px;
   background: #3D0D0A; /* Matches sidebar color exactly */
@@ -3968,19 +3968,6 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(137, 32, 27, 0.15);
   z-index: 1000;
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s;
-}
-
-/* Mouse bridge to hold hover state when moving cursor over the gap */
-.submenu-list::before {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: -10px;
-  width: 25px;
-  height: calc(100% + 20px);
-  background: transparent;
-  z-index: -1;
-  pointer-events: auto;
 }
 
 /* Make submenu display smoothly when active */
