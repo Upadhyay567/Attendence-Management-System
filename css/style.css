@@ -4046,4 +4046,16 @@ body.light-theme .submenu-list li.active a {
   border-left-color: #ffffff !important;
 }
 
+/* Responsive spacing for tall viewports to keep the gap above the profile section small and clean */
+@media (min-height: 900px) {
+  .sidebar-menu {
+    gap: 16px !important;
+  }
+}
+@media (min-height: 1050px) {
+  .sidebar-menu {
+    gap: 22px !important;
+  }
+}
+
 
