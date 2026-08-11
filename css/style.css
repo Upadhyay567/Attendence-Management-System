@@ -2669,7 +2669,7 @@ body.light-theme .sidebar-brand {
   padding: 12px 14px !important;
   display: flex;
   flex-direction: column;
-  justify-content: space-between !important; /* Spreads out menu items to prevent blank spaces */
+  justify-content: flex-start !important; /* Items group tightly with spacer pushing bottom items */
   gap: 8px !important;
   flex-grow: 1;
   overflow-y: auto;
@@ -4054,16 +4054,6 @@ body.light-theme .submenu-list li.active a {
   border-left-color: #ffffff !important;
 }
 
-/* Responsive spacing for tall viewports to keep the gap above the profile section small and clean */
-@media (min-height: 900px) {
-  .sidebar-menu {
-    gap: 16px !important;
-  }
-}
-@media (min-height: 1050px) {
-  .sidebar-menu {
-    gap: 22px !important;
-  }
-}
+
 
 
