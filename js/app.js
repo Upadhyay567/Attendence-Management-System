@@ -11926,14 +11926,14 @@ function renderAdminAttendances() {
   if (!currentUser) return;
 
   main.innerHTML = `
-    <div class="content-header" style="margin-bottom: 20px;">
+    <div class="content-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
       <div>
-        <h1 class="content-title" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 0;">Attendances</h1>
+        <h1 class="content-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Attendances</h1>
       </div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
         <!-- Search Input -->
-        <div style="position: relative; width: 220px;">
-          <input type="text" id="admin-att-search" class="form-input" placeholder="Search" value="${Utils.escape(adminAttendancesSearchQuery)}" style="padding: 8px 12px 8px 34px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 100%;">
+        <div style="position: relative; width: 210px; flex-shrink: 0;">
+          <input type="text" id="admin-att-search" class="form-input" placeholder="Search" value="${Utils.escape(adminAttendancesSearchQuery)}" style="height: 36px; padding: 0 12px 0 34px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 100%; box-sizing: border-box;">
           <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -11941,8 +11941,8 @@ function renderAdminAttendances() {
         </div>
 
         <!-- Actions Dropdown Button -->
-        <div style="position: relative;">
-          <button id="admin-att-actions-btn" class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+        <div style="position: relative; flex-shrink: 0;">
+          <button id="admin-att-actions-btn" class="btn btn-secondary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 36px; padding: 0 14px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -11962,9 +11962,9 @@ function renderAdminAttendances() {
           </div>
         </div>
 
-        <!-- + Create Button -->
-        <button id="admin-att-create-btn" class="btn" style="display: flex; align-items: center; gap: 6px; padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); cursor: pointer; transition: all 0.2s ease;">
-          <span style="font-size: 16px; line-height: 1; font-weight: 700;">+</span> Create
+        <!-- + Create Button (Compact and Proportionate) -->
+        <button id="admin-att-create-btn" class="btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 36px; padding: 0 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); cursor: pointer; white-space: nowrap; flex-shrink: 0; box-sizing: border-box; transition: all 0.2s ease;">
+          <span style="font-size: 15px; line-height: 1; font-weight: 700;">+</span> Create
         </button>
       </div>
     </div>
@@ -11972,25 +11972,25 @@ function renderAdminAttendances() {
     <div class="content-body" style="padding-top: 0;">
       <!-- Subheader Controls Row -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
-        <!-- Left: Select (N) Button -->
+        <!-- Left: Select ( N ) Button -->
         <div>
-          <button id="admin-att-select-toggle-btn" class="btn" style="border: 1.5px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
-            Select (<span id="admin-att-selected-count">0</span>)
+          <button id="admin-att-select-toggle-btn" class="btn" style="display: inline-flex; align-items: center; justify-content: center; width: auto !important; height: 32px; padding: 0 14px; border: 1.5px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box;">
+            Select ( <span id="admin-att-selected-count">0</span> )
           </button>
         </div>
 
         <!-- Right: Pagination Controls matching reference layout -->
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <button id="btn-att-first-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="First Page">&laquo;</button>
-          <button id="btn-att-prev-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Previous Page">&lt;</button>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <button id="btn-att-first-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="First Page">&laquo;</button>
+          <button id="btn-att-prev-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Previous Page">&lt;</button>
           
           <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); margin: 0 4px;">
-            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 42px; height: 28px; text-align: center; padding: 2px 4px; font-size: 12.5px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
-            <span>/ <span id="span-att-total-pages">1</span></span>
+            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 38px; height: 32px; text-align: center; padding: 0; font-size: 13px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-sizing: border-box;">
+            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-muted);">/ <span id="span-att-total-pages" style="color: var(--text-primary);">1</span></span>
           </div>
 
-          <button id="btn-att-next-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Next Page">&gt;</button>
-          <button id="btn-att-last-page" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px; border-radius: 6px; min-width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" title="Last Page">&raquo;</button>
+          <button id="btn-att-next-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Next Page">&gt;</button>
+          <button id="btn-att-last-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Last Page">&raquo;</button>
         </div>
       </div>
 

@@ -544,6 +544,38 @@
       "facePhoto": null
     },
     {
+      "id": "log_usr_sarah_2026-08-11_sch_q8jji9v",
+      "userId": "usr_sarah",
+      "date": "2026-08-11",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "18:03",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "chandani chowk",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_david_2026-08-11_sch_q8jji9v",
+      "userId": "usr_david",
+      "date": "2026-08-11",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "18:04",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695174° N, 77.186072° E",
+      "distance": 0.01,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_john_2026-08-10",
       "userId": "usr_john",
       "date": "2026-08-10",
@@ -616,19 +648,6 @@
       "facePhoto": null
     },
     {
-      "id": "log_usr_john_2026-08-07",
-      "userId": "usr_john",
-      "date": "2026-08-07",
-      "checkIn": "10:35",
-      "checkOut": null,
-      "status": "On Time",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "coords": "28.695175° N, 77.186028° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
       "id": "log_usr_sarah_2026-08-07",
       "userId": "usr_sarah",
       "date": "2026-08-07",
@@ -645,12 +664,13 @@
       "userId": "usr_t42n6xh",
       "date": "2026-08-07",
       "checkIn": "11:18",
-      "checkOut": "11:18",
-      "status": "Pending Verification",
+      "checkOut": "11:19",
+      "status": "On Time",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695053° N, 77.185937° E",
-      "distance": 0.01
+      "distance": 0.01,
+      "shiftId": "sch_q8jji9v"
     },
     {
       "id": "log_usr_david_2026-08-07",
@@ -1338,38 +1358,6 @@
       "status": "Late",
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi"
-    },
-    {
-      "id": "log_usr_sarah_2026-08-11_sch_q8jji9v",
-      "userId": "usr_sarah",
-      "date": "2026-08-11",
-      "shiftId": "sch_q8jji9v",
-      "checkIn": "18:03",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "chandani chowk",
-      "deviationFlag": false,
-      "justification": "",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_david_2026-08-11_sch_q8jji9v",
-      "userId": "usr_david",
-      "date": "2026-08-11",
-      "shiftId": "sch_q8jji9v",
-      "checkIn": "18:04",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
-      "deviationFlag": false,
-      "justification": "",
-      "coords": "28.695174° N, 77.186072° E",
-      "distance": 0.01,
-      "facePhoto": null
     }
   ],
   "leaveRequests": [
