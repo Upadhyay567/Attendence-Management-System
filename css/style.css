@@ -3959,13 +3959,13 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   position: absolute;
   left: 226px; /* Aligns exactly with the right edge of the 240px wide sidebar */
   top: 0;
-  width: 250px;
+  width: 240px; /* Perfectly matches sidebar width */
   background: #3D0D0A; /* Matches sidebar color exactly */
   border: 1px solid rgba(137, 32, 27, 0.4);
-  border-radius: 12px;
-  padding: 10px 8px;
+  border-radius: 10px; /* Modern and clean rounded corners */
+  padding: 8px 6px;
   list-style: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(137, 32, 27, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(137, 32, 27, 0.1);
   z-index: 1000;
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s;
 }
@@ -3983,7 +3983,7 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
 }
 
 .submenu-list li {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .submenu-list li:last-child {
@@ -3993,12 +3993,12 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
 .submenu-list a {
   display: flex !important;
   align-items: center !important;
-  padding: 10px 14px !important;
+  padding: 8px 12px !important; /* Slightly more compact and balanced */
   color: #fca5a5 !important;
   text-decoration: none !important;
   font-weight: 500 !important;
-  font-size: 13.5px !important;
-  border-radius: 8px !important;
+  font-size: 13px !important; /* Elegant premium styling */
+  border-radius: 6px !important;
   transition: all 0.2s ease !important;
   border-left: 3px solid transparent !important;
 }
