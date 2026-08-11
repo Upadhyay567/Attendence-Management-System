@@ -11926,115 +11926,119 @@ function renderAdminAttendances() {
   if (!currentUser) return;
 
   main.innerHTML = `
-    <div class="content-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
-      <div>
-        <h1 class="content-title" style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.02em;">Attendances</h1>
-      </div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
-        <!-- Search Input -->
-        <div style="position: relative; width: 210px; flex-shrink: 0;">
-          <input type="text" id="admin-att-search" class="form-input" placeholder="Search" value="${Utils.escape(adminAttendancesSearchQuery)}" style="height: 36px; padding: 0 12px 0 34px; font-size: 13px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 100%; box-sizing: border-box;">
-          <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
+    <div id="admin-attendances-page-container" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: var(--text-primary);">
+      <!-- Header Bar -->
+      <div class="content-header" style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 0 0 16px 0; border-bottom: 1px solid var(--border);">
+        <div>
+          <h1 class="content-title" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.01em;">Attendances</h1>
         </div>
-
-        <!-- Actions Dropdown Button -->
-        <div style="position: relative; flex-shrink: 0;">
-          <button id="admin-att-actions-btn" class="btn btn-secondary" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 36px; padding: 0 14px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
+          <!-- Search Input -->
+          <div style="position: relative; width: 220px; flex-shrink: 0;">
+            <input type="text" id="admin-att-search" class="form-input" placeholder="Search" value="${Utils.escape(adminAttendancesSearchQuery)}" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px 0 34px; font-size: 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 100%; box-sizing: border-box;">
+            <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            Actions
-          </button>
-          <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 6px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 150; min-width: 190px; padding: 6px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
-            <button id="btn-admin-att-bulk-delete" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--danger); cursor: pointer; text-align: left; transition: background 0.15s ease;">
-              <span>🗑️</span> Delete Selected
-            </button>
-            <button id="btn-admin-att-export-sel" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; transition: background 0.15s ease;">
-              <span>📥</span> Export Selected CSV
-            </button>
-            <button id="btn-admin-att-export-all" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; font-size: 12.5px; font-weight: 500; border: none; background: transparent; color: var(--text-primary); cursor: pointer; text-align: left; border-top: 1px solid var(--border); transition: background 0.15s ease;">
-              <span>📊</span> Export All Records CSV
-            </button>
           </div>
+
+          <!-- Actions Dropdown Button -->
+          <div style="position: relative; flex-shrink: 0;">
+            <button id="admin-att-actions-btn" class="btn btn-secondary" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto !important; height: 34px; padding: 0 15px; font-size: 14px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              Actions
+            </button>
+            <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 1000; min-width: 140px; padding: 4px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
+              <button id="btn-admin-att-import" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: block; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 500; border: none; background: transparent; color: #1e293b; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">
+                Import
+              </button>
+              <button id="btn-admin-att-export" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: block; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 500; border: none; background: transparent; color: #1e293b; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">
+                Export
+              </button>
+              <button id="btn-admin-att-delete" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: block; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; background: transparent; color: #ef4444; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.background='transparent'">
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <!-- + Create Button -->
+          <button id="admin-att-create-btn" class="btn" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 34px; padding: 0 16px; font-size: 14px; font-weight: 700; border-radius: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); cursor: pointer; white-space: nowrap; flex-shrink: 0; box-sizing: border-box; transition: all 0.2s ease;">
+            <span style="font-size: 16px; line-height: 1; font-weight: 700;">+</span> Create
+          </button>
         </div>
-
-        <!-- + Create Button (Compact and Proportionate) -->
-        <button id="admin-att-create-btn" class="btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 36px; padding: 0 16px; font-size: 13px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); cursor: pointer; white-space: nowrap; flex-shrink: 0; box-sizing: border-box; transition: all 0.2s ease;">
-          <span style="font-size: 15px; line-height: 1; font-weight: 700;">+</span> Create
-        </button>
       </div>
-    </div>
 
-    <div class="content-body" style="padding-top: 0;">
+      <!-- Hidden CSV file input for Import -->
+      <input type="file" id="admin-att-csv-input" accept=".csv" style="display: none;">
+
       <!-- Subheader Controls Row -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
-        <!-- Left: Select ( N ) Button -->
+        <!-- Left: Select Button -->
         <div>
-          <button id="admin-att-select-toggle-btn" class="btn" style="display: inline-flex; align-items: center; justify-content: center; width: auto !important; height: 32px; padding: 0 14px; border: 1.5px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.05); font-size: 12px; font-weight: 700; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box;">
-            Select ( <span id="admin-att-selected-count">0</span> )
+          <button id="admin-att-select-toggle-btn" class="btn" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; width: auto !important; height: 32px; padding: 0 16px; border: 1.5px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.04); font-size: 13.5px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box;">
+            <span id="admin-att-select-label">Select</span>
           </button>
         </div>
 
-        <!-- Right: Pagination Controls matching reference layout -->
-        <div style="display: flex; align-items: center; gap: 4px;">
-          <button id="btn-att-first-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="First Page">&laquo;</button>
-          <button id="btn-att-prev-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Previous Page">&lt;</button>
+        <!-- Right: Single Clean Horizontal Box Pagination Panel « Previous 1 / 8 Next » -->
+        <div class="admin-att-pagination-panel" style="display: inline-flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <button id="btn-att-first-page" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="First Page">&laquo;</button>
+          <button id="btn-att-prev-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Previous Page">Previous</button>
           
-          <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary); margin: 0 4px;">
-            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 38px; height: 32px; text-align: center; padding: 0; font-size: 13px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-sizing: border-box;">
-            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-muted);">/ <span id="span-att-total-pages" style="color: var(--text-primary);">1</span></span>
+          <div style="display: flex; align-items: center; justify-content: center; padding: 0 10px; height: 100%; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border); background: rgba(0,0,0,0.015);">
+            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 32px; height: 22px; text-align: center; padding: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 700; border: none; background: transparent; color: var(--text-primary); outline: none;">
+            <span style="color: var(--text-muted); margin-left: 2px;">/ <span id="span-att-total-pages" style="color: var(--text-primary);">1</span></span>
           </div>
 
-          <button id="btn-att-next-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Next Page">&gt;</button>
-          <button id="btn-att-last-page" class="btn btn-secondary" style="width: 32px !important; height: 32px; padding: 0; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" title="Last Page">&raquo;</button>
+          <button id="btn-att-next-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Next Page">Next</button>
+          <button id="btn-att-last-page" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: background 0.15s ease;" title="Last Page">&raquo;</button>
         </div>
       </div>
 
       <!-- Main Table Card -->
-      <div class="card-panel" style="padding: 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--border);">
+      <div class="card-panel" style="padding: 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); background: #ffffff;">
         <div class="table-container" style="overflow-x: auto; margin: 0;">
-          <table class="custom-table" id="admin-attendances-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+          <table class="custom-table" id="admin-attendances-table" style="width: 100%; border-collapse: collapse; margin: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
             <thead>
-              <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.015);">
+              <tr style="border-bottom: 1px solid var(--border); background: rgba(243, 237, 230, 0.5);">
                 <th style="width: 44px; text-align: center; padding: 12px 10px;">
                   <input type="checkbox" id="admin-att-select-all" style="cursor: pointer; width: 16px; height: 16px; accent-color: #ef4444;">
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-employee">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-employee">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Employee
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Employee
                   </span>
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-date">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-date">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Date
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Date
                   </span>
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-checkin">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-checkin">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Check-In
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Check-In
                   </span>
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-checkout">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-checkout">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Check-Out
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Check-Out
                   </span>
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-shift">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-shift">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> Shift
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Shift
                   </span>
                 </th>
-                <th style="cursor: pointer; padding: 12px 14px; user-select: none;" id="th-att-atwork">
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-atwork">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11px;">↑↓</span> At Work
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> At Work
                   </span>
                 </th>
-                <th style="text-align: right; padding: 12px 16px; width: 100px;">
-                  <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; color: var(--text-muted); font-size: 13px;">
+                <th style="text-align: right; padding: 12px 16px; width: 100px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);">
+                  <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
                     Actions
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="4" y1="21" x2="4" y2="14"></line>
@@ -12108,7 +12112,7 @@ function renderAdminAttendances() {
     });
   }
 
-  // Select (N) Button Click -> Toggle Select All Visible
+  // Select Button Click -> Toggle Select All Visible
   const selectToggleBtn = document.getElementById('admin-att-select-toggle-btn');
   if (selectToggleBtn) {
     selectToggleBtn.addEventListener('click', () => {
@@ -12129,16 +12133,95 @@ function renderAdminAttendances() {
     });
   }
 
-  // Bulk Delete Action
-  const btnBulkDelete = document.getElementById('btn-admin-att-bulk-delete');
-  if (btnBulkDelete) {
-    btnBulkDelete.addEventListener('click', async () => {
+  // Actions Dropdown: Import
+  const btnImport = document.getElementById('btn-admin-att-import');
+  const csvInput = document.getElementById('admin-att-csv-input');
+  if (btnImport && csvInput) {
+    btnImport.addEventListener('click', () => {
+      csvInput.click();
+    });
+
+    csvInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target.result;
+          const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+          if (lines.length <= 1) {
+            CustomDialog.alert("The CSV file is empty or missing data rows.", "Import Failed");
+            return;
+          }
+
+          const employees = DB.getUsers().filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+          const empMap = new Map();
+          employees.forEach(u => {
+            empMap.set(u.id.toLowerCase(), u);
+            if (u.employeeId) empMap.set(u.employeeId.toLowerCase(), u);
+            empMap.set(u.name.toLowerCase(), u);
+          });
+
+          let importedCount = 0;
+          for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+            if (cols.length < 3) continue;
+
+            const empIdentifier = cols[0].toLowerCase();
+            const matchedEmp = empMap.get(empIdentifier) || empMap.get((cols[1] || '').toLowerCase()) || employees[0];
+            if (!matchedEmp) continue;
+
+            const date = cols[2] || new Date().toISOString().split('T')[0];
+            const checkIn = cols[3] || '09:00';
+            const checkOut = cols[4] || '18:00';
+            const status = cols[7] || 'On Time';
+
+            DB.createManualAttendanceLog({
+              userId: matchedEmp.id,
+              date,
+              checkIn,
+              checkOut: checkOut === '--' ? null : checkOut,
+              status
+            });
+            importedCount++;
+          }
+
+          requestsPushDBState();
+          showToastNotification(`Successfully imported ${importedCount} attendance records.`, 'success');
+          updateTable();
+        } catch (err) {
+          console.error("CSV Import error:", err);
+          CustomDialog.alert("Failed to parse CSV file. Please verify the format.", "Import Error");
+        }
+      };
+      reader.readAsText(file);
+      csvInput.value = '';
+    });
+  }
+
+  // Actions Dropdown: Export
+  const btnExport = document.getElementById('btn-admin-att-export');
+  if (btnExport) {
+    btnExport.addEventListener('click', () => {
+      if (adminAttendancesSelectedIds.size > 0) {
+        exportEmployeeAttendancesCSV(Array.from(adminAttendancesSelectedIds));
+      } else {
+        exportEmployeeAttendancesCSV(null);
+      }
+    });
+  }
+
+  // Actions Dropdown: Delete
+  const btnDelete = document.getElementById('btn-admin-att-delete');
+  if (btnDelete) {
+    btnDelete.addEventListener('click', async () => {
       if (adminAttendancesSelectedIds.size === 0) {
         await CustomDialog.alert("Please select one or more attendance records to delete.", "No Records Selected");
         return;
       }
       const count = adminAttendancesSelectedIds.size;
-      const confirmed = await CustomDialog.confirm(`Are you sure you want to delete ${count} selected attendance record${count > 1 ? 's' : ''}?`, "Confirm Bulk Deletion");
+      const confirmed = await CustomDialog.confirm(`Are you sure you want to delete ${count} selected attendance record${count > 1 ? 's' : ''}?`, "Confirm Deletion");
       if (!confirmed) return;
 
       adminAttendancesSelectedIds.forEach(logId => {
@@ -12148,26 +12231,6 @@ function renderAdminAttendances() {
       requestsPushDBState();
       showToastNotification(`Successfully deleted ${count} attendance records.`, 'success');
       updateTable();
-    });
-  }
-
-  // Export Selected CSV
-  const btnExportSel = document.getElementById('btn-admin-att-export-sel');
-  if (btnExportSel) {
-    btnExportSel.addEventListener('click', () => {
-      if (adminAttendancesSelectedIds.size === 0) {
-        CustomDialog.alert("Please select one or more attendance records to export.", "No Records Selected");
-        return;
-      }
-      exportEmployeeAttendancesCSV(Array.from(adminAttendancesSelectedIds));
-    });
-  }
-
-  // Export All CSV
-  const btnExportAll = document.getElementById('btn-admin-att-export-all');
-  if (btnExportAll) {
-    btnExportAll.addEventListener('click', () => {
-      exportEmployeeAttendancesCSV(null);
     });
   }
 
@@ -12197,9 +12260,13 @@ function renderAdminAttendances() {
   });
 
   function updateSelectedCountDisplay() {
-    const countEl = document.getElementById('admin-att-selected-count');
-    if (countEl) {
-      countEl.textContent = adminAttendancesSelectedIds.size;
+    const labelEl = document.getElementById('admin-att-select-label');
+    if (labelEl) {
+      if (adminAttendancesSelectedIds.size === 0) {
+        labelEl.textContent = 'Select';
+      } else {
+        labelEl.textContent = `Select (${adminAttendancesSelectedIds.size})`;
+      }
     }
   }
 
@@ -12301,7 +12368,7 @@ function renderAdminAttendances() {
     if (paginated.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 13.5px;">
+          <td colspan="8" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
             No employee attendance records found.
           </td>
         </tr>
@@ -12320,25 +12387,25 @@ function renderAdminAttendances() {
         if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
 
         return `
-          <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+          <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif;" onmouseover="this.style.background='rgba(0,0,0,0.015)'" onmouseout="this.style.background='transparent'">
             <td style="width: 44px; text-align: center; padding: 12px 10px;">
               <input type="checkbox" class="admin-att-row-cb" data-id="${log.id}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; accent-color: #ef4444;">
             </td>
             <td style="padding: 12px 14px;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${avatarBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${avatarBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.15);">
                   ${initials}
                 </div>
-                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap;">
-                  ${Utils.escape(log.employeeName)} <span style="font-size: 12px; font-weight: 500; color: var(--text-secondary); opacity: 0.85;">(${Utils.escape(log.employeeId)})</span>
+                <div style="font-size: 14px; font-weight: 600; color: #1e293b; white-space: nowrap;">
+                  ${Utils.escape(log.employeeName)} <span style="font-size: 13px; font-weight: 500; color: #ef4444; opacity: 0.9;">(${Utils.escape(log.employeeId)})</span>
                 </div>
               </div>
             </td>
-            <td style="padding: 12px 14px; font-size: 13px; color: var(--text-secondary); font-family: monospace;">${log.date}</td>
-            <td style="padding: 12px 14px; font-size: 13px; font-weight: 500; color: var(--text-primary); font-family: monospace;">${checkInDisplay}</td>
-            <td style="padding: 12px 14px; font-size: 13px; font-weight: 500; color: var(--text-primary); font-family: monospace;">${checkOutDisplay}</td>
-            <td style="padding: 12px 14px; font-size: 13px; color: var(--text-secondary);">${Utils.escape(log.shiftName)}</td>
-            <td style="padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: monospace;">${log.atWorkStr}</td>
+            <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.date}</td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${checkInDisplay}</td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${checkOutDisplay}</td>
+            <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${Utils.escape(log.shiftName)}</td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.atWorkStr}</td>
             <td style="padding: 12px 16px; text-align: right;">
               <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
                 <button class="btn-att-edit" data-id="${log.id}" title="Edit" style="background: transparent; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; padding: 0; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
