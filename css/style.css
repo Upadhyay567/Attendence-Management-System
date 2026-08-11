@@ -3950,36 +3950,42 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   transition: transform 0.2s ease !important;
 }
 
-.submenu-list {
-  display: block;
-  opacity: 0;
-  transform: translateX(8px) translateY(-5px);
-  pointer-events: none;
-  visibility: hidden;
-  position: absolute;
-  left: 226px; /* Aligns exactly with the right edge of the 240px wide sidebar */
-  top: 0;
-  width: 240px; /* Perfectly matches sidebar width */
-  background: #3D0D0A; /* Matches sidebar color exactly */
-  border: 1px solid rgba(137, 32, 27, 0.4);
-  border-radius: 10px; /* Modern and clean rounded corners */
-  padding: 8px 6px;
-  list-style: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(137, 32, 27, 0.1);
-  z-index: 1000;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.2s;
+/* Sidebar Submenu styling (Inline Accordion) */
+.menu-item-has-submenu {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
 }
 
-/* Make submenu display smoothly when active */
+.menu-item-has-submenu > a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.submenu-list {
+  display: none !important; /* Hidden by default */
+  list-style: none !important;
+  padding: 4px 0 4px 16px !important; /* Indent submenu items slightly for visual hierarchy */
+  margin: 0 !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  background: transparent !important; /* Inherit sidebar background */
+  border: none !important;
+  box-shadow: none !important;
+  position: static !important; /* In document flow directly below button */
+  width: 100% !important;
+}
+
+/* Display submenu inline when active/open */
 .menu-item-has-submenu.open .submenu-list {
-  opacity: 1;
-  transform: translateX(0) translateY(0);
-  pointer-events: auto;
-  visibility: visible;
+  display: flex !important;
 }
 
 .menu-item-has-submenu.open .submenu-arrow {
-  transform: rotate(90deg);
+  transform: rotate(90deg) !important;
 }
 
 .submenu-list li {
@@ -4001,6 +4007,7 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   border-radius: 6px !important;
   transition: all 0.2s ease !important;
   border-left: 3px solid transparent !important;
+  background: transparent !important;
 }
 
 .submenu-list a:hover {
@@ -4014,29 +4021,6 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   color: #ffffff !important;
   font-weight: 600 !important;
   box-shadow: 0 2px 8px rgba(137, 32, 27, 0.4) !important;
-  border-left-color: #ffffff !important;
-}
-
-/* Light theme support */
-body.light-theme .submenu-list {
-  background: #FAF6EE;
-  border-color: rgba(137, 32, 27, 0.18);
-  box-shadow: 0 8px 24px rgba(137, 32, 27, 0.12);
-}
-
-body.light-theme .submenu-list a {
-  color: #89201B !important;
-}
-
-body.light-theme .submenu-list a:hover {
-  background: rgba(137, 32, 27, 0.06) !important;
-  color: #89201B !important;
-  border-left-color: #89201B !important;
-}
-
-body.light-theme .submenu-list li.active a {
-  background: #89201B !important;
-  color: #ffffff !important;
   border-left-color: #ffffff !important;
 }
 
