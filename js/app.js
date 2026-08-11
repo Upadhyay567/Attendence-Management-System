@@ -1258,7 +1258,6 @@ function renderAppShell() {
       <li class="menu-item" id="nav-admin-support"><a href="#admin-support">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span class="menu-label">Support Tickets</span>
       </a></li>
-      <li class="menu-spacer" style="flex-grow: 1; pointer-events: none; list-style: none;"></li>
       <li class="menu-item" id="nav-admin-profile"><a href="#admin-profile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span class="menu-label">My Profile</span>
       </a></li>

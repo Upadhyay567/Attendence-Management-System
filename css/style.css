@@ -2669,8 +2669,7 @@ body.light-theme .sidebar-brand {
   padding: 12px 14px !important;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start !important; /* Items group tightly with spacer pushing bottom items */
-  gap: 8px !important;
+  gap: 10px !important;
   flex-grow: 1;
   overflow-y: auto;
 }
