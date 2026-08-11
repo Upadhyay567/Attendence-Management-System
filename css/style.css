@@ -2669,7 +2669,8 @@ body.light-theme .sidebar-brand {
   padding: 12px 14px !important;
   display: flex;
   flex-direction: column;
-  gap: 10px !important;
+  justify-content: space-between !important; /* Spreads out menu items to prevent blank spaces */
+  gap: 8px !important;
   flex-grow: 1;
   overflow-y: auto;
 }
@@ -3943,6 +3944,13 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   position: relative;
 }
 
+.submenu-arrow {
+  display: inline-block;
+  font-size: 10px;
+  opacity: 0.7;
+  transition: transform 0.2s ease !important;
+}
+
 .submenu-list {
   display: block;
   opacity: 0;
@@ -3976,15 +3984,15 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   pointer-events: auto;
 }
 
-/* Make submenu display smoothly on hover */
-.menu-item-has-submenu:hover .submenu-list {
+/* Make submenu display smoothly when active */
+.menu-item-has-submenu.open .submenu-list {
   opacity: 1;
   transform: translateX(0) translateY(0);
   pointer-events: auto;
   visibility: visible;
 }
 
-.menu-item-has-submenu:hover .submenu-arrow {
+.menu-item-has-submenu.open .submenu-arrow {
   transform: rotate(90deg);
 }
 

@@ -1453,29 +1453,18 @@ function renderAppShell() {
   // Attendance Submenu hover logic with debounce delay
   const attendanceMenu = document.getElementById('nav-admin-attendance');
   if (attendanceMenu) {
-    const submenu = attendanceMenu.querySelector('.submenu-list');
     let hideTimeout = null;
 
     const showSubmenu = () => {
       if (hideTimeout) clearTimeout(hideTimeout);
-      submenu.style.visibility = 'visible';
-      submenu.style.opacity = '1';
-      submenu.style.pointerEvents = 'auto';
-      submenu.style.transform = 'translateX(0) translateY(0)';
-      const arrow = attendanceMenu.querySelector('.submenu-arrow');
-      if (arrow) arrow.style.transform = 'rotate(90deg)';
+      attendanceMenu.classList.add('open');
     };
 
     const hideSubmenu = () => {
       if (hideTimeout) clearTimeout(hideTimeout);
       hideTimeout = setTimeout(() => {
-        submenu.style.visibility = 'hidden';
-        submenu.style.opacity = '0';
-        submenu.style.pointerEvents = 'none';
-        submenu.style.transform = 'translateX(8px) translateY(-5px)';
-        const arrow = attendanceMenu.querySelector('.submenu-arrow');
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
-      }, 200); // 200ms delay is perfect for seamless traversal
+        attendanceMenu.classList.remove('open');
+      }, 300); // 300ms delay is extremely robust for traversals
     };
 
     attendanceMenu.addEventListener('mouseenter', showSubmenu);
