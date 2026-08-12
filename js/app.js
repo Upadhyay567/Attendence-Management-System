@@ -361,15 +361,8 @@ const startApp = async () => {
     }
 
     updateNotificationsUI();
-    const currentHash = window.location.hash || '#dashboard';
-    if (currentHash === '#dashboard') {
-      renderEmployeeDashboard();
-    } else if (currentHash === '#admin-schedules') {
-      renderAdminSchedules();
-    } else if (currentHash === '#admin-accounts') {
-      renderAccountManagementView();
-    } else if (currentHash === '#admin-users') {
-      renderAdminUsers();
+    if (typeof window.appHandleRoute === 'function') {
+      window.appHandleRoute();
     }
   };
 
@@ -678,6 +671,7 @@ function setupRouter() {
     }
   };
 
+  window.appHandleRoute = handleRoute;
   window.addEventListener('hashchange', handleRoute);
   handleRoute();
 }

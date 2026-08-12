@@ -451,14 +451,18 @@ export const DB = {
         clearTimeout(timeoutId);
         if (!res.ok) throw new Error('API server returned error status');
         this.data = await res.json();
+        try {
+          localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+        } catch (storageErr) {}
+        try {
+          this.validateAndMigrateState();
+        } catch (migErr) {}
         console.log('Database state initialized from backend API.');
         return;
       } catch (e) {
         if (window.apiBaseUrl) {
-          console.error('Failed to fetch from backend API. Mock fallback is disabled on Live Server.', e);
-          return;
+          console.error('Failed to fetch from backend API. Falling back to local cache.', e);
         }
-        console.warn('Backend API connection failed or timed out. Falling back to local cache.', e);
       }
     } else {
       console.log('Skipping backend API fetch due to recent local write.');
