@@ -889,19 +889,7 @@ function renderLoginView() {
       btn.addEventListener('click', (e) => {
         const targetBtn = e.currentTarget;
         const role = targetBtn.getAttribute('data-role');
-        
-        let defaultUser = null;
-        if (role === 'hr') {
-          defaultUser = DB.getUsers().find(u => u.role === 'hr') || DB.getUsers().find(u => u.id === 'usr_admin') || { role: 'hr' };
-        } else if (role === 'manager') {
-          defaultUser = DB.getUsers().find(u => u.role === 'manager') || DB.getUsers().find(u => u.id === 'usr_manager') || { role: 'manager' };
-        } else {
-          defaultUser = DB.getUsers().find(u => u.role === 'employee') || DB.getUsers().find(u => u.id === 'usr_john') || { role: 'employee' };
-        }
-        
-        if (defaultUser) {
-          showVerificationScreen(defaultUser);
-        }
+        renderUsersList(role);
       });
     });
 
@@ -1007,7 +995,7 @@ function renderLoginView() {
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
-          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
+          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="${Utils.escape(selectedUser.employeeId || selectedUser.username || '')}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
         ${isHrOrManager ? `
@@ -1197,12 +1185,23 @@ function renderLoginView() {
 
   const proceedLogin = (user) => {
     Auth.currentUser = user;
-    sessionStorage.setItem('attendance_current_session', JSON.stringify({ id: user.id }));
+    const sessionData = JSON.stringify({
+      id: user.id,
+      token: 'session_' + Math.random().toString(36).substring(2) + '_' + Date.now(),
+      loginTime: new Date().toISOString()
+    });
+    sessionStorage.setItem('attendance_current_session', sessionData);
+    localStorage.setItem('attendance_current_session', sessionData);
+    
     const baseRole = DB.getUserBaseRole(user.role);
-    if (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') {
-      window.location.hash = '#admin-dashboard';
+    const targetHash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') 
+      ? '#admin-dashboard' 
+      : '#dashboard';
+
+    if (window.location.hash === targetHash) {
+      window.dispatchEvent(new Event('hashchange'));
     } else {
-      window.location.hash = '#dashboard';
+      window.location.hash = targetHash;
     }
   };
 
