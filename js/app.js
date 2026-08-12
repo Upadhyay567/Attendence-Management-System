@@ -506,8 +506,10 @@ function setupRouter() {
         return;
       }
 
-      // STRICT EMPLOYEE ROLE PERMISSIONS ENFORCEMENT
+      // ROLE PERMISSIONS & ROUTING
       const baseRole = DB.getUserBaseRole(user.role);
+      const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager';
+
       if (baseRole === 'employee') {
         const allowedEmployeeRoutes = [
           '#dashboard',
@@ -517,29 +519,30 @@ function setupRouter() {
           '#employee-verification',
           '#employee-swaps',
           '#support',
-          '#settings'
+          '#settings',
+          '#work-status',
+          '#daily-work-status',
+          '#employee-work-status',
+          '#admin-work-status'
         ];
         if (!allowedEmployeeRoutes.includes(hash)) {
           console.warn(`Unauthorized route attempt by employee: ${hash}`);
           window.location.hash = '#dashboard';
           return;
         }
-      }
-
-      const isManagementRoute = hash.startsWith('#admin-');
-      const isEmployeeRoute = hash === '#dashboard' || hash === '#leaves' || hash.startsWith('#employee-');
-      const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager';
-
-      if (isManagementRoute && !isManagementRole) {
+      } else if (!isManagementRole && hash.startsWith('#admin-') && hash !== '#admin-work-status') {
         window.location.hash = '#dashboard';
         return;
       }
-      if (isEmployeeRoute && isManagementRole) {
-        window.location.hash = '#admin-dashboard';
-        return;
+
+      // Render AppShell only once or if user context changed to prevent layout resets/flickering
+      const mainView = document.getElementById('main-view');
+      const currentShellUser = root.getAttribute('data-shell-user-id');
+      if (!mainView || currentShellUser !== user.id) {
+        renderAppShell();
+        root.setAttribute('data-shell-user-id', user.id);
       }
 
-      renderAppShell();
       if (typeof updateNotificationsUI === 'function') {
         updateNotificationsUI();
       }
@@ -557,7 +560,7 @@ function setupRouter() {
         const href = subLi.querySelector('a')?.getAttribute('href');
         if (href === hash) {
           subLi.classList.add('active');
-          const parentMenu = document.getElementById('nav-admin-attendance');
+          const parentMenu = subLi.closest('.menu-item-has-submenu');
           if (parentMenu) {
             parentMenu.classList.add('active');
             parentMenu.classList.add('open');
@@ -594,6 +597,13 @@ function setupRouter() {
         case '#admin-settings':
           renderSettingsView();
           break;
+        case '#work-status':
+        case '#daily-work-status':
+        case '#employee-work-status':
+        case '#admin-work-status':
+          renderDailyWorkStatus();
+          triggerCelebrationIfBirthday(user);
+          break;
 
         // Admin / HR / Manager Routes
         case '#admin-dashboard':
@@ -601,10 +611,6 @@ function setupRouter() {
         case '#admin-deviations':
         case '#admin-time-policies':
           renderAdminDashboard();
-          triggerCelebrationIfBirthday(user);
-          break;
-        case '#admin-work-status':
-          renderDailyWorkStatus();
           triggerCelebrationIfBirthday(user);
           break;
         case '#admin-attendances':
@@ -1456,18 +1462,18 @@ function renderAppShell() {
     });
   });
 
-  // Attendance Submenu click toggle logic
-  const attendanceMenu = document.getElementById('nav-admin-attendance');
-  if (attendanceMenu) {
-    const parentLink = attendanceMenu.querySelector('a');
+  // Submenu click toggle logic for all menus
+  const allSubmenus = root.querySelectorAll('.menu-item-has-submenu');
+  allSubmenus.forEach(menu => {
+    const parentLink = menu.querySelector('a');
     if (parentLink) {
       parentLink.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        attendanceMenu.classList.toggle('open');
+        menu.classList.toggle('open');
       });
     }
-  }
+  });
 
   const handleLogout = () => {
     Auth.logout();
