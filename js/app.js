@@ -456,6 +456,7 @@ function setupRouter() {
   const handleRoute = async () => {
     try {
       await DB.init();
+      const root = document.getElementById('app-root');
       // Clear any active GPS watch and radar animation interval on navigation change
       if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
         try {
