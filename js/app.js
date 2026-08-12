@@ -510,8 +510,10 @@ function setupRouter() {
       const baseRole = DB.getUserBaseRole(user.role);
       const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager';
 
-      if (baseRole === 'employee') {
-        const allowedEmployeeRoutes = [
+      // Role-based route guard
+      if (!isManagementRole) {
+        // Employee Allowed Routes
+        const employeeAllowed = [
           '#dashboard',
           '#leaves',
           '#employee-reports',
@@ -520,19 +522,22 @@ function setupRouter() {
           '#employee-swaps',
           '#support',
           '#settings',
+          '#admin-settings',
           '#work-status',
           '#daily-work-status',
           '#employee-work-status',
           '#admin-work-status'
         ];
-        if (!allowedEmployeeRoutes.includes(hash)) {
-          console.warn(`Unauthorized route attempt by employee: ${hash}`);
+        if (!employeeAllowed.includes(hash)) {
           window.location.hash = '#dashboard';
           return;
         }
-      } else if (!isManagementRole && hash.startsWith('#admin-') && hash !== '#admin-work-status') {
-        window.location.hash = '#dashboard';
-        return;
+      } else {
+        // Management (HR / Manager / Finance) Guard
+        if (hash === '#dashboard' || hash === '#leaves' || (hash.startsWith('#employee-') && hash !== '#employee-work-status')) {
+          window.location.hash = '#admin-dashboard';
+          return;
+        }
       }
 
       // Render AppShell only once or if user context changed to prevent layout resets/flickering
@@ -752,6 +757,7 @@ function renderLoginView() {
     }).join('');
   };
 
+  root.removeAttribute('data-shell-user-id');
   root.innerHTML = `
     <div class="auth-wrapper">
       <div class="auth-hero-column">
@@ -1477,6 +1483,7 @@ function renderAppShell() {
 
   const handleLogout = () => {
     Auth.logout();
+    root.removeAttribute('data-shell-user-id');
     sessionStorage.removeItem('hs_pending_auto_checkin_time');
     sessionStorage.removeItem('hs_mock_location');
     sessionStorage.removeItem('hs_current_resolved_coords');
