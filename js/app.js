@@ -12969,8 +12969,8 @@ function renderDailyWorkStatus() {
     }
 
     // 3. Fetch real attendance logs and approved leaves
-    const allLogs = DB.getAttendanceLogs();
-    const allLeaves = DB.getLeaves ? DB.getLeaves() : [];
+    const allLogs = DB.getLogs();
+    const allLeaves = DB.getLeaveRequests();
 
     // Map logs by key: `${userId}_${dateStr}`
     const logsMap = new Map();
@@ -13174,8 +13174,8 @@ function exportDailyWorkStatusCSV(year, month) {
 
   const allUsers = DB.getUsers();
   const employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
-  const allLogs = DB.getAttendanceLogs();
-  const allLeaves = DB.getLeaves ? DB.getLeaves() : [];
+  const allLogs = DB.getLogs();
+  const allLeaves = DB.getLeaveRequests();
 
   const logsMap = new Map();
   allLogs.forEach(l => {
