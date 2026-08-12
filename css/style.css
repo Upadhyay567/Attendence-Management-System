@@ -1358,17 +1358,32 @@ body.light-theme .day-bubble.active {
 }
 
 /* Password Input Wrapper & Toggle Eye Button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  -webkit-appearance: none !important;
+}
+
 .password-wrapper {
   position: relative;
 }
 
-.password-wrapper .form-input {
-  padding-right: 46px;
+.password-wrapper .form-input,
+.password-wrapper input[type="password"],
+.password-wrapper input[type="text"] {
+  padding-right: 44px !important;
 }
 
 .password-toggle-btn {
   position: absolute;
-  right: 12px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -1376,21 +1391,26 @@ body.light-theme .day-bubble.active {
   color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s ease;
-  z-index: 2;
+  transition: all 0.2s ease;
+  z-index: 5;
 }
 
 .password-toggle-btn:hover {
-  color: var(--text-primary);
+  color: var(--primary);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .password-toggle-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
 }
 
 /* Guidelines Layout and checkboxes */

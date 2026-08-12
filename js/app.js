@@ -3123,9 +3123,11 @@ function showForgotPasswordModal(initialId = '') {
     <form id="forgot-step-new-pass-form" style="display:none; flex-direction:column; gap:16px">
       <div>
         <label style="display:block; font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">NEW PASSWORD *</label>
-        <div style="position:relative">
-          <input type="password" id="forgot-newpwd" class="form-input" placeholder="Minimum 6 characters" required style="padding-right: 38px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-1" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+        <div class="password-wrapper" style="position:relative">
+          <input type="password" id="forgot-newpwd" class="form-input" placeholder="Minimum 6 characters" required style="padding-right: 44px !important; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-1" class="password-toggle-btn" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:6px; transition:color 0.2s ease;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
         </div>
         
         <!-- Strength Indicator -->
@@ -3141,9 +3143,11 @@ function showForgotPasswordModal(initialId = '') {
 
       <div>
         <label style="display:block; font-size:11.5px; font-weight:700; color:var(--text-secondary); margin-bottom:6px">CONFIRM PASSWORD *</label>
-        <div style="position:relative">
-          <input type="password" id="forgot-confirmpwd" class="form-input" placeholder="Re-enter new password" required style="padding-right: 38px; width:100%; box-sizing:border-box">
-          <button type="button" id="btn-toggle-reset-pwd-2" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0;">👁️</button>
+        <div class="password-wrapper" style="position:relative">
+          <input type="password" id="forgot-confirmpwd" class="form-input" placeholder="Re-enter new password" required style="padding-right: 44px !important; width:100%; box-sizing:border-box">
+          <button type="button" id="btn-toggle-reset-pwd-2" class="password-toggle-btn" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-secondary); cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:6px; transition:color 0.2s ease;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
         </div>
       </div>
 
@@ -3330,19 +3334,21 @@ function showForgotPasswordModal(initialId = '') {
   });
 
   // Toggle Visibility triggers
-  const svgEyeOpen = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-  const svgEyeClosed = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  const svgEyeOpen = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const svgEyeClosed = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
-  modal.querySelector('#btn-toggle-reset-pwd-1').addEventListener('click', () => {
-    const type = newPwdInput.type === 'password' ? 'text' : 'password';
-    newPwdInput.type = type;
-    modal.querySelector('#btn-toggle-reset-pwd-1').innerHTML = type === 'password' ? svgEyeOpen : svgEyeClosed;
+  modal.querySelector('#btn-toggle-reset-pwd-1').addEventListener('click', (e) => {
+    e.preventDefault();
+    const isCurrentlyPassword = newPwdInput.type === 'password';
+    newPwdInput.type = isCurrentlyPassword ? 'text' : 'password';
+    modal.querySelector('#btn-toggle-reset-pwd-1').innerHTML = isCurrentlyPassword ? svgEyeOpen : svgEyeClosed;
   });
 
-  modal.querySelector('#btn-toggle-reset-pwd-2').addEventListener('click', () => {
-    const type = confirmPwdInput.type === 'password' ? 'text' : 'password';
-    confirmPwdInput.type = type;
-    modal.querySelector('#btn-toggle-reset-pwd-2').innerHTML = type === 'password' ? svgEyeOpen : svgEyeClosed;
+  modal.querySelector('#btn-toggle-reset-pwd-2').addEventListener('click', (e) => {
+    e.preventDefault();
+    const isCurrentlyPassword = confirmPwdInput.type === 'password';
+    confirmPwdInput.type = isCurrentlyPassword ? 'text' : 'password';
+    modal.querySelector('#btn-toggle-reset-pwd-2').innerHTML = isCurrentlyPassword ? svgEyeOpen : svgEyeClosed;
   });
 
   // Password reset final submit handler
@@ -3781,18 +3787,21 @@ function showAccountModal(editUser = null) {
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
         <div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">PASSWORD *</label>
-          <div style="position:relative">
-            <input type="password" id="acct-input-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
-            <button type="button" id="btn-toggle-pwd-vis" title="Toggle password visibility" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <div class="password-wrapper" style="position:relative">
+            <input type="password" id="acct-input-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 44px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+            <button type="button" id="btn-toggle-pwd-vis" class="password-toggle-btn" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
           <div style="font-size:10px; color:#64748b; margin-top:4px">Must contain uppercase & special character.</div>
         </div>
         <div>
           <label style="display:block; font-size:11.5px; font-weight:700; color:#1a0504; margin-bottom:6px; letter-spacing:0.02em">CONFIRM PASSWORD *</label>
-          <div style="position:relative">
-            <input type="password" id="acct-input-confirm-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 38px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+          <div class="password-wrapper" style="position:relative">
+            <input type="password" id="acct-input-confirm-password" class="form-control" placeholder="••••••••" ${isEdit ? '' : 'required'} style="background:#fff; border:1px solid #cbd5e1; color:#1e293b; font-size:13px; padding:10px 44px 10px 12px; border-radius:10px; width:100%; box-sizing:border-box">
+            <button type="button" id="btn-toggle-confirm-pwd-vis" class="password-toggle-btn" title="Toggle password visibility" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s ease">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -3970,17 +3979,36 @@ function showAccountModal(editUser = null) {
   const svgEyeOpen = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const svgEyeClosed = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
-  togglePwdBtn.addEventListener('click', () => {
-    if (pwdInput.type === 'password') {
-      pwdInput.type = 'text';
-      togglePwdBtn.innerHTML = svgEyeClosed;
-      togglePwdBtn.style.color = '#dc2626';
-    } else {
-      pwdInput.type = 'password';
-      togglePwdBtn.innerHTML = svgEyeOpen;
-      togglePwdBtn.style.color = '#64748b';
-    }
-  });
+  if (togglePwdBtn && pwdInput) {
+    togglePwdBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        togglePwdBtn.innerHTML = svgEyeOpen;
+        togglePwdBtn.style.color = '#dc2626';
+      } else {
+        pwdInput.type = 'password';
+        togglePwdBtn.innerHTML = svgEyeClosed;
+        togglePwdBtn.style.color = '#64748b';
+      }
+    });
+  }
+
+  const toggleConfirmPwdBtn = modal.querySelector('#btn-toggle-confirm-pwd-vis');
+  if (toggleConfirmPwdBtn && confirmPwdInput) {
+    toggleConfirmPwdBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirmPwdInput.type === 'password') {
+        confirmPwdInput.type = 'text';
+        toggleConfirmPwdBtn.innerHTML = svgEyeOpen;
+        toggleConfirmPwdBtn.style.color = '#dc2626';
+      } else {
+        confirmPwdInput.type = 'password';
+        toggleConfirmPwdBtn.innerHTML = svgEyeClosed;
+        toggleConfirmPwdBtn.style.color = '#64748b';
+      }
+    });
+  }
 
   const closeModal = () => {
     document.body.removeChild(overlay);
