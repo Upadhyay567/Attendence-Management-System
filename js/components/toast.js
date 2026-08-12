@@ -46,7 +46,7 @@ export function showToastNotification(message, type = 'info') {
     toast.style.border = '1px solid var(--border, rgba(255,255,255,0.1))';
   }
 
-  toast.innerHTML = `<span>${message}</span>`;
+  toast.innerHTML = html`<span>${message}</span>`;
   container.appendChild(toast);
 
   requestAnimationFrame(() => {

@@ -1,14 +1,14 @@
 // js/views/schedulesView.js - Shift Allocation & Planning
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
 export function renderAdminSchedules() {
   const main = document.getElementById('main-view');
   const schedules = DB.getSchedules();
-  main.innerHTML = `
+  main.innerHTML = html`
     <div class="content-header">
       <div>
         <h1 class="content-title">Shift Calendars & Shifts</h1>
@@ -147,7 +147,7 @@ function openExpressUploadModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
-  overlay.innerHTML = `
+  overlay.innerHTML = html`
     <div class="modal-content" style="max-width:700px; padding:28px; display:flex; flex-direction:column; gap:16px" id="express-modal-container">
       <div class="modal-header" style="margin-bottom:5px">
         <h3 class="modal-title">⚡ Express Schedule Upload</h3>
@@ -385,7 +385,7 @@ function openExpressUploadModal() {
             resultsSection.insertBefore(topWrapper, statsRow);
             topWrapper.innerHTML = alertBannerHTML + warningsHTML;
 
-            statsRow.innerHTML = `
+            statsRow.innerHTML = html`
               <div style="flex:1; min-width:120px; padding:12px 16px; border-radius:var(--radius-md); background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); text-align:center">
                 <div style="font-size:22px; font-weight:800; color:var(--primary)">${total}</div>
                 <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Total Records</div>
@@ -478,7 +478,7 @@ function openDownloadSchedulesModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
-  overlay.innerHTML = `
+  overlay.innerHTML = html`
     <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:16px">
       <div class="modal-header" style="margin-bottom: 0">
         <h3 class="modal-title">📥 Export Shift Schedules</h3>

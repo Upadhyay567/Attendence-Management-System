@@ -1,7 +1,7 @@
 // js/views/employeeDashboard.js - Employee Dashboard & Geofence Worksite Panel
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -115,7 +115,7 @@ export function renderEmployeeDashboard() {
     `;
   }
 
-  main.innerHTML = `
+  main.innerHTML = html`
     <div class="content-header">
       <div>
         <h1 class="content-title">Welcome, ${Utils.escape(user.name)}</h1>
@@ -875,7 +875,7 @@ export function renderEmployeeDashboard() {
       justBlock.style.marginTop = '12px';
       justBlock.style.transition = 'all 0.3s ease';
       justBlock.style.display = 'none'; // Hidden by default until range check confirms out-of-range
-      justBlock.innerHTML = `
+      justBlock.innerHTML = html`
         <div style="font-size:12px; font-weight:600; color:var(--error); background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
           ❌ Check-in Rejected! You are out of geofence range. Under company policy, you must be within 100m of your assigned work location (${officeName}) to clock in.
           <button class="btn btn-warning btn-sm" id="btn-gps-use-worksite" style="margin-top:8px; display:block; width:100%; padding:6px; font-size:11px; font-weight:700">📍 Switch to Assigned Worksite Location</button>
@@ -1073,7 +1073,7 @@ export function renderEmployeeDashboard() {
         const errContainer = document.getElementById('gps-error-container');
         if (errContainer) {
           errContainer.style.display = 'block';
-          errContainer.innerHTML = `
+          errContainer.innerHTML = html`
             <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
               ⚠️ Mobile Device GPS problem (Insecure HTTP/No GPS). Automatically fixed location at your assigned worksite: <strong>\${officeName}</strong>.
             </div>
@@ -1170,7 +1170,7 @@ export function renderEmployeeDashboard() {
             const errContainer = document.getElementById('gps-error-container');
             if (errContainer) {
               errContainer.style.display = 'block';
-              errContainer.innerHTML = `
+              errContainer.innerHTML = html`
                 <div style="font-size:12px; font-weight:600; color:var(--warning); background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); padding:10px; border-radius:var(--radius-sm); line-height:1.4">
                   ⚠️ Mobile Device GPS problem (Permission Denied/Unavailable). Automatically fixed location at your assigned worksite: <strong>${officeName}</strong>.
                 </div>
@@ -1388,7 +1388,7 @@ function showForgotPasswordModal(initialId = '') {
     border-radius: 20px; box-shadow: var(--shadow-lg) !important;
   `;
 
-  modal.innerHTML = `
+  modal.innerHTML = html`
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:14px">
       <div style="display:flex; align-items:center; gap:10px">
         <div style="width:36px; height:36px; border-radius:10px; background:rgba(137,32,27,0.15); border:1px solid var(--border); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:18px">
@@ -1565,7 +1565,7 @@ function showForgotPasswordModal(initialId = '') {
     } else {
       // Flow B: Show Verification Options (OTP / Email / SMS)
       const optionsContainer = modal.querySelector('#verification-options-container');
-      optionsContainer.innerHTML = `
+      optionsContainer.innerHTML = html`
         <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
           <input type="radio" name="verification-method" value="email" checked style="accent-color:var(--primary)">
           <div>

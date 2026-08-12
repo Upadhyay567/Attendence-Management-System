@@ -1,9 +1,17 @@
 // js/views/dailyWorkStatusView.js - Monthly 1-31 Attendance Matrix Grid
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
+
+// Module-level state variables for filters, sorting, and pagination
+let dailyWorkStatusSelectedMonth = new Date().getMonth();
+let dailyWorkStatusSelectedYear = new Date().getFullYear();
+let dailyWorkStatusSearchQuery = '';
+let dailyWorkStatusDepartmentFilter = 'all';
+let dailyWorkStatusCurrentPage = 1;
+let dailyWorkStatusRowsPerPage = 10;
 
 export function renderDailyWorkStatus() {
   const main = document.getElementById('main-view');
@@ -20,7 +28,7 @@ export function renderDailyWorkStatus() {
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0];
 
-  main.innerHTML = `
+  main.innerHTML = html`
     <div id="daily-work-status-page-container" style="padding: 24px 32px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">
       
       <!-- Top Action Bar -->
@@ -134,6 +142,8 @@ export function renderDailyWorkStatus() {
 
     if (DB.getUserBaseRole(currentUser.role) === 'employee') {
       employees = employees.filter(e => e.id === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
+      employees = employees.filter(e => e.managerId === currentUser.id);
     }
 
     // 2. Apply Search and Department Filters
@@ -203,7 +213,7 @@ export function renderDailyWorkStatus() {
     }
 
     if (pagedEmployees.length === 0) {
-      tbody.innerHTML = `
+      tbody.innerHTML = html`
         <tr>
           <td colspan="${daysInMonth + 1}" style="padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13.5px;">
             No employee attendance records found for the selected filter and period.
@@ -439,4 +449,69 @@ function exportDailyWorkStatusCSV(year, month) {
 
 function showDailyWorkStatusFilterModal(onApply) {
   const allUsers = DB.getUsers().filter(u => DB.getUserBaseRole(u.role) === 'employee');
-  const departments = [...new Set(allUsers.map(u => u.department || 'Operations').filter(Boolean))];
+  const departments = [...new Set(allUsers.map(u => u.department || 'Operations').filter(Boolean))];
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  modalOverlay.style.zIndex = '9999';
+
+  modalOverlay.innerHTML = html`
+    <div class="modal-content" style="max-width: 420px; animation: fadeIn 0.2s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Filter Daily Work Status</h3>
+        <button id="btn-close-dws-filter-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Search Employee</label>
+          <input type="text" id="input-dws-filter-search" class="form-input" placeholder="Search by name or ID..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 12px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Department</label>
+          <select id="select-dws-filter-dept" class="form-input" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 12px; cursor: pointer;">
+            <option value="all">All Departments</option>
+            ${departments.map(d => `
+              <option value="${Utils.escape(d)}" ${dailyWorkStatusDepartmentFilter.toLowerCase() === d.toLowerCase() ? 'selected' : ''}>${Utils.escape(d)}</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 6px;">
+          <button type="button" id="btn-dws-filter-reset" style="padding: 8px 16px; font-size: 12.5px; font-weight: 600; border-radius: 8px; background: #ffffff; border: 1px solid #cbd5e1; color: #475569; cursor: pointer;">Reset</button>
+          <button type="button" id="btn-dws-filter-apply" style="padding: 8px 20px; font-size: 12.5px; font-weight: 700; border-radius: 8px; background: #89201B; border: none; color: #ffffff; cursor: pointer; box-shadow: 0 2px 6px rgba(137,32,27,0.3);">Apply Filter</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+
+  const localCloseModal = () => {
+    if (document.body.contains(modalOverlay)) {
+      document.body.removeChild(modalOverlay);
+    }
+  };
+
+  modalOverlay.querySelector('#btn-close-dws-filter-modal').addEventListener('click', localCloseModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) localCloseModal();
+  });
+
+  modalOverlay.querySelector('#btn-dws-filter-reset').addEventListener('click', () => {
+    dailyWorkStatusSearchQuery = '';
+    dailyWorkStatusDepartmentFilter = 'all';
+    dailyWorkStatusCurrentPage = 1;
+    localCloseModal();
+    if (onApply) onApply();
+  });
+
+  modalOverlay.querySelector('#btn-dws-filter-apply').addEventListener('click', () => {
+    dailyWorkStatusSearchQuery = modalOverlay.querySelector('#input-dws-filter-search').value.trim();
+    dailyWorkStatusDepartmentFilter = modalOverlay.querySelector('#select-dws-filter-dept').value;
+    dailyWorkStatusCurrentPage = 1;
+    localCloseModal();
+    if (onApply) onApply();
+  });
+}

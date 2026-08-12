@@ -1,7 +1,7 @@
 // js/views/adminDashboard.js - HR/Manager Live Monitoring & KPI Feed
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -11,7 +11,7 @@ export async function renderAdminDashboard() {
   if (!currentUser) return;
 
   // Show loading placeholders in the outer template immediately
-  main.innerHTML = `
+  main.innerHTML = html`
     <div class="content-header">
       <div>
         <h1 class="content-title">Live Attendance Monitoring</h1>
@@ -207,7 +207,7 @@ export async function renderAdminDashboard() {
     // Fill Welcome Banner
     const bannerEl = document.getElementById('dashboard-welcome-banner');
     if (bannerEl) {
-      bannerEl.innerHTML = `
+      bannerEl.innerHTML = html`
         <div>
           <span style="font-size: 11px; font-weight: 700; color: #89201B; letter-spacing: 0.05em; text-transform: uppercase;">${greeting}</span>
           <h2 style="font-size: 20px; font-weight: 800; color: #1a0504; margin: 6px 0 4px;">Welcome back, ${Utils.escape(welcomeName)}!</h2>
@@ -229,7 +229,7 @@ export async function renderAdminDashboard() {
     // Fill Stats Grid
     const statsGrid = document.getElementById('dashboard-stats-grid');
     if (statsGrid) {
-      statsGrid.innerHTML = `
+      statsGrid.innerHTML = html`
         <!-- Total Employees -->
         <div class="stat-card">
           <div class="stat-icon stat-icon-blue">👥</div>
@@ -342,7 +342,7 @@ export async function renderAdminDashboard() {
     const feedBody = document.getElementById('live-feed-table-body');
     if (feedBody) {
       if (todayLogs.length === 0) {
-        feedBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No check-ins logged today.</td></tr>`;
+        feedBody.innerHTML = html`<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No check-ins logged today.</td></tr>`;
       } else {
         feedBody.innerHTML = todayLogs.map(l => {
           const u = DB.getUser(l.userId);
@@ -399,7 +399,7 @@ export async function renderAdminDashboard() {
     if (pendingInbox) {
       const pendingLeaves = leaves.filter(lv => lv.status === 'Pending');
       if (pendingLeaves.length === 0) {
-        pendingInbox.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
+        pendingInbox.innerHTML = html`<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
       } else {
         pendingInbox.innerHTML = pendingLeaves.map(lv => {
           const u = DB.getUser(lv.userId);
@@ -525,7 +525,7 @@ function renderAdminUsers() {
     </div>
   ` : '';
 
-  main.innerHTML = `
+  main.innerHTML = html`
     <div class="equify-page-header">
       <div>
         <h1 class="equify-page-title">Employee Registers & Payroll Setup</h1>
@@ -738,7 +738,7 @@ function renderAdminUsers() {
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
+        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
       } else {
         tbody.innerHTML = filtered.map(u => {
           const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
@@ -824,7 +824,7 @@ function openUserModal(userId = null) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
+  overlay.innerHTML = html`
     <div class="modal-content" style="max-width: 700px">
       <div class="modal-header">
         <h3 class="modal-title">${isEdit ? 'Modify Candidate Profile' : 'Register New Employee'}</h3>
@@ -1107,7 +1107,7 @@ function openUserModal(userId = null) {
         reader.onload = (event) => {
           editorPhotoDataUrl = event.target.result;
           if (editorPhotoPreview) {
-            editorPhotoPreview.innerHTML = `<img src="${editorPhotoDataUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+            editorPhotoPreview.innerHTML = html`<img src="${editorPhotoDataUrl}" style="width:100%; height:100%; object-fit:contain;">`;
             editorPhotoPreview.style.background = 'transparent';
             editorPhotoPreview.style.cursor = 'pointer';
             editorPhotoPreview.title = 'Click to view full screen';
@@ -1134,7 +1134,7 @@ function openUserModal(userId = null) {
     btnEditorRemovePhoto.addEventListener('click', () => {
       editorPhotoDataUrl = '';
       if (editorPhotoPreview) {
-        editorPhotoPreview.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`;
+        editorPhotoPreview.innerHTML = html`<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`;
         editorPhotoPreview.style.background = 'linear-gradient(135deg,#89201B,#5c0f0a)';
         editorPhotoPreview.style.cursor = 'default';
         editorPhotoPreview.title = '';

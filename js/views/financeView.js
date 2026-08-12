@@ -1,7 +1,7 @@
 // js/views/financeView.js - Financial Ledger & Payroll Calculations
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -87,7 +87,7 @@ export function renderAdminFinance() {
     const projs = [...new Set(records.map(r => r.project).filter(Boolean))];
     const cats = [...new Set(records.map(r => r.category).filter(Boolean))];
 
-    main.innerHTML = `
+    main.innerHTML = html`
       <div class="content-header">
         <div>
           <h1 class="content-title">💼 Corporate Finance Desk</h1>

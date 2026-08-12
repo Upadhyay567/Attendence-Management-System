@@ -1,7 +1,7 @@
 // js/views/leavesView.js - Leave Applications & Balances
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -31,7 +31,7 @@ export function renderEmployeeLeaves() {
 
   const approverName = getApprovalHeadForDepartment(user.department);
 
-  main.innerHTML = `
+  main.innerHTML = html`
     <div class="content-header">
       <div>
         <h1 class="content-title">Leave Request Desk</h1>

@@ -1,7 +1,7 @@
 // js/views/attendancesView.js - Attendance Registers & Check-in/Out Logs
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -10,7 +10,7 @@ export function renderAdminAttendances() {
   const currentUser = Auth.getCurrentUser();
   if (!currentUser) return;
 
-  main.innerHTML = `
+  main.innerHTML = html`
     <div id="admin-attendances-page-container" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: var(--text-primary);">
       <!-- Header Bar -->
       <div class="content-header" style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 0 0 16px 0; border-bottom: 1px solid var(--border);">
@@ -451,7 +451,7 @@ export function renderAdminAttendances() {
     if (!tbody) return;
 
     if (paginated.length === 0) {
-      tbody.innerHTML = `
+      tbody.innerHTML = html`
         <tr>
           <td colspan="8" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
             No employee attendance records found.
@@ -632,7 +632,7 @@ function showCreateAttendanceModal() {
   modalOverlay.className = 'modal-overlay';
   modalOverlay.style.zIndex = '9999';
 
-  modalOverlay.innerHTML = `
+  modalOverlay.innerHTML = html`
     <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
         <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Create Attendance Record</h3>
@@ -738,7 +738,7 @@ function showEditAttendanceModal(logId) {
   modalOverlay.className = 'modal-overlay';
   modalOverlay.style.zIndex = '9999';
 
-  modalOverlay.innerHTML = `
+  modalOverlay.innerHTML = html`
     <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
         <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Edit Attendance Record</h3>

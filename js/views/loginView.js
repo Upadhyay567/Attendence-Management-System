@@ -1,7 +1,7 @@
 // js/views/loginView.js - Role Selection & Authentication View
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils } from '../utils/helpers.js';
+import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 
 let AUTH_REQUIRE_ID_MANDATORY = true;
@@ -45,7 +45,7 @@ export function renderLoginView() {
   };
 
   root.removeAttribute('data-shell-user-id');
-  root.innerHTML = `
+  root.innerHTML = html`
     <div class="auth-wrapper">
       <div class="auth-hero-column">
         <div class="auth-hero-overlay"></div>
@@ -104,7 +104,7 @@ export function renderLoginView() {
     const authBox = document.getElementById('auth-box');
     if (!authBox) return;
 
-    authBox.innerHTML = `
+    authBox.innerHTML = html`
       <div id="role-selector-section" style="animation: fadeIn 0.3s ease;">
         <div class="auth-header" style="position:relative; margin-bottom: 24px; text-align: center;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
@@ -213,7 +213,7 @@ export function renderLoginView() {
 
     const itemsHTML = getRoleItemsHTML(usersList, defaultSubtitle) || `<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No accounts registered under this role.</div>`;
 
-    authBox.innerHTML = `
+    authBox.innerHTML = html`
       <div id="role-users-section" style="animation: fadeIn 0.3s ease;">
         <div class="auth-header" style="margin-bottom: 20px; text-align: center; position: relative;">
           <button id="btn-back-to-roles" style="position: absolute; left: 0; top: 0; background: transparent; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 0;">
@@ -270,7 +270,7 @@ export function renderLoginView() {
       ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
       : '';
 
-    authBox.innerHTML = `
+    authBox.innerHTML = html`
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
         <div class="auth-header" style="margin-bottom: 24px; text-align: center; position: relative;">
           <div class="auth-logo" style="margin-bottom: 12px; justify-content: center; display: flex;">
@@ -493,4 +493,5 @@ export function renderLoginView() {
   };
 
   // Bootstrap login view with Role Selector list
-  renderRolesList();
+  renderRolesList();
+}
