@@ -1227,9 +1227,11 @@ function renderAppShell() {
           <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
         </a>
         <ul class="submenu-list">
-          <li class="submenu-item" id="sub-requests"><a href="#admin-requests">Attendance Requests</a></li>
-          <li class="submenu-item" id="sub-hours-balance"><a href="#admin-hours-balance">Hours Balance</a></li>
-          <li class="submenu-item" id="sub-time-policies"><a href="#admin-time-policies">Time Policies</a></li>
+          <li class="submenu-item" id="sub-my-attendances"><a href="#admin-my-attendances">My Attendances</a></li>
+          <li class="submenu-item" id="sub-attendances"><a href="#admin-attendances">Attendances</a></li>
+          <li class="submenu-item" id="sub-work-status"><a href="#admin-work-status">Daily Work Status</a></li>
+          <li class="submenu-item" id="sub-checkin-log"><a href="#admin-checkin-log">Check-in / Check-out Log</a></li>
+          <li class="submenu-item" id="sub-deviations"><a href="#admin-deviations">Late Arrival & Early Departure</a></li>
         </ul>
       </li>
       ` : ''}
