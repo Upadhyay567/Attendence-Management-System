@@ -453,8 +453,9 @@ function triggerCelebrationIfBirthday(user) {
 }
 
 function setupRouter() {
-  const handleRoute = () => {
+  const handleRoute = async () => {
     try {
+      await DB.init();
       // Clear any active GPS watch and radar animation interval on navigation change
       if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
         try {
@@ -12947,6 +12948,10 @@ function renderDailyWorkStatus() {
     // 1. Fetch real employees only (no HR or Manager accounts)
     const allUsers = DB.getUsers();
     let employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
+
+    if (DB.getUserBaseRole(currentUser.role) === 'employee') {
+      employees = employees.filter(e => e.id === currentUser.id);
+    }
 
     // 2. Apply Search and Department Filters
     if (dailyWorkStatusSearchQuery) {

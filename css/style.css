@@ -2508,7 +2508,7 @@ body {
 
 /* Dark Sidebar Navigation (#89201B Brand Theme) */
 .sidebar {
-  width: 240px !important;
+  width: 260px !important;
   background: #3D0D0A !important;
   border-right: 1px solid rgba(137, 32, 27, 0.3) !important;
   display: flex;
