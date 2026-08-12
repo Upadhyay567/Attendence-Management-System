@@ -480,6 +480,22 @@
       "facePhoto": null
     },
     {
+      "id": "log_usr_john_2026-08-12_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-08-12",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "12:36",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695183° N, 77.186061° E",
+      "distance": 0.01,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_david_2026-08-11_1786517028106",
       "userId": "usr_david",
       "date": "2026-08-11",
@@ -2576,19 +2592,19 @@
       "location": "Kohat Enclave, Pitampura, Delhi"
     },
     {
-      "id": "log_usr_john_2026-08-12_sch_3ebecon",
-      "userId": "usr_john",
+      "id": "log_usr_6af1y3c_2026-08-12_sch_q8jji9v",
+      "userId": "usr_6af1y3c",
       "date": "2026-08-12",
-      "shiftId": "sch_3ebecon",
-      "checkIn": "12:36",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "13:23",
       "checkOut": null,
       "status": "Late",
       "biometricUsed": "none",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "location": "Chatarpur",
       "deviationFlag": false,
       "justification": "",
-      "coords": "28.695183° N, 77.186061° E",
-      "distance": 0.01,
+      "coords": "24.916400° N, 79.581200° E",
+      "distance": 0,
       "facePhoto": null
     }
   ],
