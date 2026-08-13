@@ -171,12 +171,12 @@ export function renderLoginView() {
       </div>
     `;
 
-    // Bind portal button clicks
+    // Bind portal button clicks to go directly to verification screen
     authBox.querySelectorAll('.role-portal-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const targetBtn = e.currentTarget;
         const role = targetBtn.getAttribute('data-role');
-        renderUsersList(role);
+        showVerificationScreen(role);
       });
     });
 
@@ -189,65 +189,7 @@ export function renderLoginView() {
     }
   };
 
-  const renderUsersList = (role) => {
-    const authBox = document.getElementById('auth-box');
-    if (!authBox) return;
-
-    let roleTitle = '';
-    let usersList = [];
-    let defaultSubtitle = '';
-
-    if (role === 'hr') {
-      roleTitle = 'HR / Admin';
-      usersList = hrUsers;
-      defaultSubtitle = 'HR / Admin';
-    } else if (role === 'manager') {
-      roleTitle = 'Managers';
-      usersList = managerUsers;
-      defaultSubtitle = 'Operations Manager';
-    } else {
-      roleTitle = 'Employees';
-      usersList = employeeUsers;
-      defaultSubtitle = 'Employee';
-    }
-
-    const itemsHTML = getRoleItemsHTML(usersList, defaultSubtitle) || `<div style="font-size:11.5px;color:var(--text-secondary);text-align:center;padding:20px">No accounts registered under this role.</div>`;
-
-    authBox.innerHTML = html`
-      <div id="role-users-section" style="animation: fadeIn 0.3s ease;">
-        <div class="auth-header" style="margin-bottom: 20px; text-align: center; position: relative;">
-          <button id="btn-back-to-roles" style="position: absolute; left: 0; top: 0; background: transparent; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 0;">
-            ◀ Back
-          </button>
-          <div class="auth-logo" style="margin-bottom: 8px; justify-content: center; display: flex;">
-            <img src="surya-logo.png?v=7" alt="Surya Logo" style="height: 50px; object-fit: contain; mix-blend-mode: multiply;">
-          </div>
-          <div class="auth-title" style="text-align: center; font-size: 18px; font-weight: 700; color: var(--primary);">${roleTitle} Portal</div>
-          <div class="auth-sub-desc" style="text-align: center; font-size: 12.5px; color: var(--text-muted); margin-top: 4px;">SELECT YOUR ACCOUNT TO CONTINUE</div>
-        </div>
-        
-        <div class="staff-list" style="max-height: 320px; overflow-y: auto;">
-          ${itemsHTML}
-        </div>
-      </div>
-    `;
-
-    // Bind back button
-    authBox.querySelector('#btn-back-to-roles').addEventListener('click', renderRolesList);
-
-    // Bind user selection
-    authBox.querySelectorAll('.staff-item').forEach(userBtn => {
-      userBtn.addEventListener('click', () => {
-        const username = userBtn.getAttribute('data-username');
-        const user = DB.getUserByUsername(username);
-        if (user) {
-          showVerificationScreen(user);
-        }
-      });
-    });
-  };
-
-  const showVerificationScreen = (selectedUser) => {
+  const showVerificationScreen = (role) => {
     const authBox = document.getElementById('auth-box');
     if (!authBox) return;
 
@@ -256,19 +198,46 @@ export function renderLoginView() {
     let idLabelText = 'Employee ID';
     let placeholderText = 'e.g. EMP100';
 
-    if (selectedUser.role === 'hr') {
+    if (role === 'hr') {
       idLabelText = 'HR ID';
       placeholderText = 'e.g. HR100';
-    } else if (selectedUser.role === 'manager' || selectedUser.role === 'finance_manager') {
+    } else if (role === 'manager') {
       idLabelText = 'Manager ID';
       placeholderText = 'e.g. MGR100';
     }
 
-    const isHrOrManager = selectedUser && (selectedUser.role === 'hr' || selectedUser.role === 'manager' || selectedUser.role === 'finance_manager');
+    const isHrOrManager = role === 'hr' || role === 'manager';
 
     const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
       ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
       : '';
+
+    const passwordFieldHTML = isHrOrManager ? html`
+      <div class="form-group" style="margin-bottom: 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+          <label class="form-label" for="auth-pwd-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0; display: block;">Password *</label>
+          <button type="button" id="btn-forgot-password-trigger" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline">Forgot Password?</button>
+        </div>
+        <div style="position:relative">
+          <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
+          <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px; display:flex; align-items:center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+    ` : '';
+
+    const loginButtonHTML = isHrOrManager
+      ? '<button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>'
+      : '<button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>';
+
+    const skipDevButtonHTML = (!isHrOrManager && skipButtonHTML) ? '' : '<button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>';
+
+    const createAccountLinkHTML = isHrOrManager ? html`
+      <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
+        Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
+      </div>
+    ` : '';
 
     authBox.innerHTML = html`
       <div id="auth-verification-section" style="animation: fadeIn 0.3s ease; padding: 10px;">
@@ -282,23 +251,10 @@ export function renderLoginView() {
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
-          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="${Utils.escape(selectedUser.employeeId || selectedUser.username || '')}" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
+          <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
         </div>
 
-        ${isHrOrManager ? `
-        <div class="form-group" style="margin-bottom: 16px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-            <label class="form-label" for="auth-pwd-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0; display: block;">Password *</label>
-            <button type="button" id="btn-forgot-password-trigger" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0; text-decoration:underline">Forgot Password?</button>
-          </div>
-          <div style="position:relative">
-            <input type="password" id="auth-pwd-input" class="form-input" placeholder="Enter account password" style="background: rgba(255,255,255,0.02); font-size: 13px; padding-right: 40px;">
-            <button type="button" id="btn-toggle-auth-pwd" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px; display:flex; align-items:center;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-            </button>
-          </div>
-        </div>
-        ` : ''}
+        ${passwordFieldHTML}
 
         <!-- Warning Box -->
         <div id="auth-verify-warning" style="display: none; padding: 10px 14px; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); background: rgba(239,68,68,0.05); color: var(--error); font-size: 11.5px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
@@ -306,23 +262,12 @@ export function renderLoginView() {
 
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
-          ${isHrOrManager ? `
-          <button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>
-          ` : `
-          <button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>
-          ${skipButtonHTML}
-          `}
-          ${(!isHrOrManager && skipButtonHTML) ? '' : `
-          <button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>
-          `}
+          ${loginButtonHTML}
+          ${!isHrOrManager ? skipButtonHTML : ''}
+          ${skipDevButtonHTML}
+          ${createAccountLinkHTML}
 
-          ${isHrOrManager ? `
-          <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
-            Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
-          </div>
-          ` : ''}
-
-          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Account</button>
+          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Role</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
           By logging in, you agree to the <a href="#" id="btn-show-policy-verify" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy</a>.
@@ -343,14 +288,14 @@ export function renderLoginView() {
 
     if (forgotPwdBtn) {
       forgotPwdBtn.addEventListener('click', () => {
-        const prefilledId = inputEl ? inputEl.value.trim() : (selectedUser ? selectedUser.employeeId : '');
+        const prefilledId = inputEl ? inputEl.value.trim() : '';
         showForgotPasswordModal(prefilledId);
       });
     }
 
     if (toggleAuthPwdBtn && pwdEl) {
-      const svgEyeOpen = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-      const svgEyeClosed = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+      const svgEyeOpen = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const svgEyeClosed = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
       toggleAuthPwdBtn.addEventListener('click', (e) => {
         e.preventDefault();
         if (pwdEl.type === 'password') {
@@ -368,6 +313,17 @@ export function renderLoginView() {
         showAccountModal();
       });
     }
+
+    const getDefaultUserForRole = () => {
+      const allUsers = DB.getUsers();
+      if (role === 'hr') {
+        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'hr') || allUsers[0];
+      } else if (role === 'manager') {
+        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'finance_manager') || allUsers[0];
+      } else {
+        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'employee') || allUsers[0];
+      }
+    };
 
     const handleVerification = () => {
       const enteredId = inputEl.value.trim();
@@ -394,14 +350,13 @@ export function renderLoginView() {
       }
 
       // Check role match
-      const expectedRole = selectedUser.role;
       let isRoleValid = false;
-      if (expectedRole === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
-      if ((expectedRole === 'manager' || expectedRole === 'finance_manager') && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
-      if (expectedRole === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
+      if (role === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
+      if (role === 'manager' && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
+      if (role === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
 
       if (!isRoleValid) {
-        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${expectedRole.toUpperCase()} portal.`;
+        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${role.toUpperCase()} portal.`;
         warningEl.style.display = 'block';
         return;
       }
@@ -445,20 +400,33 @@ export function renderLoginView() {
       });
     }
 
+    const handleSkip = () => {
+      const enteredId = inputEl.value.trim();
+      if (enteredId) {
+        const matched = DB.getUsers().find(u => 
+          (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
+          (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
+          (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
+          (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
+        );
+        if (matched) {
+          proceedLogin(matched);
+          return;
+        }
+      }
+      proceedLogin(getDefaultUserForRole());
+    };
+
     if (skipBtn) {
-      skipBtn.addEventListener('click', () => {
-        proceedLogin(selectedUser);
-      });
+      skipBtn.addEventListener('click', handleSkip);
     }
 
     if (skipDevBtn) {
-      skipDevBtn.addEventListener('click', () => {
-        proceedLogin(selectedUser);
-      });
+      skipDevBtn.addEventListener('click', handleSkip);
     }
 
     backBtn.addEventListener('click', () => {
-      renderLoginView();
+      renderRolesList();
     });
 
     const policyLinkVerify = authBox.querySelector('#btn-show-policy-verify');
