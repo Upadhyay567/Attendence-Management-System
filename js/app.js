@@ -7437,6 +7437,32 @@ async function renderAdminDashboard() {
   `;
 
   // Bind minimal click events on loading shell if they exist
+
+
+  const statsGridEl = document.getElementById('dashboard-stats-grid');
+  if (statsGridEl && !statsGridEl.dataset.listenerBound) {
+    statsGridEl.dataset.listenerBound = 'true';
+    statsGridEl.addEventListener('click', (e) => {
+      const card = e.target.closest('.stat-card');
+      if (!card) return;
+      const cardId = card.id;
+      if (cardId === 'card-total-staff') {
+        window.location.hash = '#admin-users';
+      } else if (cardId === 'card-present-now') {
+        showPresentNowModal();
+      } else if (cardId === 'card-absent-today') {
+        showAbsentTodayModal();
+      } else if (cardId === 'card-late-arrivals') {
+        showLateArrivalsModal();
+      } else if (cardId === 'card-approved-leave') {
+        showApprovedLeaveModal();
+      } else if (cardId === 'card-pending-swaps') {
+        window.activeAdminApprovalsTab = 'swaps';
+        window.location.hash = '#admin-approvals';
+      }
+    });
+  }
+
   const resetDbBtn = document.getElementById('btn-admin-reset-db');
   if (resetDbBtn) {
     resetDbBtn.addEventListener('click', async () => {
@@ -7448,6 +7474,253 @@ async function renderAdminDashboard() {
   }
 
   // Define update function
+
+  function showDashboardDetailModal(title, items, type) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.zIndex = '999999';
+
+    let tableContentHTML = '';
+    if (items.length === 0) {
+      tableContentHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color:var(--text-muted);">No records found.</td></tr>';
+    } else {
+      if (type === 'present') {
+        tableContentHTML = items.map(item => {
+          const u = item.user;
+          const name = u ? u.name : 'Unknown';
+          const empid = u ? u.employeeId : 'N/A';
+          const dept = u ? u.department : 'N/A';
+          const time = item.time || '--:--';
+          const location = item.location || 'Office Headquarters';
+          const gpsStatus = item.gpsStatus || '—';
+          return '<tr>' +
+            '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
+            '<td style="padding:12px 14px;">' + time + '</td>' +
+            '<td style="text-align:left; padding:12px 14px; font-size:12px;">' + Utils.escape(location) + '</td>' +
+            '<td style="padding:12px 14px;">' + gpsStatus + '</td>' +
+            '</tr>';
+        }).join('');
+      } else if (type === 'absent') {
+        tableContentHTML = items.map(u => {
+          const name = u.name || 'Unknown';
+          const empid = u.employeeId || 'N/A';
+          const dept = u.department || 'N/A';
+          const designation = u.designation || 'N/A';
+          const sch = DB.getSchedule(u.scheduleId);
+          const shiftName = sch ? sch.name : 'Not Assigned';
+          return '<tr>' +
+            '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(designation) + '</td>' +
+            '<td style="padding:12px 14px;">' + Utils.escape(shiftName) + '</td>' +
+            '</tr>';
+        }).join('');
+      } else if (type === 'late') {
+        tableContentHTML = items.map(item => {
+          const u = item.user;
+          const name = u ? u.name : 'Unknown';
+          const empid = u ? u.employeeId : 'N/A';
+          const dept = u ? u.department : 'N/A';
+          const time = item.time || '--:--';
+          const shiftStart = item.shiftStart || '--:--';
+          const gpsStatus = item.gpsStatus || '—';
+          return '<tr>' +
+            '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
+            '<td style="padding:12px 14px;">' + shiftStart + '</td>' +
+            '<td style="padding:12px 14px; font-weight:700; color:var(--warning)">' + time + '</td>' +
+            '<td style="padding:12px 14px;">' + gpsStatus + '</td>' +
+            '</tr>';
+        }).join('');
+      } else if (type === 'leave') {
+        tableContentHTML = items.map(item => {
+          const u = item.user;
+          const name = u ? u.name : 'Unknown';
+          const empid = u ? u.employeeId : 'N/A';
+          const type = item.type || 'Leave';
+          const dates = Utils.formatDate(item.startDate) + ' to ' + Utils.formatDate(item.endDate);
+          const reason = item.reason || 'No reason provided';
+          return '<tr>' +
+            '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
+            '<td style="padding:12px 14px;"><strong>' + type + '</strong></td>' +
+            '<td style="padding:12px 14px;">' + dates + '</td>' +
+            '<td style="text-align:left; padding:12px 14px; font-size:12px; line-height:1.45;">"' + Utils.escape(reason) + '"</td>' +
+            '</tr>';
+        }).join('');
+      }
+    }
+
+    let tableHeaderHTML = '';
+    if (type === 'present') {
+      tableHeaderHTML = '<tr>' +
+        '<th style="text-align:left; padding:12px 14px;">Employee</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Department</th>' +
+        '<th style="padding:12px 14px;">Checked In</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Worksite Location</th>' +
+        '<th style="padding:12px 14px;">GPS Status</th>' +
+        '</tr>';
+    } else if (type === 'absent') {
+      tableHeaderHTML = '<tr>' +
+        '<th style="text-align:left; padding:12px 14px;">Employee</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Department</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Designation</th>' +
+        '<th style="padding:12px 14px;">Assigned Shift</th>' +
+        '</tr>';
+    } else if (type === 'late') {
+      tableHeaderHTML = '<tr>' +
+        '<th style="text-align:left; padding:12px 14px;">Employee</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Department</th>' +
+        '<th style="padding:12px 14px;">Shift Start</th>' +
+        '<th style="padding:12px 14px;">Checked In</th>' +
+        '<th style="padding:12px 14px;">GPS Status</th>' +
+        '</tr>';
+    } else if (type === 'leave') {
+      tableHeaderHTML = '<tr>' +
+        '<th style="text-align:left; padding:12px 14px;">Employee</th>' +
+        '<th style="padding:12px 14px;">Leave Type</th>' +
+        '<th style="padding:12px 14px;">Duration</th>' +
+        '<th style="text-align:left; padding:12px 14px;">Reason Notes</th>' +
+        '</tr>';
+    }
+
+    overlay.innerHTML = `
+      <div class="modal-content" style="max-width: 750px; padding: 24px;">
+        <div class="modal-header" style="margin-bottom: 20px;">
+          <h3 class="modal-title" style="font-size: 20px; font-weight: 700; display:flex; align-items:center; gap:8px">
+            <span>📊</span> ${title}
+          </h3>
+          <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))" style="border:none; background:none; cursor:pointer;">
+            <svg style="width:20px;height:20px;fill:var(--text-secondary)" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+          </button>
+        </div>
+        <div class="modal-body" style="max-height: 60vh; overflow-y: auto; margin-top:10px">
+          <div class="table-container" style="border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+            <table class="custom-table" style="width:100%; border-collapse: collapse; text-align: center; font-size:13px;">
+              <thead>
+                <tr style="background: rgba(243, 237, 230, 0.5); border-bottom:1px solid var(--border);">
+                  ${tableHeaderHTML}
+                </tr>
+              </thead>
+              <tbody>
+                ${tableContentHTML}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top:20px; display:flex; justify-content:flex-end">
+          <button class="btn btn-secondary" onclick="closeModal(this.closest('.modal-overlay'))" style="width:auto; padding:8px 20px;">Close Window</button>
+        </div>
+      </div>
+    `;
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeModal(overlay);
+      }
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  const getAssignedUserIds = () => {
+    const freshUser = DB.getUser(currentUser.id) || currentUser;
+    const isManager = freshUser.role === 'manager';
+    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
+    if (isManager) {
+      users = users.filter(u => u.managerId === currentUser.id);
+    }
+    return users;
+  };
+
+  function showPresentNowModal() {
+    const activeEmployees = getAssignedUserIds();
+    const activeUserIds = activeEmployees.map(u => u.id);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const logs = DB.getLogs().filter(l => l.date === todayStr && l.checkIn && !l.checkOut && activeUserIds.includes(l.userId));
+    
+    const items = logs.map(l => {
+      const u = DB.getUser(l.userId);
+      const distKm = parseFloat(l.distance) || 0;
+      const distM = Math.round(distKm * 1000);
+      let gpsStatus;
+      if (!l.location) {
+        gpsStatus = '<span style="font-size:11.5px;color:var(--text-muted)">— No GPS</span>';
+      } else if (distKm <= 0.1) {
+        const distLabel = distM > 0 ? (distM + 'm from worksite') : 'At worksite';
+        gpsStatus = '<span style="font-size:11.5px;font-weight:700;color:#10b981">IN RANGE (' + distLabel + ')</span>';
+      } else {
+        gpsStatus = '<span style="font-size:11.5px;font-weight:700;color:#ef4444">OUT OF RANGE (' + distKm.toFixed(2) + ' km)</span>';
+      }
+      return {
+        user: u,
+        time: l.checkIn,
+        location: l.location || 'Office Headquarters',
+        gpsStatus: gpsStatus
+      };
+    });
+    showDashboardDetailModal('Present Now - Currently Checked In', items, 'present');
+  }
+
+  function showAbsentTodayModal() {
+    const activeEmployees = getAssignedUserIds();
+    const activeUserIds = activeEmployees.map(u => u.id);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const checkedInUserIds = new Set(DB.getLogs().filter(l => l.date === todayStr && l.checkIn).map(l => l.userId));
+    const onLeaveUserIds = new Set(DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate).map(lv => lv.userId));
+    const absentUsers = activeEmployees.filter(u => !checkedInUserIds.has(u.id) && !onLeaveUserIds.has(u.id));
+    showDashboardDetailModal('Absent Today - Active Staff Missing Logs', absentUsers, 'absent');
+  }
+
+  function showLateArrivalsModal() {
+    const activeEmployees = getAssignedUserIds();
+    const activeUserIds = activeEmployees.map(u => u.id);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const logs = DB.getLogs().filter(l => l.date === todayStr && l.checkIn && l.status === 'Late' && activeUserIds.includes(l.userId));
+    
+    const items = logs.map(l => {
+      const u = DB.getUser(l.userId);
+      const sch = DB.getSchedule(u.scheduleId);
+      const distKm = parseFloat(l.distance) || 0;
+      const distM = Math.round(distKm * 1000);
+      let gpsStatus;
+      if (!l.location) {
+        gpsStatus = '<span style="font-size:11.5px;color:var(--text-muted)">— No GPS</span>';
+      } else if (distKm <= 0.1) {
+        const distLabel = distM > 0 ? (distM + 'm from worksite') : 'At worksite';
+        gpsStatus = '<span style="font-size:11.5px;font-weight:700;color:#10b981">IN RANGE (' + distLabel + ')</span>';
+      } else {
+        gpsStatus = '<span style="font-size:11.5px;font-weight:700;color:#ef4444">OUT OF RANGE (' + distKm.toFixed(2) + ' km)</span>';
+      }
+      return {
+        user: u,
+        time: l.checkIn,
+        shiftStart: sch ? sch.startTime : '--:--',
+        gpsStatus: gpsStatus
+      };
+    });
+    showDashboardDetailModal('Late Arrivals - Checked In Late Today', items, 'late');
+  }
+
+  function showApprovedLeaveModal() {
+    const activeEmployees = getAssignedUserIds();
+    const activeUserIds = activeEmployees.map(u => u.id);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const approvedLeaves = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && activeUserIds.includes(lv.userId));
+    
+    const items = approvedLeaves.map(lv => {
+      const u = DB.getUser(lv.userId);
+      return {
+        user: u,
+        startDate: lv.startDate,
+        endDate: lv.endDate,
+        type: lv.type,
+        reason: lv.reason
+      };
+    });
+    showDashboardDetailModal('Approved Leave - Active Leaves Today', items, 'leave');
+  }
+
   function updateDashboardViews() {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
     const isManager = freshUser.role === 'manager';
@@ -7469,9 +7742,9 @@ async function renderAdminDashboard() {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn && !l.checkOut);
+    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn && !l.checkOut && assignedUserIds.includes(l.userId));
     const lateToday = presentToday.filter(l => l.status === 'Late');
-    const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate);
+    const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));
     
     const presentCount = presentToday.length;
     const lateCount = lateToday.length;
@@ -7540,32 +7813,32 @@ async function renderAdminDashboard() {
     if (statsGrid) {
       statsGrid.innerHTML = `
         <!-- Total Employees -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-total-staff" style="cursor: pointer;">
           <div class="stat-icon stat-icon-blue">👥</div>
           <div class="stat-info"><span class="stat-value">${totalEmployees}</span><span class="stat-label">Total Staff</span></div>
         </div>
         <!-- Present Now -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-present-now" style="cursor: pointer;">
           <div class="stat-icon stat-icon-green">✅</div>
           <div class="stat-info"><span class="stat-value">${presentCount}</span><span class="stat-label">Present Now</span></div>
         </div>
         <!-- Absent Today -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-absent-today" style="cursor: pointer;">
           <div class="stat-icon stat-icon-red">❌</div>
           <div class="stat-info"><span class="stat-value">${absentCount < 0 ? 0 : absentCount}</span><span class="stat-label">Absent Today</span></div>
         </div>
         <!-- Late Arrivals -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-late-arrivals" style="cursor: pointer;">
           <div class="stat-icon stat-icon-amber">⏰</div>
           <div class="stat-info"><span class="stat-value">${lateCount}</span><span class="stat-label">Late Arrivals</span></div>
         </div>
         <!-- Approved Leave -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-approved-leave" style="cursor: pointer;">
           <div class="stat-icon stat-icon-cyan">📁</div>
           <div class="stat-info"><span class="stat-value">${leaveCount}</span><span class="stat-label">Approved Leave</span></div>
         </div>
         <!-- Pending Swaps -->
-        <div class="stat-card">
+        <div class="stat-card" id="card-pending-swaps" style="cursor: pointer;">
           <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:rgb(139,92,246)">🔄</div>
           <div class="stat-info"><span class="stat-value">${pendingSwapsCount}</span><span class="stat-label">Pending Swaps</span></div>
         </div>
@@ -11217,6 +11490,7 @@ function openScheduleModal(schedId = null) {
 }
 
 function renderAdminApprovals() {
+  if (window.activeAdminApprovalsTab) { activeAdminApprovalsTab = window.activeAdminApprovalsTab; }
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const isManager = user.role === 'manager';
@@ -11422,6 +11696,7 @@ function renderAdminApprovals() {
   document.querySelectorAll('.btn-tab-approval').forEach(btn => {
     btn.addEventListener('click', (e) => {
       activeAdminApprovalsTab = e.target.getAttribute('data-tab');
+      window.activeAdminApprovalsTab = activeAdminApprovalsTab;
       renderAdminApprovals();
     });
   });
