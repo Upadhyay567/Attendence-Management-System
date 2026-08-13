@@ -12272,7 +12272,7 @@ function renderAdminAttendances() {
           <button id="btn-att-prev-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Previous Page">Previous</button>
           
           <div style="display: flex; align-items: center; justify-content: center; padding: 0 10px; height: 100%; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border); background: rgba(0,0,0,0.015);">
-            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 32px; height: 22px; text-align: center; padding: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 700; border: none; background: transparent; color: var(--text-primary); outline: none;">
+            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 40px; height: 22px; text-align: center; padding: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 700; border: none; background: transparent; color: var(--text-primary); outline: none;">
             <span style="color: var(--text-muted); margin-left: 2px;">/ <span id="span-att-total-pages" style="color: var(--text-primary);">1</span></span>
           </div>
 
@@ -12321,20 +12321,7 @@ function renderAdminAttendances() {
                   </span>
                 </th>
                 <th style="text-align: right; padding: 12px 16px; width: 100px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);">
-                  <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                    Actions
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="4" y1="21" x2="4" y2="14"></line>
-                      <line x1="4" y1="10" x2="4" y2="3"></line>
-                      <line x1="12" y1="21" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12" y2="3"></line>
-                      <line x1="20" y1="21" x2="20" y2="16"></line>
-                      <line x1="20" y1="12" x2="20" y2="3"></line>
-                      <line x1="1" y1="14" x2="7" y2="14"></line>
-                      <line x1="9" y1="8" x2="15" y2="8"></line>
-                      <line x1="17" y1="16" x2="23" y2="16"></line>
-                    </svg>
-                  </span>
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -13066,6 +13053,7 @@ let dailyWorkStatusSelectedYear = nowDWS.getFullYear();
 let dailyWorkStatusSelectedMonth = nowDWS.getMonth(); // 0-indexed (e.g. 7 = August)
 let dailyWorkStatusCurrentPage = 1;
 let dailyWorkStatusRowsPerPage = 18;
+let dailyWorkStatusTotalFilteredCount = 0;
 let dailyWorkStatusSearchQuery = '';
 let dailyWorkStatusDepartmentFilter = 'all';
 let dailyWorkStatusStatusFilter = 'all';
@@ -13176,11 +13164,18 @@ function renderDailyWorkStatus() {
           <div id="dws-page-info" style="color: #64748b; font-weight: 500;">
             Page 1 of 1
           </div>
-          <div style="display: inline-flex; align-items: center; gap: 8px;">
-            <button type="button" id="btn-dws-prev-page" style="background: none; border: none; font-size: 14px; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s ease;">←</button>
-            <span id="lbl-dws-page-number" style="font-weight: 700; color: #1e293b;">1</span>
-            <span id="lbl-dws-total-pages" style="color: #94a3b8;">/ 1</span>
-            <button type="button" id="btn-dws-next-page" style="background: none; border: none; font-size: 14px; font-weight: 700; color: #64748b; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s ease;">→</button>
+          <!-- Box Panel Pagination Panel « Previous 1 / 8 Next » -->
+          <div class="admin-dws-pagination-panel" style="display: inline-flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <button type="button" id="btn-dws-first-page" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="First Page">&laquo;</button>
+            <button type="button" id="btn-dws-prev-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Previous Page">Previous</button>
+            
+            <div style="display: flex; align-items: center; justify-content: center; padding: 0 10px; height: 100%; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border); background: rgba(0,0,0,0.015);">
+              <span id="lbl-dws-page-number" style="font-weight: 700; color: var(--text-primary);">1</span>
+              <span id="lbl-dws-total-pages" style="color: var(--text-muted); margin-left: 2px;">/ 1</span>
+            </div>
+
+            <button type="button" id="btn-dws-next-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Next Page">Next</button>
+            <button type="button" id="btn-dws-last-page" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: background 0.15s ease;" title="Last Page">&raquo;</button>
           </div>
         </div>
       </div>
@@ -13248,23 +13243,38 @@ function renderDailyWorkStatus() {
     const pagedEmployees = employees.slice(startIdx, startIdx + dailyWorkStatusRowsPerPage);
 
     // Update pagination labels
+    dailyWorkStatusTotalFilteredCount = totalEmployees;
     const pageInfoEl = document.getElementById('dws-page-info');
     const pageNumEl = document.getElementById('lbl-dws-page-number');
     const totalPagesEl = document.getElementById('lbl-dws-total-pages');
+    const firstBtn = document.getElementById('btn-dws-first-page');
     const prevBtn = document.getElementById('btn-dws-prev-page');
     const nextBtn = document.getElementById('btn-dws-next-page');
+    const lastBtn = document.getElementById('btn-dws-last-page');
 
     if (pageInfoEl) pageInfoEl.textContent = `Page ${dailyWorkStatusCurrentPage} of ${totalPages}`;
     if (pageNumEl) pageNumEl.textContent = `${dailyWorkStatusCurrentPage}`;
     if (totalPagesEl) totalPagesEl.textContent = `/ ${totalPages}`;
 
+    if (firstBtn) {
+      firstBtn.style.color = dailyWorkStatusCurrentPage > 1 ? 'var(--text-primary)' : 'var(--text-muted)';
+      firstBtn.style.cursor = dailyWorkStatusCurrentPage > 1 ? 'pointer' : 'default';
+      firstBtn.style.opacity = dailyWorkStatusCurrentPage > 1 ? '1' : '0.5';
+    }
     if (prevBtn) {
-      prevBtn.style.color = dailyWorkStatusCurrentPage > 1 ? '#334155' : '#cbd5e1';
+      prevBtn.style.color = dailyWorkStatusCurrentPage > 1 ? 'var(--text-primary)' : 'var(--text-muted)';
       prevBtn.style.cursor = dailyWorkStatusCurrentPage > 1 ? 'pointer' : 'default';
+      prevBtn.style.opacity = dailyWorkStatusCurrentPage > 1 ? '1' : '0.5';
     }
     if (nextBtn) {
-      nextBtn.style.color = dailyWorkStatusCurrentPage < totalPages ? '#334155' : '#cbd5e1';
+      nextBtn.style.color = dailyWorkStatusCurrentPage < totalPages ? 'var(--text-primary)' : 'var(--text-muted)';
       nextBtn.style.cursor = dailyWorkStatusCurrentPage < totalPages ? 'pointer' : 'default';
+      nextBtn.style.opacity = dailyWorkStatusCurrentPage < totalPages ? '1' : '0.5';
+    }
+    if (lastBtn) {
+      lastBtn.style.color = dailyWorkStatusCurrentPage < totalPages ? 'var(--text-primary)' : 'var(--text-muted)';
+      lastBtn.style.cursor = dailyWorkStatusCurrentPage < totalPages ? 'pointer' : 'default';
+      lastBtn.style.opacity = dailyWorkStatusCurrentPage < totalPages ? '1' : '0.5';
     }
 
     if (pagedEmployees.length === 0) {
@@ -13383,6 +13393,16 @@ function renderDailyWorkStatus() {
   }
 
   // Pagination navigation listeners
+  const firstBtn = document.getElementById('btn-dws-first-page');
+  if (firstBtn) {
+    firstBtn.addEventListener('click', () => {
+      if (dailyWorkStatusCurrentPage > 1) {
+        dailyWorkStatusCurrentPage = 1;
+        updateMatrixTable();
+      }
+    });
+  }
+
   const prevBtn = document.getElementById('btn-dws-prev-page');
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
@@ -13396,11 +13416,20 @@ function renderDailyWorkStatus() {
   const nextBtn = document.getElementById('btn-dws-next-page');
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      const allUsers = DB.getUsers();
-      let employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
-      const totalPages = Math.max(1, Math.ceil(employees.length / dailyWorkStatusRowsPerPage));
+      const totalPages = Math.max(1, Math.ceil(dailyWorkStatusTotalFilteredCount / dailyWorkStatusRowsPerPage));
       if (dailyWorkStatusCurrentPage < totalPages) {
         dailyWorkStatusCurrentPage++;
+        updateMatrixTable();
+      }
+    });
+  }
+
+  const lastBtn = document.getElementById('btn-dws-last-page');
+  if (lastBtn) {
+    lastBtn.addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(dailyWorkStatusTotalFilteredCount / dailyWorkStatusRowsPerPage));
+      if (dailyWorkStatusCurrentPage < totalPages) {
+        dailyWorkStatusCurrentPage = totalPages;
         updateMatrixTable();
       }
     });

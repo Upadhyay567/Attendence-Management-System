@@ -2635,21 +2635,46 @@ body.light-theme .sidebar-brand {
 
 @media (min-width: 769px) {
   .sidebar {
-    width: 260px !important;
+    width: 76px !important;
     display: flex !important;
     position: relative !important;
     left: 0 !important;
     transform: none !important;
     flex-shrink: 0 !important;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
-  .sidebar .menu-label,
-  .sidebar .user-info-text {
+  .sidebar.active {
+    width: 260px !important;
+  }
+  
+  /* Collapsed state item centering and text hiding */
+  .sidebar:not(.active) .menu-item a {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+  }
+  .sidebar:not(.active) .menu-label,
+  .sidebar:not(.active) .user-info-text,
+  .sidebar:not(.active) .submenu-arrow,
+  .sidebar:not(.active) .sidebar-footer .logout-btn {
+    display: none !important;
+  }
+  .sidebar:not(.active) .sidebar-footer {
+    margin: 10px 4px !important;
+    padding: 8px !important;
+    justify-content: center !important;
+  }
+  .sidebar:not(.active) .submenu-list {
+    display: none !important;
+  }
+
+  .sidebar.active .menu-label,
+  .sidebar.active .user-info-text {
     display: inline !important;
   }
-  .sidebar .sidebar-brand {
+  .sidebar.active .sidebar-brand {
     padding: 20px 24px !important;
   }
-  .sidebar .surya-brand-img.full-logo {
+  .sidebar.active .surya-brand-img.full-logo {
     height: 60px !important;
     width: auto !important;
     max-width: 170px !important;

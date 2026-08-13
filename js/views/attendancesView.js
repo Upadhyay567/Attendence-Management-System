@@ -74,7 +74,7 @@ export function renderAdminAttendances() {
           <button id="btn-att-prev-page" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Previous Page">Previous</button>
           
           <div style="display: flex; align-items: center; justify-content: center; padding: 0 10px; height: 100%; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border); background: rgba(0,0,0,0.015);">
-            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 32px; height: 22px; text-align: center; padding: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 700; border: none; background: transparent; color: var(--text-primary); outline: none;">
+            <input type="number" id="input-att-current-page" min="1" max="1" value="1" style="width: 40px; height: 22px; text-align: center; padding: 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 700; border: none; background: transparent; color: var(--text-primary); outline: none;">
             <span style="color: var(--text-muted); margin-left: 2px;">/ <span id="span-att-total-pages" style="color: var(--text-primary);">1</span></span>
           </div>
 
@@ -123,20 +123,7 @@ export function renderAdminAttendances() {
                   </span>
                 </th>
                 <th style="text-align: right; padding: 12px 16px; width: 100px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);">
-                  <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px;">
-                    Actions
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="4" y1="21" x2="4" y2="14"></line>
-                      <line x1="4" y1="10" x2="4" y2="3"></line>
-                      <line x1="12" y1="21" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12" y2="3"></line>
-                      <line x1="20" y1="21" x2="20" y2="16"></line>
-                      <line x1="20" y1="12" x2="20" y2="3"></line>
-                      <line x1="1" y1="14" x2="7" y2="14"></line>
-                      <line x1="9" y1="8" x2="15" y2="8"></line>
-                      <line x1="17" y1="16" x2="23" y2="16"></line>
-                    </svg>
-                  </span>
+                  Actions
                 </th>
               </tr>
             </thead>
