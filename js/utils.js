@@ -62,6 +62,74 @@ export const Utils = {
     document.body.removeChild(link);
   },
 
+  // Export to formatted Excel sheet (.xls) supporting column widths and date formatting
+  exportToExcel(filename, headers, rows) {
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
+    html += `<head><meta charset="utf-8">`;
+    html += `<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Sheet1</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->`;
+    html += `<style>`;
+    html += `table { border-collapse: collapse; }`;
+    html += `th { background-color: #ef4444; color: #ffffff; font-weight: bold; border: 0.5pt solid #cbd5e1; text-align: left; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; padding: 6px 8px; }`;
+    html += `td { border: 0.5pt solid #cbd5e1; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; padding: 6px 8px; mso-number-format:"\\@"; }`;
+    html += `</style></head><body>`;
+    html += `<table>`;
+    
+    // Add colgroups for column widths
+    html += `<colgroup>`;
+    html += `<col style="width: 150px;" />`; // Employee Name
+    html += `<col style="width: 110px;" />`; // Employee ID
+    html += `<col style="width: 130px;" />`; // Date (Wider so no ###)
+    html += `<col style="width: 90px;" />`;  // Check-In
+    html += `<col style="width: 90px;" />`;  // Check-Out
+    html += `<col style="width: 120px;" />`; // Shift
+    html += `<col style="width: 90px;" />`;  // At Work
+    html += `<col style="width: 95px;" />`;  // Status
+    html += `<col style="width: 250px;" />`; // Location
+    html += `</colgroup>`;
+
+    // Add headers
+    html += `<tr>`;
+    headers.forEach(h => {
+      html += `<th>${h}</th>`;
+    });
+    html += `</tr>`;
+
+    // Add rows
+    rows.forEach(row => {
+      html += `<tr>`;
+      row.forEach((cell, idx) => {
+        const val = cell === null || cell === undefined ? '' : String(cell);
+        if (idx === 2) {
+          // Date format yyyy-mm-dd
+          html += `<td style="mso-number-format:'yyyy-mm-dd'; text-align: center;">${val}</td>`;
+        } else if (idx === 3 || idx === 4) {
+          // Check-In & Check-Out time format hh:mm
+          html += `<td style="mso-number-format:'hh:mm'; text-align: center;">${val}</td>`;
+        } else if (idx === 6) {
+          // Duration (At Work)
+          html += `<td style="text-align: center;">${val}</td>`;
+        } else {
+          html += `<td>${val}</td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+
+    html += `</table></body></html>`;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const excelFilename = filename.replace(/\\.csv$/i, '.xls');
+    link.setAttribute("download", excelFilename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
+
   // Generate full month days array for reports
   getDaysInMonth(year, month) {
     const date = new Date(year, month, 1);

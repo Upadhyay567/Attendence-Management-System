@@ -825,18 +825,26 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     logs = logs.filter(l => idSet.has(l.id));
   }
 
-  const filename = `Employee_Attendances_${new Date().toISOString().split('T')[0]}.csv`;
+  const filename = `Employee_Attendances_${new Date().toISOString().split('T')[0]}.xls`;
   const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
   const rows = logs.map(l => {
     const emp = employeeMap.get(l.userId);
     const shift = DB.getSchedule(l.shiftId);
     const atWork = Utils.calculateDuration(l.checkIn, l.checkOut);
+    
+    // Format check-in/out times to show seconds, matching dashboard UI
+    let checkInDisplay = l.checkIn || '--';
+    if (checkInDisplay !== '--' && checkInDisplay.length === 5) checkInDisplay += ':00';
+    
+    let checkOutDisplay = l.checkOut || '--';
+    if (checkOutDisplay !== '--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
+
     return [
       emp ? emp.name : 'Unknown',
       emp ? (emp.employeeId || emp.id) : '',
       l.date,
-      l.checkIn || '--',
-      l.checkOut || '--',
+      checkInDisplay,
+      checkOutDisplay,
       shift ? shift.name : 'Regular Shift',
       atWork === '-' ? '--' : atWork,
       l.status || 'On Time',
@@ -844,7 +852,7 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     ];
   });
 
-  Utils.exportToCSV(filename, headers, rows);
+  Utils.exportToExcel(filename, headers, rows);
 }
 
 // ==========================================
