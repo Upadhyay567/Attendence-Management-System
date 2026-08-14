@@ -2667,6 +2667,21 @@ body.light-theme .sidebar-brand {
     display: none !important;
   }
 
+  /* Collapsed state brand padding and overflow adjustments to prevent logo cropping */
+  .sidebar:not(.active) .sidebar-brand {
+    padding: 8px 4px !important;
+    justify-content: center !important;
+  }
+  .sidebar:not(.active) .sidebar-brand-logo {
+    padding: 0 !important;
+    overflow: visible !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
   .sidebar.active .menu-label,
   .sidebar.active .user-info-text {
     display: inline !important;
