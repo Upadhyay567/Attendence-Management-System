@@ -1285,7 +1285,7 @@ function renderAppShell() {
       <div class="sidebar-brand">
         <a href="#dashboard" class="sidebar-brand-logo" title="House of Surya">
           <img src="assets/surya_logo_white.png?v=8" alt="House of Surya Logo" class="surya-brand-img full-logo" />
-          <img src="assets/surya_logo_favicon.png?v=8" alt="House of Surya Favicon" class="surya-brand-img favicon-logo" />
+          <img src="assets/surya_logo_white.png?v=8" alt="House of Surya Favicon" class="surya-brand-img favicon-logo" />
         </a>
       </div>
       <ul class="sidebar-menu">
