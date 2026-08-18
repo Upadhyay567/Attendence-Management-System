@@ -18,3 +18,5 @@ node_modules/
 search_*.py
 check_syntax.py
 update_db.js
+scratch/
+

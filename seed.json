@@ -48,7 +48,7 @@
       "username": "manager",
       "employeeId": "MGR102",
       "name": "Manjit  kour Operations Manager",
-      "password": "Manjit@123",
+      "password": "$hash$9b629e62",
       "role": "manager",
       "scheduleId": "sch_q8jji9v",
       "baseSalary": 80000,
@@ -76,7 +76,8 @@
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "status": "Active"
+      "status": "Active",
+      "passwordResetCount": 1
     },
     {
       "id": "usr_john",
@@ -86,7 +87,7 @@
       "password": "JohnPassword123!",
       "role": "employee",
       "managerId": "",
-      "scheduleId": "sch_3ebecon",
+      "scheduleId": "sch_q8jji9v",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
       "allowanceTravel": 3000,
@@ -192,7 +193,7 @@
       "name": "David Lightman",
       "password": "DavidPassword123!",
       "role": "employee",
-      "scheduleId": "sch_q8jji9v",
+      "scheduleId": "sch_3ebecon",
       "baseSalary": 48000,
       "allowanceHRA": 7200,
       "allowanceTravel": 3000,
@@ -300,7 +301,7 @@
       "status": "Active",
       "password": "$hash$f629dc1a",
       "preferredLocation": "Noida sector 61",
-      "managerId": "",
+      "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
@@ -355,7 +356,7 @@
     {
       "id": "usr_6af1y3c",
       "employeeId": "HR0789",
-      "scheduleId": "sch_q8jji9v",
+      "scheduleId": "sch_3ebecon",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -383,13 +384,19 @@
       "status": "Active",
       "photo": null,
       "password": "$hash$01ab75bf",
-      "preferredLocation": "Chatarpur",
-      "managerId": "",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
       "state": "delhi",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "scheduleIds": [
+        "sch_3ebecon"
+      ],
+      "shiftLocations": {
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+      }
     }
   ],
   "schedules": [
@@ -398,7 +405,7 @@
       "name": "Morning Shift",
       "startTime": "11:30",
       "endTime": "16:00",
-      "gracePeriod": 10,
+      "gracePeriod": 5,
       "halfDayLimit": 120,
       "workDays": [
         1,
@@ -414,7 +421,7 @@
       "name": "Night  Shift 56",
       "startTime": "11:00",
       "endTime": "17:00",
-      "gracePeriod": 15,
+      "gracePeriod": 5,
       "halfDayLimit": 120,
       "workDays": [
         1,
@@ -476,6 +483,54 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_john_2026-08-13_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-08-13",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "11:28",
+      "checkOut": "18:16",
+      "status": "On Time",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695118° N, 77.186008° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_6af1y3c_2026-08-13_sch_q8jji9v",
+      "userId": "usr_6af1y3c",
+      "date": "2026-08-13",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "18:14",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Chatarpur",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "24.916400° N, 79.581200° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_manager_2026-08-13_sch_q8jji9v",
+      "userId": "usr_manager",
+      "date": "2026-08-13",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "18:15",
+      "checkOut": "18:15",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
       "id": "log_usr_john_2026-08-12_1786517028015",
       "userId": "usr_john",
       "date": "2026-08-12",
@@ -505,6 +560,22 @@
       "justification": "",
       "coords": "28.695183° N, 77.186061° E",
       "distance": 0.01,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_6af1y3c_2026-08-12_sch_q8jji9v",
+      "userId": "usr_6af1y3c",
+      "date": "2026-08-12",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "13:23",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Chatarpur",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "24.916400° N, 79.581200° E",
+      "distance": 0,
       "facePhoto": null
     },
     {
@@ -2604,34 +2675,50 @@
       "location": "Kohat Enclave, Pitampura, Delhi"
     },
     {
-      "id": "log_usr_6af1y3c_2026-08-12_sch_q8jji9v",
-      "userId": "usr_6af1y3c",
-      "date": "2026-08-12",
-      "shiftId": "sch_q8jji9v",
-      "checkIn": "13:23",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "Chatarpur",
-      "deviationFlag": false,
-      "justification": "",
-      "coords": "24.916400° N, 79.581200° E",
-      "distance": 0,
-      "facePhoto": null
-    },
-    {
-      "id": "log_usr_john_2026-08-13_sch_3ebecon",
+      "id": "log_usr_john_2026-08-14_sch_3ebecon",
       "userId": "usr_john",
-      "date": "2026-08-13",
+      "date": "2026-08-14",
       "shiftId": "sch_3ebecon",
-      "checkIn": "11:28",
+      "checkIn": "10:46",
       "checkOut": null,
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
-      "coords": "28.695118° N, 77.186008° E",
+      "coords": "28.695149° N, 77.186042° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_6af1y3c_2026-08-14_sch_3ebecon",
+      "userId": "usr_6af1y3c",
+      "date": "2026-08-14",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "10:49",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695206° N, 77.186013° E",
+      "distance": 0.01,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_manager_2026-08-14_sch_q8jji9v",
+      "userId": "usr_manager",
+      "date": "2026-08-14",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "12:13",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
       "facePhoto": null
     }
@@ -2749,7 +2836,7 @@
       "receiverId": "usr_john",
       "reason": "wsd",
       "swapType": "both",
-      "status": "Pending Manager",
+      "status": "Approved",
       "date": "2026-08-05",
       "managerComment": "",
       "coworkerComment": ""
