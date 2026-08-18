@@ -2753,6 +2753,22 @@
       "coords": "28.695162° N, 77.186050° E",
       "distance": 0,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_sarah_2026-08-18_sch_q8jji9v",
+      "userId": "usr_sarah",
+      "date": "2026-08-18",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "15:59",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "chandani chowk",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [

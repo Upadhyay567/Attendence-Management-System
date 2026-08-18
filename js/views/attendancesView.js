@@ -5,10 +5,25 @@ import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
+let adminAttendancesCurrentPage = 1;
+let adminAttendancesRowsPerPage = 10;
+let adminAttendancesSortField = 'date';
+let adminAttendancesSortOrder = 'desc';
+let adminAttendancesSearchQuery = '';
+let adminAttendancesSelectedIds = new Set();
+let adminAttendancesSelectedMonth = new Date().getMonth();
+let adminAttendancesSelectedYear = new Date().getFullYear();
+
 export function renderAdminAttendances() {
   const main = document.getElementById('main-view');
   const currentUser = Auth.getCurrentUser();
   if (!currentUser) return;
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const currentMonthName = monthNames[adminAttendancesSelectedMonth];
 
   main.innerHTML = html`
     <div id="admin-attendances-page-container" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: var(--text-primary);">
@@ -25,6 +40,20 @@ export function renderAdminAttendances() {
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
+          </div>
+
+          <!-- Calendar Month Filter Button -->
+          <div style="position: relative; flex-shrink: 0;">
+            <button type="button" id="admin-att-calendar-btn" class="btn btn-secondary" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto !important; height: 34px; padding: 0 14px; font-size: 14px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
+              <span id="lbl-admin-att-current-month">${currentMonthName}, ${adminAttendancesSelectedYear}</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--text-secondary);">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+            <input type="month" id="admin-att-month-picker" value="${adminAttendancesSelectedYear}-${String(adminAttendancesSelectedMonth + 1).padStart(2, '0')}" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
           </div>
 
           <!-- Actions Dropdown Button -->
@@ -122,6 +151,11 @@ export function renderAdminAttendances() {
                     <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> At Work
                   </span>
                 </th>
+                <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-status">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Status
+                  </span>
+                </th>
                 <th style="text-align: right; padding: 12px 16px; width: 100px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);">
                   Actions
                 </th>
@@ -144,6 +178,30 @@ export function renderAdminAttendances() {
     });
     document.addEventListener('click', () => {
       actionsMenu.style.display = 'none';
+    });
+  }
+
+  // Calendar Month/Year Picker Button
+  const calBtn = document.getElementById('admin-att-calendar-btn');
+  const calInput = document.getElementById('admin-att-month-picker');
+  if (calBtn && calInput) {
+    calBtn.addEventListener('click', () => {
+      if (typeof calInput.showPicker === 'function') {
+        calInput.showPicker();
+      } else {
+        calInput.click();
+      }
+    });
+
+    calInput.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val) {
+        const [y, m] = val.split('-');
+        adminAttendancesSelectedYear = parseInt(y, 10);
+        adminAttendancesSelectedMonth = parseInt(m, 10) - 1;
+        adminAttendancesCurrentPage = 1;
+        renderAdminAttendances();
+      }
     });
   }
 
@@ -313,7 +371,8 @@ export function renderAdminAttendances() {
     'th-att-checkin': 'checkIn',
     'th-att-checkout': 'checkOut',
     'th-att-shift': 'shiftName',
-    'th-att-atwork': 'atWorkMins'
+    'th-att-atwork': 'atWorkMins',
+    'th-att-status': 'status'
   };
 
   Object.entries(sortMap).forEach(([thId, field]) => {
@@ -349,7 +408,16 @@ export function renderAdminAttendances() {
     const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
     const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
 
-    const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+    const rawLogs = DB.getLogs().filter(log => {
+      if (!employeeMap.has(log.userId)) return false;
+      if (log.date) {
+        const [y, m] = log.date.split('-');
+        const logYear = parseInt(y, 10);
+        const logMonth = parseInt(m, 10) - 1; // 0-indexed
+        return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
+      }
+      return false;
+    });
 
     // Map logs with rich display values
     const mappedLogs = rawLogs.map(log => {
@@ -440,7 +508,7 @@ export function renderAdminAttendances() {
     if (paginated.length === 0) {
       tbody.innerHTML = html`
         <tr>
-          <td colspan="8" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+          <td colspan="9" style="text-align: center; padding: 48px 20px; color: var(--text-muted); font-size: 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
             No employee attendance records found.
           </td>
         </tr>
@@ -458,6 +526,37 @@ export function renderAdminAttendances() {
         let checkOutDisplay = log.checkOut || '--:--';
         if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
 
+        const shift = DB.getSchedule(log.shiftId);
+        
+        let isLateArrival = log.status === 'Late';
+        if (log.checkIn && shift) {
+          const [inH, inM] = log.checkIn.split(':').map(Number);
+          const [startH, startM] = shift.startTime.split(':').map(Number);
+          const checkInMins = inH * 60 + inM;
+          const startMins = startH * 60 + startM;
+          const grace = shift.gracePeriod || 0;
+          if (checkInMins > startMins + grace) {
+            isLateArrival = true;
+          }
+        }
+        
+        let isEarlyDeparture = false;
+        if (log.checkOut && shift) {
+          const [outH, outM] = log.checkOut.split(':').map(Number);
+          const [endH, endM] = shift.endTime.split(':').map(Number);
+          const checkOutMins = outH * 60 + outM;
+          const endMins = endH * 60 + endM;
+          if (checkOutMins < endMins) {
+            isEarlyDeparture = true;
+          }
+        }
+
+        const s = log.status || 'On Time';
+        let badgeClass = 'badge-on-time';
+        if (s === 'Late') badgeClass = 'badge-late';
+        else if (s === 'Half Day') badgeClass = 'badge-half-day';
+        else if (s === 'Absent') badgeClass = 'badge-absent';
+
         return `
           <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif;" onmouseover="this.style.background='rgba(0,0,0,0.015)'" onmouseout="this.style.background='transparent'">
             <td style="width: 44px; text-align: center; padding: 12px 10px;">
@@ -474,10 +573,19 @@ export function renderAdminAttendances() {
               </div>
             </td>
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.date}</td>
-            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${checkInDisplay}</td>
-            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${checkOutDisplay}</td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+              ${checkInDisplay}
+              ${isLateArrival ? `<div style="font-size: 11px; color: #ef4444; font-weight: 600; margin-top: 2px;">Late Arrival</div>` : ''}
+            </td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+              ${checkOutDisplay}
+              ${isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
+            </td>
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${Utils.escape(log.shiftName)}</td>
             <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.atWorkStr}</td>
+            <td style="padding: 12px 14px; font-size: 13px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+              <span class="badge ${badgeClass}">${s}</span>
+            </td>
             <td style="padding: 12px 16px; text-align: right;">
               <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
                 <button class="btn-att-edit" data-id="${log.id}" title="Edit" style="background: transparent; border: 1px solid var(--border); border-radius: 6px; width: 28px; height: 28px; padding: 0; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;">
