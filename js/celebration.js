@@ -161,15 +161,17 @@ function initCelebrationCanvas(canvas) {
   // Spawns a firework explosion
   function spawnFireworkBurst() {
     if (!active) return;
-    const cx = Math.random() * (canvas.width - 200) + 100;
-    const cy = Math.random() * (canvas.height * 0.6) + 100;
+    const w = canvas.width || window.innerWidth || 800;
+    const h = canvas.height || window.innerHeight || 600;
+    const cx = Math.random() * (w - 200) + 100;
+    const cy = Math.random() * (h * 0.5) + 100;
     const burstColor = colors[Math.floor(Math.random() * colors.length)];
-    const sparksCount = Math.floor(Math.random() * 30) + 30;
+    const sparksCount = Math.floor(Math.random() * 40) + 50; // 50 to 90 sparks
     
     const sparks = [];
     for (let i = 0; i < sparksCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 5 + 2;
+      const speed = Math.random() * 7 + 3; // 3 to 10 speed
       sparks.push({
         x: cx,
         y: cy,
@@ -177,15 +179,15 @@ function initCelebrationCanvas(canvas) {
         vy: Math.sin(angle) * speed,
         color: burstColor,
         alpha: 1.0,
-        decay: Math.random() * 0.02 + 0.015,
-        size: Math.random() * 2 + 1.5
+        decay: Math.random() * 0.012 + 0.008, // slower decay for longer trails
+        size: Math.random() * 2.5 + 2.0 // larger sparks (2.0 to 4.5px radius)
       });
     }
     fireworks.push(sparks);
   }
 
   // Set interval to spawn fireworks
-  const fwInterval = setInterval(spawnFireworkBurst, 1200);
+  const fwInterval = setInterval(spawnFireworkBurst, 700); // spawn every 700ms for more action
   spawnFireworkBurst();
 
   function draw() {
@@ -278,9 +280,11 @@ function initCelebrationCanvas(canvas) {
       let activeSparks = 0;
       
       sparks.forEach(s => {
+        s.vx *= 0.98; // air resistance
+        s.vy *= 0.98; // air resistance
         s.x += s.vx;
         s.y += s.vy;
-        s.vy += 0.04; // gravity
+        s.vy += 0.08; // gravity
         s.alpha -= s.decay;
         
         if (s.alpha > 0) {
@@ -396,6 +400,7 @@ export function triggerBirthdayCelebration(user) {
   };
 
   // Close helpers
+  let destroyCanvas = null;
   let cleanedUp = false;
   const cleanup = () => {
     if (cleanedUp) return;
@@ -418,5 +423,5 @@ export function triggerBirthdayCelebration(user) {
 
   // Canvas celebration initialization
   const canvas = overlay.querySelector('#celebration-canvas');
-  const destroyCanvas = initCelebrationCanvas(canvas);
+  destroyCanvas = initCelebrationCanvas(canvas);
 }
