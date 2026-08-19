@@ -80,7 +80,7 @@ export function renderEmployeeLeaves() {
               <label class="form-label" for="leave-proof">Supporting Document <span style="color:var(--text-muted);font-weight:normal;font-size:12px;">(Optional, e.g. medical certificate)</span></label>
               <input class="form-input" type="file" id="leave-proof" accept="image/*,.pdf,.doc,.docx" style="padding:8px">
             </div>
-            <button class="btn" type="submit">Submit Request</button>
+            <button class="btn" type="submit" style="background: var(--primary); color: #ffffff; border-radius: 8px; font-weight: 700; height: 42px; width: 100%; border: none; cursor: pointer; transition: all 0.2s ease;">Submit Request</button>
           </form>
           <div id="leave-alert" style="display:none"></div>
         </div>
@@ -114,10 +114,40 @@ export function renderEmployeeLeaves() {
       showLeaveAlert('Start date cannot be after end date.', 'error');
       return;
     }
-    DB.applyLeave(user.id, type, start, end, reason, chosenApprover);
-    showLeaveAlert('Leave request submitted successfully!', 'success');
-    document.getElementById('leave-request-form').reset();
-    renderPersonalLeaves(user.id);
+
+    const proofFile = document.getElementById('leave-proof').files[0];
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    const sendRequest = (base64Data = null) => {
+      DB.applyLeave(user.id, type, start, end, reason, chosenApprover, base64Data);
+      showLeaveAlert('Leave request submitted successfully!', 'success');
+      document.getElementById('leave-request-form').reset();
+      renderPersonalLeaves(user.id);
+    };
+
+    if (proofFile) {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading...';
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+        sendRequest(evt.target.result);
+      };
+      reader.onerror = function() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+        showLeaveAlert('Error reading file. Please try again.', 'error');
+      };
+      reader.readAsDataURL(proofFile);
+    } else {
+      sendRequest(null);
+    }
   });
 }
-

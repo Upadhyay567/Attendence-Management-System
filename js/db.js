@@ -1442,7 +1442,7 @@ export const DB = {
     return this.data.leaveRequests.sort((a, b) => b.requestDate.localeCompare(a.requestDate));
   },
 
-  applyLeave(userId, type, startDate, endDate, reason, approverHead = '') {
+  applyLeave(userId, type, startDate, endDate, reason, approverHead = '', supportingDoc = null) {
     const newId = 'lv_' + Math.random().toString(36).substring(2, 9);
     const newRequest = {
       id: newId,
@@ -1454,7 +1454,8 @@ export const DB = {
       approverHead,
       status: 'Pending',
       requestDate: new Date().toISOString().split('T')[0],
-      managerComment: ''
+      managerComment: '',
+      supportingDoc
     };
     this.data.leaveRequests.push(newRequest);
     this.save();

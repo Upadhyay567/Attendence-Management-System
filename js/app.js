@@ -529,7 +529,7 @@ function setupRouter() {
         }
       } else {
         // Management (HR / Manager / Finance) Guard
-        if (hash === '#dashboard' || hash === '#leaves' || (hash.startsWith('#employee-') && hash !== '#employee-work-status')) {
+        if (hash === '#dashboard' || (hash.startsWith('#employee-') && hash !== '#employee-work-status')) {
           window.location.hash = '#admin-dashboard';
           return;
         }
@@ -1212,8 +1212,7 @@ function renderAppShell() {
           <li class="submenu-item" id="sub-my-attendances"><a href="#admin-my-attendances">My Attendances</a></li>
           <li class="submenu-item" id="sub-attendances"><a href="#admin-attendances">Attendances</a></li>
           <li class="submenu-item" id="sub-work-status"><a href="#admin-work-status">Daily Work Status</a></li>
-          <li class="submenu-item" id="sub-checkin-log"><a href="#admin-checkin-log">Check-in / Check-out Log</a></li>
-          <li class="submenu-item" id="sub-deviations"><a href="#admin-deviations">Late Arrival & Early Departure</a></li>
+          <li class="submenu-item" id="sub-leaves"><a href="#leaves">My Leave Request</a></li>
         </ul>
       </li>
       ` : ''}
@@ -1252,12 +1251,23 @@ function renderAppShell() {
     `;
   } else {
     menuHTML = `
-      <li class="menu-item" id="nav-dashboard"><a href="#dashboard">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> <span class="menu-label">${labels.status}</span>
-      </a></li>
-      <li class="menu-item" id="nav-leaves"><a href="#leaves">
-        <svg viewBox="0 0 24 24"><path d="M14 6c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V6zm6 2c0-.55-.45-1-1-1h-3c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1h3c.55 0 1-.45 1-1V8z"/></svg> <span class="menu-label">${labels.leaves}</span>
-      </a></li>
+      <li class="menu-item menu-item-has-submenu" id="nav-employee-attendance" style="position: relative;">
+        <a href="javascript:void(0)" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span style="display: flex; align-items: center; gap: 14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;vertical-align:middle;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m7.5 12.5 2 2 4.5-4.5"></path>
+              <path d="m11.5 12.5 1.5 1.5 3-3"></path>
+            </svg>
+            <span class="menu-label">Attendance</span>
+          </span>
+          <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
+        </a>
+        <ul class="submenu-list">
+          <li class="submenu-item" id="sub-emp-dashboard"><a href="#dashboard">My Attendance</a></li>
+          <li class="submenu-item" id="sub-emp-leaves"><a href="#leaves">My Leave Request</a></li>
+        </ul>
+      </li>
       <li class="menu-item" id="nav-employee-reports"><a href="#employee-reports">
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> <span class="menu-label">${labels.payslips}</span>
       </a></li>
@@ -4780,7 +4790,7 @@ function renderEmployeeLeaves() {
               <label class="form-label" for="leave-proof">Supporting Document <span style="color:var(--text-muted);font-weight:normal;font-size:12px;">(Optional, e.g. medical certificate)</span></label>
               <input class="form-input" type="file" id="leave-proof" accept="image/*,.pdf,.doc,.docx" style="padding:8px">
             </div>
-            <button class="btn" type="submit">Submit Request</button>
+            <button class="btn" type="submit" style="background: var(--primary); color: #ffffff; border-radius: 8px; font-weight: 700; height: 42px; width: 100%; border: none; cursor: pointer; transition: all 0.2s ease;">Submit Request</button>
           </form>
           <div id="leave-alert" style="display:none"></div>
         </div>
@@ -4814,10 +4824,41 @@ function renderEmployeeLeaves() {
       showLeaveAlert('Start date cannot be after end date.', 'error');
       return;
     }
-    DB.applyLeave(user.id, type, start, end, reason, chosenApprover);
-    showLeaveAlert('Leave request submitted successfully!', 'success');
-    document.getElementById('leave-request-form').reset();
-    renderPersonalLeaves(user.id);
+
+    const proofFile = document.getElementById('leave-proof').files[0];
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    const sendRequest = (base64Data = null) => {
+      DB.applyLeave(user.id, type, start, end, reason, chosenApprover, base64Data);
+      showLeaveAlert('Leave request submitted successfully!', 'success');
+      document.getElementById('leave-request-form').reset();
+      renderPersonalLeaves(user.id);
+    };
+
+    if (proofFile) {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading...';
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+        sendRequest(evt.target.result);
+      };
+      reader.onerror = function() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Request';
+        }
+        showLeaveAlert('Error reading file. Please try again.', 'error');
+      };
+      reader.readAsDataURL(proofFile);
+    } else {
+      sendRequest(null);
+    }
   });
 }
 
@@ -6346,6 +6387,7 @@ function renderPersonalLeaves(userId) {
         </td>
         <td style="font-size: 13px; color: var(--text-secondary); line-height: 1.4; min-width: 150px; word-wrap: break-word;">
           <strong>Reason:</strong> ${Utils.escape(lv.reason)}
+          ${lv.supportingDoc ? `<br><a href="${lv.supportingDoc}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 6px; border-radius:4px; margin-top:6px; color:#ffffff; background:#89201B; text-decoration:none; font-weight:600;">📄 View Document</a>` : ''}
           ${lv.managerComment ? `<br><strong style="color:var(--primary)">Manager:</strong> ${Utils.escape(lv.managerComment)}` : ''}
         </td>
       </tr>
@@ -11546,6 +11588,7 @@ function renderAdminApprovals() {
                   </td>
                   <td style="font-size: 13px; color:var(--text-secondary); line-height:1.4; min-width: 150px; word-wrap: break-word;">
                     "${Utils.escape(lv.reason)}"
+                    ${lv.supportingDoc ? `<br><a href="${lv.supportingDoc}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 6px; border-radius:4px; margin-top:6px; color:#ffffff; background:#89201B; text-decoration:none; font-weight:600;">📄 View Document</a>` : ''}
                     ${lv.managerComment ? `<br><span style="color:var(--primary)"><strong>Comment:</strong> ${Utils.escape(lv.managerComment)}</span>` : ''}
                   </td>
                   <td style="font-size: 13px; color: var(--text-secondary);">${Utils.formatDate(lv.requestDate).replace(/ /g, '&nbsp;')}</td>
