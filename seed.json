@@ -156,7 +156,7 @@
       "deductionTDS": 10,
       "phone": "+91 9888822222",
       "email": "sarah123@gmail.com",
-      "dob": "1994-07-30",
+      "dob": "1994-08-18",
       "address": "Plot 102, Gali No 3, Laxmi Nagar",
       "city": "Delhi",
       "gender": "Female",
@@ -184,7 +184,10 @@
       "pendingProfileEdits": null,
       "scheduleIds": [
         "sch_q8jji9v"
-      ]
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "chandani chowk"
+      }
     },
     {
       "id": "usr_david",
@@ -504,7 +507,7 @@
       "date": "2026-08-18",
       "shiftId": "sch_3ebecon",
       "checkIn": "10:33",
-      "checkOut": null,
+      "checkOut": "18:58",
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
@@ -520,7 +523,7 @@
       "date": "2026-08-18",
       "shiftId": "sch_q8jji9v",
       "checkIn": "15:59",
-      "checkOut": null,
+      "checkOut": "19:00",
       "status": "Late",
       "biometricUsed": "none",
       "location": "chandani chowk",
@@ -2902,6 +2905,24 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_vsvqne7",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Sarah Connor! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-08-18",
+      "author": "HR Department",
+      "targetUserId": "usr_sarah"
+    },
+    {
+      "id": "ann_v27ihlx",
+      "title": "🎂 Happy Birthday Wish!",
+      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
+      "category": "Urgent",
+      "date": "2026-08-18",
+      "author": "HR Department",
+      "targetUserId": "usr_john"
+    },
     {
       "id": "ann_xbm58xk",
       "title": "🎂 Happy Birthday Wish!",
