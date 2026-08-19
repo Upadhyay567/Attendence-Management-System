@@ -49,7 +49,7 @@
       "employeeId": "MGR102",
       "name": "Manjit  kour Operations Manager",
       "password": "$hash$9b629e62",
-      "role": "manager",
+      "role": "employee",
       "scheduleId": "sch_q8jji9v",
       "baseSalary": 80000,
       "allowanceHRA": 12000,
@@ -71,13 +71,21 @@
       "resume": null,
       "aadhar": null,
       "preferredLocation": "Noida sector 61",
-      "managerId": "",
-      "assignedById": "usr_admin",
+      "managerId": "usr_manager",
+      "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
       "status": "Active",
-      "passwordResetCount": 1
+      "passwordResetCount": 1,
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "Noida sector 61"
+      },
+      "photo": null,
+      "state": "delhi"
     },
     {
       "id": "usr_john",
@@ -86,7 +94,7 @@
       "name": "John Doe",
       "password": "JohnPassword123!",
       "role": "employee",
-      "managerId": "usr_manager",
+      "managerId": "usr_7yuu1l5",
       "scheduleId": "sch_3ebecon",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
@@ -121,7 +129,7 @@
         "date": "2026-06-10"
       },
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "assignedById": "usr_7kek2wc",
+      "assignedById": "usr_7yuu1l5",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
@@ -404,24 +412,24 @@
     {
       "id": "usr_7yuu1l5",
       "employeeId": "MGR900",
-      "scheduleId": null,
-      "preferredLocation": null,
+      "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": null,
       "allowanceHRA": null,
       "allowanceTravel": null,
       "deductionPF": null,
       "deductionPT": null,
-      "deductionTDS": null,
+      "deductionTDS": 5,
       "phone": "8796453290",
       "email": "sumitsharma213@gmail.com",
-      "dob": "",
+      "dob": "1992-07-31",
       "address": "",
-      "city": "",
+      "city": "Noida",
       "gender": "Male",
       "department": "Operations Manager",
       "designation": "Operations Manager",
       "dateOfJoining": "2026-08-19",
-      "emergencyContact": "",
+      "emergencyContact": "+91 98765 43202",
       "documents": [],
       "resume": null,
       "aadhar": null,
@@ -431,8 +439,20 @@
       "mobile": "8796453290",
       "role": "manager",
       "status": "Active",
-      "photo": "",
-      "password": "$hash$4b4b7482"
+      "photo": null,
+      "password": "$hash$4b4b7482",
+      "scheduleIds": [
+        "sch_3ebecon"
+      ],
+      "shiftLocations": {
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "managerId": "",
+      "assignedById": "usr_manager",
+      "profileVerificationStatus": "Approved",
+      "state": "delhi",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     }
   ],
   "schedules": [

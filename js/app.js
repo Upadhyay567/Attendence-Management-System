@@ -5050,7 +5050,9 @@ function renderEmployeeProfile() {
   const user = DB.getUser(userId);
   const main = document.getElementById('main-view');
 
-  const userSchedule = user.scheduleId ? DB.data.schedules.find(s => s.id === user.scheduleId) : null;
+  const userSchedule = (user.scheduleIds && user.scheduleIds.length > 0)
+    ? DB.getSchedule(user.scheduleIds[0])
+    : (user.scheduleId ? DB.getSchedule(user.scheduleId) : null);
   const shiftText = userSchedule ? `${userSchedule.name} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'Not Assigned';
   const locationText = user.preferredLocation || 'Not Assigned';
 
@@ -8574,7 +8576,7 @@ function openUserModal(userId = null) {
           <select class="form-input" id="editor-role" required>
             ${(() => {
               const currentUser = Auth.getCurrentUser();
-              if (currentUser.role === 'hr') {
+              if (currentUser.role === 'hr' || currentUser.role === 'manager') {
                 return `
                   <option value="employee" ${isEdit && user.role === 'employee' ? 'selected' : ''}>Employee</option>
                   <option value="hr" ${isEdit && user.role === 'hr' ? 'selected' : ''}>HR Coordinator</option>
@@ -8590,7 +8592,7 @@ function openUserModal(userId = null) {
         </div>
         ${(() => {
           const currentUser = Auth.getCurrentUser();
-          if (currentUser.role === 'hr') {
+          if (currentUser.role === 'hr' || currentUser.role === 'manager') {
             const managers = DB.getUsers().filter(m => m.role === 'manager');
             return `
               <div class="form-group">
