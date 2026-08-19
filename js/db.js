@@ -1091,7 +1091,7 @@ export const DB = {
   },
 
   resolveUserShiftForDate(user, dateStr, preferShiftId = null) {
-    if (!user) return { scheduleId: null, schedule: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi', allSchedules: [], candidateSchedules: [] };
+    if (!user) return { scheduleId: null, schedule: null, preferredLocation: null, allSchedules: [], candidateSchedules: [] };
     
     // Collect all assigned schedule IDs
     let assignedIds = [];
@@ -1112,7 +1112,7 @@ export const DB = {
 
     const allSchedules = assignedIds.map(id => this.getSchedule(id)).filter(Boolean);
     if (allSchedules.length === 0) {
-      return { scheduleId: null, schedule: null, preferredLocation: 'Kohat Enclave, Pitampura, Delhi', allSchedules: [], candidateSchedules: [] };
+      return { scheduleId: null, schedule: null, preferredLocation: null, allSchedules: [], candidateSchedules: [] };
     }
 
     const targetDate = new Date(dateStr);
@@ -1175,7 +1175,7 @@ export const DB = {
 
     const resolvedLocation = (user && user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) ||
                              (user && user.preferredLocation) ||
-                             'Kohat Enclave, Pitampura, Delhi';
+                             (selectedSchedule ? selectedSchedule.location : null);
 
     return {
       scheduleId: selectedSchedule ? selectedSchedule.id : null,
@@ -1187,11 +1187,11 @@ export const DB = {
   },
 
   getUserShiftLocation(user, shiftId) {
-    if (!user) return 'Kohat Enclave, Pitampura, Delhi';
+    if (!user) return null;
     if (user.shiftLocations && shiftId && user.shiftLocations[shiftId]) {
       return user.shiftLocations[shiftId];
     }
-    return user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+    return user.preferredLocation || null;
   },
 
   getSchedules() {

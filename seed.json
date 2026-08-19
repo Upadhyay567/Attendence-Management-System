@@ -400,6 +400,39 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       }
+    },
+    {
+      "id": "usr_7yuu1l5",
+      "employeeId": "MGR900",
+      "scheduleId": null,
+      "preferredLocation": null,
+      "baseSalary": null,
+      "allowanceHRA": null,
+      "allowanceTravel": null,
+      "deductionPF": null,
+      "deductionPT": null,
+      "deductionTDS": null,
+      "phone": "8796453290",
+      "email": "sumitsharma213@gmail.com",
+      "dob": "",
+      "address": "",
+      "city": "",
+      "gender": "Male",
+      "department": "Operations Manager",
+      "designation": "Operations Manager",
+      "dateOfJoining": "2026-08-19",
+      "emergencyContact": "",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "name": "Sumit Sharma",
+      "username": "MGR900",
+      "mobile": "8796453290",
+      "role": "manager",
+      "status": "Active",
+      "photo": "",
+      "password": "$hash$4b4b7482"
     }
   ],
   "schedules": [

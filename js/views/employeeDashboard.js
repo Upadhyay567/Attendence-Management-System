@@ -11,22 +11,11 @@ export function renderEmployeeDashboard() {
   const selectedShiftId = sessionStorage.getItem('hs_selected_shift_id');
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
-  let schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
-  if (!schedule) {
-    schedule = {
-      id: 'sch_1',
-      name: 'Standard Day Shift',
-      startTime: '09:00',
-      endTime: '17:00',
-      gracePeriod: 15,
-      workDays: [1, 2, 3, 4, 5],
-      location: 'Kohat Enclave, Pitampura, Delhi'
-    };
-  }
-  const officeName = (user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
-  const todayLog = DB.getTodayLog(user.id, schedule.id);
+  let schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
+  const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi') : (user.preferredLocation || null);
+  const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
 
-  const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+  const checkInStatus = getCheckInTimeStatus(user, schedule ? schedule.id : null);
   const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
   const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
   sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
@@ -192,7 +181,7 @@ export function renderEmployeeDashboard() {
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:12px; line-height:1.4">
                 <div>
                   <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Fixed Worksite Location</span>
-                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${Utils.escape(officeName)}</div>
+                  <div style="font-weight:600; color:var(--primary); margin-top:2px" id="gps-worksite-name-display">${officeName ? Utils.escape(officeName) : 'No worksite assigned'}</div>
                   <div style="color:var(--text-secondary); font-size:11px" id="gps-worksite-coords-display">--</div>
                 </div>
                 <div style="border-left:1px solid var(--border); padding-left:10px">
@@ -284,28 +273,34 @@ export function renderEmployeeDashboard() {
             <div class="card-panel-header">
               <h3 class="card-panel-title">Active Shift Details</h3>
             </div>
-            <div class="shift-card" style="background:transparent;border:none;padding:0">
-              <div class="shift-card-header" style="margin-bottom:10px">
-                <span class="shift-title" style="color:var(--primary);font-size:16px">${Utils.escape(schedule.name)}</span>
+            ${schedule ? `
+              <div class="shift-card" style="background:transparent;border:none;padding:0">
+                <div class="shift-card-header" style="margin-bottom:10px">
+                  <span class="shift-title" style="color:var(--primary);font-size:16px">${Utils.escape(schedule.name)}</span>
+                </div>
+                <div class="shift-meta-row">
+                  <span>Working Hours:</span>
+                  <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(schedule.endTime)}</strong>
+                </div>
+                <div class="shift-meta-row">
+                  <span>Grace Period:</span>
+                  <strong style="color:var(--warning)">${schedule.gracePeriod} minutes</strong>
+                </div>
+                <div class="shift-meta-row">
+                  <span>Assigned Location:</span>
+                  <strong style="color:var(--text-primary)">${officeName ? Utils.escape(officeName) : 'Not assigned'}</strong>
+                </div>
+                <div class="shift-days-row">
+                  ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `
+                    <div class="day-bubble ${schedule.workDays && schedule.workDays.includes(i) ? 'active' : ''}">${day}</div>
+                  `).join('')}
+                </div>
               </div>
-              <div class="shift-meta-row">
-                <span>Working Hours:</span>
-                <strong style="color:var(--text-primary)">${formatTime12h(schedule.startTime)} <span style="font-size:10px;font-weight:700;color:var(--primary);background:rgba(251,191,36,0.1);padding:2px 6px;border-radius:4px;margin:0 4px">→</span> ${formatTime12h(schedule.endTime)}</strong>
+            ` : `
+              <div class="shift-card" style="background:transparent;border:none;padding:20px 0;text-align:center;color:var(--text-secondary);font-size:14px;">
+                No shift schedule assigned
               </div>
-              <div class="shift-meta-row">
-                <span>Grace Period:</span>
-                <strong style="color:var(--warning)">${schedule.gracePeriod} minutes</strong>
-              </div>
-              <div class="shift-meta-row">
-                <span>Assigned Location:</span>
-                <strong style="color:var(--text-primary)">${Utils.escape(officeName)}</strong>
-              </div>
-              <div class="shift-days-row">
-                ${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `
-                  <div class="day-bubble ${schedule.workDays.includes(i) ? 'active' : ''}">${day}</div>
-                `).join('')}
-              </div>
-            </div>
+            `}
           </div>
         </div>
 
@@ -437,7 +432,7 @@ export function renderEmployeeDashboard() {
     const regIn = document.getElementById('btn-regular-checkin');
     if (regIn) {
       regIn.addEventListener('click', async () => {
-        const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+        const checkInStatus = getCheckInTimeStatus(user, schedule ? schedule.id : null);
         if (!checkInStatus.allowed) {
           if (checkInStatus.type === 'TooEarly') {
             await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
@@ -446,19 +441,19 @@ export function renderEmployeeDashboard() {
           }
           return;
         }
-        handlePinClockIn(user.id, schedule.id);
+        handlePinClockIn(user.id, schedule ? schedule.id : null);
       });
     }
   } else if (!todayLog.checkOut) {
     const regOut = document.getElementById('btn-regular-checkout');
-    if (regOut) regOut.addEventListener('click', () => handleClockOut(user.id, schedule.id));
+    if (regOut) regOut.addEventListener('click', () => handleClockOut(user.id, schedule ? schedule.id : null));
   }
 
   // Bind Geofence Card Actions (Direct Check-In without passwords/prompts)
   const geoCheckIn = document.getElementById('btn-geofence-checkin');
   if (geoCheckIn) {
     geoCheckIn.addEventListener('click', async () => {
-      const checkInStatus = getCheckInTimeStatus(user, schedule.id);
+      const checkInStatus = getCheckInTimeStatus(user, schedule ? schedule.id : null);
       if (!checkInStatus.allowed) {
         if (checkInStatus.type === 'TooEarly') {
           await CustomDialog.alert("Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.", "Too Early");
@@ -508,7 +503,7 @@ export function renderEmployeeDashboard() {
       }
 
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
-      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule.id);
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null);
       requestsPushDBState();
       renderEmployeeDashboard();
     });
@@ -524,7 +519,7 @@ export function renderEmployeeDashboard() {
         return;
       }
       
-      const log = DB.checkOut(user.id, 'none', null, schedule.id);
+      const log = DB.checkOut(user.id, 'none', null, schedule ? schedule.id : null);
       requestsPushDBState();
       renderEmployeeDashboard();
       if (log) {
