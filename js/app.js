@@ -1251,23 +1251,12 @@ function renderAppShell() {
     `;
   } else {
     menuHTML = `
-      <li class="menu-item menu-item-has-submenu" id="nav-employee-attendance" style="position: relative;">
-        <a href="javascript:void(0)" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-          <span style="display: flex; align-items: center; gap: 14px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;vertical-align:middle;">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="m7.5 12.5 2 2 4.5-4.5"></path>
-              <path d="m11.5 12.5 1.5 1.5 3-3"></path>
-            </svg>
-            <span class="menu-label">Attendance</span>
-          </span>
-          <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
-        </a>
-        <ul class="submenu-list">
-          <li class="submenu-item" id="sub-emp-dashboard"><a href="#dashboard">My Attendance</a></li>
-          <li class="submenu-item" id="sub-emp-leaves"><a href="#leaves">My Leave Request</a></li>
-        </ul>
-      </li>
+      <li class="menu-item" id="nav-dashboard"><a href="#dashboard">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> <span class="menu-label">Check In / Status</span>
+      </a></li>
+      <li class="menu-item" id="nav-leaves"><a href="#leaves">
+        <svg viewBox="0 0 24 24"><path d="M14 6c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V6zm6 2c0-.55-.45-1-1-1h-3c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1h3c.55 0 1-.45 1-1V8z"/></svg> <span class="menu-label">My Leave Request</span>
+      </a></li>
       <li class="menu-item" id="nav-employee-reports"><a href="#employee-reports">
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg> <span class="menu-label">${labels.payslips}</span>
       </a></li>
