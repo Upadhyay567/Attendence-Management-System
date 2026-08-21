@@ -394,7 +394,7 @@
       "role": "hr",
       "status": "Active",
       "photo": null,
-      "password": "$hash$01ab75bf",
+      "password": "pbkdf2$100000$99150b21a40c391995bf6b03cd331228$7415c2ad75ec1f1b1dadd715af843109edee1ef88210791ef9fb9732b4da6a431db9cd7c477082a74aadd25c743b499cc123108d4eaaad8bc0dca94d67475da5",
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
@@ -440,7 +440,7 @@
       "role": "manager",
       "status": "Active",
       "photo": null,
-      "password": "$hash$4b4b7482",
+      "password": "pbkdf2$100000$d2154903718f40f82ec65241c2f170c1$d7d34bc6d23ef93bda54da3e94d129d5ff27ddd53b9ac68fa524b3424d153b394e134c875736991581bb6dea25aa665da6470e8c2323085392ea66e71270d042",
       "scheduleIds": [
         "sch_3ebecon"
       ],
