@@ -1229,7 +1229,7 @@ function renderLoginView() {
       }
     };
 
-    const handleVerification = () => {
+    const handleVerification = async () => {
       const enteredId = inputEl.value.trim();
       const enteredPwd = pwdEl ? pwdEl.value : '';
 
@@ -1239,55 +1239,37 @@ function renderLoginView() {
         return;
       }
 
-      const allUsers = DB.getUsers();
-      const matchedUser = allUsers.find(u => 
-        (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-        (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-        (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-        (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-      );
-
-      if (!matchedUser) {
-        warningEl.textContent = `⚠️ Invalid ${idLabelText}. No matching account found.`;
+      if (isHrOrManager && !enteredPwd) {
+        warningEl.textContent = `⚠️ Password is required to log in to this account.`;
         warningEl.style.display = 'block';
         return;
       }
 
-      // Check role match
-      let isRoleValid = false;
-      if (role === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
-      if (role === 'manager' && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
-      if (role === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
+      try {
+        warningEl.style.display = 'none';
+        submitBtn.setAttribute('disabled', 'true');
+        submitBtn.textContent = 'Verifying...';
 
-      if (!isRoleValid) {
-        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${role.toUpperCase()} portal.`;
+        const session = await DB.login(enteredId, enteredPwd, false, role);
+        
+        const sessionData = JSON.stringify({
+          id: session.user.id,
+          token: session.token,
+          loginTime: new Date().toISOString()
+        });
+        sessionStorage.setItem('attendance_current_session', sessionData);
+        localStorage.setItem('attendance_current_session', sessionData);
+
+        // Fetch projected role-isolated database state from server
+        await DB.init();
+
+        proceedLogin(session.user, session.token);
+      } catch (err) {
+        warningEl.textContent = '⚠️ ' + err.message;
         warningEl.style.display = 'block';
-        return;
+        submitBtn.removeAttribute('disabled');
+        submitBtn.textContent = 'Verify';
       }
-
-      if (matchedUser.status === 'Inactive') {
-        warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
-        warningEl.style.display = 'block';
-        return;
-      }
-
-      if (isHrOrManager) {
-        if (!enteredPwd) {
-          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
-          warningEl.style.display = 'block';
-          return;
-        }
-        if (matchedUser.password) {
-          const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
-          if (!isValidPwd) {
-            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
-            warningEl.style.display = 'block';
-            return;
-          }
-        }
-      }
-
-      proceedLogin(matchedUser);
     };
 
     submitBtn.addEventListener('click', handleVerification);
@@ -1304,21 +1286,32 @@ function renderLoginView() {
       });
     }
 
-    const handleSkip = () => {
+    const handleSkip = async () => {
       const enteredId = inputEl.value.trim();
-      if (enteredId) {
-        const matched = DB.getUsers().find(u => 
-          (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-          (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-        );
-        if (matched) {
-          proceedLogin(matched);
-          return;
-        }
+      try {
+        if (skipBtn) skipBtn.setAttribute('disabled', 'true');
+        if (skipDevBtn) skipDevBtn.setAttribute('disabled', 'true');
+        
+        const session = await DB.login(enteredId, '', true, role);
+        
+        const sessionData = JSON.stringify({
+          id: session.user.id,
+          token: session.token,
+          loginTime: new Date().toISOString()
+        });
+        sessionStorage.setItem('attendance_current_session', sessionData);
+        localStorage.setItem('attendance_current_session', sessionData);
+
+        // Fetch projected role-isolated database state from server
+        await DB.init();
+
+        proceedLogin(session.user, session.token);
+      } catch (err) {
+        warningEl.textContent = '⚠️ ' + err.message;
+        warningEl.style.display = 'block';
+        if (skipBtn) skipBtn.removeAttribute('disabled');
+        if (skipDevBtn) skipDevBtn.removeAttribute('disabled');
       }
-      proceedLogin(getDefaultUserForRole());
     };
 
     if (skipBtn) {
@@ -1342,11 +1335,11 @@ function renderLoginView() {
     }
   };
 
-  const proceedLogin = (user) => {
+  const proceedLogin = (user, token) => {
     Auth.currentUser = user;
     const sessionData = JSON.stringify({
       id: user.id,
-      token: 'session_' + Math.random().toString(36).substring(2) + '_' + Date.now(),
+      token: token,
       loginTime: new Date().toISOString()
     });
     sessionStorage.setItem('attendance_current_session', sessionData);

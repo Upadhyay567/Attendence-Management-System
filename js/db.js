@@ -440,6 +440,20 @@ export const DB = {
   async init() {
     await this.resolveApiBase();
     
+    let token = '';
+    try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      if (sess) {
+        token = JSON.parse(sess).token;
+      }
+    } catch (e) {}
+
+    // Enforce data isolation: If not logged in, empty database state on client to prevent leak
+    if (!token) {
+      this.data = { users: [], attendanceLogs: [], leaveRequests: [], shiftSwaps: [], schedules: [], notices: [] };
+      return;
+    }
+    
     // Skip server fetch if a local write occurred recently (to prevent race conditions with async mutations)
     const isRecentLocalWrite = this.lastLocalWrite && (Date.now() - this.lastLocalWrite < 2500);
     
@@ -447,8 +461,28 @@ export const DB = {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { signal: controller.signal });
+        
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { 
+          signal: controller.signal,
+          headers: headers
+        });
+        
         clearTimeout(timeoutId);
+        
+        if (res.status === 401) {
+          console.warn('Session expired or unauthorized. Clearing client data cache.');
+          sessionStorage.removeItem('attendance_current_session');
+          localStorage.removeItem('attendance_current_session');
+          localStorage.removeItem(DB_KEY);
+          this.data = { users: [], attendanceLogs: [], leaveRequests: [], shiftSwaps: [], schedules: [], notices: [] };
+          return;
+        }
+        
         if (!res.ok) throw new Error('API server returned error status');
         this.data = await res.json();
         try {
@@ -622,11 +656,20 @@ export const DB = {
     window.dispatchEvent(new Event('db_updated'));
 
     this.resolveApiBase().then(() => {
+      let token = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) token = JSON.parse(sess).token;
+      } catch (e) {}
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       if (mutationMeta) {
         // Granular mutations to prevent race conditions and payload overhead
         fetch((window.apiBaseUrl || '') + '/api/mutate-granular', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify(mutationMeta)
         }).then(res => {
           if (!res.ok) console.warn('Failed to sync granular mutations to MongoDB.');
@@ -637,7 +680,7 @@ export const DB = {
         // Fallback to full state sync if no meta is provided (e.g. imports or resets)
         fetch((window.apiBaseUrl || '') + '/api/mutate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify({ action: 'sync', data: this.data })
         }).then(res => {
           if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
@@ -1932,6 +1975,21 @@ export const DB = {
     if (!this.data.budgets) return;
     this.data.budgets = this.data.budgets.filter(b => b.id !== id);
     this.save({ type: 'pull', key: 'budgets', query: { id } });
+  },
+
+  async login(username, password, skipCheck, role) {
+    await this.resolveApiBase();
+    const res = await fetch((window.apiBaseUrl || '') + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, skipCheck, role })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Login failed.');
+    }
+    const session = await res.json();
+    return session;
   }
 };
 

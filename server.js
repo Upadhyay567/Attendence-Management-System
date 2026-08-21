@@ -3,6 +3,50 @@ const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const crypto = require('crypto');
+
+// Cryptographic helpers for password security (NIST-approved PBKDF2)
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+  return `pbkdf2$100000$${salt}$${hash}`;
+}
+
+function verifyPassword(password, hashedPassword) {
+  if (!hashedPassword) return false;
+  if (!hashedPassword.startsWith('pbkdf2$')) {
+    // Plain text verification for legacy / demo seed users
+    return password === hashedPassword;
+  }
+  const parts = hashedPassword.split('$');
+  const iterations = parseInt(parts[1], 10);
+  const salt = parts[2];
+  const hash = parts[3];
+  const verifyHash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+  return hash === verifyHash;
+}
+
+// In-memory token-based active sessions cache
+const activeSessions = new Map();
+
+// Authentication middleware to validate tokens and inject user context
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+  
+  const session = activeSessions.get(token);
+  if (!session || session.expires < Date.now()) {
+    return res.status(401).json({ error: 'Unauthorized: Session expired or invalid.' });
+  }
+  
+  req.user = session;
+  next();
+}
 
 const app = express();
 const PORT = parseInt(process.env.PORT || 8080, 10);
@@ -72,31 +116,161 @@ async function getCollection() {
   }
 }
 
-// 1. Fetch entire database state
-app.get('/api/db-state', async (req, res) => {
+// 0. Server-Side Authentication
+app.post('/api/auth/login', async (req, res) => {
   try {
+    const { username, password, skipCheck, role } = req.body;
+    let targetUsername = username ? username.trim() : '';
+    if (!targetUsername && skipCheck) {
+      if (role === 'hr') targetUsername = 'hr';
+      else if (role === 'manager') targetUsername = 'manager';
+      else targetUsername = 'john';
+    }
+    
+    if (!targetUsername) {
+      return res.status(400).json({ error: 'Username or Employee ID is required.' });
+    }
+    
+    let users = [];
     const col = await getCollection();
     if (useLocalFileDB || !col) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      const seedData = JSON.parse(rawSeed);
-      return res.json(seedData);
+      users = JSON.parse(rawSeed).users || [];
+    } else {
+      const stateDoc = await col.findOne({ _id: 'global_state' });
+      users = stateDoc ? (stateDoc.users || []) : [];
+    }
+    
+    const matchedUser = users.find(u =>
+      (u.employeeId && u.employeeId.toUpperCase() === targetUsername.toUpperCase()) ||
+      (u.username && u.username.toLowerCase() === targetUsername.toLowerCase()) ||
+      (u.email && u.email.toLowerCase() === targetUsername.toLowerCase()) ||
+      (u.id && u.id.toLowerCase() === targetUsername.toLowerCase())
+    );
+    
+    if (!matchedUser) {
+      return res.status(401).json({ error: 'Invalid ID/Username. No matching account found.' });
+    }
+    
+    if (matchedUser.status === 'Inactive') {
+      return res.status(403).json({ error: 'Access Denied: Account is inactive.' });
+    }
+    
+    // Verify role match
+    let isRoleValid = false;
+    if (role === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
+    if (role === 'manager' && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
+    if (role === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
+    
+    if (!isRoleValid) {
+      return res.status(403).json({ error: `Access Denied: Account role mismatch for ${role.toUpperCase()} portal.` });
+    }
+    
+    const isHrOrManager = role === 'hr' || role === 'manager';
+    if (isHrOrManager && !skipCheck) {
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required for HR/Manager login.' });
+      }
+      const isValid = verifyPassword(password, matchedUser.password);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid password credentials.' });
+      }
+      
+      // Auto-upgrade plain text passwords to secure hashes on successful login
+      if (matchedUser.password && !matchedUser.password.startsWith('pbkdf2$')) {
+        const hashed = hashPassword(password);
+        matchedUser.password = hashed;
+        // Write back to DB
+        if (col && !useLocalFileDB) {
+          await col.updateOne({ _id: 'global_state', "users.id": matchedUser.id }, { $set: { "users.$.password": hashed } });
+        }
+        const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        const stateObj = JSON.parse(rawState);
+        const uIdx = stateObj.users.findIndex(u => u.id === matchedUser.id);
+        if (uIdx !== -1) {
+          stateObj.users[uIdx].password = hashed;
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
+        }
+      }
+    }
+    
+    // Generate secure session token
+    const token = 'sess_' + crypto.randomBytes(24).toString('hex');
+    activeSessions.set(token, {
+      userId: matchedUser.id,
+      role: matchedUser.role,
+      expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours expiry
+    });
+    
+    // Return session payload (omit password hashes)
+    const userProfile = { ...matchedUser };
+    delete userProfile.password;
+    
+    res.json({ success: true, token, user: userProfile });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error during login' });
+  }
+});
+
+// 1. Fetch entire database state
+app.get('/api/db-state', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required to access database state.' });
     }
 
-    let stateDoc = await col.findOne({ _id: 'global_state' });
-    
-    if (!stateDoc) {
-      console.log('MongoDB state collection is blank. Seeding from default seed.json...');
+    const col = await getCollection();
+    let stateData = null;
+
+    if (useLocalFileDB || !col) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      const seedData = JSON.parse(rawSeed);
-      
-      stateDoc = { _id: 'global_state', ...seedData };
-      await col.insertOne(stateDoc);
-      console.log('Database successfully seeded.');
+      stateData = JSON.parse(rawSeed);
+    } else {
+      let stateDoc = await col.findOne({ _id: 'global_state' });
+      if (!stateDoc) {
+        console.log('MongoDB state collection is blank. Seeding from default seed.json...');
+        const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        stateData = JSON.parse(rawSeed);
+        stateDoc = { _id: 'global_state', ...stateData };
+        await col.insertOne(stateDoc);
+        console.log('Database successfully seeded.');
+      } else {
+        const { _id, ...cleanState } = stateDoc;
+        stateData = cleanState;
+      }
     }
-    
-    // Omit MongoDB _id parameter
-    const { _id, ...cleanState } = stateDoc;
-    res.json(cleanState);
+
+    // Security Projection: Remove all password hashes so no client gets sensitive authentication material
+    if (stateData.users && Array.isArray(stateData.users)) {
+      stateData.users = stateData.users.map(u => {
+        const copy = { ...u };
+        delete copy.password;
+        return copy;
+      });
+    }
+
+    // Role-based Isolation: If regular employee, filter datasets down to their own records only
+    if (req.user.role === 'employee') {
+      const uId = req.user.userId;
+      if (stateData.users) {
+        stateData.users = stateData.users.filter(u => u.id === uId);
+      }
+      if (stateData.attendanceLogs) {
+        stateData.attendanceLogs = stateData.attendanceLogs.filter(l => l.userId === uId);
+      }
+      if (stateData.leaveRequests) {
+        stateData.leaveRequests = stateData.leaveRequests.filter(r => r.userId === uId);
+      }
+      if (stateData.shiftSwaps) {
+        stateData.shiftSwaps = stateData.shiftSwaps.filter(s => s.senderId === uId || s.receiverId === uId);
+      }
+      // Clear budgets and financialRecords entirely for regular employees
+      stateData.budgets = [];
+      stateData.financialRecords = [];
+    }
+
+    res.json(stateData);
   } catch (err) {
     console.error('Error fetching database state:', err);
     res.status(500).json({ error: 'Failed to retrieve database state' });
@@ -104,8 +278,11 @@ app.get('/api/db-state', async (req, res) => {
 });
 
 // 2. Synchronize frontend mutation state to MongoDB
-app.post('/api/mutate', async (req, res) => {
+app.post('/api/mutate', authenticateToken, async (req, res) => {
   try {
+    if (!req.user || (req.user.role !== 'hr' && req.user.role !== 'manager' && req.user.role !== 'finance_manager')) {
+      return res.status(403).json({ error: 'Access Denied: Forbidden bulk state mutation.' });
+    }
     const { action, data } = req.body;
     if (action !== 'sync' || !data) {
       return res.status(400).json({ error: 'Invalid mutation action payload.' });
@@ -139,11 +316,52 @@ app.post('/api/mutate', async (req, res) => {
 });
 
 // 2.5 Granular transactional mutation endpoint to prevent race conditions and payload overhead
-app.post('/api/mutate-granular', async (req, res) => {
+app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required for granular mutations.' });
+    }
     const { type, key, payload, query, updates } = req.body;
     if (!type || !key) {
       return res.status(400).json({ error: 'Type and key are required for granular mutations.' });
+    }
+
+    // Access Control Validation: employees can only modify their own leaves, logs, or shift swaps
+    if (req.user.role === 'employee') {
+      if (!['attendanceLogs', 'leaveRequests', 'shiftSwaps'].includes(key)) {
+        return res.status(403).json({ error: 'Access Denied: Forbidden database operation.' });
+      }
+      if (type === 'push') {
+        const recordUserId = payload.userId || payload.senderId;
+        if (recordUserId !== req.user.userId) {
+          return res.status(403).json({ error: 'Access Denied: Cannot modify records of other employees.' });
+        }
+      } else if (type === 'update') {
+        // Employees can only update their own records, and cannot approve leaves
+        if (key === 'leaveRequests') {
+          return res.status(403).json({ error: 'Access Denied: Employees cannot approve/reject leave requests.' });
+        }
+        if (key === 'shiftSwaps') {
+          // Allow employees to update swap status ONLY if they are the receiver (accept/reject swap) or sender
+          const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+          const stateObj = JSON.parse(rawState);
+          const swap = stateObj.shiftSwaps.find(s => s.id === query.id);
+          if (swap && swap.receiverId !== req.user.userId && swap.senderId !== req.user.userId) {
+            return res.status(403).json({ error: 'Access Denied: Forbidden.' });
+          }
+        }
+        if (key === 'attendanceLogs') {
+          // Verify attendance log belongs to logged in user
+          const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+          const stateObj = JSON.parse(rawState);
+          const log = stateObj.attendanceLogs.find(l => l.id === query.id);
+          if (log && log.userId !== req.user.userId) {
+            return res.status(403).json({ error: 'Access Denied: Forbidden.' });
+          }
+        }
+      } else if (type === 'pull') {
+        return res.status(403).json({ error: 'Access Denied: Deletions forbidden.' });
+      }
     }
 
     const col = await getCollection();
