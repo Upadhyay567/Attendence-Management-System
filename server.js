@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const crypto = require('crypto');
+const multer = require('multer');
 
 // Cryptographic helpers for password security (NIST-approved PBKDF2)
 function hashPassword(password) {
@@ -320,6 +321,57 @@ app.post('/api/auth/reset-password', async (req, res) => {
     console.error('Password reset error:', err);
     res.status(500).json({ error: 'Internal server error during password reset.' });
   }
+});
+
+// Configure multer storage for secure document uploads
+const docStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'uploads', 'leave_docs');
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '_' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `doc_${uniqueSuffix}${ext}`);
+  }
+});
+
+const docFileFilter = (req, file, cb) => {
+  const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only PDF, JPEG, and PNG are allowed.'));
+  }
+};
+
+const uploadDoc = multer({
+  storage: docStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB Limit
+  fileFilter: docFileFilter
+});
+
+// Endpoint to handle secure document uploads
+app.post('/api/upload-leave-doc', authenticateToken, (req, res) => {
+  uploadDoc.single('file')(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ error: 'File size exceeds the 5MB limit.' });
+        }
+        return res.status(400).json({ error: err.message });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded.' });
+    }
+    
+    const fileUrl = `/uploads/leave_docs/${req.file.filename}`;
+    res.json({ success: true, url: fileUrl });
+  });
 });
 
 // 1. Fetch entire database state

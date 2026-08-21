@@ -118,36 +118,78 @@ export function renderEmployeeLeaves() {
     const proofFile = document.getElementById('leave-proof').files[0];
     const submitBtn = e.target.querySelector('button[type="submit"]');
     
-    const sendRequest = (base64Data = null) => {
-      DB.applyLeave(user.id, type, start, end, reason, chosenApprover, base64Data);
+    const uploadAndSubmit = async () => {
+      let fileUrl = null;
+      if (proofFile) {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Uploading file...';
+        }
+
+        // Restrict upload sizes to a maximum of 5MB.
+        if (proofFile.size > 5 * 1024 * 1024) {
+          showLeaveAlert('File size exceeds the 5MB limit.', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
+          }
+          return;
+        }
+
+        // Validate mime-types (PDF, JPEG, PNG)
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(proofFile.type)) {
+          showLeaveAlert('Invalid file type. Only PDF, JPEG, and PNG are allowed.', 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
+          }
+          return;
+        }
+
+        try {
+          const formData = new FormData();
+          formData.append('file', proofFile);
+
+          await DB.resolveApiBase();
+          const session = JSON.parse(sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session') || '{}');
+          
+          const uploadRes = await fetch((window.apiBaseUrl || '') + '/api/upload-leave-doc', {
+            method: 'POST',
+            headers: {
+              'Authorization': session.token ? `Bearer ${session.token}` : ''
+            },
+            body: formData
+          });
+
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json();
+            throw new Error(errData.error || 'Failed to upload document.');
+          }
+
+          const uploadData = await uploadRes.json();
+          fileUrl = uploadData.url;
+        } catch (err) {
+          showLeaveAlert('Upload error: ' + err.message, 'error');
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
+          }
+          return;
+        }
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Request';
+      }
+
+      DB.applyLeave(user.id, type, start, end, reason, chosenApprover, fileUrl);
       showLeaveAlert('Leave request submitted successfully!', 'success');
       document.getElementById('leave-request-form').reset();
       renderPersonalLeaves(user.id);
     };
 
-    if (proofFile) {
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Uploading...';
-      }
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit Request';
-        }
-        sendRequest(evt.target.result);
-      };
-      reader.onerror = function() {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit Request';
-        }
-        showLeaveAlert('Error reading file. Please try again.', 'error');
-      };
-      reader.readAsDataURL(proofFile);
-    } else {
-      sendRequest(null);
-    }
+    uploadAndSubmit();
   });
 }
