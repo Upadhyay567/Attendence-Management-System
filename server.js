@@ -138,6 +138,70 @@ app.post('/api/mutate', async (req, res) => {
   }
 });
 
+// 2.5 Granular transactional mutation endpoint to prevent race conditions and payload overhead
+app.post('/api/mutate-granular', async (req, res) => {
+  try {
+    const { type, key, payload, query, updates } = req.body;
+    if (!type || !key) {
+      return res.status(400).json({ error: 'Type and key are required for granular mutations.' });
+    }
+
+    const col = await getCollection();
+
+    // Helper to apply local modifications to state object
+    const applyLocalUpdate = (data) => {
+      if (type === 'push') {
+        data[key] = data[key] || [];
+        const exists = data[key].some(item => item.id === payload.id);
+        if (!exists) data[key].push(payload);
+      } else if (type === 'update') {
+        data[key] = data[key] || [];
+        const idx = data[key].findIndex(item => item.id === query.id);
+        if (idx !== -1) Object.assign(data[key][idx], updates);
+      } else if (type === 'pull') {
+        data[key] = data[key] || [];
+        data[key] = data[key].filter(item => {
+          for (const [k, v] of Object.entries(query)) {
+            if (item[k] !== v) return true;
+          }
+          return false;
+        });
+      }
+    };
+
+    // 1. Update MongoDB atomically if online
+    if (col && !useLocalFileDB) {
+      let updateOp = {};
+      if (type === 'push') {
+        updateOp = { $push: { [key]: payload } };
+        // Avoid duplicate push
+        await col.updateOne({ _id: 'global_state', [`${key}.id`]: { $ne: payload.id } }, updateOp);
+      } else if (type === 'update') {
+        const setFields = {};
+        for (const [f, val] of Object.entries(updates)) {
+          setFields[`${key}.$.${f}`] = val;
+        }
+        updateOp = { $set: setFields };
+        await col.updateOne({ _id: 'global_state', [`${key}.id`]: query.id }, updateOp);
+      } else if (type === 'pull') {
+        updateOp = { $pull: { [key]: query } };
+        await col.updateOne({ _id: 'global_state' }, updateOp);
+      }
+    }
+
+    // 2. Synchronize seed.json file thread-safely
+    const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+    const stateObj = JSON.parse(rawState);
+    applyLocalUpdate(stateObj);
+    fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
+
+    res.json({ success: true, type, key });
+  } catch (err) {
+    console.error('Error applying granular mutation:', err);
+    res.status(500).json({ error: 'Failed to apply granular update' });
+  }
+});
+
 // 3. Dedicated file & bulk data upload endpoint
 app.post('/api/upload', (req, res) => {
   try {

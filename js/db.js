@@ -616,22 +616,35 @@ export const DB = {
     }
   },
 
-  save() {
+  save(mutationMeta = null) {
     this.lastLocalWrite = Date.now();
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
     window.dispatchEvent(new Event('db_updated'));
 
     this.resolveApiBase().then(() => {
-      // Async push mutations to MongoDB in background
-      fetch((window.apiBaseUrl || '') + '/api/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', data: this.data })
-      }).then(res => {
-        if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
-      }).catch(err => {
-        console.warn('Network error syncing mutations to MongoDB:', err);
-      });
+      if (mutationMeta) {
+        // Granular mutations to prevent race conditions and payload overhead
+        fetch((window.apiBaseUrl || '') + '/api/mutate-granular', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mutationMeta)
+        }).then(res => {
+          if (!res.ok) console.warn('Failed to sync granular mutations to MongoDB.');
+        }).catch(err => {
+          console.warn('Network error syncing granular mutations:', err);
+        });
+      } else {
+        // Fallback to full state sync if no meta is provided (e.g. imports or resets)
+        fetch((window.apiBaseUrl || '') + '/api/mutate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync', data: this.data })
+        }).then(res => {
+          if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
+        }).catch(err => {
+          console.warn('Network error syncing mutations to MongoDB:', err);
+        });
+      }
     });
   },
 
@@ -822,7 +835,7 @@ export const DB = {
       ...user
     };
     this.data.users.push(newUser);
-    this.save();
+    this.save({ type: 'push', key: 'users', payload: newUser });
     return newUser;
   },
 
@@ -848,7 +861,7 @@ export const DB = {
     const userIndex = this.data.users.findIndex(u => u.id === id);
     if (userIndex !== -1) {
       this.data.users[userIndex] = { ...this.data.users[userIndex], ...updates };
-      this.save();
+      this.save({ type: 'update', key: 'users', query: { id: id }, updates });
       return this.data.users[userIndex];
     }
     return null;
@@ -858,7 +871,9 @@ export const DB = {
     this.data.users = this.data.users.filter(u => u.id !== id);
     this.data.attendanceLogs = this.data.attendanceLogs.filter(l => l.userId !== id);
     this.data.leaveRequests = this.data.leaveRequests.filter(l => l.userId !== id);
-    this.save();
+    this.save({ type: 'pull', key: 'users', query: { id } });
+    this.save({ type: 'pull', key: 'attendanceLogs', query: { userId: id } });
+    this.save({ type: 'pull', key: 'leaveRequests', query: { userId: id } });
   },
 
   getCustomRoles() {
@@ -1207,7 +1222,7 @@ export const DB = {
     const newId = 'sch_' + Math.random().toString(36).substring(2, 9);
     const newSchedule = { id: newId, ...schedule };
     this.data.schedules.push(newSchedule);
-    if (!skipSave) this.save();
+    if (!skipSave) this.save({ type: 'push', key: 'schedules', payload: newSchedule });
     return newSchedule;
   },
 
@@ -1215,7 +1230,7 @@ export const DB = {
     const idx = this.data.schedules.findIndex(s => String(s.id) === String(id));
     if (idx !== -1) {
       this.data.schedules[idx] = { ...this.data.schedules[idx], ...updates };
-      this.save();
+      this.save({ type: 'update', key: 'schedules', query: { id }, updates });
       return this.data.schedules[idx];
     }
     return null;
@@ -1326,7 +1341,21 @@ export const DB = {
       existing.distance = Number(distance);
       existing.facePhoto = facePhoto;
       existing.shiftId = resolvedShiftId;
-      this.save();
+      this.save({
+        type: 'update',
+        key: 'attendanceLogs',
+        query: { id: existing.id },
+        updates: {
+          checkIn: timeStr,
+          status,
+          biometricUsed: method,
+          location: effectiveLocation,
+          coords,
+          distance: Number(distance),
+          facePhoto,
+          shiftId: resolvedShiftId
+        }
+      });
       return existing;
     }
 
@@ -1349,7 +1378,7 @@ export const DB = {
     };
 
     this.data.attendanceLogs.push(newLog);
-    this.save();
+    this.save({ type: 'push', key: 'attendanceLogs', payload: newLog });
     return newLog;
   },
 
@@ -1384,7 +1413,17 @@ export const DB = {
       }
     }
 
-    this.save();
+    this.save({
+      type: 'update',
+      key: 'attendanceLogs',
+      query: { id: log.id },
+      updates: {
+        checkOut: log.checkOut,
+        biometricUsed: log.biometricUsed,
+        facePhotoOut: log.facePhotoOut || null,
+        status: log.status
+      }
+    });
     return log;
   },
 
@@ -1458,7 +1497,7 @@ export const DB = {
       supportingDoc
     };
     this.data.leaveRequests.push(newRequest);
-    this.save();
+    this.save({ type: 'push', key: 'leaveRequests', payload: newRequest });
     return newRequest;
   },
 
@@ -1467,7 +1506,7 @@ export const DB = {
     if (req) {
       req.status = status;
       req.managerComment = comment;
-      this.save();
+      this.save({ type: 'update', key: 'leaveRequests', query: { id }, updates: { status, managerComment: comment } });
       return req;
     }
     return null;
@@ -1718,7 +1757,7 @@ export const DB = {
       coworkerComment: ''
     };
     this.data.shiftSwaps.push(newSwap);
-    this.save();
+    this.save({ type: 'push', key: 'shiftSwaps', payload: newSwap });
     return newSwap;
   },
 
@@ -1728,7 +1767,7 @@ export const DB = {
     if (swap && swap.status === 'Pending Coworker') {
       swap.status = accept ? 'Pending Manager' : 'Rejected';
       swap.coworkerComment = comment;
-      this.save();
+      this.save({ type: 'update', key: 'shiftSwaps', query: { id: swapId }, updates: { status: swap.status, coworkerComment: comment } });
       return swap;
     }
     return null;
@@ -1810,14 +1849,14 @@ export const DB = {
       author
     };
     this.data.announcements.unshift(newAnn);
-    this.save();
+    this.save({ type: 'push', key: 'announcements', payload: newAnn });
     return newAnn;
   },
 
   deleteAnnouncement(id) {
     if (!this.data.announcements) return;
     this.data.announcements = this.data.announcements.filter(a => a.id !== id);
-    this.save();
+    this.save({ type: 'pull', key: 'announcements', query: { id } });
   },
 
   approveUserDocument(userId, docType) {
@@ -1827,7 +1866,7 @@ export const DB = {
       user.verificationStatuses = {};
     }
     user.verificationStatuses[docType] = 'Approved';
-    this.save();
+    this.save({ type: 'update', key: 'users', query: { id: userId }, updates: { verificationStatuses: user.verificationStatuses } });
     return user;
   },
 
@@ -1838,7 +1877,7 @@ export const DB = {
       user.verificationStatuses = {};
     }
     user.verificationStatuses[docType] = 'Rejected';
-    this.save();
+    this.save({ type: 'update', key: 'users', query: { id: userId }, updates: { verificationStatuses: user.verificationStatuses } });
     return user;
   },
 
@@ -1859,14 +1898,14 @@ export const DB = {
       timestamp: new Date().toISOString()
     };
     this.data.financialRecords.push(newRecord);
-    this.save();
+    this.save({ type: 'push', key: 'financialRecords', payload: newRecord });
     return newRecord;
   },
 
   deleteFinancialRecord(id) {
     if (!this.data.financialRecords) return;
     this.data.financialRecords = this.data.financialRecords.filter(r => r.id !== id);
-    this.save();
+    this.save({ type: 'pull', key: 'financialRecords', query: { id } });
   },
 
   getBudgets() {
@@ -1885,14 +1924,14 @@ export const DB = {
       ...budget
     };
     this.data.budgets.push(newBudget);
-    this.save();
+    this.save({ type: 'push', key: 'budgets', payload: newBudget });
     return newBudget;
   },
 
   deleteBudget(id) {
     if (!this.data.budgets) return;
     this.data.budgets = this.data.budgets.filter(b => b.id !== id);
-    this.save();
+    this.save({ type: 'pull', key: 'budgets', query: { id } });
   }
 };
 
