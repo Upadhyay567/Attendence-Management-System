@@ -2937,6 +2937,38 @@
       "coords": "28.695182° N, 77.186004° E",
       "distance": 0,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_6af1y3c_2026-08-21_sch_3ebecon",
+      "userId": "usr_6af1y3c",
+      "date": "2026-08-21",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "11:42",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695142° N, 77.186026° E",
+      "distance": 0,
+      "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-08-21_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-08-21",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "11:42",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.694875° N, 77.185912° E",
+      "distance": 0.03,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [

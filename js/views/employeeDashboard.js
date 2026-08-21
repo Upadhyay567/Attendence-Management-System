@@ -673,6 +673,17 @@ export function renderEmployeeDashboard() {
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          // Anti-spoofing checks
+          const isMocked = pos.mocked || (pos.coords && (pos.coords.mocked || pos.coords.mockStatus)) || (pos.coords && pos.coords.accuracy === 0);
+          const isEmulator = pos.coords && Math.abs(pos.coords.latitude - 37.422) < 0.001 && Math.abs(pos.coords.longitude - (-122.084)) < 0.001;
+          
+          if (isMocked || isEmulator) {
+            const reason = isMocked ? "Mock location provider detected or invalid GPS accuracy" : "Default simulator coordinates detected";
+            alert("❌ Check-in Rejected! GPS spoofing or mock location detected: " + reason);
+            callback(null);
+            return;
+          }
+
           const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           window.lastAcquiredLocation = coords;
           callback(coords);
