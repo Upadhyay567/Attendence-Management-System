@@ -2944,7 +2944,7 @@
       "date": "2026-08-21",
       "shiftId": "sch_3ebecon",
       "checkIn": "11:42",
-      "checkOut": null,
+      "checkOut": "18:42",
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
@@ -2952,7 +2952,8 @@
       "justification": "",
       "coords": "28.695142° N, 77.186026° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "facePhotoOut": null
     },
     {
       "id": "log_usr_john_2026-08-21_sch_3ebecon",
@@ -2960,7 +2961,7 @@
       "date": "2026-08-21",
       "shiftId": "sch_3ebecon",
       "checkIn": "11:42",
-      "checkOut": null,
+      "checkOut": "18:44",
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
@@ -2968,7 +2969,8 @@
       "justification": "",
       "coords": "28.694875° N, 77.185912° E",
       "distance": 0.03,
-      "facePhoto": null
+      "facePhoto": null,
+      "facePhotoOut": null
     },
     {
       "id": "log_usr_sarah_2026-08-21_sch_q8jji9v",
@@ -2976,7 +2978,7 @@
       "date": "2026-08-21",
       "shiftId": "sch_q8jji9v",
       "checkIn": "15:32",
-      "checkOut": null,
+      "checkOut": "18:45",
       "status": "Late",
       "biometricUsed": "none",
       "location": "chandani chowk",
@@ -2984,7 +2986,25 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "facePhotoOut": null
+    },
+    {
+      "id": "log_usr_7yuu1l5_2026-08-21_sch_3ebecon",
+      "userId": "usr_7yuu1l5",
+      "date": "2026-08-21",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "18:44",
+      "checkOut": "18:44",
+      "status": "Half Day",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695152° N, 77.186061° E",
+      "distance": 0,
+      "facePhoto": null,
+      "facePhotoOut": null
     }
   ],
   "leaveRequests": [

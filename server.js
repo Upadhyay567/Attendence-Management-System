@@ -663,13 +663,40 @@ function freePort(port) {
   }
 }
 
+async function syncLocalToMongoOnBoot() {
+  try {
+    const col = await getCollection();
+    if (col && !useLocalFileDB) {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        const seedData = JSON.parse(rawSeed);
+        
+        // Remove MongoDB _id if it exists in seed data to avoid conflicts, then set _id: 'global_state'
+        delete seedData._id;
+        
+        await col.updateOne(
+          { _id: 'global_state' },
+          { $set: seedData },
+          { upsert: true }
+        );
+        console.log('🔄 Synced local seed.json database state to MongoDB successfully on startup.');
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to sync local seed.json to MongoDB on boot:', err.message);
+  }
+}
+
 function startExpressServer(portToTry) {
   freePort(portToTry);
-  const serverInstance = app.listen(portToTry, '0.0.0.0', () => {
+  const serverInstance = app.listen(portToTry, '0.0.0.0', async () => {
     console.log(`===================================================`);
     console.log(`  HS GROUP DELHI EXPRESS LIVE SERVER ACTIVE `);
     print_urls(portToTry, localIP);
     console.log(`===================================================`);
+
+    // Synchronize local JSON data state to MongoDB database on server boot
+    await syncLocalToMongoOnBoot();
 
     // Write server config for client auto-discovery
     try {
