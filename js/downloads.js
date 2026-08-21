@@ -1,6 +1,7 @@
 import { DB } from './db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
+import { AppAPI } from './AppAPI.js';
 
 // Extend DB with custom query logic for Profile and Report downloads
 DB.queryEmployeeProfiles = function(userIds) {
@@ -48,25 +49,6 @@ DB.queryAttendanceReport = function(userIds, month, year) {
       overtimeHours: (overtimeMinutes / 60).toFixed(1) + ' hrs'
     };
   }).filter(Boolean);
-};
-
-// Client-Side API Helper
-export const AppAPI = {
-  async fetchProfileDownload(userIds) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(DB.queryEmployeeProfiles(userIds));
-      }, 300);
-    });
-  },
-
-  async fetchReportDownload(userIds, month, year) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(DB.queryAttendanceReport(userIds, month, year));
-      }, 300);
-    });
-  }
 };
 
 // Loader utility for SheetJS Excel export
