@@ -3359,8 +3359,8 @@ function showForgotPasswordModal(initialId = '') {
     return '******' + cleaned.substring(cleaned.length - 4);
   };
 
-  // Step 1 Click Handler: Verify Identity
-  modal.querySelector('#btn-verify-identifier').addEventListener('click', () => {
+  // Step 1 Click Handler: Verify Identity via Server API
+  modal.querySelector('#btn-verify-identifier').addEventListener('click', async () => {
     const errorEl = modal.querySelector('#forgot-identifier-error');
     errorEl.style.display = 'none';
 
@@ -3371,65 +3371,74 @@ function showForgotPasswordModal(initialId = '') {
       return;
     }
 
-    const allUsers = DB.getUsers();
-    const matchedUser = allUsers.find(u => {
-      const key = rawInput.toLowerCase();
-      const cleanKey = rawInput.replace(/\D/g, '');
-      const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
-      const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+    try {
+      const verifyBtn = modal.querySelector('#btn-verify-identifier');
+      verifyBtn.setAttribute('disabled', 'true');
+      verifyBtn.textContent = 'Verifying...';
 
-      return (u.username && u.username.toLowerCase() === key) ||
-             (u.email && u.email.toLowerCase() === key) ||
-             (u.employeeId && u.employeeId.toLowerCase() === key) ||
-             isPhoneMatch;
-    });
+      await DB.resolveApiBase();
+      const res = await fetch((window.apiBaseUrl || '') + '/api/auth/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: rawInput })
+      });
 
-    if (!matchedUser) {
-      errorEl.textContent = '⚠️ Account record not found for the entered credentials.';
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Account record not found.');
+      }
+
+      const data = await res.json();
+      verifiedUser = data.user;
+      const resetsCount = verifiedUser.passwordResetCount || 0;
+
+      // Transition Step 1 Out
+      modal.querySelector('#forgot-step-identifier').style.display = 'none';
+
+      verifyBtn.removeAttribute('disabled');
+      verifyBtn.textContent = 'Proceed';
+
+      if (resetsCount < 2) {
+        // Flow A: Direct "Create New Password" Button
+        modal.querySelector('#forgot-step-direct-trigger').style.display = 'flex';
+      } else {
+        // Flow B: Show Verification Options (OTP / Email / SMS)
+        const optionsContainer = modal.querySelector('#verification-options-container');
+        optionsContainer.innerHTML = `
+          <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+            <input type="radio" name="verification-method" value="email" checked style="accent-color:var(--primary)">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Email Verification</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send verification code to ${obfuscateEmail(verifiedUser.email)}</div>
+            </div>
+          </label>
+          <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+            <input type="radio" name="verification-method" value="sms" style="accent-color:var(--primary)">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">SMS Verification</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send code to ${obfuscatePhone(verifiedUser.phone || verifiedUser.mobile)}</div>
+            </div>
+          </label>
+          <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
+            <input type="radio" name="verification-method" value="otp" style="accent-color:var(--primary)">
+            <div>
+              <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">One-Time Passcode (OTP)</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Authenticate with dynamic temporary passcode</div>
+            </div>
+          </label>
+        `;
+        modal.querySelector('#forgot-step-verification-select').style.display = 'flex';
+      }
+    } catch (err) {
+      errorEl.textContent = '⚠️ ' + err.message;
       errorEl.style.display = 'block';
-      return;
-    }
-
-    verifiedUser = matchedUser;
-    const resetsCount = verifiedUser.passwordResetCount || 0;
-
-    // Transition Step 1 Out
-    modal.querySelector('#forgot-step-identifier').style.display = 'none';
-
-    if (resetsCount < 2) {
-      // Flow A: Direct "Create New Password" Button
-      modal.querySelector('#forgot-step-direct-trigger').style.display = 'flex';
-    } else {
-      // Flow B: Show Verification Options (OTP / Email / SMS)
-      const optionsContainer = modal.querySelector('#verification-options-container');
-      optionsContainer.innerHTML = `
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="email" checked style="accent-color:var(--primary)">
-          <div>
-            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Email Verification</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send verification code to ${obfuscateEmail(verifiedUser.email)}</div>
-          </div>
-        </label>
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="sms" style="accent-color:var(--primary)">
-          <div>
-            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">SMS Verification</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Send code to ${obfuscatePhone(verifiedUser.phone || verifiedUser.mobile)}</div>
-          </div>
-        </label>
-        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-surface-hover); border:1px solid var(--border); border-radius:10px; cursor:pointer;">
-          <input type="radio" name="verification-method" value="otp" style="accent-color:var(--primary)">
-          <div>
-            <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">One-Time Passcode (OTP)</div>
-            <div style="font-size:11px; color:var(--text-muted); margin-top:2px">Authenticate with dynamic temporary passcode</div>
-          </div>
-        </label>
-      `;
-      modal.querySelector('#forgot-step-verification-select').style.display = 'flex';
+      const verifyBtn = modal.querySelector('#btn-verify-identifier');
+      verifyBtn.removeAttribute('disabled');
+      verifyBtn.textContent = 'Proceed';
     }
   });
 
-  // Flow A Click Handler
+// Flow A Click Handler
   modal.querySelector('#btn-trigger-create-password').addEventListener('click', () => {
     modal.querySelector('#forgot-step-direct-trigger').style.display = 'none';
     modal.querySelector('#forgot-step-new-pass-form').style.display = 'flex';
@@ -3522,7 +3531,7 @@ function showForgotPasswordModal(initialId = '') {
   });
 
   // Password reset final submit handler
-  modal.querySelector('#forgot-step-new-pass-form').addEventListener('submit', (e) => {
+  modal.querySelector('#forgot-step-new-pass-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errorEl = modal.querySelector('#forgot-step3-error');
     errorEl.style.display = 'none';
@@ -3546,23 +3555,38 @@ function showForgotPasswordModal(initialId = '') {
       return;
     }
 
-    const currentCount = verifiedUser.passwordResetCount || 0;
-    const hashed = Utils.hashPassword(newPwd);
+    try {
+      const submitBtn = modal.querySelector('#forgot-step-new-pass-form button[type="submit"]');
+      submitBtn.setAttribute('disabled', 'true');
+      submitBtn.textContent = 'Updating Password...';
 
-    // Save counter increment and password update to database
-    DB.updateUser(verifiedUser.id, {
-      password: hashed,
-      passwordResetCount: currentCount + 1
-    });
-
-    closeModal();
-    if (typeof showToastNotification === 'function') {
-      showToastNotification('✅ Password updated successfully! Please log in with your new credentials.', 'success');
-    }
-    const loginPwdInput = document.getElementById('auth-pwd-input');
-    if (loginPwdInput) {
-      loginPwdInput.value = newPwd;
-      loginPwdInput.focus();
+      await DB.resolveApiBase();
+      const resetRes = await fetch((window.apiBaseUrl || '') + '/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: verifiedUser.id, newPassword: newPwd })
+      });
+      
+      if (!resetRes.ok) {
+        const err = await resetRes.json();
+        throw new Error(err.error || 'Failed to reset password.');
+      }
+      
+      closeModal();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification('✅ Password updated successfully! Please log in with your new credentials.', 'success');
+      }
+      const loginPwdInput = document.getElementById('auth-pwd-input');
+      if (loginPwdInput) {
+        loginPwdInput.value = newPwd;
+        loginPwdInput.focus();
+      }
+    } catch (err) {
+      errorEl.textContent = '⚠️ ' + err.message;
+      errorEl.style.display = 'block';
+      const submitBtn = modal.querySelector('#forgot-step-new-pass-form button[type="submit"]');
+      submitBtn.removeAttribute('disabled');
+      submitBtn.textContent = 'Update Password';
     }
   });
 }

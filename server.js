@@ -14,16 +14,31 @@ function hashPassword(password) {
 
 function verifyPassword(password, hashedPassword) {
   if (!hashedPassword) return false;
-  if (!hashedPassword.startsWith('pbkdf2$')) {
-    // Plain text verification for legacy / demo seed users
-    return password === hashedPassword;
+  
+  // Custom polynomial hash verify ($hash$xxxxxxxx)
+  if (hashedPassword.startsWith('$hash$')) {
+    let hash = 0x811c9dc5;
+    const str = String(password);
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    const hex = (hash >>> 0).toString(16).padStart(8, '0');
+    return `$hash$${hex}` === hashedPassword;
   }
-  const parts = hashedPassword.split('$');
-  const iterations = parseInt(parts[1], 10);
-  const salt = parts[2];
-  const hash = parts[3];
-  const verifyHash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
-  return hash === verifyHash;
+  
+  // PBKDF2 verify
+  if (hashedPassword.startsWith('pbkdf2$')) {
+    const parts = hashedPassword.split('$');
+    const iterations = parseInt(parts[1], 10);
+    const salt = parts[2];
+    const hash = parts[3];
+    const verifyHash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+    return hash === verifyHash;
+  }
+  
+  // Plain text verify fallback
+  return password === hashedPassword;
 }
 
 // In-memory token-based active sessions cache
@@ -210,6 +225,100 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error during login' });
+  }
+});
+
+// 0.5 Forgot Password Identification
+app.post('/api/auth/identify', async (req, res) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ error: 'Identifier is required.' });
+    }
+    
+    let users = [];
+    const col = await getCollection();
+    if (useLocalFileDB || !col) {
+      const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      users = JSON.parse(rawSeed).users || [];
+    } else {
+      const stateDoc = await col.findOne({ _id: 'global_state' });
+      users = stateDoc ? (stateDoc.users || []) : [];
+    }
+    
+    const matchedUser = users.find(u => {
+      const key = identifier.trim().toLowerCase();
+      const cleanKey = identifier.replace(/\D/g, '');
+      const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
+      const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+      
+      return (u.username && u.username.toLowerCase() === key) ||
+             (u.email && u.email.toLowerCase() === key) ||
+             (u.employeeId && u.employeeId.toLowerCase() === key) ||
+             isPhoneMatch;
+    });
+    
+    if (!matchedUser) {
+      return res.status(404).json({ error: 'Account record not found for the entered credentials.' });
+    }
+    
+    res.json({
+      success: true,
+      user: {
+        id: matchedUser.id,
+        username: matchedUser.username,
+        email: matchedUser.email,
+        phone: matchedUser.phone || matchedUser.mobile,
+        passwordResetCount: matchedUser.passwordResetCount || 0
+      }
+    });
+  } catch (err) {
+    console.error('Identification error:', err);
+    res.status(500).json({ error: 'Internal server error during identification.' });
+  }
+});
+
+// 0.6 Secure Password Reset Endpoint
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { userId, newPassword } = req.body;
+    if (!userId || !newPassword) {
+      return res.status(400).json({ error: 'User ID and new password are required.' });
+    }
+    
+    const col = await getCollection();
+    const hashedPassword = hashPassword(newPassword);
+    
+    if (col && !useLocalFileDB) {
+      const stateDoc = await col.findOne({ _id: 'global_state' });
+      const users = stateDoc ? (stateDoc.users || []) : [];
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+      }
+      const nextCount = (user.passwordResetCount || 0) + 1;
+      
+      await col.updateOne(
+        { _id: 'global_state', "users.id": userId },
+        { $set: { "users.$.password": hashedPassword, "users.$.passwordResetCount": nextCount } }
+      );
+    }
+    
+    const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+    const stateObj = JSON.parse(rawState);
+    const uIdx = stateObj.users.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      stateObj.users[uIdx].password = hashedPassword;
+      stateObj.users[uIdx].passwordResetCount = (stateObj.users[uIdx].passwordResetCount || 0) + 1;
+      fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
+    } else {
+      return res.status(404).json({ error: 'User not found in local database.' });
+    }
+    
+    res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (err) {
+    console.error('Password reset error:', err);
+    res.status(500).json({ error: 'Internal server error during password reset.' });
   }
 });
 
