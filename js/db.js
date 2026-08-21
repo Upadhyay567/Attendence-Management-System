@@ -489,7 +489,7 @@ export const DB = {
           localStorage.setItem(DB_KEY, JSON.stringify(this.data));
         } catch (storageErr) {}
         try {
-          this.validateAndMigrateState();
+          this.validateAndMigrateState(false);
         } catch (migErr) {}
         console.log('Database state initialized from backend API.');
         return;
@@ -515,18 +515,30 @@ export const DB = {
     }
     
     try {
-      this.validateAndMigrateState();
+      this.validateAndMigrateState(false);
     } catch (migErr) {
       console.error('State migration warning:', migErr);
     }
   },
 
-  validateAndMigrateState() {
+  validateAndMigrateState(shouldSave = true) {
     if (!this.data) this.data = {};
+    
+    // Check if the current user is an employee under data isolation
+    let isEmployeeIsolated = false;
+    try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      if (sess) {
+        if (this.data.users && this.data.users.length === 1) {
+          isEmployeeIsolated = true;
+        }
+      }
+    } catch (e) {}
+
     if (!this.data.schedules) this.data.schedules = [...defaultSchedules];
     if (!this.data.users) this.data.users = [...defaultUsers];
-    if (!this.data.attendanceLogs) this.data.attendanceLogs = generateDemoLogs();
-    if (!this.data.leaveRequests) this.data.leaveRequests = [...defaultLeaves];
+    if (!this.data.attendanceLogs) this.data.attendanceLogs = isEmployeeIsolated ? [] : generateDemoLogs();
+    if (!this.data.leaveRequests) this.data.leaveRequests = isEmployeeIsolated ? [] : [...defaultLeaves];
     if (!this.data.uploadHistory) this.data.uploadHistory = [];
     if (!this.data.tickets) this.data.tickets = [];
     if (!this.data.shiftSwaps) {
@@ -624,13 +636,15 @@ export const DB = {
       if (u.assignedById === undefined && u.role === 'employee') { u.assignedById = 'usr_admin'; modified = true; }
     });
 
-    // Ensure essential system users exist
-    ['hr', 'manager', 'finance'].forEach(name => {
-      if (!this.data.users.some(u => u.username === name)) {
-        const defaultU = defaultUsers.find(u => u.username === name);
-        if (defaultU) { this.data.users.push(defaultU); modified = true; }
-      }
-    });
+    // Ensure essential system users exist (skip if isolated employee view)
+    if (!isEmployeeIsolated) {
+      ['hr', 'manager', 'finance'].forEach(name => {
+        if (!this.data.users.some(u => u.username === name)) {
+          const defaultU = defaultUsers.find(u => u.username === name);
+          if (defaultU) { this.data.users.push(defaultU); modified = true; }
+        }
+      });
+    }
 
     // Ensure all schedules have workDays, location, halfDayLimit, gracePeriod
     this.data.schedules.forEach(s => {
@@ -646,7 +660,11 @@ export const DB = {
     }
 
     if (modified) {
-      this.save();
+      if (shouldSave) {
+        this.save();
+      } else {
+        localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+      }
     }
   },
 
