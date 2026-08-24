@@ -6113,44 +6113,47 @@ function renderEmployeeProfile() {
           }
         });
       }
-
+      // Await the save so in-memory data is up-to-date before re-rendering
+      let result = null;
+      let saveError = null;
       try {
-        const result = await updatePromise;
-        if (result) {
-          alertEl.className = 'alert alert-success';
-          if (isSelfAdmin || editCount < 3) {
-            alertEl.textContent = actionType === 'save' 
-              ? 'Profile saved successfully.' 
-              : (isSelfAdmin ? 'Profile details updated successfully!' : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`);
-          } else {
-            alertEl.className = 'alert alert-warning';
-            alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
-          }
-        } else {
-          alertEl.className = 'alert alert-error';
-          alertEl.textContent = 'Failed to update profile details.';
-        }
+        result = await updatePromise;
       } catch (err) {
         console.error('Error saving profile:', err);
-        alertEl.className = 'alert alert-error';
-        alertEl.textContent = 'Failed to sync changes with the server database.';
+        saveError = err;
       }
-      
-      alertEl.style.display = 'flex';
-      setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
-      
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save Changes';
-      }
-      if (updateBtn) {
-        updateBtn.disabled = false;
-        updateBtn.innerHTML = 'Update Profile';
-      }
-      
+
+      // Re-render with updated data FIRST so DOM is fresh
       renderAppShell();
       renderEmployeeProfile();
+
+      // Show alert and reset buttons on the freshly rendered DOM
+      const freshAlert = document.getElementById('profile-alert');
+      const freshSaveBtn = document.getElementById('btn-profile-save');
+      const freshUpdateBtn = document.getElementById('btn-profile-update');
+
+      if (freshAlert) {
+        if (saveError) {
+          freshAlert.className = 'alert alert-error';
+          freshAlert.textContent = 'Failed to sync changes with the server database.';
+        } else if (result) {
+          freshAlert.className = isSelfAdmin || editCount < 3 ? 'alert alert-success' : 'alert alert-warning';
+          freshAlert.textContent = isSelfAdmin || editCount < 3
+            ? (actionType === 'save' ? 'Profile saved successfully.' : (isSelfAdmin ? 'Profile details updated successfully!' : `Profile details updated! (Direct edit ${editCount + 1}/3)`))
+            : 'Direct edit limit reached. Changes submitted to HR/Manager for approval.';
+        } else {
+          freshAlert.className = 'alert alert-error';
+          freshAlert.textContent = 'Failed to update profile details.';
+        }
+        freshAlert.style.display = 'flex';
+        setTimeout(() => { freshAlert.style.display = 'none'; }, 4000);
+      }
+
+      if (freshSaveBtn) { freshSaveBtn.disabled = false; freshSaveBtn.innerHTML = 'Save Changes'; }
+      if (freshUpdateBtn) { freshUpdateBtn.disabled = false; freshUpdateBtn.innerHTML = 'Update Profile'; }
     }, 500);
+
+
   };
 
   if (detailsForm) {
