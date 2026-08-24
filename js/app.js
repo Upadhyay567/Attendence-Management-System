@@ -9275,6 +9275,7 @@ function openUserModal(userId = null) {
       };
     }
 
+    const managerSelect = document.getElementById('editor-manager');
     let managerId = '';
     if (currentUser.role === 'manager') {
       managerId = currentUser.id;
