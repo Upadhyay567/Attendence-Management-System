@@ -999,36 +999,18 @@ export const DB = {
   updateUserProfile(userId, details) {
     const user = this.getUser(userId);
     if (user) {
-      if (details.name !== undefined) user.name = details.name;
-      if (details.phone !== undefined) user.phone = details.phone;
-      if (details.email !== undefined) user.email = details.email;
-      if (details.dob !== undefined) user.dob = details.dob;
-      if (details.gender !== undefined) user.gender = details.gender;
-      if (details.address !== undefined) user.address = details.address;
-      if (details.city !== undefined) user.city = details.city;
-      if (details.emergencyContact !== undefined) user.emergencyContact = details.emergencyContact;
-      if (details.username !== undefined) user.username = details.username;
-      if (details.password !== undefined) user.password = details.password;
-      if (details.employeeId !== undefined) user.employeeId = details.employeeId;
-      if (details.department !== undefined) user.department = details.department;
-      if (details.designation !== undefined) user.designation = details.designation;
-      if (details.dateOfJoining !== undefined) user.dateOfJoining = details.dateOfJoining;
-      if (details.baseSalary !== undefined) user.baseSalary = Number(details.baseSalary);
-      if (details.allowanceHRA !== undefined) user.allowanceHRA = Number(details.allowanceHRA);
-      if (details.allowanceTravel !== undefined) user.allowanceTravel = Number(details.allowanceTravel);
-      if (details.deductionPF !== undefined) user.deductionPF = Number(details.deductionPF);
-      if (details.deductionPT !== undefined) user.deductionPT = Number(details.deductionPT);
-      if (details.deductionTDS !== undefined) user.deductionTDS = Number(details.deductionTDS);
-      if (details.state !== undefined) user.state = details.state;
-      if (details.status !== undefined) user.status = details.status;
-      if (details.profilePhoto !== undefined) user.profilePhoto = details.profilePhoto;
-      if (details.bankDetails !== undefined) user.bankDetails = details.bankDetails;
-      if (details.resume !== undefined) user.resume = details.resume;
-      if (details.aadhar !== undefined) user.aadhar = details.aadhar;
-      this.save();
-      return user;
+      Object.keys(details).forEach(key => {
+        if (details[key] !== undefined) {
+          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'deductionPF', 'deductionPT', 'deductionTDS'].includes(key)) {
+            user[key] = details[key] === null ? null : Number(details[key]);
+          } else {
+            user[key] = details[key];
+          }
+        }
+      });
+      return this.save({ type: 'update', key: 'users', query: { id: userId }, updates: details }).then(() => user);
     }
-    return null;
+    return Promise.resolve(null);
   },
 
   uploadDocument(userId, fileName, fileSize, url = '') {

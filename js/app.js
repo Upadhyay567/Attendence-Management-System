@@ -6091,45 +6091,62 @@ function renderEmployeeProfile() {
       updateBtn.innerHTML = '⏳ Updating...';
     }
 
-    setTimeout(() => {
+    setTimeout(async () => {
+      let updatePromise;
       if (isSelfAdmin || editCount < 3) {
-        DB.updateUserProfile(user.id, { 
+        const updates = { 
           name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-          baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
-        });
-        const updatedUser = DB.getUser(user.id);
-        if (!isSelfAdmin) {
-          updatedUser.profileEditCount = editCount + 1;
-        }
-        updatedUser.profileVerificationStatus = 'Approved';
-        updatedUser.profileVerificationComment = '';
-        DB.save();
-        
-        Auth.init();
-        alertEl.className = 'alert alert-success';
-        if (actionType === 'save') {
-          alertEl.textContent = 'Profile saved successfully.';
-        } else {
-          alertEl.textContent = isSelfAdmin 
-            ? 'Profile details updated successfully!'
-            : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`;
-        }
-      } else {
-        const updatedUser = DB.getUser(user.id);
-        updatedUser.profileVerificationStatus = 'Pending Approval';
-        updatedUser.pendingProfileEdits = {
-          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-          allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+          baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+          profileVerificationStatus: 'Approved',
+          profileVerificationComment: ''
         };
-        DB.save();
-        
-        Auth.init();
-        alertEl.className = 'alert alert-warning';
-        alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+        if (!isSelfAdmin) {
+          updates.profileEditCount = editCount + 1;
+        }
+        updatePromise = DB.updateUserProfile(user.id, updates);
+      } else {
+        updatePromise = DB.updateUserProfile(user.id, {
+          profileVerificationStatus: 'Pending Approval',
+          pendingProfileEdits: {
+            name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+            allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
+          }
+        });
+      }
+
+      try {
+        const result = await updatePromise;
+        if (result) {
+          alertEl.className = 'alert alert-success';
+          if (isSelfAdmin || editCount < 3) {
+            alertEl.textContent = actionType === 'save' 
+              ? 'Profile saved successfully.' 
+              : (isSelfAdmin ? 'Profile details updated successfully!' : `Profile details updated successfully! (Direct edit ${editCount + 1}/3)`);
+          } else {
+            alertEl.className = 'alert alert-warning';
+            alertEl.textContent = 'Direct edit limit reached. Your changes have been submitted to HR/Manager for approval.';
+          }
+        } else {
+          alertEl.className = 'alert alert-error';
+          alertEl.textContent = 'Failed to update profile details.';
+        }
+      } catch (err) {
+        console.error('Error saving profile:', err);
+        alertEl.className = 'alert alert-error';
+        alertEl.textContent = 'Failed to sync changes with the server database.';
       }
       
       alertEl.style.display = 'flex';
       setTimeout(() => { alertEl.style.display = 'none'; }, 4000);
+      
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = 'Save Changes';
+      }
+      if (updateBtn) {
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = 'Update Profile';
+      }
       
       renderAppShell();
       renderEmployeeProfile();

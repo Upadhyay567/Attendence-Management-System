@@ -526,9 +526,19 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Type and key are required for granular mutations.' });
     }
 
-    // Access Control Validation: employees can only modify their own leaves, logs, or shift swaps
+    // Access Control Validation: employees can only modify their own leaves, logs, shift swaps, or user profiles
     if (req.user && req.user.role === 'employee') {
-      if (!['attendanceLogs', 'leaveRequests', 'shiftSwaps'].includes(key)) {
+      if (key === 'users') {
+        if (type !== 'update' || query.id !== req.user.userId) {
+          return res.status(403).json({ error: 'Access Denied: Cannot modify other user profiles.' });
+        }
+        const allowedFields = ['name', 'phone', 'mobile', 'email', 'dob', 'gender', 'emergencyContact', 'address', 'city', 'photo', 'password', 'profileEditCount', 'profileVerificationStatus', 'pendingProfileEdits'];
+        const updateKeys = Object.keys(updates || {});
+        const forbiddenKeys = updateKeys.filter(k => !allowedFields.includes(k));
+        if (forbiddenKeys.length > 0) {
+          return res.status(403).json({ error: `Access Denied: Cannot modify administrative fields (${forbiddenKeys.join(', ')}).` });
+        }
+      } else if (!['attendanceLogs', 'leaveRequests', 'shiftSwaps'].includes(key)) {
         return res.status(403).json({ error: 'Access Denied: Forbidden database operation.' });
       }
       if (type === 'push') {
