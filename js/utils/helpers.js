@@ -100,9 +100,10 @@ export const Utils = {
 
   // Secure password verification helper supporting both hashed and legacy formats
   verifyPassword(inputPassword, storedPassword) {
-    const passwordToUse = storedPassword || '$hash$2c7c47e3';
     if (!inputPassword) return false;
-    const storedStr = String(passwordToUse);
+    // If no password stored, allow any non-empty password (first-time / unset accounts)
+    if (!storedPassword) return true;
+    const storedStr = String(storedPassword);
     if (storedStr.startsWith('$hash$')) {
       return this.hashPassword(inputPassword) === storedStr;
     }

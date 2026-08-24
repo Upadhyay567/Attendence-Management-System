@@ -14,11 +14,10 @@ function hashPassword(password) {
 }
 
 function verifyPassword(password, hashedPassword) {
-  const passwordToUse = hashedPassword || '$hash$2c7c47e3';
-  if (!password) return false;
+  if (!hashedPassword || !password) return false;
   
   // Custom polynomial hash verify ($hash$xxxxxxxx)
-  if (passwordToUse.startsWith('$hash$')) {
+  if (hashedPassword.startsWith('$hash$')) {
     let hash = 0x811c9dc5;
     const str = String(password);
     for (let i = 0; i < str.length; i++) {
@@ -26,12 +25,12 @@ function verifyPassword(password, hashedPassword) {
       hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
     }
     const hex = (hash >>> 0).toString(16).padStart(8, '0');
-    return `$hash$${hex}` === passwordToUse;
+    return `$hash$${hex}` === hashedPassword;
   }
   
   // PBKDF2 verify
-  if (passwordToUse.startsWith('pbkdf2$')) {
-    const parts = passwordToUse.split('$');
+  if (hashedPassword.startsWith('pbkdf2$')) {
+    const parts = hashedPassword.split('$');
     const iterations = parseInt(parts[1], 10);
     const salt = parts[2];
     const hash = parts[3];
@@ -40,7 +39,7 @@ function verifyPassword(password, hashedPassword) {
   }
   
   // Plain text verify fallback
-  return password === passwordToUse;
+  return password === hashedPassword;
 }
 
 // In-memory token-based active sessions cache
@@ -188,9 +187,12 @@ app.post('/api/auth/login', async (req, res) => {
       if (!password) {
         return res.status(400).json({ error: 'Password is required for HR/Manager login.' });
       }
-      const isValid = verifyPassword(password, matchedUser.password);
-      if (!isValid) {
-        return res.status(401).json({ error: 'Invalid password credentials.' });
+      // If user has no password stored, allow any non-empty password (first-time login)
+      if (matchedUser.password) {
+        const isValid = verifyPassword(password, matchedUser.password);
+        if (!isValid) {
+          return res.status(401).json({ error: 'Invalid password credentials.' });
+        }
       }
       
       // Auto-upgrade plain text passwords to secure hashes on successful login
