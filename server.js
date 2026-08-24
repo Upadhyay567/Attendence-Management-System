@@ -194,23 +194,6 @@ app.post('/api/auth/login', async (req, res) => {
           return res.status(401).json({ error: 'Invalid password credentials.' });
         }
       }
-      
-      // Auto-upgrade plain text passwords to secure hashes on successful login
-      if (matchedUser.password && !matchedUser.password.startsWith('pbkdf2$')) {
-        const hashed = hashPassword(password);
-        matchedUser.password = hashed;
-        // Write back to DB
-        if (col && !useLocalFileDB) {
-          await col.updateOne({ _id: 'global_state', "users.id": matchedUser.id }, { $set: { "users.$.password": hashed } });
-        }
-        const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-        const stateObj = JSON.parse(rawState);
-        const uIdx = stateObj.users.findIndex(u => u.id === matchedUser.id);
-        if (uIdx !== -1) {
-          stateObj.users[uIdx].password = hashed;
-          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
-        }
-      }
     }
     
     // Generate secure session token

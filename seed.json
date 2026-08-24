@@ -41,7 +41,7 @@
       "shiftLocations": {
         "sch_1": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "pbkdf2$100000$05521fd0037aee3cb484a7b9dea156db$f70e1d30bf7b00226cddc3ec1f31674c23fd8f5b73d303db3bef28e2ddfd04eea46f51493de91f87a50b9cb99e5ac15b30fbccea305dede37477ff188855ef08"
+      "password": "\\"
     },
     {
       "id": "usr_hr",
@@ -83,8 +83,7 @@
       ],
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
-      },
-      "password": ""
+      }
     },
     {
       "id": "usr_manager",
@@ -128,7 +127,7 @@
       },
       "photo": null,
       "state": "delhi",
-      "password": "pbkdf2$100000$bf7d5af43a62616cbd61dc1adbcc7b0b$fd39b2d1c178d8d8c8a34b05448252a94ef28da76e9fcc451e5fe91361fca5b36d56eb0a732962bdd8b994e56372b664f257b86cb2b2add912e9ee5b7706a3ff"
+      "password": "\\"
     },
     {
       "id": "usr_john",
@@ -172,9 +171,28 @@
       },
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "assignedById": "usr_7yuu1l5",
-      "profileVerificationStatus": "Approved",
+      "profileVerificationStatus": "Pending Approval",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null,
+      "pendingProfileEdits": {
+        "name": "John Doe",
+        "employeeId": "EMP103",
+        "username": "john",
+        "email": "john.doe345@gmail.com",
+        "phone": "+91 9999911111",
+        "dob": "1992-07-31",
+        "gender": "Female",
+        "emergencyContact": "+91 99999 00001",
+        "address": "H.No. 45, Sector 15 - Updated",
+        "city": "Noida",
+        "department": "Engineering",
+        "designation": "Software Engineer",
+        "dateOfJoining": "2023-11-12",
+        "allowanceHRA": 8259,
+        "allowanceTravel": 3000,
+        "deductionPF": 4400,
+        "deductionPT": 200,
+        "deductionTDS": 5
+      },
       "status": "Active",
       "profileEditCount": 3,
       "photo": null,
@@ -454,7 +472,7 @@
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "passwordResetCount": 1,
-      "password": "pbkdf2$100000$edd88acd6571bc529307477e713b88f0$a4a9224ab5565c8ca17327777fc11b20c23418b2f6261771e267f59d684dc454abf84ae022fbf60dc2cd2915a27708e2cdf642122e0d486a08e8fb4e6253b9ea"
+      "password": "\\"
     },
     {
       "id": "usr_7yuu1l5",
@@ -499,7 +517,7 @@
       "state": "delhi",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "password": "pbkdf2$100000$6ad0b408f6c3c695452d8819537899d7$0a4e1e02a977129e22278e93266173194b1a8b0171e363c2e9b78a8692c7cb369846bfedd60b4cf504d5ab7d63b11765776932294c7f5ede01fe4aac3d1a2926"
+      "password": "\\"
     },
     {
       "id": "usr_gfko2jc",
@@ -575,7 +593,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "pbkdf2$100000$bebf592c30553f8120d178fbc4186af5$69a8700ac29b490060ce3a0688240e6cd7326619245b284891cd2c7837fc2f3a987bd4d6f34eebe966d455e43fbba48a5df4f325da394ec7d112691da8d6f592"
+      "password": "\\"
     },
     {
       "id": "usr_rv8lky9",
@@ -610,29 +628,29 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "pbkdf2$100000$3c1d0bf4c841586a832cd2bcc5081a99$539a2c5717011bd355a9ad64a8ba5239db5c70ceb57eb24b2ebbb0b94abb187312d2d22e6c16cf9017f9cd753c9d426afc5c9ccab317bb030eaf7add18af4f2d"
+      "password": "\\"
     },
     {
       "id": "usr_sjtxi5d",
       "employeeId": "HR521",
-      "scheduleId": null,
-      "preferredLocation": null,
+      "scheduleId": "sch_bgpyqv3",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": null,
       "allowanceHRA": null,
       "allowanceTravel": null,
       "deductionPF": null,
       "deductionPT": null,
-      "deductionTDS": null,
+      "deductionTDS": 5,
       "phone": "7839907890",
       "email": "himanshusharma231@gmail.com",
-      "dob": "",
+      "dob": "1992-07-31",
       "address": "",
-      "city": "",
+      "city": "Noida",
       "gender": "Male",
       "department": "HR Administrator",
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-24",
-      "emergencyContact": "",
+      "emergencyContact": "+91 99999 00001",
       "documents": [],
       "resume": null,
       "aadhar": null,
@@ -642,10 +660,20 @@
       "mobile": "7839907890",
       "role": "hr",
       "status": "Active",
-      "photo": "",
+      "photo": null,
       "managerId": "",
-      "assignedById": "",
-      "password": "pbkdf2$100000$00f3bdc51722ed273d536299ce5ae436$3783e526426606a0e64f9c1a51db3587e8de3bd66e32a4e74a84aaf78aa15fdef165484ea2652a0f2ad5c596c586075183ffde988cdbef5fcbde4afad1749aed"
+      "assignedById": "usr_sjtxi5d",
+      "password": "\\",
+      "scheduleIds": [
+        "sch_bgpyqv3"
+      ],
+      "shiftLocations": {
+        "sch_bgpyqv3": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "profileVerificationStatus": "Approved",
+      "state": "delhi",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     }
   ],
   "schedules": [
@@ -654,7 +682,7 @@
       "name": "Morning Shift",
       "startTime": "11:30",
       "endTime": "16:00",
-      "gracePeriod": 5,
+      "gracePeriod": 12,
       "halfDayLimit": 120,
       "workDays": [
         1,
