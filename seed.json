@@ -5,7 +5,6 @@
       "username": "hr",
       "employeeId": "HR101",
       "name": "shubham HR Coordinator",
-      "password": "Shubham@2456",
       "role": "hr",
       "scheduleId": "sch_mfl8wvv",
       "baseSalary": 75000,
@@ -41,14 +40,14 @@
       ],
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_manager",
       "username": "manager",
       "employeeId": "MGR102",
       "name": "Manjit  kour Operations Manager",
-      "password": "pbkdf2$100000$3b1cef69404be676e0a173f7306614a7$b956d90760fcaa5b8a97bc79f8b83c3e08d2437e119296706bab86bb3c90521aa532f272fed58e5c22844490a269b34de014d7f6bd99df3e729f7b143b529091",
       "role": "manager",
       "scheduleId": "sch_q8jji9v",
       "baseSalary": 80000,
@@ -85,14 +84,14 @@
         "sch_q8jji9v": "Noida sector 61"
       },
       "photo": null,
-      "state": "delhi"
+      "state": "delhi",
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_john",
       "username": "john",
       "employeeId": "EMP103",
       "name": "John Doe",
-      "password": "JohnPassword123!",
       "role": "employee",
       "managerId": "usr_7yuu1l5",
       "scheduleId": "sch_3ebecon",
@@ -145,14 +144,14 @@
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_sarah",
       "username": "sarah",
       "employeeId": "EMP104",
       "name": "Sarah Connor",
-      "password": "SarahPassword123!",
       "role": "employee",
       "managerId": "usr_manager",
       "scheduleId": "sch_q8jji9v",
@@ -195,14 +194,14 @@
       ],
       "shiftLocations": {
         "sch_q8jji9v": "chandani chowk"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_david",
       "username": "david",
       "employeeId": "EMP105",
       "name": "David Lightman",
-      "password": "DavidPassword123!",
       "role": "employee",
       "scheduleId": "sch_3ebecon",
       "baseSalary": 48000,
@@ -238,7 +237,8 @@
       ],
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_t42n6xh",
@@ -266,7 +266,6 @@
       "bankDetails": null,
       "name": "Rahul Sharma",
       "username": "rahulsharma",
-      "password": "Surya@123",
       "role": "employee",
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "",
@@ -282,7 +281,8 @@
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_7kek2wc",
@@ -313,7 +313,6 @@
       "mobile": "9536885675",
       "role": "hr",
       "status": "Active",
-      "password": "$hash$f629dc1a",
       "preferredLocation": "Noida sector 61",
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
@@ -328,14 +327,14 @@
       "shiftLocations": {
         "sch_q8jji9v": "Noida sector 61"
       },
-      "passwordResetCount": 1
+      "passwordResetCount": 1,
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_finance",
       "username": "finance",
       "employeeId": "MGR106",
       "name": "Finance Manager",
-      "password": "FinancePassword123!",
       "role": "manager",
       "scheduleId": "sch_q8jji9v",
       "baseSalary": 78000,
@@ -365,7 +364,8 @@
       "photo": null,
       "state": "Uttar Pradesh",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_6af1y3c",
@@ -397,7 +397,6 @@
       "role": "hr",
       "status": "Active",
       "photo": null,
-      "password": "pbkdf2$100000$99150b21a40c391995bf6b03cd331228$7415c2ad75ec1f1b1dadd715af843109edee1ef88210791ef9fb9732b4da6a431db9cd7c477082a74aadd25c743b499cc123108d4eaaad8bc0dca94d67475da5",
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
@@ -410,7 +409,8 @@
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_7yuu1l5",
@@ -443,19 +443,19 @@
       "role": "manager",
       "status": "Active",
       "photo": null,
-      "password": "pbkdf2$100000$d2154903718f40f82ec65241c2f170c1$d7d34bc6d23ef93bda54da3e94d129d5ff27ddd53b9ac68fa524b3424d153b394e134c875736991581bb6dea25aa665da6470e8c2323085392ea66e71270d042",
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "managerId": "usr_7yuu1l5",
+      "assignedById": "usr_7yuu1l5",
       "profileVerificationStatus": "Approved",
       "state": "delhi",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "password": "pbkdf2$100000$6ad0b408f6c3c695452d8819537899d7$0a4e1e02a977129e22278e93266173194b1a8b0171e363c2e9b78a8692c7cb369846bfedd60b4cf504d5ab7d63b11765776932294c7f5ede01fe4aac3d1a2926"
     },
     {
       "id": "usr_gfko2jc",
@@ -484,7 +484,6 @@
       "bankDetails": null,
       "name": "Ananya Raghav",
       "username": "ananyaraghav",
-      "password": "Surya@123",
       "role": "hr",
       "scheduleIds": [
         "sch_3ebecon"
@@ -495,7 +494,9 @@
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "photo": null,
-      "state": "delhi"
+      "state": "delhi",
+      "status": "Active",
+      "password": "$hash$2c7c47e3"
     }
   ],
   "schedules": [
@@ -3048,9 +3049,38 @@
       "distance": 0,
       "facePhoto": null,
       "facePhotoOut": null
+    },
+    {
+      "id": "log_usr_john_2026-08-24_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-08-24",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "11:32",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695162° N, 77.186054° E",
+      "distance": 0,
+      "facePhoto": null
     }
   ],
   "leaveRequests": [
+    {
+      "id": "lv_a4skcu4",
+      "userId": "usr_6af1y3c",
+      "type": "Casual",
+      "startDate": "2026-08-26",
+      "endDate": "2026-08-28",
+      "reason": "Emergency",
+      "approverHead": "Operations Manager",
+      "status": "Pending",
+      "requestDate": "2026-08-24",
+      "managerComment": "",
+      "supportingDoc": null
+    },
     {
       "id": "lv_t5o1ep7",
       "userId": "usr_john",
@@ -3095,19 +3125,6 @@
       "status": "Approved",
       "requestDate": "2026-06-08",
       "managerComment": "Take care and recover!"
-    },
-    {
-      "id": "lv_a4skcu4",
-      "userId": "usr_6af1y3c",
-      "type": "Casual",
-      "startDate": "2026-08-26",
-      "endDate": "2026-08-28",
-      "reason": "Emergency",
-      "approverHead": "Operations Manager",
-      "status": "Pending",
-      "requestDate": "2026-08-24",
-      "managerComment": "",
-      "supportingDoc": null
     }
   ],
   "tickets": [
