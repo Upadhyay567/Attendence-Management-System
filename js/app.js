@@ -6851,6 +6851,9 @@ function renderAdminSupport() {
   if (isManager) {
     const assignedIds = DB.getUsers().filter(u => u.managerId === user.id).map(u => u.id);
     allTickets = allTickets.filter(t => assignedIds.includes(t.userId));
+  } else if (user.role === 'hr') {
+    const assignedIds = DB.getUsers().filter(u => u.assignedById === user.id).map(u => u.id);
+    allTickets = allTickets.filter(t => assignedIds.includes(t.userId));
   }
   const allUsers = DB.getUsers();
 
@@ -6930,6 +6933,8 @@ function renderAdminVerificationView() {
   let employees = DB.getUsers().filter(u => u.role === 'employee');
   if (isManager) {
     employees = employees.filter(u => u.managerId === user.id);
+  } else if (user.role === 'hr') {
+    employees = employees.filter(u => u.assignedById === user.id);
   }
 
   main.innerHTML = `
@@ -7904,10 +7909,11 @@ async function renderAdminDashboard() {
 
   const getAssignedUserIds = () => {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const isManager = freshUser.role === 'manager';
     let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
-    if (isManager) {
-      users = users.filter(u => u.managerId === currentUser.id);
+    if (freshUser.role === 'manager') {
+      users = users.filter(u => u.managerId === freshUser.id);
+    } else if (freshUser.role === 'hr') {
+      users = users.filter(u => u.assignedById === freshUser.id);
     }
     return users;
   };
@@ -8003,20 +8009,23 @@ async function renderAdminDashboard() {
   function updateDashboardViews() {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
     const isManager = freshUser.role === 'manager';
+    const isHr = freshUser.role === 'hr';
 
     let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
     if (isManager) {
-      users = users.filter(u => u.managerId === currentUser.id);
+      users = users.filter(u => u.managerId === freshUser.id);
+    } else if (isHr) {
+      users = users.filter(u => u.assignedById === freshUser.id);
     }
     const assignedUserIds = users.map(u => u.id);
 
     let logs = DB.getLogs();
-    if (isManager) {
+    if (isManager || isHr) {
       logs = logs.filter(l => assignedUserIds.includes(l.userId));
     }
 
     let leaves = DB.getLeaveRequests();
-    if (isManager) {
+    if (isManager || isHr) {
       leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
     }
 
@@ -9899,7 +9908,7 @@ function openProfileDownloadModal(preSelectedUserId) {
   let users = [];
 
   if (loggedInUser.role === 'hr') {
-    users = DB.getUsers();
+    users = DB.getUsers().filter(u => u.assignedById === loggedInUser.id || u.id === loggedInUser.id);
   } else if (loggedInUser.role === 'manager') {
     users = DB.getUsers().filter(u => u.managerId === loggedInUser.id || u.id === loggedInUser.id);
   } else {
@@ -10707,6 +10716,8 @@ function openAttendanceReportModal() {
       if (u.status === 'Inactive') return false;
       if (loggedInUser.role === 'manager') {
         return u.managerId === loggedInUser.id;
+      } else if (loggedInUser.role === 'hr') {
+        return u.assignedById === loggedInUser.id;
       }
       return true;
     });
@@ -11773,26 +11784,32 @@ function renderAdminApprovals() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const isManager = user.role === 'manager';
-  const assignedEmployees = DB.getUsers().filter(u => u.role === 'employee' && u.managerId === user.id);
+  const isHr = user.role === 'hr';
+  const assignedEmployees = DB.getUsers().filter(u => {
+    if (u.role !== 'employee') return false;
+    if (isManager) return u.managerId === user.id;
+    if (isHr) return u.assignedById === user.id;
+    return true;
+  });
   const assignedUserIds = assignedEmployees.map(u => u.id);
 
   let leaves = DB.getLeaveRequests();
-  if (isManager) {
+  if (isManager || isHr) {
     leaves = leaves.filter(l => assignedUserIds.includes(l.userId));
   }
 
   let swaps = DB.getShiftSwaps().filter(s => s.status === 'Pending Manager');
-  if (isManager) {
+  if (isManager || isHr) {
     swaps = swaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
   }
 
   let allSwaps = DB.getShiftSwaps();
-  if (isManager) {
+  if (isManager || isHr) {
     allSwaps = allSwaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
   }
 
   let allDeviations = DB.getLogs().filter(l => l.coords);
-  if (isManager) {
+  if (isManager || isHr) {
     allDeviations = allDeviations.filter(l => assignedUserIds.includes(l.userId));
   }
 
@@ -12214,11 +12231,13 @@ function renderAdminReports() {
 function compileReports(month, year) {
   const loggedInUser = Auth.getCurrentUser();
   const users = DB.getUsers().filter(u => {
+    if (u.role !== 'employee') return false;
     if (loggedInUser.role === 'manager') {
-      return u.role === 'employee' && u.managerId === loggedInUser.id;
-    } else {
-      return u.role === 'employee';
+      return u.managerId === loggedInUser.id;
+    } else if (loggedInUser.role === 'hr') {
+      return u.assignedById === loggedInUser.id;
     }
+    return true;
   });
   let grandGrossSalary = 0;
   let grandDeductions = 0;
@@ -13583,6 +13602,10 @@ function renderDailyWorkStatus() {
 
     if (DB.getUserBaseRole(currentUser.role) === 'employee') {
       employees = employees.filter(e => e.id === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
+      employees = employees.filter(e => e.managerId === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'hr') {
+      employees = employees.filter(e => e.assignedById === currentUser.id);
     }
 
     // 2. Apply Search and Department Filters

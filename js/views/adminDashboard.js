@@ -316,10 +316,11 @@ export async function renderAdminDashboard() {
 
   const getAssignedUserIds = () => {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const isManager = freshUser.role === 'manager';
     let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
-    if (isManager) {
-      users = users.filter(u => u.managerId === currentUser.id);
+    if (freshUser.role === 'manager') {
+      users = users.filter(u => u.managerId === freshUser.id);
+    } else if (freshUser.role === 'hr') {
+      users = users.filter(u => u.assignedById === freshUser.id);
     }
     return users;
   };
@@ -415,20 +416,23 @@ export async function renderAdminDashboard() {
   function updateDashboardViews() {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
     const isManager = freshUser.role === 'manager';
+    const isHr = freshUser.role === 'hr';
 
     let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
     if (isManager) {
-      users = users.filter(u => u.managerId === currentUser.id);
+      users = users.filter(u => u.managerId === freshUser.id);
+    } else if (isHr) {
+      users = users.filter(u => u.assignedById === freshUser.id);
     }
     const assignedUserIds = users.map(u => u.id);
 
     let logs = DB.getLogs();
-    if (isManager) {
+    if (isManager || isHr) {
       logs = logs.filter(l => assignedUserIds.includes(l.userId));
     }
 
     let leaves = DB.getLeaveRequests();
-    if (isManager) {
+    if (isManager || isHr) {
       leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
     }
 

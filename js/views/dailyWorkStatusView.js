@@ -152,6 +152,8 @@ export function renderDailyWorkStatus() {
       employees = employees.filter(e => e.id === currentUser.id);
     } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
       employees = employees.filter(e => e.managerId === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'hr') {
+      employees = employees.filter(e => e.assignedById === currentUser.id);
     }
 
     // 2. Apply Search and Department Filters

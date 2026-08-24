@@ -270,7 +270,7 @@
       "role": "employee",
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "",
-      "assignedById": "usr_manager",
+      "assignedById": "usr_6af1y3c",
       "status": "Active",
       "profileVerificationStatus": "Approved",
       "photo": null,
@@ -279,7 +279,10 @@
       "pendingProfileEdits": null,
       "scheduleIds": [
         "sch_3ebecon"
-      ]
+      ],
+      "shiftLocations": {
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "id": "usr_7kek2wc",
@@ -447,7 +450,7 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "managerId": "",
+      "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
       "state": "delhi",
@@ -3052,6 +3055,19 @@
       "status": "Approved",
       "requestDate": "2026-06-08",
       "managerComment": "Take care and recover!"
+    },
+    {
+      "id": "lv_a4skcu4",
+      "userId": "usr_6af1y3c",
+      "type": "Casual",
+      "startDate": "2026-08-26",
+      "endDate": "2026-08-28",
+      "reason": "Emergency",
+      "approverHead": "Operations Manager",
+      "status": "Pending",
+      "requestDate": "2026-08-24",
+      "managerComment": "",
+      "supportingDoc": null
     }
   ],
   "tickets": [
