@@ -785,6 +785,31 @@ function openUserModal(userId = null) {
         updates.password = Utils.hashPassword(password);
       }
       DB.updateUser(userId, updates);
+
+      try {
+        let sessionToken = '';
+        try {
+          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+          if (sess) sessionToken = JSON.parse(sess).token || '';
+        } catch (e) {}
+        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+          },
+          body: JSON.stringify({ action: 'sync', data: DB.data })
+        });
+      } catch (err) {
+        console.warn('Network error synchronizing mutation with backend database:', err);
+      }
+
+      closeModal(overlay);
+      if (typeof showToastNotification === 'function') {
+        showToastNotification('✅ Employee details updated successfully.', 'success');
+      } else {
+        alert('Employee details updated successfully.');
+      }
     } else {
       let maxId = 99;
       DB.data.users.forEach(u => {
@@ -813,33 +838,38 @@ function openUserModal(userId = null) {
         }
         return;
       }
-      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
-    }
+      const createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
 
-    try {
-      let sessionToken = '';
       try {
-        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-        if (sess) sessionToken = JSON.parse(sess).token || '';
-      } catch (e) {}
-      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
-        },
-        body: JSON.stringify({ action: 'sync', data: DB.data })
-      });
-    } catch (err) {
-      console.warn('Network error synchronizing mutation with backend database:', err);
+        let sessionToken = '';
+        try {
+          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+          if (sess) sessionToken = JSON.parse(sess).token || '';
+        } catch (e) {}
+        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+          },
+          body: JSON.stringify({ action: 'sync', data: DB.data })
+        });
+      } catch (err) {
+        console.warn('Network error synchronizing mutation with backend database:', err);
+      }
+
+      closeModal(overlay);
+      if (window.showAccountCreationSuccessModal && createdUser) {
+        window.showAccountCreationSuccessModal(createdUser, rawPassword);
+      } else {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Employee registered successfully.', 'success');
+        } else {
+          alert('Employee registered successfully.');
+        }
+      }
     }
 
-    closeModal(overlay);
-    if (typeof showToastNotification === 'function') {
-      showToastNotification(isEdit ? '✅ Employee details updated successfully.' : '✅ Employee registered successfully.', 'success');
-    } else {
-      alert(isEdit ? 'Employee details updated successfully.' : 'Employee registered successfully.');
-    }
     if (window.location.hash === '#admin-dashboard') {
       await renderAdminDashboard();
     } else {
@@ -847,5 +877,3 @@ function openUserModal(userId = null) {
     }
   });
 }
-
-

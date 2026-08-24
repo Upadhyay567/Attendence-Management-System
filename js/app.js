@@ -3907,63 +3907,61 @@ window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
   const card = document.createElement('div');
   card.className = 'modal-content card-panel';
   card.style.cssText = `
-    max-width: 460px; width: 90%; padding: 32px;
+    max-width: 460px; width: 92%; padding: 32px;
     background: #faf7f2 !important;
-    border: 1px solid rgba(16, 185, 129, 0.25) !important;
-    border-radius: 24px; box-shadow: 0 16px 40px rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(137, 32, 27, 0.15) !important;
+    border-radius: 24px; box-shadow: 0 16px 40px rgba(137,32,27,0.15);
     text-align: center;
   `;
 
   card.innerHTML = `
     <div style="text-align: center; margin-bottom: 20px;">
-      <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      </div>
-      <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #1a0504; letter-spacing: -0.01em;">Account Created Successfully</h3>
-      <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">The portal account has been saved to the database.</p>
+      <div style="font-size: 42px; margin-bottom: 8px;">🎉</div>
+      <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #89201B; letter-spacing: -0.01em;">Account Created Successfully!</h3>
+      <p style="font-size: 12.5px; color: #5c4341; margin: 6px 0 0;">Here are the credentials for the newly created account:</p>
     </div>
     
-    <div style="background: #ffffff; border: 1px solid rgba(137, 32, 27, 0.08); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: left;">
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
-        <span style="color: #64748b; font-weight: 600;">Employee ID:</span>
-        <strong style="color: #1e293b; font-family: monospace;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
+    <div style="background: #eef7f8; border: 1px solid rgba(6,182,212,0.18); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Full Name:</span>
+        <strong style="color: #1e293b; font-size: 13px;">${newUser.name}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
-        <span style="color: #64748b; font-weight: 600;">User ID:</span>
-        <strong style="color: #1e293b; font-family: monospace;">${newUser.id}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">HR / Employee ID:</span>
+        <strong style="color: #0891b2; font-family: monospace; font-size: 13.5px; background: #cffafe; padding: 3px 10px; border-radius: 6px;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
-        <span style="color: #64748b; font-weight: 600;">Login Email:</span>
-        <strong style="color: #1e293b;">${newUser.email || '—'}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Email Address:</span>
+        <strong style="color: #1e293b; font-size: 13px;">${newUser.email || '—'}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
-        <span style="color: #64748b; font-weight: 600;">Generated Password:</span>
-        <strong style="color: #dc2626; font-family: monospace; font-size: 13.5px; letter-spacing: 0.5px; background: rgba(220,38,38,0.05); padding: 2px 6px; border-radius: 4px;">${plainTextPassword}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Password:</span>
+        <strong style="color: #d97706; font-family: monospace; font-size: 13.5px; background: #fef3c7; padding: 3px 10px; border-radius: 6px;">${plainTextPassword}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
-        <span style="color: #64748b; font-weight: 600;">Role Name:</span>
-        <strong style="color: #1e293b;">${roleName}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Role Name:</span>
+        <strong style="color: #1e293b; font-size: 13px;">${roleName}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; ${newUser.managerId || newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;' : ''}">
-        <span style="color: #64748b; font-weight: 600;">Role ID:</span>
-        <strong style="color: #1e293b; font-family: monospace;">${newUser.role}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; ${newUser.managerId || newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;' : ''}">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Role ID:</span>
+        <strong style="color: #1e293b; font-family: monospace; font-size: 13px;">${newUser.role}</strong>
       </div>
       ${newUser.managerId ? `
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px; ${newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;' : ''}">
-        <span style="color: #64748b; font-weight: 600;">Assigned Manager:</span>
-        <strong style="color: #1e293b;">${managerText}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center; ${newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;' : ''}">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Assigned Manager:</span>
+        <strong style="color: #1e293b; font-size: 13px;">${managerText}</strong>
       </div>
       ` : ''}
       ${newUser.assignedById ? `
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
-        <span style="color: #64748b; font-weight: 600;">Assigned HR / Admin:</span>
-        <strong style="color: #1e293b;">${assignedByText}</strong>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Assigned HR / Admin:</span>
+        <strong style="color: #1e293b; font-size: 13px;">${assignedByText}</strong>
       </div>
       ` : ''}
     </div>
 
-    <div style="display: flex; justify-content: center;">
-      <button class="btn btn-secondary" id="btn-success-popup-close" style="min-width: 140px; padding: 10px 24px; font-weight: 700; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, #89201B 0%, #591411 100%); color: #fff; border: none; box-shadow: 0 4px 12px rgba(137,32,27,0.2);">Close</button>
+    <div style="display: flex; justify-content: center; width: 100%;">
+      <button class="btn btn-primary" id="btn-success-popup-close" style="width: 100%; padding: 12px; font-weight: 700; font-size: 14px; border-radius: 12px; cursor: pointer; background: #89201B; color: #fff; border: none; box-shadow: 0 4px 12px rgba(137,32,27,0.2); transition: background 0.2s;">Got It & Continue</button>
     </div>
   `;
 
