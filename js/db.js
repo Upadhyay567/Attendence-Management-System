@@ -418,7 +418,7 @@ export const DB = {
     if (typeof window.apiBaseUrl === 'undefined') {
       window.apiBaseUrl = '';
       try {
-        const configRes = await fetch('/server-config.json');
+        const configRes = await fetch('/server-config.json?v=' + Date.now());
         if (configRes.ok) {
           const config = await configRes.json();
           if (config && config.port) {
@@ -467,7 +467,7 @@ export const DB = {
           headers['Authorization'] = `Bearer ${token}`;
         }
         
-        const res = await fetch((window.apiBaseUrl || '') + '/api/db-state', { 
+        const res = await fetch((window.apiBaseUrl || '') + '/api/db-state?v=' + Date.now(), { 
           signal: controller.signal,
           headers: headers
         });
@@ -712,7 +712,7 @@ export const DB = {
   async reset() {
     try {
       await this.resolveApiBase();
-      const seedRes = await fetch((window.apiBaseUrl || '') + '/seed.json');
+      const seedRes = await fetch((window.apiBaseUrl || '') + '/seed.json?v=' + Date.now());
       if (seedRes.ok) {
         this.data = await seedRes.json();
         this.save();
