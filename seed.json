@@ -5,7 +5,6 @@
       "username": "admin",
       "employeeId": "HR100",
       "name": "DEEPAK SHARMA HR Admin Manager",
-      "password": "pbkdf2$100000$05521fd0037aee3cb484a7b9dea156db$f70e1d30bf7b00226cddc3ec1f31674c23fd8f5b73d303db3bef28e2ddfd04eea46f51493de91f87a50b9cb99e5ac15b30fbccea305dede37477ff188855ef08",
       "role": "hr",
       "scheduleId": "sch_1",
       "baseSalary": 95000,
@@ -41,7 +40,8 @@
       ],
       "shiftLocations": {
         "sch_1": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "password": "pbkdf2$100000$05521fd0037aee3cb484a7b9dea156db$f70e1d30bf7b00226cddc3ec1f31674c23fd8f5b73d303db3bef28e2ddfd04eea46f51493de91f87a50b9cb99e5ac15b30fbccea305dede37477ff188855ef08"
     },
     {
       "id": "usr_hr",
@@ -71,7 +71,7 @@
       "aadhar": null,
       "preferredLocation": "Noida sector 61",
       "managerId": "usr_manager",
-      "assignedById": "usr_7kek2wc",
+      "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
@@ -84,7 +84,7 @@
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
       },
-      "password": "$hash$2c7c47e3"
+      "password": ""
     },
     {
       "id": "usr_manager",
@@ -119,7 +119,7 @@
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
       "status": "Active",
-      "passwordResetCount": 1,
+      "passwordResetCount": 3,
       "scheduleIds": [
         "sch_q8jji9v"
       ],
@@ -128,7 +128,7 @@
       },
       "photo": null,
       "state": "delhi",
-      "password": "pbkdf2$100000$f3e12862677c4acf2c99912d7e19911d$5397f4e8a06e40a8069fe2d662ce834928267326a82b34b79f4d923d8afd3527b89af03eacb766e7ba9412a87d7d0eee0d97daf60785fce30bb12414b6779026"
+      "password": "pbkdf2$100000$bf7d5af43a62616cbd61dc1adbcc7b0b$fd39b2d1c178d8d8c8a34b05448252a94ef28da76e9fcc451e5fe91361fca5b36d56eb0a732962bdd8b994e56372b664f257b86cb2b2add912e9ee5b7706a3ff"
     },
     {
       "id": "usr_john",
@@ -453,7 +453,8 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "pbkdf2$100000$32e06d0dd15a02949421e63754a2ecf7$bad09ad9c100bbc944afd283313b97cff5cd71b2a86158d78b20d683e0714e22da72bcec7a4dde9ce47c07d87a4491c8aa884dbdac3f7531ae354af7d6b3b4ed"
+      "passwordResetCount": 1,
+      "password": "pbkdf2$100000$edd88acd6571bc529307477e713b88f0$a4a9224ab5565c8ca17327777fc11b20c23418b2f6261771e267f59d684dc454abf84ae022fbf60dc2cd2915a27708e2cdf642122e0d486a08e8fb4e6253b9ea"
     },
     {
       "id": "usr_7yuu1l5",

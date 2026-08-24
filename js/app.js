@@ -4438,6 +4438,7 @@ function showAccountModal(editUser = null) {
     }
   });
 }
+window.showAccountModal = showAccountModal;
 
 // Register a new location globally
 function registerNewLocation(name, lat, lng) {

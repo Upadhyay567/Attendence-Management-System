@@ -514,7 +514,12 @@ app.post('/api/mutate', authenticateToken, async (req, res) => {
 app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required for granular mutations.' });
+      const { type, key } = req.body;
+      if (type === 'push' && key === 'users') {
+        // Allow unauthenticated account registration (pushing new user to the database)
+      } else {
+        return res.status(401).json({ error: 'Authentication required for granular mutations.' });
+      }
     }
     const { type, key, payload, query, updates } = req.body;
     if (!type || !key) {
