@@ -527,7 +527,7 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
     }
 
     // Access Control Validation: employees can only modify their own leaves, logs, or shift swaps
-    if (req.user.role === 'employee') {
+    if (req.user && req.user.role === 'employee') {
       if (!['attendanceLogs', 'leaveRequests', 'shiftSwaps'].includes(key)) {
         return res.status(403).json({ error: 'Access Denied: Forbidden database operation.' });
       }

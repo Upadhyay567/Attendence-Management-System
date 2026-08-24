@@ -3898,6 +3898,12 @@ window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
   
   const roleName = newUser.role === 'hr' ? 'HR Coordinator' : (newUser.role === 'manager' ? 'Operations Manager' : 'Employee');
 
+  const managerUser = newUser.managerId ? DB.getUser(newUser.managerId) : null;
+  const assignedByVal = newUser.assignedById ? DB.getUser(newUser.assignedById) : null;
+
+  const managerText = managerUser ? `${managerUser.name} (${managerUser.employeeId || managerUser.username})` : (newUser.managerId || '—');
+  const assignedByText = assignedByVal ? `${assignedByVal.name} (${assignedByVal.employeeId || assignedByVal.username})` : (newUser.assignedById || '—');
+
   const card = document.createElement('div');
   card.className = 'modal-content card-panel';
   card.style.cssText = `
@@ -3938,10 +3944,22 @@ window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
         <span style="color: #64748b; font-weight: 600;">Role Name:</span>
         <strong style="color: #1e293b;">${roleName}</strong>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; ${newUser.managerId || newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;' : ''}">
         <span style="color: #64748b; font-weight: 600;">Role ID:</span>
         <strong style="color: #1e293b; font-family: monospace;">${newUser.role}</strong>
       </div>
+      ${newUser.managerId ? `
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; ${newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;' : ''}">
+        <span style="color: #64748b; font-weight: 600;">Assigned Manager:</span>
+        <strong style="color: #1e293b;">${managerText}</strong>
+      </div>
+      ` : ''}
+      ${newUser.assignedById ? `
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+        <span style="color: #64748b; font-weight: 600;">Assigned HR / Admin:</span>
+        <strong style="color: #1e293b;">${assignedByText}</strong>
+      </div>
+      ` : ''}
     </div>
 
     <div style="display: flex; justify-content: center;">
@@ -4399,6 +4417,14 @@ function showAccountModal(editUser = null) {
       payload.password = Utils.hashPassword(password);
     }
 
+    let syncSuccess = false;
+    let syncErrorMsg = 'Failed to save account to database.';
+
+    const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+    let sessionData = null;
+    try { if (sess) sessionData = JSON.parse(sess); } catch(e) {}
+    const token = sessionData ? sessionData.token : '';
+
     if (isEdit) {
       DB.updateUser(editUser.id, payload);
     } else {
@@ -4406,22 +4432,43 @@ function showAccountModal(editUser = null) {
       payload.id = createdUser.id;
     }
 
-    closeModal();
-
     try {
-      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-      const token = sess ? JSON.parse(sess).token : '';
-      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+      const url = token ? '/api/mutate' : '/api/mutate-granular';
+      const body = token 
+        ? { action: 'sync', data: DB.data }
+        : { type: 'push', key: 'users', payload: DB.data.users.find(u => u.id === payload.id) };
+
+      const res = await fetch((window.apiBaseUrl || '') + url, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+          ...(token ? { 'Authorization': 'Bearer ' + token } : {})
         },
-        body: JSON.stringify({ action: 'sync', data: DB.data })
+        body: JSON.stringify(body)
       });
+
+      if (res.ok) {
+        syncSuccess = true;
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        syncErrorMsg = errData.error || 'Server rejected the save operation.';
+      }
     } catch (err) {
-      console.warn('Network error synchronizing mutation with backend database:', err);
+      console.warn('Network error synchronizing mutation:', err);
+      syncErrorMsg = 'Network error. The server could not be reached.';
     }
+
+    if (!syncSuccess) {
+      errorEl.textContent = `⚠️ Database Sync Failed: ${syncErrorMsg}`;
+      errorEl.style.display = 'block';
+      if (!isEdit) {
+        DB.data.users = DB.data.users.filter(u => u.id !== payload.id);
+        localStorage.setItem('attendance_system_db', JSON.stringify(DB.data));
+      }
+      return;
+    }
+
+    closeModal();
 
     if (typeof renderAdminUsers === 'function') renderAdminUsers();
     if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
