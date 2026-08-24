@@ -41,7 +41,7 @@
       "shiftLocations": {
         "sch_1": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_hr",
@@ -83,7 +83,8 @@
       ],
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
-      }
+      },
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_manager",
@@ -127,7 +128,7 @@
       },
       "photo": null,
       "state": "delhi",
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_john",
@@ -472,7 +473,7 @@
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "passwordResetCount": 1,
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_7yuu1l5",
@@ -517,7 +518,7 @@
       "state": "delhi",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_gfko2jc",
@@ -593,7 +594,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_rv8lky9",
@@ -628,7 +629,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "\\"
+      "password": "$hash$2c7c47e3"
     },
     {
       "id": "usr_sjtxi5d",
@@ -663,7 +664,7 @@
       "photo": null,
       "managerId": "",
       "assignedById": "usr_sjtxi5d",
-      "password": "\\",
+      "password": "$hash$2c7c47e3",
       "scheduleIds": [
         "sch_bgpyqv3"
       ],
