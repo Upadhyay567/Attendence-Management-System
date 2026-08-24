@@ -768,9 +768,10 @@ function openUserModal(userId = null) {
     const assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
 
     if (isEdit) {
-      const finalPassword = password || user.password;
-      DB.updateUser(userId, { 
-        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+      // Only include the password field in the update if the admin entered a new one.
+      // If left blank, omit it so the existing hashed password on the server is preserved.
+      const updates = {
+        name, employeeId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact,
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -778,7 +779,12 @@ function openUserModal(userId = null) {
         city, state,
         profileVerificationComment: '',
         pendingProfileEdits: null
-      });
+      };
+      // Hash and include the new password only if the admin explicitly entered one
+      if (password) {
+        updates.password = Utils.hashPassword(password);
+      }
+      DB.updateUser(userId, updates);
     } else {
       let maxId = 99;
       DB.data.users.forEach(u => {
@@ -792,7 +798,8 @@ function openUserModal(userId = null) {
       const nextEmpId = 'EMP' + (maxId + 1);
 
       const finalUsername = username || name.toLowerCase().replace(/\s+/g, '') || nextEmpId.toLowerCase();
-      const finalPassword = password || 'Surya@123';
+      const rawPassword = password || 'Surya@123';
+      const finalPassword = Utils.hashPassword(rawPassword);
 
       const enteredId = employeeId.trim();
       const existingUserById = DB.getUserByUsernameOrId(enteredId);
@@ -810,9 +817,17 @@ function openUserModal(userId = null) {
     }
 
     try {
+      let sessionToken = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) sessionToken = JSON.parse(sess).token || '';
+      } catch (e) {}
       await fetch((window.apiBaseUrl || '') + '/api/mutate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+        },
         body: JSON.stringify({ action: 'sync', data: DB.data })
       });
     } catch (err) {

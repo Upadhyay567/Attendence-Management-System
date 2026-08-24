@@ -335,55 +335,61 @@ export function renderLoginView() {
         return;
       }
 
-      const allUsers = DB.getUsers();
-      const matchedUser = allUsers.find(u => 
-        (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-        (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-        (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-        (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-      );
-
-      if (!matchedUser) {
-        warningEl.textContent = `⚠️ Invalid ${idLabelText}. No matching account found.`;
+      if (isHrOrManager && !enteredPwd) {
+        warningEl.textContent = `⚠️ Password is required to log in to this account.`;
         warningEl.style.display = 'block';
         return;
       }
 
-      // Check role match
-      let isRoleValid = false;
-      if (role === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
-      if (role === 'manager' && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
-      if (role === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
-
-      if (!isRoleValid) {
-        warningEl.textContent = `⚠️ Access Denied: Account '${enteredId}' is an ${matchedUser.role.toUpperCase()} account and cannot log in from the ${role.toUpperCase()} portal.`;
-        warningEl.style.display = 'block';
-        return;
+      // Disable submit button to prevent double-click
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying...';
       }
+      warningEl.style.display = 'none';
 
-      if (matchedUser.status === 'Inactive') {
-        warningEl.textContent = `⚠️ Your account is Inactive. Please contact HR.`;
-        warningEl.style.display = 'block';
-        return;
-      }
-
-      if (isHrOrManager) {
-        if (!enteredPwd) {
-          warningEl.textContent = `⚠️ Password is required to log in to this account.`;
+      // Authenticate via backend to get a real server-issued session token
+      const apiBase = window.apiBaseUrl || '';
+      fetch(`${apiBase}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: enteredId, password: enteredPwd, role })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data })))
+      .then(({ status, data }) => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Verify';
+        }
+        if (status !== 200 || !data.success) {
+          const errMsg = data.error || 'Invalid credentials. Please try again.';
+          warningEl.textContent = `⚠️ ${errMsg}`;
           warningEl.style.display = 'block';
           return;
         }
-        if (matchedUser.password) {
-          const isValidPwd = Utils.verifyPassword(enteredPwd, matchedUser.password);
-          if (!isValidPwd) {
-            warningEl.textContent = `⚠️ Invalid Password. Please check your password and try again.`;
-            warningEl.style.display = 'block';
-            return;
-          }
+        // Use the real server-issued token so all API calls (DB save, fetch state) work correctly
+        proceedLogin(data.user, data.token);
+      })
+      .catch(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Verify';
         }
-      }
-
-      proceedLogin(matchedUser);
+        // Server unreachable: fall back to client-side login without server token
+        warningEl.textContent = '⚠️ Server unreachable. Continuing in offline mode.';
+        warningEl.style.display = 'block';
+        const allUsers = DB.getUsers();
+        const matchedUser = allUsers.find(u =>
+          (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
+          (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
+          (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
+          (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
+        );
+        setTimeout(() => {
+          warningEl.style.display = 'none';
+          if (matchedUser) proceedLogin(matchedUser, null);
+        }, 1500);
+      });
     };
 
     submitBtn.addEventListener('click', handleVerification);
@@ -402,19 +408,32 @@ export function renderLoginView() {
 
     const handleSkip = () => {
       const enteredId = inputEl.value.trim();
-      if (enteredId) {
-        const matched = DB.getUsers().find(u => 
-          (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-          (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-        );
-        if (matched) {
-          proceedLogin(matched);
-          return;
+      const defaultUser = getDefaultUserForRole();
+      const userToLogin = enteredId
+        ? (DB.getUsers().find(u => 
+            (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
+            (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
+            (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
+            (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
+          ) || defaultUser)
+        : defaultUser;
+
+      // Call backend with skipCheck so it creates a real server session token
+      const apiBase = window.apiBaseUrl || '';
+      fetch(`${apiBase}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: userToLogin ? userToLogin.employeeId || userToLogin.username : '', skipCheck: true, role })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data })))
+      .then(({ status, data }) => {
+        if (status === 200 && data.success) {
+          proceedLogin(data.user || userToLogin, data.token);
+        } else {
+          proceedLogin(userToLogin, null);
         }
-      }
-      proceedLogin(getDefaultUserForRole());
+      })
+      .catch(() => proceedLogin(userToLogin, null));
     };
 
     if (skipBtn) {
@@ -438,11 +457,13 @@ export function renderLoginView() {
     }
   };
 
-  const proceedLogin = (user) => {
+  const proceedLogin = (user, serverToken) => {
     Auth.currentUser = user;
+    // Use real server-issued token if available; otherwise generate a client-side fallback token
+    const token = serverToken || ('session_' + Math.random().toString(36).substring(2) + '_' + Date.now());
     const sessionData = JSON.stringify({
       id: user.id,
-      token: 'session_' + Math.random().toString(36).substring(2) + '_' + Date.now(),
+      token: token,
       loginTime: new Date().toISOString()
     });
     sessionStorage.setItem('attendance_current_session', sessionData);

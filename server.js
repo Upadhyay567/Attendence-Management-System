@@ -451,6 +451,29 @@ app.post('/api/mutate', authenticateToken, async (req, res) => {
     if (action !== 'sync' || !data) {
       return res.status(400).json({ error: 'Invalid mutation action payload.' });
     }
+
+    // CRITICAL: Preserve existing password hashes from the current database.
+    // The client never receives passwords from /api/db-state (security feature),
+    // so the incoming 'data' will have users without password fields.
+    // We must merge existing passwords back in to prevent them from being wiped.
+    const mergePasswords = (incomingData, existingUsers) => {
+      if (!incomingData.users || !Array.isArray(incomingData.users) || !existingUsers) return;
+      const existingPassMap = {};
+      existingUsers.forEach(u => { if (u.id && u.password) existingPassMap[u.id] = u.password; });
+      incomingData.users.forEach(u => {
+        if (u.id && !u.password && existingPassMap[u.id]) {
+          u.password = existingPassMap[u.id];
+        }
+      });
+    };
+
+    // Load current state to extract existing passwords for merging
+    let existingUsers = [];
+    try {
+      const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      existingUsers = JSON.parse(rawSeed).users || [];
+    } catch (e) {}
+    mergePasswords(data, existingUsers);
     
     const col = await getCollection();
     if (useLocalFileDB || !col) {
@@ -458,6 +481,14 @@ app.post('/api/mutate', authenticateToken, async (req, res) => {
       return res.json({ success: true, localFile: true });
     }
     
+    // Also merge passwords from MongoDB if available
+    try {
+      const stateDoc = await col.findOne({ _id: 'global_state' });
+      if (stateDoc && stateDoc.users) {
+        mergePasswords(data, stateDoc.users);
+      }
+    } catch (e) {}
+
     // Upsert the full state
     const updateResult = await col.updateOne(
       { _id: 'global_state' },

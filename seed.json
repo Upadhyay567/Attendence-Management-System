@@ -1,6 +1,49 @@
 {
   "users": [
     {
+      "id": "usr_admin",
+      "username": "admin",
+      "employeeId": "HR100",
+      "name": "DEEPAK SHARMA HR Admin Manager",
+      "password": "pbkdf2$100000$05521fd0037aee3cb484a7b9dea156db$f70e1d30bf7b00226cddc3ec1f31674c23fd8f5b73d303db3bef28e2ddfd04eea46f51493de91f87a50b9cb99e5ac15b30fbccea305dede37477ff188855ef08",
+      "role": "hr",
+      "scheduleId": "sch_1",
+      "baseSalary": 95000,
+      "allowanceHRA": 14250,
+      "allowanceTravel": 3000,
+      "deductionPF": 7600,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543209",
+      "email": "adminsurya.group@gmail.com",
+      "dob": "1985-05-12",
+      "address": "12, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Male",
+      "department": "Human Resources",
+      "designation": "HR Admin Manager",
+      "dateOfJoining": "2020-04-15",
+      "emergencyContact": "+91 98765 43201",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "managerId": "",
+      "assignedById": "usr_admin",
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "status": "Active",
+      "photo": null,
+      "state": "delhi",
+      "scheduleIds": [
+        "sch_1"
+      ],
+      "shiftLocations": {
+        "sch_1": "HS Group Worksite (28.6952, 77.1860)"
+      }
+    },
+    {
       "id": "usr_hr",
       "username": "hr",
       "employeeId": "HR101",
@@ -85,7 +128,7 @@
       },
       "photo": null,
       "state": "delhi",
-      "password": "$hash$2c7c47e3"
+      "password": "pbkdf2$100000$f3e12862677c4acf2c99912d7e19911d$5397f4e8a06e40a8069fe2d662ce834928267326a82b34b79f4d923d8afd3527b89af03eacb766e7ba9412a87d7d0eee0d97daf60785fce30bb12414b6779026"
     },
     {
       "id": "usr_john",
@@ -410,7 +453,7 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "pbkdf2$100000$e75ac03e78a29dea04ef8ce3e52b297c$cbcfec3e4caa0186f02766168e3f92bbb6e553618ce562bb04927f4b4d2a0640f8882794d14a0424be8ff17acafea180c1032884248378b233007a67aebcc28f"
     },
     {
       "id": "usr_7yuu1l5",
