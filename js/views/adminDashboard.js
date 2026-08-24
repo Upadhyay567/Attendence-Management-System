@@ -316,7 +316,7 @@ export async function renderAdminDashboard() {
 
   const getAssignedUserIds = () => {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
-    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
+    let users = DB.getUsers().filter(u => u.role === 'employee' && u.status !== 'Inactive');
     if (freshUser.role === 'manager') {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (freshUser.role === 'hr') {
@@ -418,13 +418,15 @@ export async function renderAdminDashboard() {
     const isManager = freshUser.role === 'manager';
     const isHr = freshUser.role === 'hr';
 
-    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
+    let users = DB.getUsers().filter(u => u.status !== 'Inactive');
     if (isManager) {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (isHr) {
       users = users.filter(u => u.assignedById === freshUser.id);
     }
-    const assignedUserIds = users.map(u => u.id);
+
+    const activeEmployees = users.filter(u => u.role === 'employee');
+    const assignedUserIds = activeEmployees.map(u => u.id);
 
     let logs = DB.getLogs();
     if (isManager || isHr) {
@@ -444,8 +446,8 @@ export async function renderAdminDashboard() {
     const presentCount = presentToday.length;
     const lateCount = lateToday.length;
     const leaveCount = onLeaveToday.length;
-    const totalEmployees = users.length;
-    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn).length;
+    const totalEmployees = activeEmployees.length;
+    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn && assignedUserIds.includes(l.userId)).length;
     const absentCount = totalEmployees - checkedInAtAllCount - leaveCount;
     
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
@@ -1538,15 +1540,29 @@ function openUserModal(userId = null) {
       };
     }
 
-    const managerSelect = document.getElementById('editor-manager');
-    const managerId = managerSelect ? managerSelect.value : (currentUser.role === 'manager' ? currentUser.id : (isEdit ? user.managerId : ''));
+    let managerId = '';
+    if (currentUser.role === 'manager') {
+      managerId = currentUser.id;
+    } else {
+      managerId = managerSelect ? managerSelect.value : (isEdit ? user.managerId : '');
+    }
+
     const assignedBySelect = document.getElementById('editor-assigned-by');
-    const assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
+    let assignedById = '';
+    if (currentUser.role === 'hr' || currentUser.role === 'manager') {
+      assignedById = currentUser.id;
+    } else {
+      assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
+    }
+
+    let createdUser = null;
+    let plainPassword = '';
 
     if (isEdit) {
       const finalPassword = password || user.password;
+      const hashedPass = Utils.hashPassword(finalPassword);
       DB.updateUser(userId, { 
-        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, email, phone, dob, password: hashedPass, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -1569,6 +1585,7 @@ function openUserModal(userId = null) {
 
       const finalUsername = username || name.toLowerCase().replace(/\s+/g, '') || nextEmpId.toLowerCase();
       const finalPassword = password || 'Surya@123';
+      plainPassword = finalPassword;
 
       const enteredId = employeeId.trim();
       const existingUserById = DB.getUserByUsernameOrId(enteredId);
@@ -1582,13 +1599,19 @@ function openUserModal(userId = null) {
         }
         return;
       }
-      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      const hashedPass = Utils.hashPassword(finalPassword);
+      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
 
     try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      const token = sess ? JSON.parse(sess).token : '';
       await fetch((window.apiBaseUrl || '') + '/api/mutate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify({ action: 'sync', data: DB.data })
       });
     } catch (err) {
@@ -1596,11 +1619,25 @@ function openUserModal(userId = null) {
     }
 
     closeModal(overlay);
-    if (typeof showToastNotification === 'function') {
-      showToastNotification(isEdit ? '✅ Employee details updated successfully.' : '✅ Employee registered successfully.', 'success');
+
+    if (isEdit) {
+      if (typeof showToastNotification === 'function') {
+        showToastNotification('✅ Employee details updated successfully.', 'success');
+      } else {
+        alert('Employee details updated successfully.');
+      }
     } else {
-      alert(isEdit ? 'Employee details updated successfully.' : 'Employee registered successfully.');
+      if (window.showAccountCreationSuccessModal && createdUser) {
+        window.showAccountCreationSuccessModal(createdUser, plainPassword);
+      } else {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Employee registered successfully.', 'success');
+        } else {
+          alert('Employee registered successfully.');
+        }
+      }
     }
+
     if (window.location.hash === '#admin-dashboard') {
       await renderAdminDashboard();
     } else {

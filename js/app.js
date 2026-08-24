@@ -3886,6 +3886,80 @@ function renderAccountManagementView() {
   });
 }
 
+window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px);
+    display: flex; justify-content: center; align-items: center; z-index: 999999;
+    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  `;
+  
+  const roleName = newUser.role === 'hr' ? 'HR Coordinator' : (newUser.role === 'manager' ? 'Operations Manager' : 'Employee');
+
+  const card = document.createElement('div');
+  card.className = 'modal-content card-panel';
+  card.style.cssText = `
+    max-width: 460px; width: 90%; padding: 32px;
+    background: #faf7f2 !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+    border-radius: 24px; box-shadow: 0 16px 40px rgba(16, 185, 129, 0.1);
+    text-align: center;
+  `;
+
+  card.innerHTML = `
+    <div style="text-align: center; margin-bottom: 20px;">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #1a0504; letter-spacing: -0.01em;">Account Created Successfully</h3>
+      <p style="font-size: 12px; color: #64748b; margin: 6px 0 0;">The portal account has been saved to the database.</p>
+    </div>
+    
+    <div style="background: #ffffff; border: 1px solid rgba(137, 32, 27, 0.08); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+        <span style="color: #64748b; font-weight: 600;">Employee ID:</span>
+        <strong style="color: #1e293b; font-family: monospace;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+        <span style="color: #64748b; font-weight: 600;">User ID:</span>
+        <strong style="color: #1e293b; font-family: monospace;">${newUser.id}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+        <span style="color: #64748b; font-weight: 600;">Login Email:</span>
+        <strong style="color: #1e293b;">${newUser.email || '—'}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+        <span style="color: #64748b; font-weight: 600;">Generated Password:</span>
+        <strong style="color: #dc2626; font-family: monospace; font-size: 13.5px; letter-spacing: 0.5px; background: rgba(220,38,38,0.05); padding: 2px 6px; border-radius: 4px;">${plainTextPassword}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px; border-bottom: 1px solid rgba(0,0,0,0.03); padding-bottom: 8px;">
+        <span style="color: #64748b; font-weight: 600;">Role Name:</span>
+        <strong style="color: #1e293b;">${roleName}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+        <span style="color: #64748b; font-weight: 600;">Role ID:</span>
+        <strong style="color: #1e293b; font-family: monospace;">${newUser.role}</strong>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: center;">
+      <button class="btn btn-secondary" id="btn-success-popup-close" style="min-width: 140px; padding: 10px 24px; font-weight: 700; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, #89201B 0%, #591411 100%); color: #fff; border: none; box-shadow: 0 4px 12px rgba(137,32,27,0.2);">Close</button>
+    </div>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  
+  card.querySelector('#btn-success-popup-close').addEventListener('click', () => {
+    overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+    setTimeout(() => {
+      if (overlay.parentNode) document.body.removeChild(overlay);
+    }, 180);
+  });
+};
+
 function showAccountModal(editUser = null) {
   const isEdit = !!editUser;
   const overlay = document.createElement('div');
@@ -4284,18 +4358,41 @@ function showAccountModal(editUser = null) {
       }
     }
 
+    let department = '';
+    let designation = '';
+    if (role === 'hr') {
+      department = 'Human Resources';
+      designation = 'HR Coordinator';
+    } else if (role === 'manager') {
+      department = 'Operations';
+      designation = 'Operations Manager';
+    } else {
+      // role === 'employee'
+      department = isEdit ? (editUser.department || 'Staff') : 'Staff';
+      designation = isEdit ? (editUser.designation || 'Employee') : 'Employee';
+    }
+
+    if (customRoleName && customRoleName !== 'hr' && customRoleName !== 'manager' && customRoleName !== 'employee') {
+      department = customRoleName;
+      designation = customRoleName;
+    }
+
+    const currentUser = Auth.getCurrentUser() || {};
+
     const payload = {
       name,
       username,
-      employeeId: username.toUpperCase(),
+      employeeId: isEdit ? (editUser.employeeId || username.toUpperCase()) : username.toUpperCase(),
       email,
       phone: mobile,
       mobile: mobile,
       role,
       status: isEdit ? (editUser.status || 'Active') : 'Active',
-      department: customRoleName || (role === 'hr' ? 'Human Resources' : 'Operations'),
-      designation: customRoleName || (role === 'hr' ? 'HR Coordinator' : 'Operations Manager'),
-      photo: uploadedPhotoDataUrl
+      department,
+      designation,
+      photo: uploadedPhotoDataUrl,
+      managerId: isEdit ? (editUser.managerId || '') : (currentUser.role === 'manager' ? currentUser.id : ''),
+      assignedById: isEdit ? (editUser.assignedById || '') : (currentUser.role === 'hr' || currentUser.role === 'manager' ? currentUser.id : '')
     };
 
     if (password) {
@@ -4304,61 +4401,41 @@ function showAccountModal(editUser = null) {
 
     if (isEdit) {
       DB.updateUser(editUser.id, payload);
-      closeModal();
-      requestsPushDBState();
-      if (typeof renderAdminUsers === 'function') renderAdminUsers();
-      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
-      await CustomDialog.alert(`Account for ${name} (${username}) updated successfully.`);
     } else {
-      DB.addUser(payload);
-      closeModal();
-      requestsPushDBState();
-      if (typeof renderAdminUsers === 'function') renderAdminUsers();
-      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
-
-      const credModal = document.createElement('div');
-      credModal.style.cssText = `
-        position: fixed; top:0; left:0; width:100vw; height:100vh;
-        background: rgba(12,3,4,0.85); backdrop-filter: blur(8px);
-        display:flex; justify-content:center; align-items:center; z-index:10001;
-        animation: fadeIn 0.2s ease forwards;
-      `;
-      credModal.innerHTML = `
-        <div class="card-panel" style="max-width: 440px; width: 90%; padding: 26px; background: var(--bg-surface); border: 1px solid var(--primary); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center;">
-          <div style="font-size: 40px; margin-bottom: 8px;">🎉</div>
-          <h3 style="font-size: 19px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">Account Created Successfully!</h3>
-          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 18px;">Here are the credentials for the newly created account:</p>
-          
-          <div style="background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.3); border-radius: 10px; padding: 16px; text-align: left; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
-              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Full Name:</span>
-              <strong style="color:var(--text-primary); font-size:13px">${Utils.escape(name)}</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
-              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">HR / Employee ID:</span>
-              <strong style="color:var(--cyan); font-size:14px; font-family:monospace; background:rgba(6,182,212,0.15); padding:3px 10px; border-radius:6px">${Utils.escape(username.toUpperCase())}</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px">
-              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Email Address:</span>
-              <strong style="color:var(--text-primary); font-size:13px">${Utils.escape(email)}</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center">
-              <span style="color:var(--text-secondary); font-weight:600; font-size:12.5px">Password:</span>
-              <strong style="color:#f59e0b; font-size:14px; font-family:monospace; background:rgba(245,158,11,0.15); padding:3px 10px; border-radius:6px">${Utils.escape(password)}</strong>
-            </div>
-          </div>
-
-          <button id="btn-close-cred-modal" class="btn btn-primary" style="width: 100%; padding: 11px; font-weight: 700; font-size: 13.5px; border-radius: 8px;">Got It & Continue</button>
-        </div>
-      `;
-      document.body.appendChild(credModal);
-      credModal.querySelector('#btn-close-cred-modal').addEventListener('click', () => {
-        document.body.removeChild(credModal);
-        showVerificationScreen(payload);
-      });
+      const createdUser = DB.addUser(payload);
+      payload.id = createdUser.id;
     }
 
-    renderAccountManagementView();
+    closeModal();
+
+    try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      const token = sess ? JSON.parse(sess).token : '';
+      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ action: 'sync', data: DB.data })
+      });
+    } catch (err) {
+      console.warn('Network error synchronizing mutation with backend database:', err);
+    }
+
+    if (typeof renderAdminUsers === 'function') renderAdminUsers();
+    if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
+    if (typeof renderAccountManagementView === 'function') renderAccountManagementView();
+
+    if (isEdit) {
+      await CustomDialog.alert(`Account for ${name} (${username}) updated successfully.`);
+    } else {
+      if (window.showAccountCreationSuccessModal) {
+        window.showAccountCreationSuccessModal(payload, password);
+      } else {
+        await CustomDialog.alert(`Account for ${name} (${username}) created successfully.`);
+      }
+    }
   });
 }
 
@@ -6930,7 +7007,7 @@ function renderAdminVerificationView() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const isManager = user.role === 'manager';
-  let employees = DB.getUsers().filter(u => u.role === 'employee');
+  let employees = DB.getUsers().filter(u => u.status !== 'Inactive');
   if (isManager) {
     employees = employees.filter(u => u.managerId === user.id);
   } else if (user.role === 'hr') {
@@ -7909,7 +7986,7 @@ async function renderAdminDashboard() {
 
   const getAssignedUserIds = () => {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
-    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
+    let users = DB.getUsers().filter(u => u.role === 'employee' && u.status !== 'Inactive');
     if (freshUser.role === 'manager') {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (freshUser.role === 'hr') {
@@ -8011,13 +8088,15 @@ async function renderAdminDashboard() {
     const isManager = freshUser.role === 'manager';
     const isHr = freshUser.role === 'hr';
 
-    let users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager' && u.role !== 'finance_manager' && u.status !== 'Inactive');
+    let users = DB.getUsers().filter(u => u.status !== 'Inactive');
     if (isManager) {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (isHr) {
       users = users.filter(u => u.assignedById === freshUser.id);
     }
-    const assignedUserIds = users.map(u => u.id);
+
+    const activeEmployees = users.filter(u => u.role === 'employee');
+    const assignedUserIds = activeEmployees.map(u => u.id);
 
     let logs = DB.getLogs();
     if (isManager || isHr) {
@@ -8037,8 +8116,8 @@ async function renderAdminDashboard() {
     const presentCount = presentToday.length;
     const lateCount = lateToday.length;
     const leaveCount = onLeaveToday.length;
-    const totalEmployees = users.length;
-    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn).length;
+    const totalEmployees = activeEmployees.length;
+    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn && assignedUserIds.includes(l.userId)).length;
     const absentCount = totalEmployees - checkedInAtAllCount - leaveCount;
     
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
@@ -8380,8 +8459,10 @@ function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const users = DB.getUsers().filter(u => {
-    if (user.role === 'manager' || user.role === 'hr') {
-      return true; // show all employee, hr, and manager profiles, including their own!
+    if (user.role === 'manager') {
+      return u.managerId === user.id && u.role === 'employee';
+    } else if (user.role === 'hr') {
+      return u.assignedById === user.id && u.role === 'employee';
     } else if (user.role === 'finance_manager') {
       return false; // Not showing employee list to Finance Manager
     } else {
@@ -9131,15 +9212,29 @@ function openUserModal(userId = null) {
       };
     }
 
-    const managerSelect = document.getElementById('editor-manager');
-    const managerId = managerSelect ? managerSelect.value : (currentUser.role === 'manager' ? currentUser.id : (isEdit ? user.managerId : ''));
+    let managerId = '';
+    if (currentUser.role === 'manager') {
+      managerId = currentUser.id;
+    } else {
+      managerId = managerSelect ? managerSelect.value : (isEdit ? user.managerId : '');
+    }
+
     const assignedBySelect = document.getElementById('editor-assigned-by');
-    const assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
+    let assignedById = '';
+    if (currentUser.role === 'hr' || currentUser.role === 'manager') {
+      assignedById = currentUser.id;
+    } else {
+      assignedById = assignedBySelect ? assignedBySelect.value : currentUser.id;
+    }
+
+    let createdUser = null;
+    let plainPassword = '';
 
     if (isEdit) {
       const finalPassword = password || user.password;
+      const hashedPass = Utils.hashPassword(finalPassword);
       DB.updateUser(userId, { 
-        name, employeeId, email, phone, dob, password: finalPassword, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, email, phone, dob, password: hashedPass, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -9162,6 +9257,7 @@ function openUserModal(userId = null) {
 
       const finalUsername = username || name.toLowerCase().replace(/\s+/g, '') || nextEmpId.toLowerCase();
       const finalPassword = password || 'Surya@123';
+      plainPassword = finalPassword;
 
       const enteredId = employeeId.trim();
       const existingUserById = DB.getUserByUsernameOrId(enteredId);
@@ -9175,13 +9271,19 @@ function openUserModal(userId = null) {
         }
         return;
       }
-      DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      const hashedPass = Utils.hashPassword(finalPassword);
+      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
     }
 
     try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      const token = sess ? JSON.parse(sess).token : '';
       await fetch((window.apiBaseUrl || '') + '/api/mutate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify({ action: 'sync', data: DB.data })
       });
     } catch (err) {
@@ -9189,11 +9291,25 @@ function openUserModal(userId = null) {
     }
 
     closeModal(overlay);
-    if (typeof showToastNotification === 'function') {
-      showToastNotification(isEdit ? '✅ Employee details updated successfully.' : '✅ Employee registered successfully.', 'success');
+
+    if (isEdit) {
+      if (typeof showToastNotification === 'function') {
+        showToastNotification('✅ Employee details updated successfully.', 'success');
+      } else {
+        alert('Employee details updated successfully.');
+      }
     } else {
-      alert(isEdit ? 'Employee details updated successfully.' : 'Employee registered successfully.');
+      if (window.showAccountCreationSuccessModal && createdUser) {
+        window.showAccountCreationSuccessModal(createdUser, plainPassword);
+      } else {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Employee registered successfully.', 'success');
+        } else {
+          alert('Employee registered successfully.');
+        }
+      }
     }
+
     if (window.location.hash === '#admin-dashboard') {
       await renderAdminDashboard();
     } else {

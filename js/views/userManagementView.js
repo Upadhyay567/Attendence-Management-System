@@ -9,8 +9,10 @@ export function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const users = DB.getUsers().filter(u => {
-    if (user.role === 'manager' || user.role === 'hr') {
-      return true; // show all employee, hr, and manager profiles, including their own!
+    if (user.role === 'manager') {
+      return u.managerId === user.id && u.role === 'employee';
+    } else if (user.role === 'hr') {
+      return u.assignedById === user.id && u.role === 'employee';
     } else if (user.role === 'finance_manager') {
       return false; // Not showing employee list to Finance Manager
     } else {
