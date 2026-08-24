@@ -673,7 +673,7 @@ export const DB = {
     localStorage.setItem(DB_KEY, JSON.stringify(this.data));
     window.dispatchEvent(new Event('db_updated'));
 
-    this.resolveApiBase().then(() => {
+    return this.resolveApiBase().then(() => {
       let token = '';
       try {
         const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
@@ -685,7 +685,7 @@ export const DB = {
 
       if (mutationMeta) {
         // Granular mutations to prevent race conditions and payload overhead
-        fetch((window.apiBaseUrl || '') + '/api/mutate-granular', {
+        return fetch((window.apiBaseUrl || '') + '/api/mutate-granular', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify(mutationMeta)
@@ -696,7 +696,7 @@ export const DB = {
         });
       } else {
         // Fallback to full state sync if no meta is provided (e.g. imports or resets)
-        fetch((window.apiBaseUrl || '') + '/api/mutate', {
+        return fetch((window.apiBaseUrl || '') + '/api/mutate', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({ action: 'sync', data: this.data })
