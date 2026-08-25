@@ -13,6 +13,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const ejs = require('ejs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hs_group_delhi_jwt_secret_2026_key';
 
@@ -445,18 +446,15 @@ app.post('/api/auth/send-otp', authRateLimiter, async (req, res) => {
             }
           });
 
+          const templatePath = path.join(__dirname, 'templates', 'otp-email.ejs');
+          const htmlContent = await ejs.renderFile(templatePath, { userName: user.name, otp });
+
           await transporter.sendMail({
             from: `"HS Group Delhi" <${process.env.SMTP_USER}>`,
             to: email,
             subject: 'HS Group Delhi - Password Reset Verification Code',
             text: `Dear ${user.name},\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nBest regards,\nHouse of Surya / HS Group Delhi`,
-            html: `<div style="font-family:sans-serif;padding:20px;border:1px solid #ddd;border-radius:10px;max-width:500px;">
-              <h2 style="color:#ef4444;margin-top:0;">HS Group Delhi</h2>
-              <p>Dear <strong>${user.name}</strong>,</p>
-              <p>Your 6-digit verification code is:</p>
-              <div style="font-size:24px;font-weight:bold;letter-spacing:4px;padding:15px;background:#f8fafc;border-radius:8px;text-align:center;color:#ef4444;margin:15px 0;">${otp}</div>
-              <p style="font-size:12px;color:#64748b;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-            </div>`
+            html: htmlContent
           });
           sent = true;
           details = 'Email sent successfully via SMTP.';
