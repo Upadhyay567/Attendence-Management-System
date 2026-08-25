@@ -503,7 +503,7 @@ export function renderEmployeeDashboard() {
       }
 
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
-      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null);
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null, coords.lat, coords.lng);
       requestsPushDBState();
       renderEmployeeDashboard();
     });

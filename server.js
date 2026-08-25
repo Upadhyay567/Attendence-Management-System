@@ -11,8 +11,17 @@ const twilio = require('twilio');
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hs_group_delhi_jwt_secret_2026_key';
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per 15 minutes
+  message: { error: 'Too many authentication requests from this IP. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Cryptographic helpers for password security (bcrypt-based by default, with backwards compatibility)
 function hashPassword(password) {
@@ -56,6 +65,22 @@ function verifyPassword(password, hashedPassword) {
   
   // Plain text verify fallback
   return password === hashedPassword;
+}
+
+// Calculate Haversine distance between two coordinates in meters
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3; // metres
+  const phi1 = lat1 * Math.PI / 180;
+  const phi2 = lat2 * Math.PI / 180;
+  const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+  const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // in metres
 }
 
 // Authentication middleware to validate tokens and inject user context using JWT
@@ -146,10 +171,16 @@ async function getCollection() {
 }
 
 // 0. Server-Side Authentication
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authRateLimiter, async (req, res) => {
   try {
     const { username, password, skipCheck, role } = req.body;
-    let targetUsername = username ? username.trim() : '';
+    
+    // Input Validation
+    if (role && !['employee', 'hr', 'manager', 'finance_manager'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid portal role specified.' });
+    }
+    
+    let targetUsername = username ? String(username).trim() : '';
     if (!targetUsername && skipCheck) {
       if (role === 'hr') targetUsername = 'hr';
       else if (role === 'manager') targetUsername = 'manager';
@@ -231,11 +262,15 @@ app.post('/api/auth/login', async (req, res) => {
 const activeOtps = new Map();
 
 // 0.4 Send OTP Endpoint
-app.post('/api/auth/send-otp', async (req, res) => {
+app.post('/api/auth/send-otp', authRateLimiter, async (req, res) => {
   try {
     const { userId, method } = req.body;
     if (!userId || !method) {
       return res.status(400).json({ error: 'User ID and verification method are required.' });
+    }
+
+    if (!['otp', 'sms', 'email'].includes(method)) {
+      return res.status(400).json({ error: 'Invalid verification method.' });
     }
 
     let users = [];
@@ -351,11 +386,15 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // 0.45 Verify OTP Endpoint
-app.post('/api/auth/verify-otp', (req, res) => {
+app.post('/api/auth/verify-otp', authRateLimiter, (req, res) => {
   try {
     const { userId, otp } = req.body;
     if (!userId || !otp) {
       return res.status(400).json({ error: 'User ID and OTP are required.' });
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ error: 'Verification code must be exactly 6 digits.' });
     }
 
     const session = activeOtps.get(userId);
@@ -387,7 +426,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
 });
 
 // 0.5 Forgot Password Identification
-app.post('/api/auth/identify', async (req, res) => {
+app.post('/api/auth/identify', authRateLimiter, async (req, res) => {
   try {
     const { identifier } = req.body;
     if (!identifier) {
@@ -437,11 +476,15 @@ app.post('/api/auth/identify', async (req, res) => {
 });
 
 // 0.6 Secure Password Reset Endpoint
-app.post('/api/auth/reset-password', async (req, res) => {
+app.post('/api/auth/reset-password', authRateLimiter, async (req, res) => {
   try {
     const { userId, newPassword } = req.body;
     if (!userId || !newPassword) {
       return res.status(400).json({ error: 'User ID and new password are required.' });
+    }
+
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
     
     const col = await getCollection();
@@ -678,6 +721,48 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
     const { type, key, payload, query, updates } = req.body;
     if (!type || !key) {
       return res.status(400).json({ error: 'Type and key are required for granular mutations.' });
+    }
+
+    // Geofencing Proximity check for attendance logs on clock-in (type push)
+    if (key === 'attendanceLogs' && type === 'push' && payload) {
+      const officeName = payload.location || 'Kohat Enclave, Pitampura, Delhi';
+      
+      let stateObj;
+      const col = await getCollection();
+      if (useLocalFileDB || !col) {
+        const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        stateObj = JSON.parse(rawSeed);
+      } else {
+        stateObj = await col.findOne({ _id: 'global_state' });
+      }
+
+      const officeCoordsMap = (stateObj && stateObj.officeCoordinates) || {
+        'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 }
+      };
+
+      const office = officeCoordsMap[officeName] || officeCoordsMap['Kohat Enclave, Pitampura, Delhi'] || Object.values(officeCoordsMap)[0];
+      if (office) {
+        let employeeLat = payload.latitude;
+        let employeeLng = payload.longitude;
+
+        // Fallback: if raw coordinates are missing but coords string is present, parse it
+        if ((employeeLat === undefined || employeeLat === null) && payload.coords) {
+          const match = payload.coords.match(/([\d\.\-]+).*?([\d\.\-]+)/);
+          if (match) {
+            employeeLat = parseFloat(match[1]);
+            employeeLng = parseFloat(match[2]);
+          }
+        }
+
+        if (employeeLat !== undefined && employeeLat !== null && employeeLng !== undefined && employeeLng !== null) {
+          const dist = calculateHaversineDistance(employeeLat, employeeLng, office.lat, office.lng);
+          if (dist > 100) { // 100 meters
+            return res.status(400).json({ error: `Geofence validation failed. You are out of range for ${officeName} (Distance: ${dist.toFixed(1)}m).` });
+          }
+        } else {
+          return res.status(400).json({ error: 'Geofence validation failed. GPS coordinates are missing from the check-in request.' });
+        }
+      }
     }
 
     // Access Control Validation: employees can only modify their own leaves, logs, shift swaps, or user profiles

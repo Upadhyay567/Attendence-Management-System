@@ -2334,7 +2334,7 @@ function renderEmployeeDashboard() {
       }
 
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
-      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null);
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null, coords.lat, coords.lng);
       requestsPushDBState();
       renderEmployeeDashboard();
     });
@@ -4908,7 +4908,7 @@ async function handlePinClockIn(userId, shiftId = null) {
   }
 
   sessionStorage.removeItem('hs_pending_auto_checkin_time');
-  DB.checkIn(userId, authResult.method, officeName, false, '', coordsStr, resolvedDistance, authResult.photo, null, schedule ? schedule.id : null);
+  DB.checkIn(userId, authResult.method, officeName, false, '', coordsStr, resolvedDistance, authResult.photo, null, schedule ? schedule.id : null, coords.lat, coords.lng);
   requestsPushDBState();
   if (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager')) {
     renderAdminMyAttendances();
@@ -14862,7 +14862,7 @@ function renderAdminMyAttendances() {
       }
 
       sessionStorage.removeItem('hs_pending_auto_checkin_time');
-      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null);
+      DB.checkIn(user.id, 'none', officeName, false, '', coordsStr, resolvedDistance, null, null, schedule ? schedule.id : null, coords.lat, coords.lng);
       requestsPushDBState();
       renderAdminMyAttendances();
     });

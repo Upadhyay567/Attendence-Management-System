@@ -1339,7 +1339,7 @@ export const DB = {
     return false;
   },
 
-  checkIn(userId, method = 'none', location = null, deviationFlag = false, justification = '', coords = '', distance = 0, facePhoto = null, timeOverride = null, shiftId = null) {
+  checkIn(userId, method = 'none', location = null, deviationFlag = false, justification = '', coords = '', distance = 0, facePhoto = null, timeOverride = null, shiftId = null, latitude = null, longitude = null) {
     const todayStr = new Date().toISOString().split('T')[0];
     const user = this.getUser(userId);
     const resolved = user ? this.resolveUserShiftForDate(user, todayStr, shiftId) : null;
@@ -1384,6 +1384,8 @@ export const DB = {
       existing.distance = Number(distance);
       existing.facePhoto = facePhoto;
       existing.shiftId = resolvedShiftId;
+      existing.latitude = latitude ? Number(latitude) : null;
+      existing.longitude = longitude ? Number(longitude) : null;
       this.save({
         type: 'update',
         key: 'attendanceLogs',
@@ -1396,7 +1398,9 @@ export const DB = {
           coords,
           distance: Number(distance),
           facePhoto,
-          shiftId: resolvedShiftId
+          shiftId: resolvedShiftId,
+          latitude: latitude ? Number(latitude) : null,
+          longitude: longitude ? Number(longitude) : null
         }
       });
       return existing;
@@ -1417,7 +1421,9 @@ export const DB = {
       justification,
       coords,
       distance: Number(distance),
-      facePhoto: facePhoto
+      facePhoto: facePhoto,
+      latitude: latitude ? Number(latitude) : null,
+      longitude: longitude ? Number(longitude) : null
     };
 
     this.data.attendanceLogs.push(newLog);
