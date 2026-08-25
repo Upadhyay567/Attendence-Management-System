@@ -899,6 +899,33 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Type and key are required for granular mutations.' });
     }
 
+    // Backend duplicate validation check for users
+    if (key === 'users' && type === 'push' && payload) {
+      const online = await connectMongoose();
+      if (online && !useLocalFileDB) {
+        const usernameExists = await User.exists({ username: payload.username });
+        if (usernameExists) {
+          return res.status(400).json({ error: `The Employee ID / HR ID '${payload.username.toUpperCase()}' is already taken.` });
+        }
+        const emailExists = await User.exists({ email: payload.email });
+        if (emailExists) {
+          return res.status(400).json({ error: `Email '${payload.email}' is already registered to another account.` });
+        }
+      } else {
+        if (fs.existsSync(LOCAL_DB_FILE)) {
+          const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+          const stateObj = JSON.parse(rawState);
+          const users = stateObj.users || [];
+          if (users.some(u => u.username.toLowerCase() === payload.username.toLowerCase())) {
+            return res.status(400).json({ error: `The Employee ID / HR ID '${payload.username.toUpperCase()}' is already taken.` });
+          }
+          if (users.some(u => u.email.toLowerCase() === payload.email.toLowerCase())) {
+            return res.status(400).json({ error: `Email '${payload.email}' is already registered to another account.` });
+          }
+        }
+      }
+    }
+
     // Geofencing Proximity check for attendance logs on clock-in (type push)
     if (key === 'attendanceLogs' && type === 'push' && payload) {
       const officeName = payload.location || 'Kohat Enclave, Pitampura, Delhi';

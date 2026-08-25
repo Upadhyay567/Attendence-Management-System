@@ -3943,92 +3943,74 @@ function renderAccountManagementView() {
 }
 
 window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px);
-    display: flex; justify-content: center; align-items: center; z-index: 999999;
-    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  `;
-  
-  const roleName = newUser.role === 'hr' ? 'HR Coordinator' : (newUser.role === 'manager' ? 'Operations Manager' : 'Employee');
-
-  const managerUser = newUser.managerId ? DB.getUser(newUser.managerId) : null;
-  const assignedByVal = newUser.assignedById ? DB.getUser(newUser.assignedById) : null;
-
-  const managerText = managerUser ? `${managerUser.name} (${managerUser.employeeId || managerUser.username})` : (newUser.managerId || '—');
-  const assignedByText = assignedByVal ? `${assignedByVal.name} (${assignedByVal.employeeId || assignedByVal.username})` : (newUser.assignedById || '—');
-
-  const card = document.createElement('div');
-  card.className = 'modal-content card-panel';
-  card.style.cssText = `
-    max-width: 460px; width: 92%; padding: 32px;
-    background: #faf7f2 !important;
-    border: 1px solid rgba(137, 32, 27, 0.15) !important;
-    border-radius: 24px; box-shadow: 0 16px 40px rgba(137,32,27,0.15);
-    text-align: center;
-  `;
-
-  card.innerHTML = `
-    <div style="text-align: center; margin-bottom: 20px;">
-      <div style="font-size: 42px; margin-bottom: 8px;">🎉</div>
-      <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #89201B; letter-spacing: -0.01em;">Account Created Successfully!</h3>
-      <p style="font-size: 12.5px; color: #5c4341; margin: 6px 0 0;">Here are the credentials for the newly created account:</p>
-    </div>
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-dialog-overlay';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(12px);
+      display: flex; justify-content: center; align-items: center; z-index: 999999;
+      animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    `;
     
-    <div style="background: #eef7f8; border: 1px solid rgba(6,182,212,0.18); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; text-align: left;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Full Name:</span>
-        <strong style="color: #1e293b; font-size: 13px;">${newUser.name}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">HR / Employee ID:</span>
-        <strong style="color: #0891b2; font-family: monospace; font-size: 13.5px; background: #cffafe; padding: 3px 10px; border-radius: 6px;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Email Address:</span>
-        <strong style="color: #1e293b; font-size: 13px;">${newUser.email || '—'}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Password:</span>
-        <strong style="color: #d97706; font-family: monospace; font-size: 13.5px; background: #fef3c7; padding: 3px 10px; border-radius: 6px;">${plainTextPassword}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Role Name:</span>
-        <strong style="color: #1e293b; font-size: 13px;">${roleName}</strong>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; ${newUser.managerId || newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;' : ''}">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Role ID:</span>
-        <strong style="color: #1e293b; font-family: monospace; font-size: 13px;">${newUser.role}</strong>
-      </div>
-      ${newUser.managerId ? `
-      <div style="display: flex; justify-content: space-between; align-items: center; ${newUser.assignedById ? 'border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 8px;' : ''}">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Assigned Manager:</span>
-        <strong style="color: #1e293b; font-size: 13px;">${managerText}</strong>
-      </div>
-      ` : ''}
-      ${newUser.assignedById ? `
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="color: #89201B; font-weight: 700; font-size: 12px;">Assigned HR / Admin:</span>
-        <strong style="color: #1e293b; font-size: 13px;">${assignedByText}</strong>
-      </div>
-      ` : ''}
-    </div>
+    const card = document.createElement('div');
+    card.className = 'custom-dialog-card custom-thankyou-card';
 
-    <div style="display: flex; justify-content: center; width: 100%;">
-      <button class="btn btn-primary" id="btn-success-popup-close" style="width: 100%; padding: 12px; font-weight: 700; font-size: 14px; border-radius: 12px; cursor: pointer; background: #89201B; color: #fff; border: none; box-shadow: 0 4px 12px rgba(137,32,27,0.2); transition: background 0.2s;">Got It & Continue</button>
-    </div>
-  `;
+    const roleName = newUser.role === 'hr' ? 'HR Coordinator' : (newUser.role === 'manager' ? 'Operations Manager' : 'Employee');
 
-  overlay.appendChild(card);
-  document.body.appendChild(overlay);
-  
-  card.querySelector('#btn-success-popup-close').addEventListener('click', () => {
-    overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
-    setTimeout(() => {
-      if (overlay.parentNode) document.body.removeChild(overlay);
-    }, 180);
+    card.innerHTML = `
+      <div class="custom-dialog-icon-wrapper" style="animation: popperPulse 1.2s ease-in-out infinite alternate; position: relative; z-index: 10;">
+        <div class="custom-dialog-icon-badge custom-thankyou-icon">
+          🎉
+        </div>
+      </div>
+      <h2 style="position: relative; z-index: 10; margin-bottom: 4px !important;">Success!</h2>
+      <p class="thankyou-msg" style="position: relative; z-index: 10; font-style: normal !important; margin-bottom: 16px !important;">
+        Account Created Successfully
+      </p>
+      
+      <div class="details-card" style="position: relative; z-index: 10; display: flex; flex-direction: column; gap: 8px; width: 100%; box-sizing: border-box; text-align: left; margin-bottom: 20px !important;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
+          <span class="detail-label">Full Name:</span>
+          <strong class="detail-val">${newUser.name}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
+          <span class="detail-label">Employee ID:</span>
+          <strong class="detail-val" style="font-family: monospace; font-size: 13.5px;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
+          <span class="detail-label">Email:</span>
+          <strong class="detail-val">${newUser.email || '—'}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
+          <span class="detail-label">Password:</span>
+          <strong class="detail-val" style="font-family: monospace; font-size: 13.5px;">${plainTextPassword}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center;">
+          <span class="detail-label">Role:</span>
+          <strong class="detail-val" style="text-transform: capitalize;">${roleName}</strong>
+        </div>
+      </div>
+      
+      <div class="custom-dialog-actions" style="position: relative; z-index: 10; justify-content: center; width: 100%;">
+        <button class="custom-dialog-btn-thankyou" id="btn-success-popup-close" style="min-width: 140px;">Got It & Continue</button>
+      </div>
+    `;
+
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.style.animation = 'customDialogFadeOut 0.18s ease forwards';
+      card.style.animation = 'customDialogScaleDown 0.18s ease forwards';
+      setTimeout(() => {
+        if (overlay.parentNode) document.body.removeChild(overlay);
+        resolve();
+      }, 180);
+    };
+
+    card.querySelector('#btn-success-popup-close').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   });
 };
 
@@ -4471,6 +4453,25 @@ function showAccountModal(editUser = null) {
       payload.password = Utils.hashPassword(password);
     }
 
+    // Disable submit button to prevent duplicate clicks and show loading state
+    const submitBtn = modal.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      if (submitBtn.disabled) return;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+      submitBtn.style.cursor = 'not-allowed';
+      submitBtn.textContent = isEdit ? 'Saving...' : 'Creating...';
+    }
+
+    const reEnableSubmitBtn = () => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.textContent = isEdit ? 'Save Changes' : 'Create Account';
+      }
+    };
+
     let syncSuccess = false;
     let syncErrorMsg = 'Failed to save account to database.';
 
@@ -4519,23 +4520,31 @@ function showAccountModal(editUser = null) {
         DB.data.users = DB.data.users.filter(u => u.id !== payload.id);
         localStorage.setItem('attendance_system_db', JSON.stringify(DB.data));
       }
+      reEnableSubmitBtn();
       return;
     }
 
-    closeModal();
-
-    if (typeof renderAdminUsers === 'function') renderAdminUsers();
-    if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
-    if (typeof renderAccountManagementView === 'function') renderAccountManagementView();
-
     if (isEdit) {
+      closeModal();
+      if (typeof renderAdminUsers === 'function') renderAdminUsers();
+      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
+      if (typeof renderAccountManagementView === 'function') renderAccountManagementView();
       await CustomDialog.alert(`Account for ${name} (${username}) updated successfully.`);
     } else {
+      // Trigger/display success popup first and wait for it
       if (window.showAccountCreationSuccessModal) {
-        window.showAccountCreationSuccessModal(payload, password);
+        await window.showAccountCreationSuccessModal(payload, password);
       } else {
-        await CustomDialog.alert(`Account for ${name} (${username}) created successfully.`);
+        await CustomDialog.alert('Account Created Successfully.');
       }
+      
+      // Clear form and close modal only after success popup is dismissed
+      modal.querySelector('#acct-form').reset();
+      closeModal();
+
+      if (typeof renderAdminUsers === 'function') renderAdminUsers();
+      if (typeof renderAdminDashboard === 'function') renderAdminDashboard();
+      if (typeof renderAccountManagementView === 'function') renderAccountManagementView();
     }
   });
 }
