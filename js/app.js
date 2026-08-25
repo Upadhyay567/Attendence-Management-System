@@ -3710,6 +3710,7 @@ function renderAccountManagementView() {
       const isActive = status === 'Active';
       const initials = u.name ? u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'US';
       const canManage = currentUser.role === 'hr' || (currentUser.role === 'manager' && u.id === currentUser.id);
+      const tableIdLabelText = u.role === 'hr' ? 'HR ID' : (u.role === 'manager' || u.role === 'finance_manager' ? 'Manager ID' : 'Employee ID');
 
       let actionButtons = '<span style="font-size:11px; color:var(--text-muted); font-style:italic">View Only</span>';
       if (canManage) {
@@ -3736,7 +3737,7 @@ function renderAccountManagementView() {
               </div>
               <div>
                 <div style="font-weight:700; color:var(--text-primary); font-size:14px">${Utils.escape(u.name)}</div>
-                <div style="font-size:11.5px; color:var(--text-secondary)">ID: ${Utils.escape(u.employeeId || '-')}</div>
+                <div style="font-size:11.5px; color:var(--text-secondary)">${tableIdLabelText}: ${Utils.escape(u.employeeId || '-')}</div>
               </div>
             </div>
           </td>
@@ -3957,6 +3958,7 @@ window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
     card.className = 'custom-dialog-card custom-thankyou-card';
 
     const roleName = newUser.role === 'hr' ? 'HR Coordinator' : (newUser.role === 'manager' ? 'Operations Manager' : 'Employee');
+    const idLabelText = newUser.role === 'hr' ? 'HR ID' : (newUser.role === 'manager' || newUser.role === 'finance_manager' ? 'Manager ID' : 'Employee ID');
 
     card.innerHTML = `
       <div class="custom-dialog-icon-wrapper" style="animation: popperPulse 1.2s ease-in-out infinite alternate; position: relative; z-index: 10;">
@@ -3975,7 +3977,7 @@ window.showAccountCreationSuccessModal = function(newUser, plainTextPassword) {
           <strong class="detail-val">${newUser.name}</strong>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
-          <span class="detail-label">Employee ID:</span>
+          <span class="detail-label">${idLabelText}:</span>
           <strong class="detail-val" style="font-family: monospace; font-size: 13.5px;">${newUser.employeeId || newUser.username.toUpperCase()}</strong>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center; border-bottom: 1px solid rgba(137,32,27,0.08); padding-bottom: 6px;">
