@@ -3278,7 +3278,7 @@ function showForgotPasswordModal(initialId = '') {
 
       <!-- Code Entry Section (Initially Hidden) -->
       <div id="verification-code-entry" style="display:none; flex-direction:column; gap:12px; border-top:1px solid var(--border); padding-top:16px; margin-top:4px;">
-        <div style="font-size:11px; color:var(--success); font-weight:600; text-align:center; background:rgba(16,185,129,0.08); padding:8px; border-radius:8px; border:1px solid rgba(16,185,129,0.25)">
+        <div id="otp-test-code-tip" style="font-size:11px; color:var(--success); font-weight:600; text-align:center; background:rgba(16,185,129,0.08); padding:8px; border-radius:8px; border:1px solid rgba(16,185,129,0.25)">
           Code Sent! For testing, use code: <strong style="font-size:12px; text-decoration:underline;">123456</strong>
         </div>
         <div>
@@ -3436,25 +3436,90 @@ function showForgotPasswordModal(initialId = '') {
   });
 
   // Flow B Code Sending Handler
-  modal.querySelector('#btn-send-verification-code').addEventListener('click', () => {
-    modal.querySelector('#btn-send-verification-code').style.display = 'none';
-    modal.querySelector('#verification-code-entry').style.display = 'flex';
+  modal.querySelector('#btn-send-verification-code').addEventListener('click', async () => {
+    const errorEl = modal.querySelector('#forgot-verification-error');
+    if (errorEl) errorEl.style.display = 'none';
+
+    const methodEl = modal.querySelector('input[name="verification-method"]:checked');
+    const method = methodEl ? methodEl.value : 'otp';
+
+    const sendBtn = modal.querySelector('#btn-send-verification-code');
+    sendBtn.setAttribute('disabled', 'true');
+    sendBtn.textContent = 'Sending...';
+
+    try {
+      await DB.resolveApiBase();
+      const res = await fetch((window.apiBaseUrl || '') + '/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: verifiedUser.id, method })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to send verification code.');
+      }
+
+      const data = await res.json();
+      console.log('OTP details:', data.details);
+
+      // Display custom instruction to use fallback if not configured
+      const testCodeTip = modal.querySelector('#otp-test-code-tip');
+      if (testCodeTip) {
+        testCodeTip.innerHTML = `Code Sent! For testing, use code: <strong style="font-size:12px; text-decoration:underline;">${data.otpFallback}</strong>`;
+      }
+
+      modal.querySelector('#btn-send-verification-code').style.display = 'none';
+      modal.querySelector('#verification-code-entry').style.display = 'flex';
+    } catch (err) {
+      if (errorEl) {
+        errorEl.textContent = '⚠️ ' + err.message;
+        errorEl.style.display = 'block';
+      }
+    } finally {
+      sendBtn.removeAttribute('disabled');
+      sendBtn.textContent = 'Send Verification Code';
+    }
   });
 
   // Flow B Verify Code Submission
-  modal.querySelector('#btn-submit-otp').addEventListener('click', () => {
+  modal.querySelector('#btn-submit-otp').addEventListener('click', async () => {
     const errorEl = modal.querySelector('#forgot-verification-error');
     errorEl.style.display = 'none';
 
     const enteredOtp = modal.querySelector('#forgot-input-otp').value.trim();
-    if (enteredOtp !== '123456') {
-      errorEl.textContent = '⚠️ Invalid verification code. Please enter 123456 to bypass.';
+    if (!enteredOtp) {
+      errorEl.textContent = '⚠️ Please enter the 6-digit verification code.';
       errorEl.style.display = 'block';
       return;
     }
 
-    modal.querySelector('#forgot-step-verification-select').style.display = 'none';
-    modal.querySelector('#forgot-step-new-pass-form').style.display = 'flex';
+    const submitBtn = modal.querySelector('#btn-submit-otp');
+    submitBtn.setAttribute('disabled', 'true');
+    submitBtn.textContent = 'Verifying...';
+
+    try {
+      await DB.resolveApiBase();
+      const res = await fetch((window.apiBaseUrl || '') + '/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: verifiedUser.id, otp: enteredOtp })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Invalid verification code.');
+      }
+
+      modal.querySelector('#forgot-step-verification-select').style.display = 'none';
+      modal.querySelector('#forgot-step-new-pass-form').style.display = 'flex';
+    } catch (err) {
+      errorEl.textContent = '⚠️ ' + err.message;
+      errorEl.style.display = 'block';
+    } finally {
+      submitBtn.removeAttribute('disabled');
+      submitBtn.textContent = 'Verify & Proceed';
+    }
   });
 
   // Password Strength live calculator

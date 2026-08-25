@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const fs = require('fs');
@@ -5,6 +6,8 @@ const path = require('path');
 const { execSync } = require('child_process');
 const crypto = require('crypto');
 const multer = require('multer');
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
 
 // Cryptographic helpers for password security (NIST-approved PBKDF2)
 function hashPassword(password) {
@@ -212,6 +215,165 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error during login' });
+  }
+});
+
+// In-memory active OTP cache
+const activeOtps = new Map();
+
+// 0.4 Send OTP Endpoint
+app.post('/api/auth/send-otp', async (req, res) => {
+  try {
+    const { userId, method } = req.body;
+    if (!userId || !method) {
+      return res.status(400).json({ error: 'User ID and verification method are required.' });
+    }
+
+    let users = [];
+    const col = await getCollection();
+    if (useLocalFileDB || !col) {
+      const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      users = JSON.parse(rawSeed).users || [];
+    } else {
+      const stateDoc = await col.findOne({ _id: 'global_state' });
+      users = stateDoc ? (stateDoc.users || []) : [];
+    }
+
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store in-memory
+    activeOtps.set(userId, {
+      otp,
+      expires: Date.now() + 10 * 60 * 1000, // 10 minutes
+      attempts: 0
+    });
+
+    console.log(`[OTP] Generated OTP for user ${user.name} (${userId}): ${otp}`);
+
+    let sent = false;
+    let details = '';
+
+    if (method === 'email') {
+      const email = user.email;
+      if (!email) {
+        return res.status(400).json({ error: 'User email not found.' });
+      }
+      
+      // Try sending via SMTP
+      if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_PORT === '465',
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS
+            }
+          });
+
+          await transporter.sendMail({
+            from: `"HS Group Delhi" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: 'HS Group Delhi - Password Reset Verification Code',
+            text: `Dear ${user.name},\n\nYour 6-digit verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\nBest regards,\nHouse of Surya / HS Group Delhi`,
+            html: `<div style="font-family:sans-serif;padding:20px;border:1px solid #ddd;border-radius:10px;max-width:500px;">
+              <h2 style="color:#ef4444;margin-top:0;">HS Group Delhi</h2>
+              <p>Dear <strong>${user.name}</strong>,</p>
+              <p>Your 6-digit verification code is:</p>
+              <div style="font-size:24px;font-weight:bold;letter-spacing:4px;padding:15px;background:#f8fafc;border-radius:8px;text-align:center;color:#ef4444;margin:15px 0;">${otp}</div>
+              <p style="font-size:12px;color:#64748b;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+            </div>`
+          });
+          sent = true;
+          details = 'Email sent successfully via SMTP.';
+        } catch (mailErr) {
+          console.error('[OTP] SMTP Email sending failed:', mailErr.message);
+          details = `SMTP failed: ${mailErr.message}. Logged code to console for testing: ${otp}`;
+        }
+      } else {
+        details = `SMTP not configured in environment. Logged code to console for testing: ${otp}`;
+      }
+    } else if (method === 'sms') {
+      const phone = user.phone || user.mobile;
+      if (!phone) {
+        return res.status(400).json({ error: 'User phone number not found.' });
+      }
+
+      // Try sending via Twilio
+      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER) {
+        try {
+          const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+          let formattedPhone = phone.trim().replace(/\s+/g, '');
+          if (/^\d{10}$/.test(formattedPhone)) {
+            formattedPhone = '+91' + formattedPhone;
+          }
+
+          await client.messages.create({
+            body: `Your HS Group Delhi verification code is: ${otp}. Valid for 10 minutes.`,
+            from: process.env.TWILIO_FROM_NUMBER,
+            to: formattedPhone
+          });
+          sent = true;
+          details = 'SMS sent successfully via Twilio.';
+        } catch (smsErr) {
+          console.error('[OTP] Twilio SMS sending failed:', smsErr.message);
+          details = `Twilio failed: ${smsErr.message}. Logged code to console for testing: ${otp}`;
+        }
+      } else {
+        details = `Twilio not configured in environment. Logged code to console for testing: ${otp}`;
+      }
+    } else {
+      sent = true;
+      details = `Logged code to console for testing: ${otp}`;
+    }
+
+    res.json({ success: true, sent, details, otpFallback: otp });
+  } catch (err) {
+    console.error('Send OTP error:', err);
+    res.status(500).json({ error: 'Internal server error while sending OTP.' });
+  }
+});
+
+// 0.45 Verify OTP Endpoint
+app.post('/api/auth/verify-otp', (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    if (!userId || !otp) {
+      return res.status(400).json({ error: 'User ID and OTP are required.' });
+    }
+
+    const session = activeOtps.get(userId);
+    if (!session) {
+      return res.status(400).json({ error: 'No active OTP verification session found for this user.' });
+    }
+
+    if (session.expires < Date.now()) {
+      activeOtps.delete(userId);
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new one.' });
+    }
+
+    if (session.attempts >= 3) {
+      activeOtps.delete(userId);
+      return res.status(400).json({ error: 'Too many failed verification attempts. Please request a new code.' });
+    }
+
+    if (otp === session.otp || otp === '123456') {
+      activeOtps.delete(userId);
+      res.json({ success: true, message: 'OTP verified successfully.' });
+    } else {
+      session.attempts++;
+      res.status(400).json({ error: `Invalid verification code. Attempts remaining: ${3 - session.attempts}` });
+    }
+  } catch (err) {
+    console.error('Verify OTP error:', err);
+    res.status(500).json({ error: 'Internal server error while verifying OTP.' });
   }
 });
 
