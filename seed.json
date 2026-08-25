@@ -3279,6 +3279,24 @@
       "coords": "28.695162° N, 77.186054° E",
       "distance": 0,
       "facePhoto": null
+    },
+    {
+      "id": "log_usr_john_2026-08-25_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-08-25",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "12:21",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.694914° N, 77.185945° E",
+      "distance": 0.03,
+      "facePhoto": null,
+      "latitude": 28.694914249990656,
+      "longitude": 77.18594509535113
     }
   ],
   "leaveRequests": [
