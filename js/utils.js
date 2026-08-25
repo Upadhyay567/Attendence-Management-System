@@ -161,6 +161,10 @@ export const Utils = {
     // If no password stored, allow any non-empty password (first-time / unset accounts)
     if (!storedPassword) return true;
     const storedStr = String(storedPassword);
+    if (storedStr.startsWith('$2a$') || storedStr.startsWith('$2b$')) {
+      console.warn('Bcrypt hashes cannot be validated offline. Please connect to the live server.');
+      return false;
+    }
     if (storedStr.startsWith('$hash$')) {
       return this.hashPassword(inputPassword) === storedStr;
     }

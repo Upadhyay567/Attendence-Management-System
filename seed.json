@@ -41,7 +41,7 @@
       "shiftLocations": {
         "sch_1": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_hr",
@@ -84,7 +84,7 @@
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_manager",
@@ -128,7 +128,7 @@
       },
       "photo": null,
       "state": "delhi",
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_john",
@@ -207,7 +207,7 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_sarah",
@@ -257,7 +257,7 @@
       "shiftLocations": {
         "sch_q8jji9v": "chandani chowk"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_david",
@@ -300,7 +300,7 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_t42n6xh",
@@ -344,7 +344,7 @@
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_7kek2wc",
@@ -390,7 +390,7 @@
         "sch_q8jji9v": "Noida sector 61"
       },
       "passwordResetCount": 1,
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_finance",
@@ -427,7 +427,7 @@
       "state": "Uttar Pradesh",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_6af1y3c",
@@ -473,7 +473,7 @@
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "passwordResetCount": 1,
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_7yuu1l5",
@@ -518,7 +518,7 @@
       "state": "delhi",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_gfko2jc",
@@ -559,7 +559,7 @@
       "photo": null,
       "state": "delhi",
       "status": "Active",
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_yph04z7",
@@ -594,7 +594,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_rv8lky9",
@@ -629,7 +629,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
       "id": "usr_sjtxi5d",
@@ -710,7 +710,7 @@
       "photo": "",
       "managerId": "",
       "assignedById": "",
-      "password": "$hash$2c7c47e3"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     }
   ],
   "schedules": [

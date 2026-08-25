@@ -9,16 +9,29 @@ const multer = require('multer');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 
-// Cryptographic helpers for password security (NIST-approved PBKDF2)
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'hs_group_delhi_jwt_secret_2026_key';
+
+// Cryptographic helpers for password security (bcrypt-based by default, with backwards compatibility)
 function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
-  return `pbkdf2$100000$${salt}$${hash}`;
+  if (!password) return '';
+  return bcrypt.hashSync(password, 10);
 }
 
 function verifyPassword(password, hashedPassword) {
   if (!hashedPassword || !password) return false;
   
+  // Bcrypt verify
+  if (hashedPassword.startsWith('$2a$') || hashedPassword.startsWith('$2b$')) {
+    try {
+      return bcrypt.compareSync(password, hashedPassword);
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Custom polynomial hash verify ($hash$xxxxxxxx)
   if (hashedPassword.startsWith('$hash$')) {
     let hash = 0x811c9dc5;
@@ -45,10 +58,7 @@ function verifyPassword(password, hashedPassword) {
   return password === hashedPassword;
 }
 
-// In-memory token-based active sessions cache
-const activeSessions = new Map();
-
-// Authentication middleware to validate tokens and inject user context
+// Authentication middleware to validate tokens and inject user context using JWT
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -58,13 +68,13 @@ function authenticateToken(req, res, next) {
     return next();
   }
   
-  const session = activeSessions.get(token);
-  if (!session || session.expires < Date.now()) {
-    return res.status(401).json({ error: 'Unauthorized: Session expired or invalid.' });
-  }
-  
-  req.user = session;
-  next();
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Unauthorized: Session expired or invalid.' });
+    }
+    req.user = decoded;
+    next();
+  });
 }
 
 const app = express();
@@ -199,13 +209,12 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
     
-    // Generate secure session token
-    const token = 'sess_' + crypto.randomBytes(24).toString('hex');
-    activeSessions.set(token, {
-      userId: matchedUser.id,
-      role: matchedUser.role,
-      expires: Date.now() + 24 * 60 * 60 * 1000 // 24 hours expiry
-    });
+    // Generate secure signed JWT token
+    const token = jwt.sign(
+      { userId: matchedUser.id, role: matchedUser.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
     
     // Return session payload (omit password hashes)
     const userProfile = { ...matchedUser };
