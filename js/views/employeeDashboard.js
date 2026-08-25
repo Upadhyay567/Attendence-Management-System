@@ -1512,20 +1512,11 @@ function showForgotPasswordModal(initialId = '') {
   let verifiedUser = null;
 
   const obfuscateEmail = (email) => {
-    if (!email) return 'no-email@domain.com';
-    const parts = email.split('@');
-    if (parts.length !== 2) return email;
-    const name = parts[0];
-    const domain = parts[1];
-    if (name.length <= 2) return `${name[0]}***@${domain}`;
-    return `${name[0]}***${name[name.length-1]}@${domain}`;
+    return email || 'no-email@domain.com';
   };
 
   const obfuscatePhone = (phone) => {
-    if (!phone) return '******9999';
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length < 4) return '******' + cleaned;
-    return '******' + cleaned.substring(cleaned.length - 4);
+    return phone || 'no-phone';
   };
 
   // Step 1 Click Handler: Verify Identity

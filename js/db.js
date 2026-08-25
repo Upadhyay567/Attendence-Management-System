@@ -49,7 +49,7 @@ const defaultUsers = [
     "username": "hr",
     "employeeId": "HR101",
     "name": "shubham HR Coordinator",
-    "password": "Shubham@2456",
+    "password": "HRPassword123!",
     "role": "hr",
     "scheduleId": "sch_mfl8wvv",
     "baseSalary": 75000,
@@ -83,7 +83,7 @@ const defaultUsers = [
     "username": "manager",
     "employeeId": "MGR102",
     "name": "Manjit  kour Operations Manager",
-    "password": "Manjit@123",
+    "password": "ManagerPassword123!",
     "role": "manager",
     "scheduleId": "sch_q8jji9v",
     "baseSalary": 80000,
@@ -114,10 +114,10 @@ const defaultUsers = [
   },
   {
     "id": "usr_john",
-    "username": "john",
+    "username": "hemant",
     "employeeId": "EMP103",
-    "name": "John Doe",
-    "password": "JohnPassword123!",
+    "name": "Hemant (Demo)",
+    "password": "Hemant123!",
     "role": "employee",
     "managerId": "usr_manager",
     "scheduleId": "sch_q8jji9v",
@@ -596,7 +596,7 @@ export const DB = {
       if (u.role === 'admin') { u.role = 'hr'; modified = true; }
       if (!u.status) { u.status = 'Active'; modified = true; }
       if (!u.employeeId) {
-        const mappedIds = { 'admin': 'EMP100', 'hr': 'EMP101', 'manager': 'EMP102', 'john': 'EMP103', 'sarah': 'EMP104', 'david': 'EMP105' };
+        const mappedIds = { 'admin': 'EMP100', 'hr': 'EMP101', 'manager': 'EMP102', 'john': 'EMP103', 'hemant': 'EMP103', 'sarah': 'EMP104', 'david': 'EMP105' };
         u.employeeId = mappedIds[u.username] || ('EMP' + (106 + index));
         modified = true;
       }
@@ -614,13 +614,13 @@ export const DB = {
         if (u.username === 'admin') u.designation = 'HR Admin Manager';
         else if (u.username === 'hr') u.designation = 'HR Coordinator';
         else if (u.username === 'manager') u.designation = 'Operations Manager';
-        else if (u.username === 'john') u.designation = 'Software Engineer';
+        else if (u.username === 'john' || u.username === 'hemant') u.designation = 'Software Engineer';
         else if (u.username === 'sarah') u.designation = 'QA Lead';
         else u.designation = 'Junior Developer';
         modified = true;
       }
       if (u.dateOfJoining === undefined) {
-        const mappedDoj = { 'admin': '2020-04-15', 'hr': '2022-03-20', 'manager': '2021-08-01', 'john': '2023-11-12', 'sarah': '2024-02-15', 'david': '2025-01-20' };
+        const mappedDoj = { 'admin': '2020-04-15', 'hr': '2022-03-20', 'manager': '2021-08-01', 'john': '2023-11-12', 'hemant': '2023-11-12', 'sarah': '2024-02-15', 'david': '2025-01-20' };
         u.dateOfJoining = mappedDoj[u.username] || '2024-05-10';
         modified = true;
       }

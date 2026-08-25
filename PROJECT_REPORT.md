@@ -108,7 +108,7 @@ python -m http.server 8012
 To run the server, browse to: **[http://localhost:8012](http://localhost:8012)**
 
 ### Biometric Setup Initialization
-1. Log in as any employee (e.g., username `john`, password `JohnPassword123!`).
+1. Log in as any employee (e.g., username `hemant`, password `Hemant123!`).
 2. Click **Setup Face ID** or **Setup Fingerprint** on the top warning banner.
 3. Choose **Yes** to register your device's native hardware credentials. Authenticate via your OS prompt.
 4. If your device doesn't support platform authenticators or you choose to skip, the system will initialize the simulated enrollment scanner, allowing you to complete setup.
@@ -125,6 +125,6 @@ To run the server, browse to: **[http://localhost:8012](http://localhost:8012)**
 2. **HR Coordinator** (Manage employee shifts & profiles, no self-edits):
    * Username: `hr`
    * Password: `HRPassword123!`
-3. **General Employee** (John Doe):
-   * Username: `john`
-   * Password: `JohnPassword123!`
+3. **General Employee** (Hemant):
+   * Username: `hemant`
+   * Password: `Hemant123!`
