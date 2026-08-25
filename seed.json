@@ -1,12 +1,11 @@
 {
   "users": [
     {
+      "_id": "6a8d3b8e94e235d28a4e9701",
       "id": "usr_admin",
-      "username": "admin",
       "employeeId": "HR100",
-      "name": "DEEPAK SHARMA HR Admin Manager",
-      "role": "hr",
       "scheduleId": "sch_1",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 95000,
       "allowanceHRA": 14250,
       "allowanceTravel": 3000,
@@ -23,33 +22,37 @@
       "designation": "HR Admin Manager",
       "dateOfJoining": "2020-04-15",
       "emergencyContact": "+91 98765 43201",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "managerId": "",
-      "assignedById": "usr_admin",
+      "name": "DEEPAK SHARMA HR Admin Manager",
+      "username": "admin",
+      "role": "hr",
+      "status": "Active",
+      "photo": null,
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "status": "Active",
-      "photo": null,
-      "state": "delhi",
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_1"
       ],
       "shiftLocations": {
         "sch_1": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "managerId": "",
+      "assignedById": "usr_admin",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9702",
       "id": "usr_hr",
-      "username": "hr",
       "employeeId": "HR101",
-      "name": "shubham HR Coordinator",
-      "role": "hr",
       "scheduleId": "sch_mfl8wvv",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 75000,
       "allowanceHRA": 11250,
       "allowanceTravel": 3000,
@@ -66,33 +69,37 @@
       "designation": "HR Coordinator",
       "dateOfJoining": "2022-03-20",
       "emergencyContact": "+91 98765 43202",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "preferredLocation": "Noida sector 61",
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "name": "shubham HR Coordinator",
+      "username": "hr",
+      "role": "hr",
+      "status": "Active",
+      "photo": null,
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "status": "Active",
-      "photo": null,
-      "state": "delhi",
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_mfl8wvv"
       ],
       "shiftLocations": {
         "sch_mfl8wvv": "Noida sector 61"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "managerId": "usr_manager",
+      "assignedById": "usr_manager",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9703",
       "id": "usr_manager",
-      "username": "manager",
       "employeeId": "MGR102",
-      "name": "Manjit  kour Operations Manager",
-      "role": "manager",
       "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 80000,
       "allowanceHRA": 12000,
       "allowanceTravel": 3000,
@@ -109,16 +116,15 @@
       "designation": "Operations Manager",
       "dateOfJoining": "2021-08-01",
       "emergencyContact": "+91 98765 43203",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "preferredLocation": "Noida sector 61",
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "name": "Manjit  kour Operations Manager",
+      "username": "manager",
+      "role": "manager",
+      "status": "Active",
+      "photo": null,
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "status": "Active",
+      "profileEditCount": 0,
       "passwordResetCount": 3,
       "scheduleIds": [
         "sch_q8jji9v"
@@ -126,18 +132,21 @@
       "shiftLocations": {
         "sch_q8jji9v": "Noida sector 61"
       },
-      "photo": null,
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "managerId": "usr_manager",
+      "assignedById": "usr_manager",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9704",
       "id": "usr_john",
-      "username": "john",
       "employeeId": "EMP103",
-      "name": "John Doe",
-      "role": "employee",
-      "managerId": "usr_7yuu1l5",
       "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
       "allowanceTravel": 3000,
@@ -154,24 +163,11 @@
       "designation": "Software Engineer",
       "dateOfJoining": "2023-11-12",
       "emergencyContact": "+91 99999 00001",
-      "documents": [],
-      "resume": {
-        "name": "John_Doe_Resume.pdf",
-        "size": "380 KB",
-        "date": "2026-06-10"
-      },
-      "aadhar": {
-        "name": "Aadhar_Card.pdf",
-        "size": "1.4 MB",
-        "date": "2026-06-10"
-      },
-      "bankDetails": {
-        "name": "Bank_Passbook.pdf",
-        "size": "512 KB",
-        "date": "2026-06-10"
-      },
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "assignedById": "usr_7yuu1l5",
+      "name": "John Doe",
+      "username": "john",
+      "role": "employee",
+      "status": "Active",
+      "photo": null,
       "profileVerificationStatus": "Pending Approval",
       "profileVerificationComment": "",
       "pendingProfileEdits": {
@@ -194,29 +190,45 @@
         "deductionPT": 200,
         "deductionTDS": 5
       },
-      "status": "Active",
       "profileEditCount": 3,
-      "photo": null,
-      "state": "delhi",
-      "verificationStatuses": {
-        "resume": "Rejected"
-      },
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "managerId": "usr_7yuu1l5",
+      "documents": [],
+      "resume": {
+        "name": "John_Doe_Resume.pdf",
+        "size": "380 KB",
+        "date": "2026-06-10"
+      },
+      "aadhar": {
+        "name": "Aadhar_Card.pdf",
+        "size": "1.4 MB",
+        "date": "2026-06-10"
+      },
+      "bankDetails": {
+        "name": "Bank_Passbook.pdf",
+        "size": "512 KB",
+        "date": "2026-06-10"
+      },
+      "assignedById": "usr_7yuu1l5",
+      "state": "delhi",
+      "verificationStatuses": {
+        "resume": "Rejected"
+      },
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9705",
       "id": "usr_sarah",
-      "username": "sarah",
       "employeeId": "EMP104",
-      "name": "Sarah Connor",
-      "role": "employee",
-      "managerId": "usr_manager",
       "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "chandani chowk",
       "baseSalary": 62000,
       "allowanceHRA": 9300,
       "allowanceTravel": 3000,
@@ -233,6 +245,24 @@
       "designation": "QA Lead",
       "dateOfJoining": "2024-02-15",
       "emergencyContact": "+91 98888 00002",
+      "name": "Sarah Connor",
+      "username": "sarah",
+      "role": "employee",
+      "status": "Active",
+      "photo": null,
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "chandani chowk"
+      },
+      "__v": 0,
+      "managerId": "usr_manager",
       "documents": [
         {
           "id": "doc_2",
@@ -243,29 +273,16 @@
       ],
       "resume": null,
       "aadhar": null,
-      "preferredLocation": "chandani chowk",
       "assignedById": "usr_manager",
-      "status": "Active",
-      "profileVerificationStatus": "Approved",
-      "photo": null,
       "state": "delhi",
-      "profileVerificationComment": "",
-      "pendingProfileEdits": null,
-      "scheduleIds": [
-        "sch_q8jji9v"
-      ],
-      "shiftLocations": {
-        "sch_q8jji9v": "chandani chowk"
-      },
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9706",
       "id": "usr_david",
-      "username": "david",
       "employeeId": "EMP105",
-      "name": "David Lightman",
-      "role": "employee",
       "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 48000,
       "allowanceHRA": 7200,
       "allowanceTravel": 3000,
@@ -282,30 +299,37 @@
       "designation": "Junior Developer",
       "dateOfJoining": "2025-01-20",
       "emergencyContact": "+91 97777 00003",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "assignedById": "usr_7kek2wc",
+      "name": "David Lightman",
+      "username": "david",
+      "role": "employee",
       "status": "Active",
-      "managerId": "",
-      "profileVerificationStatus": "Approved",
       "photo": null,
-      "state": "delhi",
+      "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_q8jji9v"
       ],
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "assignedById": "usr_7kek2wc",
+      "managerId": "",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9707",
       "id": "usr_t42n6xh",
       "employeeId": "EMP190",
       "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -322,34 +346,38 @@
       "designation": "QA Lead",
       "dateOfJoining": "2026-07-17",
       "emergencyContact": "+91 97777 00003",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Rahul Sharma",
       "username": "rahulsharma",
       "role": "employee",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "managerId": "",
-      "assignedById": "usr_6af1y3c",
       "status": "Active",
-      "profileVerificationStatus": "Approved",
       "photo": null,
-      "state": "delhi",
+      "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "managerId": "",
+      "assignedById": "usr_6af1y3c",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9708",
       "id": "usr_7kek2wc",
       "employeeId": "HR123",
       "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -366,39 +394,39 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-07-22",
       "emergencyContact": "+91 98765 43201",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Hemant upadhyay",
       "username": "HR123",
-      "mobile": "9536885675",
       "role": "hr",
       "status": "Active",
-      "preferredLocation": "Noida sector 61",
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "photo": null,
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
-      "photo": null,
-      "state": "delhi",
+      "profileEditCount": 0,
+      "passwordResetCount": 1,
       "scheduleIds": [
         "sch_q8jji9v"
       ],
       "shiftLocations": {
         "sch_q8jji9v": "Noida sector 61"
       },
-      "passwordResetCount": 1,
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "mobile": "9536885675",
+      "managerId": "usr_manager",
+      "assignedById": "usr_manager",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9709",
       "id": "usr_finance",
-      "username": "finance",
       "employeeId": "MGR106",
-      "name": "Finance Manager",
-      "role": "manager",
       "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 78000,
       "allowanceHRA": 11700,
       "allowanceTravel": 3000,
@@ -415,24 +443,32 @@
       "designation": "Finance Manager",
       "dateOfJoining": "2023-01-10",
       "emergencyContact": "+91 98765 43204",
+      "name": "Finance Manager",
+      "username": "finance",
+      "role": "manager",
+      "status": "Active",
+      "photo": null,
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
+      "scheduleIds": [],
+      "__v": 0,
       "documents": [],
       "resume": null,
       "aadhar": null,
-      "status": "Active",
-      "preferredLocation": "Noida sector 61",
       "managerId": "",
       "assignedById": "usr_manager",
-      "profileVerificationStatus": "Approved",
-      "photo": null,
       "state": "Uttar Pradesh",
-      "profileVerificationComment": "",
-      "pendingProfileEdits": null,
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970a",
       "id": "usr_6af1y3c",
       "employeeId": "HR0789",
       "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 50000,
       "allowanceHRA": 7500,
       "allowanceTravel": 3000,
@@ -449,33 +485,35 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-06",
       "emergencyContact": "+91 99999 00001",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Abhishek Sharma",
       "username": "HR0789",
-      "mobile": "8967459032",
       "role": "hr",
       "status": "Active",
       "photo": null,
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
       "profileVerificationStatus": "Approved",
-      "state": "delhi",
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 1,
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "passwordResetCount": 1,
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "mobile": "8967459032",
+      "managerId": "usr_manager",
+      "assignedById": "usr_manager",
+      "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970b",
       "id": "usr_7yuu1l5",
       "employeeId": "MGR900",
       "scheduleId": "sch_3ebecon",
@@ -496,31 +534,35 @@
       "designation": "Operations Manager",
       "dateOfJoining": "2026-08-19",
       "emergencyContact": "+91 98765 43202",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Sumit Sharma",
       "username": "MGR900",
-      "mobile": "8796453290",
       "role": "manager",
       "status": "Active",
       "photo": null,
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "mobile": "8796453290",
       "managerId": "usr_7yuu1l5",
       "assignedById": "usr_7yuu1l5",
-      "profileVerificationStatus": "Approved",
       "state": "delhi",
-      "profileVerificationComment": "",
-      "pendingProfileEdits": null,
-      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+      "password": "$hash$4b4b7482"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970c",
       "id": "usr_gfko2jc",
       "employeeId": "HR989",
       "scheduleId": "sch_3ebecon",
@@ -541,27 +583,31 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-24",
       "emergencyContact": "+91 98765 43201",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Ananya Raghav",
       "username": "ananyaraghav",
       "role": "hr",
+      "status": "Active",
+      "photo": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
       "scheduleIds": [
         "sch_3ebecon"
       ],
       "shiftLocations": {
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
-      "photo": null,
       "state": "delhi",
-      "status": "Active",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970d",
       "id": "usr_yph04z7",
       "employeeId": "HR174",
       "scheduleId": null,
@@ -582,21 +628,26 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-24",
       "emergencyContact": "",
+      "name": "Himanshu Tomar",
+      "username": "HR174",
+      "role": "hr",
+      "status": "Active",
+      "photo": "",
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
+      "scheduleIds": [],
+      "__v": 0,
       "documents": [],
       "resume": null,
       "aadhar": null,
       "bankDetails": null,
-      "name": "Himanshu Tomar",
-      "username": "HR174",
       "mobile": "7839905827",
-      "role": "hr",
-      "status": "Active",
-      "photo": "",
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970e",
       "id": "usr_rv8lky9",
       "employeeId": "MGR100",
       "scheduleId": null,
@@ -617,21 +668,26 @@
       "designation": "Operations Manager",
       "dateOfJoining": "2026-08-24",
       "emergencyContact": "",
+      "name": "Himanshu Singh",
+      "username": "MGR100",
+      "role": "manager",
+      "status": "Active",
+      "photo": "",
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
+      "scheduleIds": [],
+      "__v": 0,
       "documents": [],
       "resume": null,
       "aadhar": null,
       "bankDetails": null,
-      "name": "Himanshu Singh",
-      "username": "MGR100",
       "mobile": "7839903214",
-      "role": "manager",
-      "status": "Active",
-      "photo": "",
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e970f",
       "id": "usr_sjtxi5d",
       "employeeId": "HR521",
       "scheduleId": "sch_bgpyqv3",
@@ -652,32 +708,35 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-24",
       "emergencyContact": "+91 99999 00001",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
       "name": "Himanshu sharma",
       "username": "HR521",
-      "mobile": "7839907890",
       "role": "hr",
       "status": "Active",
       "photo": null,
-      "managerId": "",
-      "assignedById": "usr_sjtxi5d",
-      "password": "pbkdf2$100000$4dafd8e25ea17809afcb3fb57b257ae1$254b2b9350bba9b43e59ed75d33629636869c235842c46e1713e5cbdb349a0e678b68735a70fdcc6a9e6fd832df23d3bc71249c850784766b0634843408aca47",
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "profileEditCount": 0,
+      "passwordResetCount": 1,
       "scheduleIds": [
         "sch_bgpyqv3"
       ],
       "shiftLocations": {
         "sch_bgpyqv3": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "profileVerificationStatus": "Approved",
+      "__v": 0,
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "mobile": "7839907890",
+      "managerId": "",
+      "assignedById": "usr_sjtxi5d",
       "state": "delhi",
-      "profileVerificationComment": "",
-      "pendingProfileEdits": null,
-      "passwordResetCount": 1
+      "password": "pbkdf2$100000$4dafd8e25ea17809afcb3fb57b257ae1$254b2b9350bba9b43e59ed75d33629636869c235842c46e1713e5cbdb349a0e678b68735a70fdcc6a9e6fd832df23d3bc71249c850784766b0634843408aca47"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9710",
       "id": "usr_pvu1n8o",
       "employeeId": "HR10456",
       "scheduleId": null,
@@ -698,105 +757,28 @@
       "designation": "HR Administrator",
       "dateOfJoining": "2026-08-24",
       "emergencyContact": "",
+      "name": "Hemant Raghav",
+      "username": "HR10456",
+      "role": "hr",
+      "status": "Active",
+      "photo": "",
+      "profileEditCount": 0,
+      "passwordResetCount": 0,
+      "scheduleIds": [],
+      "__v": 0,
       "documents": [],
       "resume": null,
       "aadhar": null,
       "bankDetails": null,
-      "name": "Hemant Raghav",
-      "username": "HR10456",
       "mobile": "8796453290",
-      "role": "hr",
-      "status": "Active",
-      "photo": "",
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     }
   ],
-  "schedules": [
-    {
-      "id": "sch_q8jji9v",
-      "name": "Morning Shift",
-      "startTime": "11:30",
-      "endTime": "16:00",
-      "gracePeriod": 12,
-      "halfDayLimit": 120,
-      "workDays": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "location": "chandani chowk"
-    },
-    {
-      "id": "sch_mfl8wvv",
-      "name": "Night  Shift 56",
-      "startTime": "11:00",
-      "endTime": "17:00",
-      "gracePeriod": 5,
-      "halfDayLimit": 120,
-      "workDays": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "location": "omaxe Office"
-    },
-    {
-      "id": "sch_bgpyqv3",
-      "name": "Night Shift",
-      "startTime": "20:00",
-      "endTime": "06:00",
-      "gracePeriod": 15,
-      "halfDayLimit": 120,
-      "workDays": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "location": "Chatarpur"
-    },
-    {
-      "id": "sch_3ebecon",
-      "name": "MAIN OFFICE  Shift",
-      "startTime": "09:00",
-      "endTime": "17:00",
-      "gracePeriod": 15,
-      "workDays": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "location": "omaxe Office",
-      "halfDayLimit": 120
-    },
-    {
-      "id": "sch_wtanufz",
-      "name": "new shift",
-      "startTime": "12:45",
-      "endTime": "17:00",
-      "gracePeriod": 15,
-      "workDays": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "location": "Noida sector 61",
-      "halfDayLimit": 120
-    }
-  ],
   "attendanceLogs": [
     {
+      "_id": "6a8d3b8e94e235d28a4e971d",
       "id": "log_usr_john_2026-08-20_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-20",
@@ -810,9 +792,11 @@
       "justification": "",
       "coords": "28.695177° N, 77.186046° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e971e",
       "id": "log_usr_john_2026-08-19_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-19",
@@ -826,9 +810,11 @@
       "justification": "",
       "coords": "28.694859° N, 77.185896° E",
       "distance": 0.04,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e971f",
       "id": "log_usr_6af1y3c_2026-08-19_sch_3ebecon",
       "userId": "usr_6af1y3c",
       "date": "2026-08-19",
@@ -842,9 +828,11 @@
       "justification": "",
       "coords": "28.695163° N, 77.186024° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9720",
       "id": "log_usr_sarah_2026-08-19_sch_q8jji9v",
       "userId": "usr_sarah",
       "date": "2026-08-19",
@@ -858,9 +846,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9721",
       "id": "log_usr_david_2026-08-19_sch_q8jji9v",
       "userId": "usr_david",
       "date": "2026-08-19",
@@ -874,9 +864,11 @@
       "justification": "",
       "coords": "28.695140° N, 77.186030° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9722",
       "id": "log_usr_7yuu1l5_2026-08-19_sch_3ebecon",
       "userId": "usr_7yuu1l5",
       "date": "2026-08-19",
@@ -890,9 +882,11 @@
       "justification": "",
       "coords": "28.695004° N, 77.185871° E",
       "distance": 0.02,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9723",
       "id": "log_usr_john_2026-08-18_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-18",
@@ -906,9 +900,11 @@
       "justification": "",
       "coords": "28.695165° N, 77.186050° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9724",
       "id": "log_usr_6af1y3c_2026-08-18_sch_3ebecon",
       "userId": "usr_6af1y3c",
       "date": "2026-08-18",
@@ -922,9 +918,11 @@
       "justification": "",
       "coords": "28.695162° N, 77.186050° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9725",
       "id": "log_usr_sarah_2026-08-18_sch_q8jji9v",
       "userId": "usr_sarah",
       "date": "2026-08-18",
@@ -938,9 +936,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9726",
       "id": "log_usr_john_2026-08-14_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-14",
@@ -954,9 +954,11 @@
       "justification": "",
       "coords": "28.695149° N, 77.186042° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9727",
       "id": "log_usr_6af1y3c_2026-08-14_sch_3ebecon",
       "userId": "usr_6af1y3c",
       "date": "2026-08-14",
@@ -970,9 +972,11 @@
       "justification": "",
       "coords": "28.695206° N, 77.186013° E",
       "distance": 0.01,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9728",
       "id": "log_usr_manager_2026-08-14_sch_q8jji9v",
       "userId": "usr_manager",
       "date": "2026-08-14",
@@ -986,9 +990,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9729",
       "id": "log_usr_john_2026-08-13_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-13",
@@ -1002,9 +1008,11 @@
       "justification": "",
       "coords": "28.695118° N, 77.186008° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972a",
       "id": "log_usr_6af1y3c_2026-08-13_sch_q8jji9v",
       "userId": "usr_6af1y3c",
       "date": "2026-08-13",
@@ -1018,9 +1026,11 @@
       "justification": "",
       "coords": "24.916400° N, 79.581200° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972b",
       "id": "log_usr_manager_2026-08-13_sch_q8jji9v",
       "userId": "usr_manager",
       "date": "2026-08-13",
@@ -1034,9 +1044,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972c",
       "id": "log_usr_john_2026-08-12_1786517028015",
       "userId": "usr_john",
       "date": "2026-08-12",
@@ -1050,9 +1062,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972d",
       "id": "log_usr_john_2026-08-12_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-12",
@@ -1066,9 +1080,11 @@
       "justification": "",
       "coords": "28.695183° N, 77.186061° E",
       "distance": 0.01,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972e",
       "id": "log_usr_6af1y3c_2026-08-12_sch_q8jji9v",
       "userId": "usr_6af1y3c",
       "date": "2026-08-12",
@@ -1082,9 +1098,11 @@
       "justification": "",
       "coords": "24.916400° N, 79.581200° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e972f",
       "id": "log_usr_david_2026-08-11_1786517028106",
       "userId": "usr_david",
       "date": "2026-08-11",
@@ -1098,9 +1116,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9730",
       "id": "log_usr_sarah_2026-08-11_1786517028089",
       "userId": "usr_sarah",
       "date": "2026-08-11",
@@ -1114,9 +1134,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9731",
       "id": "log_usr_hr_2026-08-11_1786517028072",
       "userId": "usr_hr",
       "date": "2026-08-11",
@@ -1130,9 +1152,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9732",
       "id": "log_usr_john_2026-08-11_1786517028055",
       "userId": "usr_john",
       "date": "2026-08-11",
@@ -1146,9 +1170,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9733",
       "id": "log_usr_hr_2026-08-11_1786517028032",
       "userId": "usr_hr",
       "date": "2026-08-11",
@@ -1162,9 +1188,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9734",
       "id": "log_usr_hr_2026-08-11_1786455662905",
       "userId": "usr_hr",
       "date": "2026-08-11",
@@ -1178,9 +1206,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9735",
       "id": "log_usr_john_2026-08-11_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-11",
@@ -1194,9 +1224,11 @@
       "justification": "",
       "coords": "28.695200° N, 77.185939° E",
       "distance": 0.01,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9736",
       "id": "log_usr_hr_2026-08-11_sch_mfl8wvv",
       "userId": "usr_hr",
       "date": "2026-08-11",
@@ -1210,9 +1242,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9737",
       "id": "log_usr_6af1y3c_2026-08-11_sch_q8jji9v",
       "userId": "usr_6af1y3c",
       "date": "2026-08-11",
@@ -1226,9 +1260,11 @@
       "justification": "",
       "coords": "24.916400° N, 79.581200° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9738",
       "id": "log_usr_manager_2026-08-11_sch_q8jji9v",
       "userId": "usr_manager",
       "date": "2026-08-11",
@@ -1242,9 +1278,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9739",
       "id": "log_usr_7kek2wc_2026-08-11_sch_q8jji9v",
       "userId": "usr_7kek2wc",
       "date": "2026-08-11",
@@ -1258,9 +1296,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973a",
       "id": "log_usr_sarah_2026-08-11_sch_q8jji9v",
       "userId": "usr_sarah",
       "date": "2026-08-11",
@@ -1274,9 +1314,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973b",
       "id": "log_usr_david_2026-08-11_sch_q8jji9v",
       "userId": "usr_david",
       "date": "2026-08-11",
@@ -1290,9 +1332,11 @@
       "justification": "",
       "coords": "28.695174° N, 77.186072° E",
       "distance": 0.01,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973c",
       "id": "log_usr_john_2026-08-10_1786517028190",
       "userId": "usr_john",
       "date": "2026-08-10",
@@ -1306,9 +1350,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973d",
       "id": "log_usr_t42n6xh_2026-08-10_1786517028173",
       "userId": "usr_t42n6xh",
       "date": "2026-08-10",
@@ -1322,9 +1368,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973e",
       "id": "log_usr_david_2026-08-10_1786517028156",
       "userId": "usr_david",
       "date": "2026-08-10",
@@ -1338,9 +1386,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e973f",
       "id": "log_usr_sarah_2026-08-10_1786517028139",
       "userId": "usr_sarah",
       "date": "2026-08-10",
@@ -1354,9 +1404,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9740",
       "id": "log_usr_john_2026-08-10_1786517028122",
       "userId": "usr_john",
       "date": "2026-08-10",
@@ -1370,9 +1422,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9741",
       "id": "log_usr_john_2026-08-10",
       "userId": "usr_john",
       "date": "2026-08-10",
@@ -1382,9 +1436,11 @@
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.694787° N, 77.185865° E",
-      "distance": 0.04
+      "distance": 0.04,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9742",
       "id": "log_usr_sarah_2026-08-10",
       "userId": "usr_sarah",
       "date": "2026-08-10",
@@ -1395,9 +1451,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.694752° N, 77.185782° E",
       "distance": 0.05,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9743",
       "id": "log_usr_david_2026-08-10",
       "userId": "usr_david",
       "date": "2026-08-10",
@@ -1410,9 +1468,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9744",
       "id": "log_usr_t42n6xh_2026-08-10_sch_3ebecon",
       "userId": "usr_t42n6xh",
       "date": "2026-08-10",
@@ -1426,9 +1486,11 @@
       "justification": "",
       "coords": "28.695192° N, 77.185749° E",
       "distance": 0.03,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9745",
       "id": "log_usr_john_2026-08-10_sch_wtanufz",
       "userId": "usr_john",
       "date": "2026-08-10",
@@ -1442,9 +1504,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9746",
       "id": "log_usr_david_2026-08-07_1786517028244",
       "userId": "usr_david",
       "date": "2026-08-07",
@@ -1458,9 +1522,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9747",
       "id": "log_usr_t42n6xh_2026-08-07_1786517028226",
       "userId": "usr_t42n6xh",
       "date": "2026-08-07",
@@ -1474,9 +1540,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9748",
       "id": "log_usr_sarah_2026-08-07_1786517028207",
       "userId": "usr_sarah",
       "date": "2026-08-07",
@@ -1490,9 +1558,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9749",
       "id": "log_usr_sarah_2026-08-07",
       "userId": "usr_sarah",
       "date": "2026-08-07",
@@ -1502,12 +1572,15 @@
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695364° N, 77.185857° E",
-      "distance": 0.03
+      "distance": 0.03,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974a",
       "id": "log_usr_t42n6xh_2026-08-07",
       "userId": "usr_t42n6xh",
       "date": "2026-08-07",
+      "shiftId": "sch_q8jji9v",
       "checkIn": "11:18",
       "checkOut": "11:19",
       "status": "On Time",
@@ -1515,9 +1588,10 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695053° N, 77.185937° E",
       "distance": 0.01,
-      "shiftId": "sch_q8jji9v"
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974b",
       "id": "log_usr_david_2026-08-07",
       "userId": "usr_david",
       "date": "2026-08-07",
@@ -1528,9 +1602,11 @@
       "location": "chandani chowk",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974c",
       "id": "log_usr_sarah_2026-08-06_1786517028281",
       "userId": "usr_sarah",
       "date": "2026-08-06",
@@ -1544,9 +1620,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974d",
       "id": "log_usr_john_2026-08-06_1786517028263",
       "userId": "usr_john",
       "date": "2026-08-06",
@@ -1560,9 +1638,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974e",
       "id": "log_usr_john_2026-08-06",
       "userId": "usr_john",
       "date": "2026-08-06",
@@ -1573,9 +1653,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695267° N, 77.185647° E",
       "distance": 0.04,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e974f",
       "id": "log_usr_sarah_2026-08-06",
       "userId": "usr_sarah",
       "date": "2026-08-06",
@@ -1588,9 +1670,11 @@
       "justification": "",
       "coords": "28.694905° N, 77.185835° E",
       "distance": 0.03,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9750",
       "id": "log_usr_david_2026-08-05_1786517028343",
       "userId": "usr_david",
       "date": "2026-08-05",
@@ -1604,9 +1688,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9751",
       "id": "log_usr_john_2026-08-05_1786517028321",
       "userId": "usr_john",
       "date": "2026-08-05",
@@ -1620,9 +1706,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9752",
       "id": "log_usr_sarah_2026-08-05_1786517028300",
       "userId": "usr_sarah",
       "date": "2026-08-05",
@@ -1636,9 +1724,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9753",
       "id": "log_usr_sarah_2026-08-05",
       "userId": "usr_sarah",
       "date": "2026-08-05",
@@ -1649,9 +1739,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695211° N, 77.185967° E",
       "distance": 0.01,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9754",
       "id": "log_usr_john_2026-08-05",
       "userId": "usr_john",
       "date": "2026-08-05",
@@ -1662,9 +1754,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.694975° N, 77.185962° E",
       "distance": 0.02,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9755",
       "id": "log_usr_david_2026-08-05",
       "userId": "usr_david",
       "date": "2026-08-05",
@@ -1675,9 +1769,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695165° N, 77.186050° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9756",
       "id": "log_usr_sarah_2026-08-04_1786517028399",
       "userId": "usr_sarah",
       "date": "2026-08-04",
@@ -1691,9 +1787,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9757",
       "id": "log_usr_david_2026-08-04_1786517028383",
       "userId": "usr_david",
       "date": "2026-08-04",
@@ -1707,9 +1805,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9758",
       "id": "log_usr_john_2026-08-04_1786517028364",
       "userId": "usr_john",
       "date": "2026-08-04",
@@ -1723,9 +1823,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9759",
       "id": "log_usr_john_2026-08-04",
       "userId": "usr_john",
       "date": "2026-08-04",
@@ -1735,9 +1837,11 @@
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695164° N, 77.185538° E",
-      "distance": 0.05
+      "distance": 0.05,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975a",
       "id": "log_usr_david_2026-08-04",
       "userId": "usr_david",
       "date": "2026-08-04",
@@ -1747,9 +1851,11 @@
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.694495° N, 77.185479° E",
-      "distance": 0.09
+      "distance": 0.09,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975b",
       "id": "log_usr_sarah_2026-08-04",
       "userId": "usr_sarah",
       "date": "2026-08-04",
@@ -1759,9 +1865,11 @@
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695139° N, 77.185915° E",
-      "distance": 0.01
+      "distance": 0.01,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975c",
       "id": "log_usr_david_2026-07-31_1786517028449",
       "userId": "usr_david",
       "date": "2026-07-31",
@@ -1775,9 +1883,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975d",
       "id": "log_usr_sarah_2026-07-31_1786517028433",
       "userId": "usr_sarah",
       "date": "2026-07-31",
@@ -1791,9 +1901,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975e",
       "id": "log_usr_john_2026-07-31_1786517028416",
       "userId": "usr_john",
       "date": "2026-07-31",
@@ -1807,9 +1919,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e975f",
       "id": "log_usr_john_2026-07-31",
       "userId": "usr_john",
       "date": "2026-07-31",
@@ -1820,9 +1934,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9760",
       "id": "log_usr_sarah_2026-07-31",
       "userId": "usr_sarah",
       "date": "2026-07-31",
@@ -1833,9 +1949,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695267° N, 77.185422° E",
       "distance": 0.06,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9761",
       "id": "log_usr_david_2026-07-31",
       "userId": "usr_david",
       "date": "2026-07-31",
@@ -1846,9 +1964,11 @@
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "coords": "28.695160° N, 77.186017° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9762",
       "id": "log_usr_john_2026-07-30_1786517028470",
       "userId": "usr_john",
       "date": "2026-07-30",
@@ -1862,9 +1982,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9763",
       "id": "log_usr_john_2026-07-30",
       "userId": "usr_john",
       "date": "2026-07-30",
@@ -1875,9 +1997,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9764",
       "id": "log_usr_john_2026-07-29_1786517028489",
       "userId": "usr_john",
       "date": "2026-07-29",
@@ -1891,9 +2015,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9765",
       "id": "log_usr_john_2026-07-29",
       "userId": "usr_john",
       "date": "2026-07-29",
@@ -1904,9 +2030,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9766",
       "id": "log_usr_sarah_2026-07-28_1786517028529",
       "userId": "usr_sarah",
       "date": "2026-07-28",
@@ -1920,9 +2048,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9767",
       "id": "log_usr_john_2026-07-28_1786517028510",
       "userId": "usr_john",
       "date": "2026-07-28",
@@ -1936,9 +2066,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9768",
       "id": "log_usr_john_2026-07-28",
       "userId": "usr_john",
       "date": "2026-07-28",
@@ -1949,9 +2081,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9769",
       "id": "log_usr_sarah_2026-07-28",
       "userId": "usr_sarah",
       "date": "2026-07-28",
@@ -1962,9 +2096,11 @@
       "location": "omaxe Office",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976a",
       "id": "log_usr_john_2026-07-27_1786517028549",
       "userId": "usr_john",
       "date": "2026-07-27",
@@ -1978,9 +2114,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976b",
       "id": "log_usr_john_2026-07-27",
       "userId": "usr_john",
       "date": "2026-07-27",
@@ -1991,9 +2129,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976c",
       "id": "log_usr_john_2026-07-24_1786517028565",
       "userId": "usr_john",
       "date": "2026-07-24",
@@ -2007,9 +2147,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976d",
       "id": "log_usr_john_2026-07-24",
       "userId": "usr_john",
       "date": "2026-07-24",
@@ -2019,9 +2161,11 @@
       "biometricUsed": "none",
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
-      "distance": 0
+      "distance": 0,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976e",
       "id": "log_usr_john_2026-07-23_1786517028582",
       "userId": "usr_john",
       "date": "2026-07-23",
@@ -2035,9 +2179,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e976f",
       "id": "log_usr_john_2026-07-23",
       "userId": "usr_john",
       "date": "2026-07-23",
@@ -2048,9 +2194,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9770",
       "id": "log_usr_t42n6xh_2026-07-22_1786517028598",
       "userId": "usr_t42n6xh",
       "date": "2026-07-22",
@@ -2064,9 +2212,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9771",
       "id": "log_usr_t42n6xh_2026-07-22",
       "userId": "usr_t42n6xh",
       "date": "2026-07-22",
@@ -2077,9 +2227,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9772",
       "id": "log_usr_john_2026-07-20_1786517028615",
       "userId": "usr_john",
       "date": "2026-07-20",
@@ -2093,9 +2245,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9773",
       "id": "log_usr_john_2026-07-20",
       "userId": "usr_john",
       "date": "2026-07-20",
@@ -2106,9 +2260,11 @@
       "location": "Noida sector 61",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9774",
       "id": "log_usr_sarah_2026-07-17_1786517028652",
       "userId": "usr_sarah",
       "date": "2026-07-17",
@@ -2122,9 +2278,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9775",
       "id": "log_usr_john_2026-07-17_1786517028632",
       "userId": "usr_john",
       "date": "2026-07-17",
@@ -2138,9 +2296,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9776",
       "id": "log_usr_john_2026-07-17",
       "userId": "usr_john",
       "date": "2026-07-17",
@@ -2151,9 +2311,11 @@
       "location": "Chandni Chowk",
       "coords": "28.656200° N, 77.231000° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9777",
       "id": "log_usr_sarah_2026-07-17",
       "userId": "usr_sarah",
       "date": "2026-07-17",
@@ -2164,9 +2326,11 @@
       "location": "omaxe Office",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9778",
       "id": "log_usr_david_2026-06-29_1786517028696",
       "userId": "usr_david",
       "date": "2026-06-29",
@@ -2180,9 +2344,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9779",
       "id": "log_usr_john_2026-06-29_1786517028674",
       "userId": "usr_john",
       "date": "2026-06-29",
@@ -2196,9 +2362,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977a",
       "id": "log_usr_john_2026-06-29",
       "userId": "usr_john",
       "date": "2026-06-29",
@@ -2206,9 +2374,11 @@
       "checkOut": "17:01",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977b",
       "id": "log_usr_david_2026-06-29",
       "userId": "usr_david",
       "date": "2026-06-29",
@@ -2216,9 +2386,11 @@
       "checkOut": "06:07",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977c",
       "id": "log_usr_david_2026-06-26_1786517028752",
       "userId": "usr_david",
       "date": "2026-06-26",
@@ -2232,9 +2404,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977d",
       "id": "log_usr_sarah_2026-06-26_1786517028734",
       "userId": "usr_sarah",
       "date": "2026-06-26",
@@ -2248,9 +2422,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977e",
       "id": "log_usr_john_2026-06-26_1786517028717",
       "userId": "usr_john",
       "date": "2026-06-26",
@@ -2264,9 +2440,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e977f",
       "id": "log_usr_john_2026-06-26",
       "userId": "usr_john",
       "date": "2026-06-26",
@@ -2274,9 +2452,11 @@
       "checkOut": "17:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9780",
       "id": "log_usr_sarah_2026-06-26",
       "userId": "usr_sarah",
       "date": "2026-06-26",
@@ -2284,9 +2464,11 @@
       "checkOut": "15:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9781",
       "id": "log_usr_david_2026-06-26",
       "userId": "usr_david",
       "date": "2026-06-26",
@@ -2294,9 +2476,11 @@
       "checkOut": "06:07",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9782",
       "id": "log_usr_david_2026-06-25_1786517028803",
       "userId": "usr_david",
       "date": "2026-06-25",
@@ -2310,9 +2494,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9783",
       "id": "log_usr_sarah_2026-06-25_1786517028787",
       "userId": "usr_sarah",
       "date": "2026-06-25",
@@ -2326,9 +2512,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9784",
       "id": "log_usr_john_2026-06-25_1786517028770",
       "userId": "usr_john",
       "date": "2026-06-25",
@@ -2342,9 +2530,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9785",
       "id": "log_usr_john_2026-06-25",
       "userId": "usr_john",
       "date": "2026-06-25",
@@ -2352,9 +2542,11 @@
       "checkOut": "17:06",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9786",
       "id": "log_usr_sarah_2026-06-25",
       "userId": "usr_sarah",
       "date": "2026-06-25",
@@ -2362,9 +2554,11 @@
       "checkOut": "15:03",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9787",
       "id": "log_usr_david_2026-06-25",
       "userId": "usr_david",
       "date": "2026-06-25",
@@ -2372,9 +2566,11 @@
       "checkOut": "06:03",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9788",
       "id": "log_usr_david_2026-06-24_1786517028855",
       "userId": "usr_david",
       "date": "2026-06-24",
@@ -2388,9 +2584,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9789",
       "id": "log_usr_sarah_2026-06-24_1786517028835",
       "userId": "usr_sarah",
       "date": "2026-06-24",
@@ -2404,9 +2602,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978a",
       "id": "log_usr_john_2026-06-24_1786517028819",
       "userId": "usr_john",
       "date": "2026-06-24",
@@ -2420,9 +2620,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978b",
       "id": "log_usr_john_2026-06-24",
       "userId": "usr_john",
       "date": "2026-06-24",
@@ -2430,9 +2632,11 @@
       "checkOut": "17:09",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978c",
       "id": "log_usr_sarah_2026-06-24",
       "userId": "usr_sarah",
       "date": "2026-06-24",
@@ -2440,9 +2644,11 @@
       "checkOut": "15:09",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978d",
       "id": "log_usr_david_2026-06-24",
       "userId": "usr_david",
       "date": "2026-06-24",
@@ -2450,9 +2656,11 @@
       "checkOut": "06:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978e",
       "id": "log_usr_sarah_2026-06-23_1786517028888",
       "userId": "usr_sarah",
       "date": "2026-06-23",
@@ -2466,9 +2674,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e978f",
       "id": "log_usr_john_2026-06-23_1786517028871",
       "userId": "usr_john",
       "date": "2026-06-23",
@@ -2482,9 +2692,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9790",
       "id": "log_usr_john_2026-06-23",
       "userId": "usr_john",
       "date": "2026-06-23",
@@ -2492,9 +2704,11 @@
       "checkOut": "17:08",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9791",
       "id": "log_usr_sarah_2026-06-23",
       "userId": "usr_sarah",
       "date": "2026-06-23",
@@ -2502,9 +2716,11 @@
       "checkOut": "15:06",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9792",
       "id": "log_usr_david_2026-06-22_1786517028942",
       "userId": "usr_david",
       "date": "2026-06-22",
@@ -2518,9 +2734,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9793",
       "id": "log_usr_sarah_2026-06-22_1786517028923",
       "userId": "usr_sarah",
       "date": "2026-06-22",
@@ -2534,9 +2752,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9794",
       "id": "log_usr_john_2026-06-22_1786517028907",
       "userId": "usr_john",
       "date": "2026-06-22",
@@ -2550,9 +2770,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9795",
       "id": "log_usr_john_2026-06-22",
       "userId": "usr_john",
       "date": "2026-06-22",
@@ -2560,9 +2782,11 @@
       "checkOut": "17:09",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9796",
       "id": "log_usr_sarah_2026-06-22",
       "userId": "usr_sarah",
       "date": "2026-06-22",
@@ -2570,9 +2794,11 @@
       "checkOut": "15:08",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9797",
       "id": "log_usr_david_2026-06-22",
       "userId": "usr_david",
       "date": "2026-06-22",
@@ -2580,9 +2806,11 @@
       "checkOut": "06:01",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9798",
       "id": "log_usr_david_2026-06-19_1786517028993",
       "userId": "usr_david",
       "date": "2026-06-19",
@@ -2596,9 +2824,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9799",
       "id": "log_usr_sarah_2026-06-19_1786517028976",
       "userId": "usr_sarah",
       "date": "2026-06-19",
@@ -2612,9 +2842,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979a",
       "id": "log_usr_john_2026-06-19_1786517028958",
       "userId": "usr_john",
       "date": "2026-06-19",
@@ -2628,9 +2860,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979b",
       "id": "log_usr_john_2026-06-19",
       "userId": "usr_john",
       "date": "2026-06-19",
@@ -2638,9 +2872,11 @@
       "checkOut": "17:00",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979c",
       "id": "log_usr_sarah_2026-06-19",
       "userId": "usr_sarah",
       "date": "2026-06-19",
@@ -2648,9 +2884,11 @@
       "checkOut": "15:02",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979d",
       "id": "log_usr_david_2026-06-19",
       "userId": "usr_david",
       "date": "2026-06-19",
@@ -2658,9 +2896,11 @@
       "checkOut": "06:05",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979e",
       "id": "log_usr_david_2026-06-18_1786517029028",
       "userId": "usr_david",
       "date": "2026-06-18",
@@ -2674,9 +2914,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e979f",
       "id": "log_usr_sarah_2026-06-18_1786517029010",
       "userId": "usr_sarah",
       "date": "2026-06-18",
@@ -2690,9 +2932,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a0",
       "id": "log_usr_sarah_2026-06-18",
       "userId": "usr_sarah",
       "date": "2026-06-18",
@@ -2700,9 +2944,11 @@
       "checkOut": "15:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a1",
       "id": "log_usr_david_2026-06-18",
       "userId": "usr_david",
       "date": "2026-06-18",
@@ -2710,9 +2956,11 @@
       "checkOut": "06:09",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a2",
       "id": "log_usr_david_2026-06-17_1786517029076",
       "userId": "usr_david",
       "date": "2026-06-17",
@@ -2726,9 +2974,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a3",
       "id": "log_usr_sarah_2026-06-17_1786517029060",
       "userId": "usr_sarah",
       "date": "2026-06-17",
@@ -2742,9 +2992,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a4",
       "id": "log_usr_john_2026-06-17_1786517029044",
       "userId": "usr_john",
       "date": "2026-06-17",
@@ -2758,9 +3010,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a5",
       "id": "log_usr_john_2026-06-17",
       "userId": "usr_john",
       "date": "2026-06-17",
@@ -2768,9 +3022,11 @@
       "checkOut": "17:09",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a6",
       "id": "log_usr_sarah_2026-06-17",
       "userId": "usr_sarah",
       "date": "2026-06-17",
@@ -2778,9 +3034,11 @@
       "checkOut": "15:01",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a7",
       "id": "log_usr_david_2026-06-17",
       "userId": "usr_david",
       "date": "2026-06-17",
@@ -2788,9 +3046,11 @@
       "checkOut": "06:01",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a8",
       "id": "log_usr_david_2026-06-16_1786517029124",
       "userId": "usr_david",
       "date": "2026-06-16",
@@ -2804,9 +3064,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97a9",
       "id": "log_usr_sarah_2026-06-16_1786517029108",
       "userId": "usr_sarah",
       "date": "2026-06-16",
@@ -2820,9 +3082,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97aa",
       "id": "log_usr_john_2026-06-16_1786517029092",
       "userId": "usr_john",
       "date": "2026-06-16",
@@ -2836,9 +3100,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ab",
       "id": "log_usr_john_2026-06-16",
       "userId": "usr_john",
       "date": "2026-06-16",
@@ -2846,9 +3112,11 @@
       "checkOut": "17:03",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ac",
       "id": "log_usr_sarah_2026-06-16",
       "userId": "usr_sarah",
       "date": "2026-06-16",
@@ -2856,9 +3124,11 @@
       "checkOut": "15:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ad",
       "id": "log_usr_david_2026-06-16",
       "userId": "usr_david",
       "date": "2026-06-16",
@@ -2866,9 +3136,11 @@
       "checkOut": "06:08",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ae",
       "id": "log_usr_david_2026-06-15_1786517029175",
       "userId": "usr_david",
       "date": "2026-06-15",
@@ -2882,9 +3154,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97af",
       "id": "log_usr_sarah_2026-06-15_1786517029157",
       "userId": "usr_sarah",
       "date": "2026-06-15",
@@ -2898,9 +3172,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b0",
       "id": "log_usr_john_2026-06-15_1786517029140",
       "userId": "usr_john",
       "date": "2026-06-15",
@@ -2914,9 +3190,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b1",
       "id": "log_usr_john_2026-06-15",
       "userId": "usr_john",
       "date": "2026-06-15",
@@ -2924,9 +3202,11 @@
       "checkOut": "17:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b2",
       "id": "log_usr_sarah_2026-06-15",
       "userId": "usr_sarah",
       "date": "2026-06-15",
@@ -2934,9 +3214,11 @@
       "checkOut": "11:00",
       "status": "Half Day",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b3",
       "id": "log_usr_david_2026-06-15",
       "userId": "usr_david",
       "date": "2026-06-15",
@@ -2944,9 +3226,11 @@
       "checkOut": "06:06",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b4",
       "id": "log_usr_david_2026-06-12_1786517029229",
       "userId": "usr_david",
       "date": "2026-06-12",
@@ -2960,9 +3244,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b5",
       "id": "log_usr_sarah_2026-06-12_1786517029209",
       "userId": "usr_sarah",
       "date": "2026-06-12",
@@ -2976,9 +3262,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b6",
       "id": "log_usr_john_2026-06-12_1786517029191",
       "userId": "usr_john",
       "date": "2026-06-12",
@@ -2992,9 +3280,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b7",
       "id": "log_usr_john_2026-06-12",
       "userId": "usr_john",
       "date": "2026-06-12",
@@ -3002,9 +3292,11 @@
       "checkOut": "17:04",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b8",
       "id": "log_usr_sarah_2026-06-12",
       "userId": "usr_sarah",
       "date": "2026-06-12",
@@ -3012,9 +3304,11 @@
       "checkOut": "12:00",
       "status": "Half Day",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97b9",
       "id": "log_usr_david_2026-06-12",
       "userId": "usr_david",
       "date": "2026-06-12",
@@ -3022,9 +3316,11 @@
       "checkOut": "06:08",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ba",
       "id": "log_usr_david_2026-06-11_1786517029299",
       "userId": "usr_david",
       "date": "2026-06-11",
@@ -3038,9 +3334,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97bb",
       "id": "log_usr_sarah_2026-06-11_1786517029276",
       "userId": "usr_sarah",
       "date": "2026-06-11",
@@ -3054,9 +3352,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97bc",
       "id": "log_usr_john_2026-06-11_1786517029249",
       "userId": "usr_john",
       "date": "2026-06-11",
@@ -3070,9 +3370,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97bd",
       "id": "log_usr_john_2026-06-11",
       "userId": "usr_john",
       "date": "2026-06-11",
@@ -3080,9 +3382,11 @@
       "checkOut": "17:01",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97be",
       "id": "log_usr_sarah_2026-06-11",
       "userId": "usr_sarah",
       "date": "2026-06-11",
@@ -3090,9 +3394,11 @@
       "checkOut": "15:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97bf",
       "id": "log_usr_david_2026-06-11",
       "userId": "usr_david",
       "date": "2026-06-11",
@@ -3100,9 +3406,11 @@
       "checkOut": "06:00",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c0",
       "id": "log_usr_david_2026-06-10_1786517029369",
       "userId": "usr_david",
       "date": "2026-06-10",
@@ -3116,9 +3424,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c1",
       "id": "log_usr_sarah_2026-06-10_1786517029346",
       "userId": "usr_sarah",
       "date": "2026-06-10",
@@ -3132,9 +3442,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c2",
       "id": "log_usr_john_2026-06-10_1786517029322",
       "userId": "usr_john",
       "date": "2026-06-10",
@@ -3148,9 +3460,11 @@
       "justification": "",
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c3",
       "id": "log_usr_john_2026-06-10",
       "userId": "usr_john",
       "date": "2026-06-10",
@@ -3158,9 +3472,11 @@
       "checkOut": "17:06",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c4",
       "id": "log_usr_sarah_2026-06-10",
       "userId": "usr_sarah",
       "date": "2026-06-10",
@@ -3168,9 +3484,11 @@
       "checkOut": "15:04",
       "status": "On Time",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c5",
       "id": "log_usr_david_2026-06-10",
       "userId": "usr_david",
       "date": "2026-06-10",
@@ -3178,9 +3496,11 @@
       "checkOut": "06:01",
       "status": "Late",
       "biometricUsed": "none",
-      "location": "Kohat Enclave, Pitampura, Delhi"
+      "location": "Kohat Enclave, Pitampura, Delhi",
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c6",
       "id": "log_usr_6af1y3c_2026-08-20_sch_3ebecon",
       "userId": "usr_6af1y3c",
       "date": "2026-08-20",
@@ -3194,9 +3514,11 @@
       "justification": "",
       "coords": "28.695182° N, 77.186004° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c7",
       "id": "log_usr_6af1y3c_2026-08-21_sch_3ebecon",
       "userId": "usr_6af1y3c",
       "date": "2026-08-21",
@@ -3211,9 +3533,11 @@
       "coords": "28.695142° N, 77.186026° E",
       "distance": 0,
       "facePhoto": null,
-      "facePhotoOut": null
+      "facePhotoOut": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c8",
       "id": "log_usr_john_2026-08-21_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-21",
@@ -3228,9 +3552,11 @@
       "coords": "28.694875° N, 77.185912° E",
       "distance": 0.03,
       "facePhoto": null,
-      "facePhotoOut": null
+      "facePhotoOut": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97c9",
       "id": "log_usr_sarah_2026-08-21_sch_q8jji9v",
       "userId": "usr_sarah",
       "date": "2026-08-21",
@@ -3245,9 +3571,11 @@
       "coords": "28.697800° N, 77.140800° E",
       "distance": 0,
       "facePhoto": null,
-      "facePhotoOut": null
+      "facePhotoOut": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97ca",
       "id": "log_usr_7yuu1l5_2026-08-21_sch_3ebecon",
       "userId": "usr_7yuu1l5",
       "date": "2026-08-21",
@@ -3262,9 +3590,11 @@
       "coords": "28.695152° N, 77.186061° E",
       "distance": 0,
       "facePhoto": null,
-      "facePhotoOut": null
+      "facePhotoOut": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97cb",
       "id": "log_usr_john_2026-08-24_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-24",
@@ -3278,9 +3608,11 @@
       "justification": "",
       "coords": "28.695162° N, 77.186054° E",
       "distance": 0,
-      "facePhoto": null
+      "facePhoto": null,
+      "__v": 0
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e97cc",
       "id": "log_usr_john_2026-08-25_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-08-25",
@@ -3296,187 +3628,271 @@
       "distance": 0.03,
       "facePhoto": null,
       "latitude": 28.694914249990656,
-      "longitude": 77.18594509535113
+      "longitude": 77.18594509535113,
+      "__v": 0
     }
   ],
   "leaveRequests": [
     {
+      "_id": "6a8d3b8e94e235d28a4e96f5",
       "id": "lv_a4skcu4",
       "userId": "usr_6af1y3c",
-      "type": "Casual",
       "startDate": "2026-08-26",
       "endDate": "2026-08-28",
       "reason": "Emergency",
-      "approverHead": "Operations Manager",
       "status": "Pending",
+      "__v": 0,
+      "type": "Casual",
+      "approverHead": "Operations Manager",
       "requestDate": "2026-08-24",
       "managerComment": "",
       "supportingDoc": null
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e96f6",
       "id": "lv_t5o1ep7",
       "userId": "usr_john",
-      "type": "Casual",
       "startDate": "2026-07-24",
       "endDate": "2026-07-25",
       "reason": "sf",
-      "approverHead": "HR Admin Manager",
       "status": "Approved",
+      "__v": 0,
+      "type": "Casual",
+      "approverHead": "HR Admin Manager",
       "requestDate": "2026-07-23",
       "managerComment": "ad"
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e96f7",
       "id": "lv_1",
       "userId": "usr_john",
-      "type": "Annual",
       "startDate": "2026-07-10",
       "endDate": "2026-07-12",
       "reason": "Family vacation trip",
       "status": "Approved",
+      "__v": 0,
+      "type": "Annual",
       "requestDate": "2026-06-24",
       "managerComment": ""
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e96f8",
       "id": "lv_3",
       "userId": "usr_david",
-      "type": "Casual",
       "startDate": "2026-06-18",
       "endDate": "2026-06-18",
       "reason": "Personal urgent matter",
       "status": "Rejected",
+      "__v": 0,
+      "type": "Casual",
       "requestDate": "2026-06-17",
       "managerComment": "High priority project deadline scheduled on that day."
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e96f9",
       "id": "lv_2",
       "userId": "usr_sarah",
-      "type": "Sick",
       "startDate": "2026-06-10",
       "endDate": "2026-06-11",
       "reason": "Dental surgery and rest",
       "status": "Approved",
+      "__v": 0,
+      "type": "Sick",
       "requestDate": "2026-06-08",
       "managerComment": "Take care and recover!"
     }
   ],
-  "tickets": [
-    {
-      "id": "tkt_1",
-      "userId": "usr_john",
-      "category": "Attendance",
-      "subject": "Missed Check-in / GPS Issue",
-      "message": "My check-in didn't register today due to poor GPS network signal. Can HR please verify my attendance log manually?",
-      "date": "2026-06-24",
-      "status": "Open",
-      "responses": []
-    },
-    {
-      "id": "tkt_2",
-      "userId": "usr_john",
-      "category": "Payroll",
-      "subject": "Tax Deduction details",
-      "message": "Could you please share the breakdown of this month’s professional tax leave deduction?",
-      "date": "2026-06-25",
-      "status": "Resolved",
-      "responses": [
-        {
-          "responder": "HR Coordinator",
-          "text": "We have updated the monthly payroll spreadsheet. You can view the full breakdown directly in the Payslips panel.",
-          "date": "2026-06-25"
-        }
-      ]
-    },
-    {
-      "id": "tkt_6lv778i",
-      "userId": "usr_john",
-      "category": "Attendance",
-      "subject": "attendence request",
-      "message": "sdf",
-      "date": "2026-08-12",
-      "status": "Open",
-      "responses": []
-    }
-  ],
   "shiftSwaps": [
     {
+      "_id": "6a8d3b8e94e235d28a4e9712",
       "id": "swap_1",
       "senderId": "usr_john",
       "receiverId": "usr_sarah",
-      "reason": "Have a personal appointment in the morning.",
-      "status": "Pending Coworker",
       "date": "2026-06-25",
+      "status": "Pending Coworker",
+      "__v": 0,
+      "reason": "Have a personal appointment in the morning.",
       "managerComment": "",
       "coworkerComment": ""
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9713",
       "id": "swap_58y7ql2",
       "senderId": "usr_t42n6xh",
       "receiverId": "usr_john",
+      "date": "2026-07-20",
+      "status": "Approved",
+      "__v": 0,
       "reason": "SICK LEAVE",
       "swapType": "location",
-      "status": "Approved",
-      "date": "2026-07-20",
       "managerComment": "TAKE CARE",
       "coworkerComment": ""
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9714",
       "id": "swap_ahok8bj",
       "senderId": "usr_david",
       "receiverId": "usr_john",
+      "date": "2026-08-05",
+      "status": "Approved",
+      "__v": 0,
       "reason": "wsd",
       "swapType": "both",
-      "status": "Approved",
-      "date": "2026-08-05",
       "managerComment": "",
       "coworkerComment": ""
     },
     {
+      "_id": "6a8d3b8e94e235d28a4e9715",
       "id": "swap_m0jifpo",
       "senderId": "usr_david",
       "receiverId": "usr_john",
+      "date": "2026-08-05",
+      "status": "Pending Coworker",
+      "__v": 0,
       "reason": "sdfg",
       "swapType": "both",
-      "status": "Pending Coworker",
-      "date": "2026-08-05",
       "managerComment": "",
       "coworkerComment": ""
     }
   ],
+  "schedules": [
+    {
+      "_id": "6a8d3b8e94e235d28a4e96fb",
+      "id": "sch_q8jji9v",
+      "name": "Morning Shift",
+      "startTime": "11:30",
+      "endTime": "16:00",
+      "gracePeriod": 12,
+      "weeklyOffs": [],
+      "__v": 0,
+      "halfDayLimit": 120,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "chandani chowk"
+    },
+    {
+      "_id": "6a8d3b8e94e235d28a4e96fc",
+      "id": "sch_mfl8wvv",
+      "name": "Night  Shift 56",
+      "startTime": "11:00",
+      "endTime": "17:00",
+      "gracePeriod": 5,
+      "weeklyOffs": [],
+      "__v": 0,
+      "halfDayLimit": 120,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "omaxe Office"
+    },
+    {
+      "_id": "6a8d3b8e94e235d28a4e96fd",
+      "id": "sch_bgpyqv3",
+      "name": "Night Shift",
+      "startTime": "20:00",
+      "endTime": "06:00",
+      "gracePeriod": 15,
+      "weeklyOffs": [],
+      "__v": 0,
+      "halfDayLimit": 120,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Chatarpur"
+    },
+    {
+      "_id": "6a8d3b8e94e235d28a4e96fe",
+      "id": "sch_3ebecon",
+      "name": "MAIN OFFICE  Shift",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "gracePeriod": 15,
+      "weeklyOffs": [],
+      "__v": 0,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "omaxe Office",
+      "halfDayLimit": 120
+    },
+    {
+      "_id": "6a8d3b8e94e235d28a4e96ff",
+      "id": "sch_wtanufz",
+      "name": "new shift",
+      "startTime": "12:45",
+      "endTime": "17:00",
+      "gracePeriod": 15,
+      "weeklyOffs": [],
+      "__v": 0,
+      "workDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "location": "Noida sector 61",
+      "halfDayLimit": 120
+    }
+  ],
+  "notices": [],
+  "officeCoordinates": {
+    "Noida sector 61": {
+      "lat": 28.6978,
+      "lng": 77.1408
+    },
+    "omaxe Office": {
+      "lat": 28.6978,
+      "lng": 77.1408
+    },
+    "chandani chowk": {
+      "lat": 28.6978,
+      "lng": 77.1408
+    },
+    "HS Group Worksite (28.6952, 77.1860)": {
+      "lat": 28.695159798682628,
+      "lng": 77.1860166983257
+    },
+    "Chatarpur": {
+      "lat": 24.9164,
+      "lng": 79.5812
+    }
+  },
+  "uploadHistory": [],
+  "tickets": [],
   "announcements": [
-    {
-      "id": "ann_vsvqne7",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Sarah Connor! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-18",
-      "author": "HR Department",
-      "targetUserId": "usr_sarah"
-    },
-    {
-      "id": "ann_v27ihlx",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-18",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
-    {
-      "id": "ann_xbm58xk",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, John Doe! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-08-18",
-      "author": "HR Department",
-      "targetUserId": "usr_john"
-    },
     {
       "id": "ann_1",
       "title": "Welcome to the New Attendance & Onboarding Portal",
-      "content": "We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation (Resume, Aadhaar, Bank Details, etc.) online and request shift swaps directly.",
+      "content": "We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation online and request shift swaps directly.",
       "category": "General",
       "date": "2026-06-25",
       "author": "HR Admin Manager"
+    },
+    {
+      "id": "ann_2",
+      "title": "Upcoming Holiday Notice: Eid-ul-Adha",
+      "content": "Please note that the office will remain closed on June 29, 2026, in observance of Eid-ul-Adha.",
+      "category": "Holiday",
+      "date": "2026-06-26",
+      "author": "HR Coordinator"
     }
   ],
   "financeData": {
@@ -3899,249 +4315,5 @@
       "date": "2026-01-01"
     }
   ],
-  "officeCoordinates": {
-    "Noida sector 61": {
-      "lat": 28.6978,
-      "lng": 77.1408
-    },
-    "omaxe Office": {
-      "lat": 28.6978,
-      "lng": 77.1408
-    },
-    "chandani chowk": {
-      "lat": 28.6978,
-      "lng": 77.1408
-    },
-    "HS Group Worksite (28.6952, 77.1860)": {
-      "lat": 28.695159798682628,
-      "lng": 77.1860166983257
-    },
-    "Chatarpur": {
-      "lat": 24.9164,
-      "lng": 79.5812
-    }
-  },
-  "uploadHistory": [
-    {
-      "id": "upl_bid8e4v",
-      "employeeName": "Row 6",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "13:28",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "reassign all employee location and shifting"
-    },
-    {
-      "id": "upl_nyb2yms",
-      "employeeName": "EMP113",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "13:28",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "reassign all employee location and shifting"
-    },
-    {
-      "id": "upl_67awhuv",
-      "employeeName": "David Lightman",
-      "oldLocation": "chandani chowk",
-      "newLocation": "chandani chowk",
-      "oldShift": "Hemant Shift",
-      "newShift": "Night Shift",
-      "date": "2026-07-17",
-      "time": "13:28",
-      "status": "Success",
-      "effective": "Next Day",
-      "reason": "reassign all employee location and shifting"
-    },
-    {
-      "id": "upl_cj1kovj",
-      "employeeName": "Sarah Connor",
-      "oldLocation": "omaxe Office",
-      "newLocation": "omaxe Office",
-      "oldShift": "Hemant Shift",
-      "newShift": "Night  Shift",
-      "date": "2026-07-17",
-      "time": "13:28",
-      "status": "Success",
-      "effective": "Next Day",
-      "reason": "reassign all employee location and shifting"
-    },
-    {
-      "id": "upl_zv1d7lw",
-      "employeeName": "John Doe",
-      "oldLocation": "Noida sector 61",
-      "newLocation": "Noida sector 61",
-      "oldShift": "Hemant Shift",
-      "newShift": "Morning Shift",
-      "date": "2026-07-17",
-      "time": "13:28",
-      "status": "Success",
-      "effective": "Next Day",
-      "reason": "reassign all employee location and shifting"
-    },
-    {
-      "id": "upl_2j3670s",
-      "employeeName": "Row 6",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "12:21",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee location and shift according to uploading files and missing any shift schedule first create then process"
-    },
-    {
-      "id": "upl_3bttj0o",
-      "employeeName": "EMP113",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "12:21",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee location and shift according to uploading files and missing any shift schedule first create then process"
-    },
-    {
-      "id": "upl_hya405n",
-      "employeeName": "Row 6",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "12:18",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee location and shift"
-    },
-    {
-      "id": "upl_wcs6wc5",
-      "employeeName": "EMP113",
-      "oldLocation": "N/A",
-      "newLocation": "N/A",
-      "oldShift": "N/A",
-      "newShift": "N/A",
-      "date": "2026-07-17",
-      "time": "12:18",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee location and shift"
-    },
-    {
-      "id": "upl_30qi0xz",
-      "employeeName": "Sarah Connor",
-      "oldLocation": "N/A",
-      "newLocation": "omaxe Office",
-      "oldShift": "Morning Shift",
-      "newShift": "Night  Shift",
-      "date": "2026-07-17",
-      "time": "12:18",
-      "status": "Success",
-      "effective": "Next Day",
-      "reason": "Reassign all employee location and shift"
-    },
-    {
-      "id": "upl_y53d4da",
-      "employeeName": "EMP115",
-      "oldLocation": "N/A",
-      "newLocation": "Worksite (28.6952, 77.1861)",
-      "oldShift": "N/A",
-      "newShift": "Night Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee shift and location"
-    },
-    {
-      "id": "upl_d60899o",
-      "employeeName": "EMP114",
-      "oldLocation": "N/A",
-      "newLocation": "gurugram",
-      "oldShift": "N/A",
-      "newShift": "Day Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee shift and location"
-    },
-    {
-      "id": "upl_8cyumfo",
-      "employeeName": "EMP113",
-      "oldLocation": "N/A",
-      "newLocation": "Kohat Enclave, Pitampura, Delhi",
-      "oldShift": "N/A",
-      "newShift": "Night Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee shift and location"
-    },
-    {
-      "id": "upl_hpte41y",
-      "employeeName": "David Lightman",
-      "oldLocation": "N/A",
-      "newLocation": "chandani chowk",
-      "oldShift": "Night Shift",
-      "newShift": "Night Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Success",
-      "effective": "Today",
-      "reason": "Reassign all employee shift and location"
-    },
-    {
-      "id": "upl_c6lbyyb",
-      "employeeName": "Sarah Connor",
-      "oldLocation": "N/A",
-      "newLocation": "omaxe Office",
-      "oldShift": "N/A",
-      "newShift": "Night  Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Failed",
-      "effective": "N/A",
-      "reason": "Reassign all employee shift and location"
-    },
-    {
-      "id": "upl_cjk9pdu",
-      "employeeName": "John Doe",
-      "oldLocation": "N/A",
-      "newLocation": "Noida sector 61",
-      "oldShift": "Standard Day Shift",
-      "newShift": "Morning Shift",
-      "date": "2026-07-17",
-      "time": "10:43",
-      "status": "Success",
-      "effective": "Next Day",
-      "reason": "Reassign all employee shift and location"
-    }
-  ],
-  "customRoles": [],
-  "messages": [],
-  "payrollAdjustments": [
-    {
-      "id": "adj_kk04yl1",
-      "userId": "usr_sarah",
-      "month": 7,
-      "year": 2026,
-      "bonus": 2000,
-      "deduction": 0,
-      "remarks": "Extra activity"
-    }
-  ]
+  "customRoles": []
 }

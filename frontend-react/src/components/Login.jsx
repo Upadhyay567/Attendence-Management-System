@@ -40,8 +40,9 @@ function Login({ onLoginSuccess }) {
         {error && <div style={{ color: '#b91c1c', background: '#fee2e2', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px' }}>{error}</div>}
 
         <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Portal Role</label>
+          <label htmlFor="portal-role" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Portal Role</label>
           <select 
+            id="portal-role"
             value={role} 
             onChange={(e) => setRole(e.target.value)}
             style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
@@ -53,8 +54,9 @@ function Login({ onLoginSuccess }) {
         </div>
 
         <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Username / Employee ID</label>
+          <label htmlFor="username" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Username / Employee ID</label>
           <input 
+            id="username"
             type="text" 
             value={username} 
             onChange={(e) => setUsername(e.target.value)}
@@ -65,8 +67,9 @@ function Login({ onLoginSuccess }) {
         </div>
 
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Password</label>
+          <label htmlFor="password" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px' }}>Password</label>
           <input 
+            id="password"
             type="password" 
             value={password} 
             onChange={(e) => setPassword(e.target.value)}

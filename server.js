@@ -1156,29 +1156,31 @@ async function syncLocalToMongoOnBoot() {
 }
 
 // Watch seed.json for manual edits in VS Code and sync to MongoDB in real-time
-let watchTimeout = null;
-try {
-  fs.watch(LOCAL_DB_FILE, (eventType) => {
-    if (eventType === 'change') {
-      clearTimeout(watchTimeout);
-      watchTimeout = setTimeout(async () => {
-        try {
-          const online = await connectMongoose();
-          if (online && !useLocalFileDB) {
-            console.log('📝 Detected manual modification to seed.json. Syncing to MongoDB...');
-            const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-            const seedData = JSON.parse(rawSeed);
-            await syncLocalToMongo(seedData);
-            console.log('✅ MongoDB successfully synchronized with manual seed.json edits.');
+if (process.env.NODE_ENV !== 'test') {
+  let watchTimeout = null;
+  try {
+    fs.watch(LOCAL_DB_FILE, (eventType) => {
+      if (eventType === 'change') {
+        clearTimeout(watchTimeout);
+        watchTimeout = setTimeout(async () => {
+          try {
+            const online = await connectMongoose();
+            if (online && !useLocalFileDB) {
+              console.log('📝 Detected manual modification to seed.json. Syncing to MongoDB...');
+              const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+              const seedData = JSON.parse(rawSeed);
+              await syncLocalToMongo(seedData);
+              console.log('✅ MongoDB successfully synchronized with manual seed.json edits.');
+            }
+          } catch (err) {
+            console.warn('⚠️ Failed to sync seed.json changes to MongoDB:', err.message);
           }
-        } catch (err) {
-          console.warn('⚠️ Failed to sync seed.json changes to MongoDB:', err.message);
-        }
-      }, 500);
-    }
-  });
-} catch (watchErr) {
-  console.warn('⚠️ File watcher on seed.json failed to initialize:', watchErr.message);
+        }, 500);
+      }
+    });
+  } catch (watchErr) {
+    console.warn('⚠️ File watcher on seed.json failed to initialize:', watchErr.message);
+  }
 }
 
 
@@ -1216,4 +1218,8 @@ function print_urls(port, ip) {
   console.log(`  Mobile / LAN:  http://${ip}:${port}`);
 }
 
-startExpressServer(PORT);
+if (require.main === module) {
+  startExpressServer(PORT);
+}
+
+module.exports = { app, connectMongoose, mongoose, User, AttendanceLog, OfficeCoordinate };
