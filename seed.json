@@ -664,7 +664,7 @@
       "photo": null,
       "managerId": "",
       "assignedById": "usr_sjtxi5d",
-      "password": "$hash$2c7c47e3",
+      "password": "pbkdf2$100000$4dafd8e25ea17809afcb3fb57b257ae1$254b2b9350bba9b43e59ed75d33629636869c235842c46e1713e5cbdb349a0e678b68735a70fdcc6a9e6fd832df23d3bc71249c850784766b0634843408aca47",
       "scheduleIds": [
         "sch_bgpyqv3"
       ],
@@ -674,7 +674,43 @@
       "profileVerificationStatus": "Approved",
       "state": "delhi",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "passwordResetCount": 1
+    },
+    {
+      "id": "usr_pvu1n8o",
+      "employeeId": "HR10456",
+      "scheduleId": null,
+      "preferredLocation": null,
+      "baseSalary": null,
+      "allowanceHRA": null,
+      "allowanceTravel": null,
+      "deductionPF": null,
+      "deductionPT": null,
+      "deductionTDS": null,
+      "phone": "8796453290",
+      "email": "ramanedr234@gmail.com",
+      "dob": "",
+      "address": "",
+      "city": "",
+      "gender": "Male",
+      "department": "HR Administrator",
+      "designation": "HR Administrator",
+      "dateOfJoining": "2026-08-24",
+      "emergencyContact": "",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "name": "Hemant Raghav",
+      "username": "HR10456",
+      "mobile": "8796453290",
+      "role": "hr",
+      "status": "Active",
+      "photo": "",
+      "managerId": "",
+      "assignedById": "",
+      "password": "$hash$942e2891"
     }
   ],
   "schedules": [
