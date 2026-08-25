@@ -12,6 +12,7 @@ const twilio = require('twilio');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hs_group_delhi_jwt_secret_2026_key';
 
@@ -22,6 +23,128 @@ const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Define Mongoose Schemas for split collections
+const UserSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  employeeId: String,
+  scheduleId: String,
+  preferredLocation: String,
+  baseSalary: Number,
+  allowanceHRA: Number,
+  allowanceTravel: Number,
+  deductionPF: Number,
+  deductionPT: Number,
+  deductionTDS: Number,
+  phone: String,
+  email: String,
+  dob: String,
+  address: String,
+  city: String,
+  gender: String,
+  department: String,
+  designation: String,
+  dateOfJoining: String,
+  emergencyContact: String,
+  name: String,
+  username: { type: String, required: true },
+  role: { type: String, enum: ['employee', 'hr', 'manager', 'finance_manager'], default: 'employee' },
+  status: { type: String, default: 'Active' },
+  photo: String,
+  password: { type: String, default: '' },
+  profileVerificationStatus: String,
+  profileVerificationComment: String,
+  pendingProfileEdits: mongoose.Schema.Types.Mixed,
+  profileEditCount: { type: Number, default: 0 },
+  passwordResetCount: { type: Number, default: 0 },
+  scheduleIds: [String],
+  shiftLocations: mongoose.Schema.Types.Mixed
+}, { strict: false, minimize: false });
+
+const AttendanceLogSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
+  date: String,
+  shiftId: String,
+  checkIn: String,
+  checkOut: String,
+  status: String,
+  biometricUsed: String,
+  location: String,
+  deviationFlag: Boolean,
+  justification: String,
+  coords: String,
+  distance: Number,
+  facePhoto: String,
+  facePhotoOut: String,
+  latitude: Number,
+  longitude: Number
+}, { strict: false, minimize: false });
+
+const ScheduleSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: String,
+  startTime: String,
+  endTime: String,
+  gracePeriod: Number,
+  weeklyOffs: [Number]
+}, { strict: false, minimize: false });
+
+const LeaveRequestSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: String,
+  leaveType: String,
+  startDate: String,
+  endDate: String,
+  reason: String,
+  status: { type: String, default: 'Pending' },
+  comments: String,
+  createdAt: String,
+  document: String
+}, { strict: false, minimize: false });
+
+const ShiftSwapSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  senderId: String,
+  receiverId: String,
+  date: String,
+  status: { type: String, default: 'Pending' },
+  shiftId: String,
+  createdAt: String
+}, { strict: false, minimize: false });
+
+const NoticeSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  title: String,
+  content: String,
+  date: String,
+  important: Boolean
+}, { strict: false, minimize: false });
+
+const OfficeCoordinateSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  lat: Number,
+  lng: Number
+}, { strict: false, minimize: false });
+
+// Register models
+const User = mongoose.model('User', UserSchema);
+const AttendanceLog = mongoose.model('AttendanceLog', AttendanceLogSchema);
+const Schedule = mongoose.model('Schedule', ScheduleSchema);
+const LeaveRequest = mongoose.model('LeaveRequest', LeaveRequestSchema);
+const ShiftSwap = mongoose.model('ShiftSwap', ShiftSwapSchema);
+const Notice = mongoose.model('Notice', NoticeSchema);
+const OfficeCoordinate = mongoose.model('OfficeCoordinate', OfficeCoordinateSchema);
+
+// Map frontend DB key names to Mongoose models
+const modelsMap = {
+  users: User,
+  attendanceLogs: AttendanceLog,
+  schedules: Schedule,
+  leaveRequests: LeaveRequest,
+  shiftSwaps: ShiftSwap,
+  notices: Notice
+};
 
 // Cryptographic helpers for password security (bcrypt-based by default, with backwards compatibility)
 function hashPassword(password) {
@@ -144,29 +267,26 @@ app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(__dirname)));
 
-let dbClient = null;
+let isMongoConnected = false;
 let useLocalFileDB = false;
 const LOCAL_DB_FILE = path.join(__dirname, 'seed.json');
 
-async function getCollection() {
-  if (useLocalFileDB) return null;
-  if (!dbClient) {
-    try {
-      dbClient = new MongoClient(MONGO_URL, { connectTimeoutMS: 500, serverSelectionTimeoutMS: 500 });
-      await dbClient.connect();
-      console.log('Connected to MongoDB database successfully.');
-    } catch (err) {
-      console.warn('⚠️ MongoDB connection omitted/offline. Operating on local database (seed.json).');
-      useLocalFileDB = true;
-      return null;
-    }
-  }
+async function connectMongoose() {
+  if (useLocalFileDB) return false;
+  if (isMongoConnected) return true;
   try {
-    const db = dbClient.db(DB_NAME);
-    return db.collection(COLLECTION_NAME);
+    await mongoose.connect(`${MONGO_URL}/${DB_NAME}`, {
+      connectTimeoutMS: 1000,
+      serverSelectionTimeoutMS: 1000
+    });
+    isMongoConnected = true;
+    console.log('Connected to MongoDB database successfully via Mongoose.');
+    return true;
   } catch (err) {
+    console.warn('⚠️ MongoDB connection omitted/offline. Operating on local database (seed.json).');
     useLocalFileDB = true;
-    return null;
+    isMongoConnected = false;
+    return false;
   }
 }
 
@@ -191,22 +311,27 @@ app.post('/api/auth/login', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Username or Employee ID is required.' });
     }
     
-    let users = [];
-    const col = await getCollection();
-    if (useLocalFileDB || !col) {
+    let matchedUser = null;
+    const online = await connectMongoose();
+    if (useLocalFileDB || !online) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      users = JSON.parse(rawSeed).users || [];
+      const users = JSON.parse(rawSeed).users || [];
+      matchedUser = users.find(u =>
+        (u.employeeId && u.employeeId.toUpperCase() === targetUsername.toUpperCase()) ||
+        (u.username && u.username.toLowerCase() === targetUsername.toLowerCase()) ||
+        (u.email && u.email.toLowerCase() === targetUsername.toLowerCase()) ||
+        (u.id && u.id.toLowerCase() === targetUsername.toLowerCase())
+      );
     } else {
-      const stateDoc = await col.findOne({ _id: 'global_state' });
-      users = stateDoc ? (stateDoc.users || []) : [];
+      matchedUser = await User.findOne({
+        $or: [
+          { employeeId: new RegExp(`^${targetUsername}$`, 'i') },
+          { username: new RegExp(`^${targetUsername}$`, 'i') },
+          { email: new RegExp(`^${targetUsername}$`, 'i') },
+          { id: new RegExp(`^${targetUsername}$`, 'i') }
+        ]
+      }).lean();
     }
-    
-    const matchedUser = users.find(u =>
-      (u.employeeId && u.employeeId.toUpperCase() === targetUsername.toUpperCase()) ||
-      (u.username && u.username.toLowerCase() === targetUsername.toLowerCase()) ||
-      (u.email && u.email.toLowerCase() === targetUsername.toLowerCase()) ||
-      (u.id && u.id.toLowerCase() === targetUsername.toLowerCase())
-    );
     
     if (!matchedUser) {
       return res.status(401).json({ error: 'Invalid ID/Username. No matching account found.' });
@@ -273,17 +398,15 @@ app.post('/api/auth/send-otp', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Invalid verification method.' });
     }
 
-    let users = [];
-    const col = await getCollection();
-    if (useLocalFileDB || !col) {
+    let user = null;
+    const online = await connectMongoose();
+    if (useLocalFileDB || !online) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      users = JSON.parse(rawSeed).users || [];
+      const users = JSON.parse(rawSeed).users || [];
+      user = users.find(u => u.id === userId);
     } else {
-      const stateDoc = await col.findOne({ _id: 'global_state' });
-      users = stateDoc ? (stateDoc.users || []) : [];
+      user = await User.findOne({ id: userId }).lean();
     }
-
-    const user = users.find(u => u.id === userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
@@ -433,27 +556,36 @@ app.post('/api/auth/identify', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Identifier is required.' });
     }
     
-    let users = [];
-    const col = await getCollection();
-    if (useLocalFileDB || !col) {
+    let matchedUser = null;
+    const online = await connectMongoose();
+    if (useLocalFileDB || !online) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      users = JSON.parse(rawSeed).users || [];
+      const users = JSON.parse(rawSeed).users || [];
+      matchedUser = users.find(u => {
+        const key = identifier.trim().toLowerCase();
+        const cleanKey = identifier.replace(/\D/g, '');
+        const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
+        const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+        
+        return (u.username && u.username.toLowerCase() === key) ||
+               (u.email && u.email.toLowerCase() === key) ||
+               (u.employeeId && u.employeeId.toLowerCase() === key) ||
+               isPhoneMatch;
+      });
     } else {
-      const stateDoc = await col.findOne({ _id: 'global_state' });
-      users = stateDoc ? (stateDoc.users || []) : [];
-    }
-    
-    const matchedUser = users.find(u => {
-      const key = identifier.trim().toLowerCase();
+      const key = identifier.trim();
       const cleanKey = identifier.replace(/\D/g, '');
-      const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
-      const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
-      
-      return (u.username && u.username.toLowerCase() === key) ||
-             (u.email && u.email.toLowerCase() === key) ||
-             (u.employeeId && u.employeeId.toLowerCase() === key) ||
-             isPhoneMatch;
-    });
+      const filter = [
+        { username: new RegExp(`^${key}$`, 'i') },
+        { email: new RegExp(`^${key}$`, 'i') },
+        { employeeId: new RegExp(`^${key}$`, 'i') }
+      ];
+      if (cleanKey) {
+        filter.push({ phone: new RegExp(cleanKey) });
+        filter.push({ mobile: new RegExp(cleanKey) });
+      }
+      matchedUser = await User.findOne({ $or: filter }).lean();
+    }
     
     if (!matchedUser) {
       return res.status(404).json({ error: 'Account record not found for the entered credentials.' });
@@ -487,22 +619,17 @@ app.post('/api/auth/reset-password', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
     }
     
-    const col = await getCollection();
+    const online = await connectMongoose();
     const hashedPassword = hashPassword(newPassword);
     
-    if (col && !useLocalFileDB) {
-      const stateDoc = await col.findOne({ _id: 'global_state' });
-      const users = stateDoc ? (stateDoc.users || []) : [];
-      const user = users.find(u => u.id === userId);
+    if (online && !useLocalFileDB) {
+      const user = await User.findOne({ id: userId });
       if (!user) {
         return res.status(404).json({ error: 'User not found.' });
       }
-      const nextCount = (user.passwordResetCount || 0) + 1;
-      
-      await col.updateOne(
-        { _id: 'global_state', "users.id": userId },
-        { $set: { "users.$.password": hashedPassword, "users.$.passwordResetCount": nextCount } }
-      );
+      user.password = hashedPassword;
+      user.passwordResetCount = (user.passwordResetCount || 0) + 1;
+      await user.save();
     }
     
     const rawState = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
@@ -581,24 +708,67 @@ app.get('/api/db-state', authenticateToken, async (req, res) => {
       return res.status(401).json({ error: 'Authentication required to access database state.' });
     }
 
-    const col = await getCollection();
     let stateData = null;
+    const online = await connectMongoose();
 
-    if (useLocalFileDB || !col) {
+    if (useLocalFileDB || !online) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
       stateData = JSON.parse(rawSeed);
     } else {
-      let stateDoc = await col.findOne({ _id: 'global_state' });
-      if (!stateDoc) {
-        console.log('MongoDB state collection is blank. Seeding from default seed.json...');
+      // Query all collections concurrently
+      const [
+        usersDocs,
+        attendanceDocs,
+        leaveDocs,
+        swapDocs,
+        scheduleDocs,
+        noticeDocs,
+        officeDocs
+      ] = await Promise.all([
+        User.find({}).lean(),
+        AttendanceLog.find({}).lean(),
+        LeaveRequest.find({}).lean(),
+        ShiftSwap.find({}).lean(),
+        Schedule.find({}).lean(),
+        Notice.find({}).lean(),
+        OfficeCoordinate.find({}).lean()
+      ]);
+
+      // If database is completely empty (e.g. fresh MongoDB run), seed it from default seed.json
+      if (usersDocs.length === 0 && scheduleDocs.length === 0) {
+        console.log('MongoDB collections are empty. Seeding from default seed.json...');
         const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
         stateData = JSON.parse(rawSeed);
-        stateDoc = { _id: 'global_state', ...stateData };
-        await col.insertOne(stateDoc);
-        console.log('Database successfully seeded.');
+        
+        // Seed Mongoose collections
+        await Promise.all([
+          User.insertMany(stateData.users || []),
+          AttendanceLog.insertMany(stateData.attendanceLogs || []),
+          LeaveRequest.insertMany(stateData.leaveRequests || []),
+          ShiftSwap.insertMany(stateData.shiftSwaps || []),
+          Schedule.insertMany(stateData.schedules || []),
+          Notice.insertMany(stateData.notices || []),
+          OfficeCoordinate.insertMany(
+            Object.entries(stateData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+          )
+        ]);
+        console.log('Database successfully seeded via Mongoose.');
       } else {
-        const { _id, ...cleanState } = stateDoc;
-        stateData = cleanState;
+        // Transform officeCoordinates array back into key-value map
+        const officeCoordinates = {};
+        officeDocs.forEach(d => {
+          officeCoordinates[d.name] = { lat: d.lat, lng: d.lng };
+        });
+
+        stateData = {
+          users: usersDocs,
+          attendanceLogs: attendanceDocs,
+          leaveRequests: leaveDocs,
+          shiftSwaps: swapDocs,
+          schedules: scheduleDocs,
+          notices: noticeDocs,
+          officeCoordinates
+        };
       }
     }
 
@@ -672,26 +842,34 @@ app.post('/api/mutate', authenticateToken, async (req, res) => {
     } catch (e) {}
     mergePasswords(data, existingUsers);
     
-    const col = await getCollection();
-    if (useLocalFileDB || !col) {
+    const online = await connectMongoose();
+    if (useLocalFileDB || !online) {
       fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
       return res.json({ success: true, localFile: true });
     }
     
     // Also merge passwords from MongoDB if available
     try {
-      const stateDoc = await col.findOne({ _id: 'global_state' });
-      if (stateDoc && stateDoc.users) {
-        mergePasswords(data, stateDoc.users);
+      const existingDbUsers = await User.find({}).lean();
+      if (existingDbUsers) {
+        mergePasswords(data, existingDbUsers);
       }
     } catch (e) {}
 
-    // Upsert the full state
-    const updateResult = await col.updateOne(
-      { _id: 'global_state' },
-      { $set: data },
-      { upsert: true }
-    );
+    // Synchronize each Mongoose collection
+    await Promise.all([
+      User.deleteMany({}).then(() => User.insertMany(data.users || [])),
+      AttendanceLog.deleteMany({}).then(() => AttendanceLog.insertMany(data.attendanceLogs || [])),
+      LeaveRequest.deleteMany({}).then(() => LeaveRequest.insertMany(data.leaveRequests || [])),
+      ShiftSwap.deleteMany({}).then(() => ShiftSwap.insertMany(data.shiftSwaps || [])),
+      Schedule.deleteMany({}).then(() => Schedule.insertMany(data.schedules || [])),
+      Notice.deleteMany({}).then(() => Notice.insertMany(data.notices || [])),
+      OfficeCoordinate.deleteMany({}).then(() => 
+        OfficeCoordinate.insertMany(
+          Object.entries(data.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+        )
+      )
+    ]);
     
     // Keep seed.json on disk in sync for offline/Go Live server fallback loading
     try {
@@ -727,20 +905,19 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
     if (key === 'attendanceLogs' && type === 'push' && payload) {
       const officeName = payload.location || 'Kohat Enclave, Pitampura, Delhi';
       
-      let stateObj;
-      const col = await getCollection();
-      if (useLocalFileDB || !col) {
+      let officeCoordinates = {};
+      const online = await connectMongoose();
+      if (useLocalFileDB || !online) {
         const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-        stateObj = JSON.parse(rawSeed);
+        officeCoordinates = JSON.parse(rawSeed).officeCoordinates || {};
       } else {
-        stateObj = await col.findOne({ _id: 'global_state' });
+        const officeDocs = await OfficeCoordinate.find({}).lean();
+        officeDocs.forEach(d => {
+          officeCoordinates[d.name] = { lat: d.lat, lng: d.lng };
+        });
       }
 
-      const officeCoordsMap = (stateObj && stateObj.officeCoordinates) || {
-        'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 }
-      };
-
-      const office = officeCoordsMap[officeName] || officeCoordsMap['Kohat Enclave, Pitampura, Delhi'] || Object.values(officeCoordsMap)[0];
+      const office = officeCoordinates[officeName] || officeCoordinates['Kohat Enclave, Pitampura, Delhi'] || Object.values(officeCoordinates)[0];
       if (office) {
         let employeeLat = payload.latitude;
         let employeeLng = payload.longitude;
@@ -813,7 +990,7 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
       }
     }
 
-    const col = await getCollection();
+    const online = await connectMongoose();
 
     // Helper to apply local modifications to state object
     const applyLocalUpdate = (data) => {
@@ -837,22 +1014,19 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
     };
 
     // 1. Update MongoDB atomically if online
-    if (col && !useLocalFileDB) {
-      let updateOp = {};
-      if (type === 'push') {
-        updateOp = { $push: { [key]: payload } };
-        // Avoid duplicate push
-        await col.updateOne({ _id: 'global_state', [`${key}.id`]: { $ne: payload.id } }, updateOp);
-      } else if (type === 'update') {
-        const setFields = {};
-        for (const [f, val] of Object.entries(updates)) {
-          setFields[`${key}.$.${f}`] = val;
+    if (online && !useLocalFileDB) {
+      const Model = modelsMap[key];
+      if (Model) {
+        if (type === 'push') {
+          const exists = await Model.exists({ id: payload.id });
+          if (!exists) {
+            await Model.create(payload);
+          }
+        } else if (type === 'update') {
+          await Model.updateOne(query, { $set: updates });
+        } else if (type === 'pull') {
+          await Model.deleteOne(query);
         }
-        updateOp = { $set: setFields };
-        await col.updateOne({ _id: 'global_state', [`${key}.id`]: query.id }, updateOp);
-      } else if (type === 'pull') {
-        updateOp = { $pull: { [key]: query } };
-        await col.updateOne({ _id: 'global_state' }, updateOp);
       }
     }
 
@@ -951,22 +1125,30 @@ function freePort(port) {
   }
 }
 
+async function syncLocalToMongo(seedData) {
+  await Promise.all([
+    User.deleteMany({}).then(() => User.insertMany(seedData.users || [])),
+    AttendanceLog.deleteMany({}).then(() => AttendanceLog.insertMany(seedData.attendanceLogs || [])),
+    LeaveRequest.deleteMany({}).then(() => LeaveRequest.insertMany(seedData.leaveRequests || [])),
+    ShiftSwap.deleteMany({}).then(() => ShiftSwap.insertMany(seedData.shiftSwaps || [])),
+    Schedule.deleteMany({}).then(() => Schedule.insertMany(seedData.schedules || [])),
+    Notice.deleteMany({}).then(() => Notice.insertMany(seedData.notices || [])),
+    OfficeCoordinate.deleteMany({}).then(() => 
+      OfficeCoordinate.insertMany(
+        Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+      )
+    )
+  ]);
+}
+
 async function syncLocalToMongoOnBoot() {
   try {
-    const col = await getCollection();
-    if (col && !useLocalFileDB) {
+    const online = await connectMongoose();
+    if (online && !useLocalFileDB) {
       if (fs.existsSync(LOCAL_DB_FILE)) {
         const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
         const seedData = JSON.parse(rawSeed);
-        
-        // Remove MongoDB _id if it exists in seed data to avoid conflicts, then set _id: 'global_state'
-        delete seedData._id;
-        
-        await col.updateOne(
-          { _id: 'global_state' },
-          { $set: seedData },
-          { upsert: true }
-        );
+        await syncLocalToMongo(seedData);
         console.log('🔄 Synced local seed.json database state to MongoDB successfully on startup.');
       }
     }
@@ -983,17 +1165,12 @@ try {
       clearTimeout(watchTimeout);
       watchTimeout = setTimeout(async () => {
         try {
-          const col = await getCollection();
-          if (col && !useLocalFileDB) {
+          const online = await connectMongoose();
+          if (online && !useLocalFileDB) {
             console.log('📝 Detected manual modification to seed.json. Syncing to MongoDB...');
             const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
             const seedData = JSON.parse(rawSeed);
-            delete seedData._id;
-            await col.updateOne(
-              { _id: 'global_state' },
-              { $set: seedData },
-              { upsert: true }
-            );
+            await syncLocalToMongo(seedData);
             console.log('✅ MongoDB successfully synchronized with manual seed.json edits.');
           }
         } catch (err) {
