@@ -1150,20 +1150,28 @@ function freePort(port) {
   }
 }
 
+let isSyncing = false;
+
 async function syncLocalToMongo(seedData) {
-  await Promise.all([
-    User.deleteMany({}).then(() => User.insertMany(seedData.users || [])),
-    AttendanceLog.deleteMany({}).then(() => AttendanceLog.insertMany(seedData.attendanceLogs || [])),
-    LeaveRequest.deleteMany({}).then(() => LeaveRequest.insertMany(seedData.leaveRequests || [])),
-    ShiftSwap.deleteMany({}).then(() => ShiftSwap.insertMany(seedData.shiftSwaps || [])),
-    Schedule.deleteMany({}).then(() => Schedule.insertMany(seedData.schedules || [])),
-    Notice.deleteMany({}).then(() => Notice.insertMany(seedData.notices || [])),
-    OfficeCoordinate.deleteMany({}).then(() => 
-      OfficeCoordinate.insertMany(
-        Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+  if (isSyncing) return;
+  isSyncing = true;
+  try {
+    await Promise.all([
+      User.deleteMany({}).then(() => User.insertMany(seedData.users || [])),
+      AttendanceLog.deleteMany({}).then(() => AttendanceLog.insertMany(seedData.attendanceLogs || [])),
+      LeaveRequest.deleteMany({}).then(() => LeaveRequest.insertMany(seedData.leaveRequests || [])),
+      ShiftSwap.deleteMany({}).then(() => ShiftSwap.insertMany(seedData.shiftSwaps || [])),
+      Schedule.deleteMany({}).then(() => Schedule.insertMany(seedData.schedules || [])),
+      Notice.deleteMany({}).then(() => Notice.insertMany(seedData.notices || [])),
+      OfficeCoordinate.deleteMany({}).then(() => 
+        OfficeCoordinate.insertMany(
+          Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+        )
       )
-    )
-  ]);
+    ]);
+  } finally {
+    isSyncing = false;
+  }
 }
 
 async function syncLocalToMongoOnBoot() {
