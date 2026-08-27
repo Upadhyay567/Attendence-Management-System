@@ -7885,6 +7885,32 @@ async function renderAdminDashboard() {
             </div>
           </div>
           <div id="hr-birthday-widget-container"></div>
+          
+          <!-- Database Sync Status Panel -->
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <h3 class="card-panel-title">⚙️ Database Status & Sync</h3>
+            </div>
+            <div id="db-status-container" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Connection:</span>
+                <span id="db-status-indicator" style="font-weight: 700; color: var(--text-primary);">Loading...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Storage Type:</span>
+                <span id="db-type-indicator" style="font-weight: 700; color: var(--text-primary);">Loading...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Synced Users / Logs:</span>
+                <span id="db-counts-indicator" style="font-weight: 700; color: var(--text-primary);">Loading...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Last Synced:</span>
+                <span id="db-last-sync-indicator" style="font-weight: 700; color: var(--text-primary);">Loading...</span>
+              </div>
+              <button class="btn btn-primary" id="btn-trigger-db-sync" style="width: 100%; margin-top: 8px; font-weight: 700; padding: 8px 12px; font-size: 12.5px;">Sync Database State</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -8216,6 +8242,69 @@ async function renderAdminDashboard() {
     showDashboardDetailModal('Approved Leave - Active Leaves Today', items, 'leave');
   }
 
+  async function updateDatabaseStatusComponent() {
+    const statusInd = document.getElementById('db-status-indicator');
+    const typeInd = document.getElementById('db-type-indicator');
+    const countsInd = document.getElementById('db-counts-indicator');
+    const lastSyncInd = document.getElementById('db-last-sync-indicator');
+    const syncBtn = document.getElementById('btn-trigger-db-sync');
+
+    if (!statusInd) return;
+
+    try {
+      const res = await fetch((window.apiBaseUrl || '') + '/api/db-status');
+      if (res.ok) {
+        const status = await res.json();
+        statusInd.innerHTML = status.online 
+          ? '<span style="color:#10b981">🟢 Connected</span>' 
+          : '<span style="color:#ef4444">🔴 Offline Fallback</span>';
+        typeInd.textContent = status.mode;
+        countsInd.textContent = `${status.usersCount} Users / ${status.logsCount} Logs`;
+        
+        const lastSyncTime = new Date(status.lastSynced);
+        lastSyncInd.textContent = lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+    } catch (e) {
+      console.warn('Failed to load database status:', e);
+      statusInd.innerHTML = '<span style="color:#ef4444">🔴 Connection Error</span>';
+    }
+
+    if (syncBtn && !syncBtn.dataset.listenerBound) {
+      syncBtn.dataset.listenerBound = 'true';
+      syncBtn.addEventListener('click', async () => {
+        syncBtn.disabled = true;
+        syncBtn.textContent = 'Syncing...';
+        try {
+          const res = await fetch((window.apiBaseUrl || '') + '/api/db-sync', { method: 'POST' });
+          if (res.ok) {
+            await updateDatabaseStatusComponent();
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('✅ Database successfully synchronized with local state!', 'success');
+            } else {
+              alert('✅ Database successfully synchronized with local state!');
+            }
+          } else {
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('⚠️ Database sync failed.', 'error');
+            } else {
+              alert('⚠️ Database sync failed.');
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('⚠️ Database sync failed (Network error).', 'error');
+          } else {
+            alert('⚠️ Database sync failed (Network error).');
+          }
+        } finally {
+          syncBtn.disabled = false;
+          syncBtn.textContent = 'Sync Database State';
+        }
+      });
+    }
+  }
+
   function updateDashboardViews() {
     const freshUser = DB.getUser(currentUser.id) || currentUser;
     const isManager = freshUser.role === 'manager';
@@ -8513,6 +8602,11 @@ async function renderAdminDashboard() {
 
     // Announcements setup
     renderAdminAnnouncementsList();
+
+    // Update Database Connection and Sync Status
+    if (typeof updateDatabaseStatusComponent === 'function') {
+      updateDatabaseStatusComponent();
+    }
   }
 
   // Initially bind form submit for announcement publishing since it exists in skeleton template

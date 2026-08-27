@@ -1,10 +1,11 @@
 const request = require('supertest');
-const { app, connectMongoose, mongoose } = require('../server');
+const { app, connectMongoose, mongoose, syncLocalToMongoOnBoot } = require('../server');
 
 describe('HS Group Attendance System API Integration Tests', () => {
   // Ensure database is connected before running tests
   beforeAll(async () => {
     await connectMongoose();
+    await syncLocalToMongoOnBoot();
   });
 
   // Close database connection after tests

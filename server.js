@@ -1219,6 +1219,46 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 
+// Database Status & Sync endpoints
+app.get('/api/db-status', async (req, res) => {
+  try {
+    const isOnline = mongoose.connection.readyState === 1;
+    let uCount = 0;
+    let lCount = 0;
+    
+    if (isOnline && !useLocalFileDB) {
+      uCount = await User.countDocuments().catch(() => 0);
+      lCount = await AttendanceLog.countDocuments().catch(() => 0);
+    } else {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        uCount = (parsed.users || []).length;
+        lCount = (parsed.attendanceLogs || []).length;
+      }
+    }
+
+    res.json({
+      online: isOnline,
+      mode: useLocalFileDB ? 'Local file (seed.json)' : (isOnline ? 'MongoDB Atlas' : 'Local file fallback'),
+      usersCount: uCount,
+      logsCount: lCount,
+      lastSynced: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/db-sync', async (req, res) => {
+  try {
+    await syncLocalToMongoOnBoot();
+    res.json({ success: true, message: 'Database successfully synchronized with local state.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function startExpressServer(portToTry) {
   freePort(portToTry);
   const serverInstance = app.listen(portToTry, '0.0.0.0', async () => {
@@ -1257,4 +1297,4 @@ if (require.main === module) {
   startExpressServer(PORT);
 }
 
-module.exports = { app, connectMongoose, mongoose, User, AttendanceLog, OfficeCoordinate };
+module.exports = { app, connectMongoose, mongoose, User, AttendanceLog, OfficeCoordinate, syncLocalToMongoOnBoot };
