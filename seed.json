@@ -180,7 +180,7 @@
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "__v": 0,
-      "managerId": "",
+      "managerId": "usr_7yuu1l5",
       "documents": [],
       "resume": {
         "name": "John_Doe_Resume.pdf",
@@ -204,7 +204,7 @@
         "aadhar": "Approved",
         "bank": "Approved"
       },
-      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+      "password": ""
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9705",
@@ -477,7 +477,7 @@
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
       "profileEditCount": 0,
-      "passwordResetCount": 1,
+      "passwordResetCount": 2,
       "scheduleIds": [
         "sch_3ebecon"
       ],
@@ -490,10 +490,10 @@
       "aadhar": null,
       "bankDetails": null,
       "mobile": "8967459032",
-      "managerId": "usr_manager",
+      "managerId": "usr_finance",
       "assignedById": "usr_6af1y3c",
       "state": "delhi",
-      "password": "$hash$01ab75bf"
+      "password": "$2b$10$Qssnt629UdB7CkjLbUmyzu.re/IrM5mirmNBJrgByi9JqG0dAZue2"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e970b",

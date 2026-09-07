@@ -17,13 +17,8 @@ const ejs = require('ejs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'hs_group_delhi_jwt_secret_2026_key';
 
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per 15 minutes
-  message: { error: 'Too many authentication requests from this IP. Please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Disable authentication rate limiting for uninterrupted login / auth requests across all roles
+const authRateLimiter = (req, res, next) => next();
 
 // Define Mongoose Schemas for split collections
 const UserSchema = new mongoose.Schema({
