@@ -5801,7 +5801,17 @@ function renderEmployeeProfile() {
               let rawName = personObj.name || '';
               let roleLabel = personObj.designation || (personObj.role === 'hr' ? 'HR Manager' : personObj.role === 'manager' ? 'Operations Manager' : personObj.role || defaultRole);
 
-              const roleKeywords = ['Operations Manager', 'HR Admin Manager', 'HR Coordinator', 'HR Manager', 'Finance Manager', 'Manager'];
+              const roleKeywords = [
+                'HR Admin Manager',
+                'HR Administrator',
+                'HR Coordinator',
+                'HR Manager',
+                'Operations Manager',
+                'Finance Manager',
+                'Administrator',
+                'Manager',
+                'Coordinator'
+              ];
               let cleanName = rawName;
               for (const kw of roleKeywords) {
                 if (cleanName.endsWith(kw) && cleanName.length > kw.length) {
@@ -5810,14 +5820,19 @@ function renderEmployeeProfile() {
                 }
               }
 
-              const initials = (cleanName || 'U').split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().substring(0, 2) || 'U';
+              const initials = (cleanName || 'U').split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'U';
               return { name: cleanName, role: roleLabel, initials };
             };
 
+            const allUsers = DB.getUsers() || [];
+
+            // 1. Fetch exact assigned HR user from database record
             let hrUser = user.assignedById ? DB.getUser(user.assignedById) : null;
+
+            // 2. Fetch exact assigned Manager user from database record
             let mgrUser = user.managerId ? DB.getUser(user.managerId) : null;
 
-            // Employees cannot be their own Registered / Assigned HR or Manager
+            // Reject employee self-assignments if user is an employee
             if (hrUser && (hrUser.role === 'employee' || hrUser.id === user.id)) {
               hrUser = null;
             }
@@ -5825,21 +5840,16 @@ function renderEmployeeProfile() {
               mgrUser = null;
             }
 
-            const allUsers = DB.getUsers() || [];
-            const hrCandidates = allUsers.filter(u => (u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr'))) && u.role !== 'employee' && u.id !== user.id);
-            const mgrCandidates = allUsers.filter(u => (u.role === 'manager' || (u.designation && u.designation.toLowerCase().includes('manager'))) && u.role !== 'employee' && u.id !== user.id);
-
-            if (!hrUser && hrCandidates.length > 0) {
-              const charSum = (user.id || 'u').split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-              hrUser = hrCandidates[charSum % hrCandidates.length];
+            // Fallback lookups ONLY if assigned IDs are not set in DB
+            if (!hrUser) {
+              hrUser = allUsers.find(u => (u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr'))) && u.role !== 'employee' && u.id !== user.id);
             }
-
-            if (!mgrUser && mgrCandidates.length > 0) {
-              mgrUser = mgrCandidates.find(u => !hrUser || u.id !== hrUser.id) || mgrCandidates[0];
+            if (!mgrUser) {
+              mgrUser = allUsers.find(u => (u.role === 'manager' || (u.designation && u.designation.toLowerCase().includes('manager'))) && u.role !== 'employee' && u.id !== user.id && u.id !== (hrUser ? hrUser.id : ''));
             }
 
             if (!hrUser && !mgrUser) {
-              hrUser = hrCandidates[0] || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
+              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin') || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
             }
 
             const hrInfo = hrUser ? parsePerson(hrUser, 'HR Manager') : null;

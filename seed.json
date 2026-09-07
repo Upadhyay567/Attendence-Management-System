@@ -197,7 +197,7 @@
         "size": "512 KB",
         "date": "2026-06-10"
       },
-      "assignedById": "usr_hr",
+      "assignedById": "usr_manager",
       "state": "delhi",
       "verificationStatuses": {
         "resume": "Rejected"
@@ -489,9 +489,9 @@
       "bankDetails": null,
       "mobile": "8967459032",
       "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "assignedById": "usr_6af1y3c",
       "state": "delhi",
-      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+      "password": "$hash$01ab75bf"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e970b",
@@ -3842,12 +3842,27 @@
       "endDate": "2026-09-09",
       "reason": "sick leave",
       "status": "Approved",
+      "__v": 0,
       "type": "Sick",
       "approverHead": "HR Admin Manager",
       "requestDate": "2026-09-07",
       "managerComment": "Take rest",
-      "supportingDoc": null,
-      "__v": 0
+      "supportingDoc": null
+    },
+    {
+      "_id": "6a9e6d47295202ae21e79620",
+      "id": "lv_q3cw4zc",
+      "userId": "usr_6af1y3c",
+      "startDate": "2026-09-08",
+      "endDate": "2026-09-09",
+      "reason": "sick leave",
+      "status": "Rejected",
+      "__v": 0,
+      "type": "Sick",
+      "approverHead": "Operations Manager",
+      "requestDate": "2026-09-07",
+      "managerComment": "qWE",
+      "supportingDoc": null
     },
     {
       "_id": "6a8d3b8e94e235d28a4e96f5",
@@ -3916,19 +3931,6 @@
       "type": "Sick",
       "requestDate": "2026-06-08",
       "managerComment": "Take care and recover!"
-    },
-    {
-      "id": "lv_q3cw4zc",
-      "userId": "usr_6af1y3c",
-      "type": "Sick",
-      "startDate": "2026-09-08",
-      "endDate": "2026-09-09",
-      "reason": "sick leave",
-      "approverHead": "Operations Manager",
-      "status": "Rejected",
-      "requestDate": "2026-09-07",
-      "managerComment": "qWE",
-      "supportingDoc": null
     }
   ],
   "shiftSwaps": [
@@ -4107,15 +4109,6 @@
   "uploadHistory": [],
   "tickets": [],
   "announcements": [
-    {
-      "id": "ann_1uo91hd",
-      "title": "🎂 Happy Birthday Wish!",
-      "content": "Wishing you a fantastic birthday filled with joy, success, and wonderful moments! Have a great day ahead, Finance Manager! 🎂🎉",
-      "category": "Urgent",
-      "date": "2026-09-07",
-      "author": "HR Department",
-      "targetUserId": "usr_finance"
-    },
     {
       "id": "ann_1",
       "title": "Welcome to the New Attendance & Onboarding Portal",
