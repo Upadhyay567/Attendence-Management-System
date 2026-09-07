@@ -5808,17 +5808,22 @@ function renderEmployeeProfile() {
             let hrUser = user.assignedById ? DB.getUser(user.assignedById) : null;
             let mgrUser = user.managerId ? DB.getUser(user.managerId) : null;
 
-            if (!hrUser && !mgrUser) {
-              hrUser = (DB.getUsers() || []).find(u => u.role === 'hr');
-              mgrUser = (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
-            } else if (!hrUser) {
-              hrUser = (DB.getUsers() || []).find(u => u.role === 'hr' && u.id !== (mgrUser ? mgrUser.id : ''));
-            } else if (!mgrUser) {
-              mgrUser = (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+            const allUsers = DB.getUsers() || [];
+
+            if (!hrUser) {
+              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr')));
+            }
+            if (!mgrUser) {
+              mgrUser = allUsers.find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
             }
 
-            const hrInfo = parsePerson(hrUser, 'HR Manager');
-            let mgrInfo = parsePerson(mgrUser, 'Operations Manager');
+            // Guaranteed Fallback if neither HR nor Manager found in DB
+            if (!hrUser && !mgrUser) {
+              hrUser = allUsers[0] || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
+            }
+
+            const hrInfo = hrUser ? parsePerson(hrUser, 'HR Manager') : null;
+            let mgrInfo = mgrUser ? parsePerson(mgrUser, 'Operations Manager') : null;
 
             // Prevent duplicate display if HR and Manager resolve to the same person
             if (hrInfo && mgrInfo) {
