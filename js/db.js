@@ -154,7 +154,7 @@ const defaultUsers = [
       "date": "2026-06-10"
     },
     "preferredLocation": "Noida sector 61",
-    "assignedById": "usr_admin",
+    "assignedById": "usr_hr",
     "profileVerificationStatus": "Approved",
     "profileVerificationComment": "",
     "pendingProfileEdits": null
@@ -195,7 +195,7 @@ const defaultUsers = [
     "resume": null,
     "aadhar": null,
     "preferredLocation": "omaxe Office",
-    "assignedById": "usr_admin"
+    "assignedById": "usr_hr"
   },
   {
     "id": "usr_david",
@@ -226,7 +226,7 @@ const defaultUsers = [
     "resume": null,
     "aadhar": null,
     "preferredLocation": "chandani chowk",
-    "assignedById": "usr_admin"
+    "assignedById": "usr_7kek2wc"
   },
   {
     "id": "usr_t42n6xh",
@@ -633,7 +633,11 @@ export const DB = {
       if (u.deductionPF === undefined) { u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08); modified = true; }
       if (u.deductionPT === undefined) { u.deductionPT = 200; modified = true; }
       if (u.deductionTDS === undefined) { u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5; modified = true; }
-      if (u.assignedById === undefined && u.role === 'employee') { u.assignedById = 'usr_admin'; modified = true; }
+      if (u.assignedById === undefined && u.role === 'employee') {
+        const hrIds = ['usr_hr', 'usr_7kek2wc', 'usr_admin'];
+        u.assignedById = hrIds[index % hrIds.length];
+        modified = true;
+      }
     });
 
     // Ensure essential system users exist (skip if isolated employee view)

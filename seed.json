@@ -31,7 +31,7 @@
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
       "profileEditCount": 0,
-      "passwordResetCount": 0,
+      "passwordResetCount": 1,
       "scheduleIds": [
         "sch_1"
       ],
@@ -197,7 +197,7 @@
         "size": "512 KB",
         "date": "2026-06-10"
       },
-      "assignedById": "usr_6af1y3c",
+      "assignedById": "usr_hr",
       "state": "delhi",
       "verificationStatuses": {
         "resume": "Rejected"
@@ -254,7 +254,7 @@
       ],
       "resume": null,
       "aadhar": null,
-      "assignedById": "usr_manager",
+      "assignedById": "usr_hr",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
@@ -301,7 +301,7 @@
       "resume": null,
       "aadhar": null,
       "assignedById": "usr_7kek2wc",
-      "managerId": "",
+      "managerId": "usr_manager",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
@@ -348,8 +348,8 @@
       "resume": null,
       "aadhar": null,
       "bankDetails": null,
-      "managerId": "",
-      "assignedById": "usr_6af1y3c",
+      "managerId": "usr_manager",
+      "assignedById": "usr_admin",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },

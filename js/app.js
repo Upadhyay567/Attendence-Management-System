@@ -5826,17 +5826,20 @@ function renderEmployeeProfile() {
             }
 
             const allUsers = DB.getUsers() || [];
+            const hrCandidates = allUsers.filter(u => (u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr'))) && u.role !== 'employee' && u.id !== user.id);
+            const mgrCandidates = allUsers.filter(u => (u.role === 'manager' || (u.designation && u.designation.toLowerCase().includes('manager'))) && u.role !== 'employee' && u.id !== user.id);
 
-            if (!hrUser) {
-              hrUser = allUsers.find(u => (u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr'))) && u.role !== 'employee' && u.id !== user.id);
-            }
-            if (!mgrUser) {
-              mgrUser = allUsers.find(u => (u.role === 'manager' || (u.designation && u.designation.toLowerCase().includes('manager'))) && u.role !== 'employee' && u.id !== user.id && u.id !== (hrUser ? hrUser.id : ''));
+            if (!hrUser && hrCandidates.length > 0) {
+              const charSum = (user.id || 'u').split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+              hrUser = hrCandidates[charSum % hrCandidates.length];
             }
 
-            // Guaranteed Fallback if neither HR nor Manager found in DB
+            if (!mgrUser && mgrCandidates.length > 0) {
+              mgrUser = mgrCandidates.find(u => !hrUser || u.id !== hrUser.id) || mgrCandidates[0];
+            }
+
             if (!hrUser && !mgrUser) {
-              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin') || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
+              hrUser = hrCandidates[0] || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
             }
 
             const hrInfo = hrUser ? parsePerson(hrUser, 'HR Manager') : null;
