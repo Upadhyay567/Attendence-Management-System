@@ -5810,7 +5810,7 @@ function renderEmployeeProfile() {
                         <div style="display: flex; align-items: center;">
                           <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
                             <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                            Verified Staff
+                            Verified Staff Batch (${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')})
                           </span>
                         </div>
                       </div>
@@ -5908,7 +5908,7 @@ function renderEmployeeProfile() {
                 <input class="prof-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required disabled>
               </div>
             </div>
-            <div class="prof-field-row-2">
+            <div class="prof-field-row">
               <div>
                 <label class="prof-label" for="prof-worksite">Worksite Location</label>
                 <input class="prof-input" type="text" id="prof-worksite" value="${Utils.escape(locationText)}" readonly disabled>
@@ -5916,6 +5916,10 @@ function renderEmployeeProfile() {
               <div>
                 <label class="prof-label" for="prof-workshift">Work Shift</label>
                 <input class="prof-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-verified-batch">Verified Staff Batch</label>
+                <input class="prof-input" type="text" id="prof-verified-batch" value="${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')}" required disabled style="font-weight:700; color:var(--primary);">
               </div>
             </div>
           </div>
@@ -6121,6 +6125,8 @@ function renderEmployeeProfile() {
     const department = document.getElementById('prof-dept').value.trim();
     const designation = document.getElementById('prof-designation').value.trim();
     const dateOfJoining = document.getElementById('prof-doj').value;
+    const verifiedStaffBatchEl = document.getElementById('prof-verified-batch');
+    const verifiedStaffBatch = verifiedStaffBatchEl ? verifiedStaffBatchEl.value.trim() : (user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026');
 
     const baseSalaryEl = document.getElementById('prof-salary');
     const baseSalary = baseSalaryEl ? (baseSalaryEl.value === '' ? null : Number(baseSalaryEl.value)) : (user.baseSalary || null);
@@ -6174,7 +6180,7 @@ function renderEmployeeProfile() {
       let updatePromise;
       if (isSelfAdmin || editCount < 3) {
         const updates = { 
-          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
+          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining, verifiedStaffBatch,
           baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
           profileVerificationStatus: 'Approved',
           profileVerificationComment: ''
@@ -16013,6 +16019,7 @@ function openStaffDetailModal(userId) {
               <div><strong>Phone:</strong> ${Utils.escape(user.phone || 'N/A')}</div>
               <div><strong>Date of Birth:</strong> ${user.dob || 'N/A'}</div>
               <div><strong>Gender:</strong> ${user.gender || 'N/A'}</div>
+              <div><strong>Verified Staff Batch:</strong> <span style="color:var(--primary);font-weight:700;">${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')}</span></div>
               <div><strong>Date of Joining:</strong> ${user.dateOfJoining || 'N/A'}</div>
               <div><strong>Home Address:</strong> ${Utils.escape(user.address || 'N/A')}, ${Utils.escape(user.city || '')}</div>
               <div><strong>Emergency Contact:</strong> ${Utils.escape(user.emergencyContact || 'N/A')}</div>

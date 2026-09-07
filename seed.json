@@ -3856,7 +3856,7 @@
       "startDate": "2026-08-26",
       "endDate": "2026-08-28",
       "reason": "Emergency",
-      "status": "Pending",
+      "status": "Approved",
       "__v": 0,
       "type": "Casual",
       "approverHead": "Operations Manager",
@@ -3925,9 +3925,9 @@
       "endDate": "2026-09-09",
       "reason": "sick leave",
       "approverHead": "Operations Manager",
-      "status": "Pending",
+      "status": "Rejected",
       "requestDate": "2026-09-07",
-      "managerComment": "",
+      "managerComment": "qWE",
       "supportingDoc": null
     }
   ],
