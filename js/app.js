@@ -5791,8 +5791,21 @@ function renderEmployeeProfile() {
             if (!assigner) {
               assigner = (DB.getUsers() || []).find(u => u.role === 'hr' || u.role === 'manager') || { name: 'HR Admin Manager', role: 'hr' };
             }
-            const roleLabel = assigner.role === 'hr' ? 'HR Manager' : assigner.role === 'manager' ? 'Operations Manager' : (assigner.designation || assigner.role || 'HR Coordinator');
-            const initials = (assigner.name || 'HR').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            
+            let rawName = assigner.name || 'HR Admin Manager';
+            let roleLabel = assigner.designation || (assigner.role === 'hr' ? 'HR Manager' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role || 'HR Coordinator');
+
+            // Clean up name if designation is concatenated in name
+            const roleKeywords = ['Operations Manager', 'HR Admin Manager', 'HR Coordinator', 'HR Manager', 'Finance Manager', 'Manager'];
+            let cleanName = rawName;
+            for (const kw of roleKeywords) {
+              if (cleanName.endsWith(kw) && cleanName.length > kw.length) {
+                cleanName = cleanName.substring(0, cleanName.length - kw.length).trim();
+                break;
+              }
+            }
+
+            const initials = (cleanName || 'HR').split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().substring(0, 2) || 'HR';
             const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
             const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
 
@@ -5802,7 +5815,7 @@ function renderEmployeeProfile() {
                   <div class="staff-banner-avatar">${initials}</div>
                   <div class="staff-banner-main">
                     <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Registered / Assigned By</div>
-                    <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(assigner.name)}</div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(cleanName)}</div>
                     <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(roleLabel)}</div>
                   </div>
                   <div class="staff-banner-meta">
