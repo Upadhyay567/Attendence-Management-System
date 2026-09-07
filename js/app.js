@@ -5106,23 +5106,38 @@ function renderEmployeeLeaves() {
   const now = new Date();
   const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  // Automatically determine the Approval Head based on department
-  const getApprovalHeadForDepartment = (dept) => {
-    const department = (dept || '').toLowerCase();
-    if (department.includes('engineering') || department.includes('quality assurance') || department.includes('qa')) {
-      return 'Operations Manager';
-    } else if (department.includes('finance')) {
-      return 'Finance Manager';
-    } else if (department.includes('operations')) {
-      return 'HR Admin Manager';
-    } else if (department.includes('resources') || department.includes('hr')) {
-      return 'HR Admin Manager';
-    } else {
-      return 'HR Admin Manager';
-    }
-  };
+  // Fetch available HR and Manager profiles from database for Approval Head selection
+  const getApprovalHeadOptionsHTML = (currentUser) => {
+    const allUsers = DB.getUsers() || [];
+    const approverProfiles = allUsers.filter(u => {
+      if (!u || u.status === 'Inactive') return false;
+      const role = (u.role || '').toLowerCase();
+      if (role === 'employee') return false;
+      return role === 'hr' || role === 'manager' || role === 'finance_manager' || role.includes('hr') || role.includes('manager');
+    });
 
-  const approverName = getApprovalHeadForDepartment(user.department);
+    if (approverProfiles.length === 0) {
+      return `<option value="">No Approval Head Available</option>`;
+    }
+
+    const assignedId = currentUser ? (currentUser.managerId || currentUser.assignedById) : null;
+
+    return approverProfiles.map(u => {
+      let roleLabel = 'Operations Manager';
+      if (u.role === 'hr' || (u.role || '').toLowerCase().includes('hr')) {
+        roleLabel = 'HR Manager';
+      } else if (u.role === 'finance_manager' || (u.designation || '').toLowerCase().includes('finance')) {
+        roleLabel = 'Finance Manager';
+      } else if (u.designation) {
+        roleLabel = u.designation;
+      } else if (u.role === 'manager') {
+        roleLabel = 'Operations Manager';
+      }
+
+      const isSelected = (assignedId && u.id === assignedId) ? 'selected' : (currentUser && u.id !== currentUser.id ? 'selected' : '');
+      return `<option value="${Utils.escape(u.id)}" ${isSelected}>${Utils.escape(u.name)} (${Utils.escape(roleLabel)})</option>`;
+    }).join('');
+  };
 
   main.innerHTML = `
     <div class="content-header">
@@ -5148,10 +5163,7 @@ function renderEmployeeLeaves() {
             <div class="form-group">
               <label class="form-label" for="leave-approver">Approval Head</label>
               <select class="form-input" id="leave-approver" required>
-                <option value="HR Admin Manager" ${approverName === 'HR Admin Manager' ? 'selected' : ''}>HR Admin Manager</option>
-                <option value="Operations Manager" ${approverName === 'Operations Manager' ? 'selected' : ''}>Operations Manager</option>
-                <option value="Finance Manager" ${approverName === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
-                <option value="Department Head" ${approverName === 'Department Head' ? 'selected' : ''}>Department Head</option>
+                ${getApprovalHeadOptionsHTML(user)}
               </select>
             </div>
 
@@ -6793,29 +6805,29 @@ function renderPersonalLeaves(userId) {
     return;
   }
   
-  const u = DB.getUser(userId);
-  const userDept = u ? u.department : '';
-  const getApprovalHeadForDepartment = (dept) => {
-    const department = (dept || '').toLowerCase();
-    if (department.includes('engineering') || department.includes('quality assurance') || department.includes('qa')) {
-      return 'Operations Manager';
-    } else if (department.includes('finance')) {
-      return 'Finance Manager';
-    } else if (department.includes('operations')) {
-      return 'HR Admin Manager';
-    } else if (department.includes('resources') || department.includes('hr')) {
-      return 'HR Admin Manager';
-    } else {
-      return 'HR Admin Manager';
+  const getApproverDisplayName = (approverHeadVal) => {
+    if (!approverHeadVal) return 'HR Admin Manager';
+    const approverUser = DB.getUser(approverHeadVal) || 
+                         (DB.getUsers() || []).find(u => u.name === approverHeadVal || u.username === approverHeadVal || u.employeeId === approverHeadVal);
+    if (approverUser) {
+      let roleLabel = 'Operations Manager';
+      if (approverUser.role === 'hr' || (approverUser.role || '').toLowerCase().includes('hr')) {
+        roleLabel = 'HR Manager';
+      } else if (approverUser.role === 'finance_manager' || (approverUser.designation || '').toLowerCase().includes('finance')) {
+        roleLabel = 'Finance Manager';
+      } else if (approverUser.designation) {
+        roleLabel = approverUser.designation;
+      }
+      return `${approverUser.name} (${roleLabel})`;
     }
+    return approverHeadVal;
   };
-  const defaultApprover = getApprovalHeadForDepartment(userDept);
 
   tbody.innerHTML = leaves.map(lv => {
     let statusClass = 'badge-pending';
     if (lv.status === 'Approved') statusClass = 'badge-approved';
     if (lv.status === 'Rejected') statusClass = 'badge-rejected';
-    const approver = lv.approverHead || defaultApprover;
+    const approver = getApproverDisplayName(lv.approverHead);
 
     return `
       <tr>
@@ -8327,7 +8339,18 @@ async function renderAdminDashboard() {
 
     let leaves = DB.getLeaveRequests();
     if (isManager || isHr) {
-      leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
+      leaves = leaves.filter(lv => {
+        const isAssigned = assignedUserIds.includes(lv.userId);
+        const isApproverMatch = lv.approverHead && (
+          lv.approverHead === freshUser.id ||
+          lv.approverHead === freshUser.name ||
+          lv.approverHead === freshUser.username ||
+          lv.approverHead === freshUser.employeeId ||
+          (typeof lv.approverHead === 'string' && lv.approverHead.includes(freshUser.name))
+        );
+        if (isHr) return isAssigned || isApproverMatch || true;
+        return isAssigned || isApproverMatch;
+      });
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -12129,37 +12152,65 @@ function renderAdminApprovals() {
   const user = Auth.getCurrentUser();
   const isManager = user.role === 'manager';
   const isHr = user.role === 'hr';
-  const assignedEmployees = DB.getUsers().filter(u => {
-    if (u.role !== 'employee') return false;
-    if (isManager) return u.managerId === user.id;
-    if (isHr) return u.assignedById === user.id;
+  const assignedUsers = DB.getUsers().filter(u => {
+    if (isManager) return u.managerId === user.id || u.assignedById === user.id;
+    if (isHr) return u.assignedById === user.id || u.managerId === user.id;
     return true;
   });
-  const assignedUserIds = assignedEmployees.map(u => u.id);
+  const assignedUserIds = new Set(assignedUsers.map(u => u.id));
 
   let leaves = DB.getLeaveRequests();
   if (isManager || isHr) {
-    leaves = leaves.filter(l => assignedUserIds.includes(l.userId));
+    leaves = leaves.filter(l => {
+      const isAssigned = assignedUserIds.has(l.userId);
+      const isApproverMatch = l.approverHead && (
+        l.approverHead === user.id ||
+        l.approverHead === user.name ||
+        l.approverHead === user.username ||
+        l.approverHead === user.employeeId ||
+        (typeof l.approverHead === 'string' && l.approverHead.includes(user.name))
+      );
+      if (isHr) return isAssigned || isApproverMatch || true;
+      return isAssigned || isApproverMatch;
+    });
   }
 
   let swaps = DB.getShiftSwaps().filter(s => s.status === 'Pending Manager');
   if (isManager || isHr) {
-    swaps = swaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
+    swaps = swaps.filter(s => assignedUserIds.has(s.senderId) || assignedUserIds.has(s.receiverId));
   }
 
   let allSwaps = DB.getShiftSwaps();
   if (isManager || isHr) {
-    allSwaps = allSwaps.filter(s => assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId));
+    allSwaps = allSwaps.filter(s => assignedUserIds.has(s.senderId) || assignedUserIds.has(s.receiverId));
   }
 
   let allDeviations = DB.getLogs().filter(l => l.coords);
   if (isManager || isHr) {
-    allDeviations = allDeviations.filter(l => assignedUserIds.includes(l.userId));
+    allDeviations = allDeviations.filter(l => assignedUserIds.has(l.userId));
   }
 
   const pendingLeavesCount = leaves.filter(l => l.status === 'Pending').length;
   const pendingSwapsCount = swaps.length;
-  const pendingDeviationsCount = DB.getLogs().filter(l => l.deviationFlag && (!isManager || assignedUserIds.includes(l.userId))).length;
+  const pendingDeviationsCount = DB.getLogs().filter(l => l.deviationFlag && (!isManager || assignedUserIds.has(l.userId))).length;
+
+  const getApproverLabel = (approverHeadVal) => {
+    if (!approverHeadVal) return 'HR Admin Manager';
+    const approverUser = DB.getUser(approverHeadVal) || 
+                         (DB.getUsers() || []).find(u => u.name === approverHeadVal || u.username === approverHeadVal || u.employeeId === approverHeadVal);
+    if (approverUser) {
+      let roleLabel = 'Operations Manager';
+      if (approverUser.role === 'hr' || (approverUser.role || '').toLowerCase().includes('hr')) {
+        roleLabel = 'HR Manager';
+      } else if (approverUser.role === 'finance_manager' || (approverUser.designation || '').toLowerCase().includes('finance')) {
+        roleLabel = 'Finance Manager';
+      } else if (approverUser.designation) {
+        roleLabel = approverUser.designation;
+      }
+      return `${approverUser.name} (${roleLabel})`;
+    }
+    return approverHeadVal;
+  };
 
   let tabContentHTML = '';
 
@@ -12168,7 +12219,7 @@ function renderAdminApprovals() {
       <div class="table-container">
         <table class="custom-table">
           <thead>
-            <tr><th>Employee</th><th>Leave Type</th><th>Duration Range</th><th>Reason Notes</th><th>Request Date</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Applicant & Approver</th><th>Leave Type</th><th>Duration Range</th><th>Reason Notes</th><th>Request Date</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody>
             ${leaves.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No leaves registered.</td></tr>` : ''}
@@ -12177,9 +12228,14 @@ function renderAdminApprovals() {
               let statusClass = 'badge-pending';
               if (lv.status === 'Approved') statusClass = 'badge-approved';
               if (lv.status === 'Rejected') statusClass = 'badge-rejected';
+              const roleTitle = u ? (u.role === 'hr' ? 'HR Manager' : u.role === 'manager' ? 'Operations Manager' : (u.designation || 'Employee')) : '';
               return `
                 <tr>
-                  <td style="font-size: 13px; font-weight: 600; color: var(--text-primary);">${u ? Utils.escape(u.name) : 'Unknown'}</td>
+                  <td style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
+                    ${u ? Utils.escape(u.name) : 'Unknown'}<br>
+                    <span style="font-size:11px; font-weight:500; color:var(--text-muted);">${Utils.escape(roleTitle)} (${u ? Utils.escape(u.employeeId) : ''})</span><br>
+                    <span style="font-size:11px; color:var(--primary); font-weight:600;">Approver: ${Utils.escape(getApproverLabel(lv.approverHead))}</span>
+                  </td>
                   <td style="font-size: 13px; font-weight: 500; color: var(--text-secondary);"><strong>${lv.type}</strong></td>
                   <td style="font-size: 13px; font-weight: 500; color: var(--text-primary);">
                     ${Utils.formatDate(lv.startDate).replace(/ /g, '&nbsp;')}<br>to ${Utils.formatDate(lv.endDate).replace(/ /g, '&nbsp;')}
@@ -16463,7 +16519,20 @@ function updateNotificationsUI() {
 
     if (user.role === 'hr' || user.role === 'manager') {
       // 1. Leave Requests pending manager approval
-      const leaves = DB.getLeaveRequests().filter(lv => lv.status === 'Pending');
+      const leaves = DB.getLeaveRequests().filter(lv => {
+        if (lv.status !== 'Pending') return false;
+        const isApproverMatch = lv.approverHead && (
+          lv.approverHead === user.id ||
+          lv.approverHead === user.name ||
+          lv.approverHead === user.username ||
+          lv.approverHead === user.employeeId ||
+          (typeof lv.approverHead === 'string' && lv.approverHead.includes(user.name))
+        );
+        const applicant = DB.getUser(lv.userId);
+        const isAssigned = applicant && (applicant.managerId === user.id || applicant.assignedById === user.id);
+        if (user.role === 'hr') return true;
+        return isApproverMatch || isAssigned;
+      });
       leaves.forEach(lv => {
         const u = DB.getUser(lv.userId);
         notifications.push({

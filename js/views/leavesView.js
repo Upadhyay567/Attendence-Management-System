@@ -13,23 +13,38 @@ export function renderEmployeeLeaves() {
   const now = new Date();
   const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  // Automatically determine the Approval Head based on department
-  const getApprovalHeadForDepartment = (dept) => {
-    const department = (dept || '').toLowerCase();
-    if (department.includes('engineering') || department.includes('quality assurance') || department.includes('qa')) {
-      return 'Operations Manager';
-    } else if (department.includes('finance')) {
-      return 'Finance Manager';
-    } else if (department.includes('operations')) {
-      return 'HR Admin Manager';
-    } else if (department.includes('resources') || department.includes('hr')) {
-      return 'HR Admin Manager';
-    } else {
-      return 'HR Admin Manager';
-    }
-  };
+  // Fetch available HR and Manager profiles from database for Approval Head selection
+  const getApprovalHeadOptionsHTML = (currentUser) => {
+    const allUsers = DB.getUsers() || [];
+    const approverProfiles = allUsers.filter(u => {
+      if (!u || u.status === 'Inactive') return false;
+      const role = (u.role || '').toLowerCase();
+      if (role === 'employee') return false;
+      return role === 'hr' || role === 'manager' || role === 'finance_manager' || role.includes('hr') || role.includes('manager');
+    });
 
-  const approverName = getApprovalHeadForDepartment(user.department);
+    if (approverProfiles.length === 0) {
+      return `<option value="">No Approval Head Available</option>`;
+    }
+
+    const assignedId = currentUser ? (currentUser.managerId || currentUser.assignedById) : null;
+
+    return approverProfiles.map(u => {
+      let roleLabel = 'Operations Manager';
+      if (u.role === 'hr' || (u.role || '').toLowerCase().includes('hr')) {
+        roleLabel = 'HR Manager';
+      } else if (u.role === 'finance_manager' || (u.designation || '').toLowerCase().includes('finance')) {
+        roleLabel = 'Finance Manager';
+      } else if (u.designation) {
+        roleLabel = u.designation;
+      } else if (u.role === 'manager') {
+        roleLabel = 'Operations Manager';
+      }
+
+      const isSelected = (assignedId && u.id === assignedId) ? 'selected' : (currentUser && u.id !== currentUser.id ? 'selected' : '');
+      return `<option value="${Utils.escape(u.id)}" ${isSelected}>${Utils.escape(u.name)} (${Utils.escape(roleLabel)})</option>`;
+    }).join('');
+  };
 
   main.innerHTML = html`
     <div class="content-header">
@@ -55,10 +70,7 @@ export function renderEmployeeLeaves() {
             <div class="form-group">
               <label class="form-label" for="leave-approver">Approval Head</label>
               <select class="form-input" id="leave-approver" required>
-                <option value="HR Admin Manager" ${approverName === 'HR Admin Manager' ? 'selected' : ''}>HR Admin Manager</option>
-                <option value="Operations Manager" ${approverName === 'Operations Manager' ? 'selected' : ''}>Operations Manager</option>
-                <option value="Finance Manager" ${approverName === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
-                <option value="Department Head" ${approverName === 'Department Head' ? 'selected' : ''}>Department Head</option>
+                ${getApprovalHeadOptionsHTML(user)}
               </select>
             </div>
 
