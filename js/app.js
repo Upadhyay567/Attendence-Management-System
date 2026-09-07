@@ -5785,41 +5785,41 @@ function renderEmployeeProfile() {
             </div>
           </div>
 
-          <!-- Assigner Card -->
+          <!-- Registration & Verified Staff Banner Card -->
           ${(() => {
-            if (user.assignedById) {
-              const assigner = DB.getUser(user.assignedById);
-              if (assigner) {
-                const roleLabel = assigner.role === 'hr' ? 'HR Coordinator' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role;
-                const initials = assigner.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-                const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-                return `
-                  <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
-                    <div class="staff-banner-grid">
-                      <div class="staff-banner-avatar">${initials}</div>
-                      <div class="staff-banner-main">
-                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Registered / Assigned By</div>
-                        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(assigner.name)}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">${roleLabel}</div>
-                      </div>
-                      <div class="staff-banner-meta">
-                        <div style="text-align: left;">
-                          <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Date of Joining</div>
-                          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${joinedDate}</div>
-                        </div>
-                        <div style="display: flex; align-items: center;">
-                          <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
-                            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                            Verified Staff Batch (${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')})
-                          </span>
-                        </div>
-                      </div>
+            let assigner = user.assignedById || user.managerId ? DB.getUser(user.assignedById || user.managerId) : null;
+            if (!assigner) {
+              assigner = (DB.getUsers() || []).find(u => u.role === 'hr' || u.role === 'manager') || { name: 'HR Admin Manager', role: 'hr' };
+            }
+            const roleLabel = assigner.role === 'hr' ? 'HR Manager' : assigner.role === 'manager' ? 'Operations Manager' : (assigner.designation || assigner.role || 'HR Coordinator');
+            const initials = (assigner.name || 'HR').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+            const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
+
+            return `
+              <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
+                <div class="staff-banner-grid">
+                  <div class="staff-banner-avatar">${initials}</div>
+                  <div class="staff-banner-main">
+                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Registered / Assigned By</div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(assigner.name)}</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(roleLabel)}</div>
+                  </div>
+                  <div class="staff-banner-meta">
+                    <div style="text-align: left;">
+                      <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Date of Joining</div>
+                      <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${joinedDate}</div>
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                      <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Verified Staff Batch (${Utils.escape(batchText)})
+                      </span>
                     </div>
                   </div>
-                `;
-              }
-            }
-            return '';
+                </div>
+              </div>
+            `;
           })()}
 
           <!-- Personal Details -->
