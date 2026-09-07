@@ -5805,11 +5805,29 @@ function renderEmployeeProfile() {
               return { name: cleanName, role: roleLabel, initials };
             };
 
-            const hrUser = user.assignedById ? DB.getUser(user.assignedById) : (DB.getUsers() || []).find(u => u.role === 'hr');
-            const mgrUser = user.managerId ? DB.getUser(user.managerId) : (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+            let hrUser = user.assignedById ? DB.getUser(user.assignedById) : null;
+            let mgrUser = user.managerId ? DB.getUser(user.managerId) : null;
+
+            if (!hrUser && !mgrUser) {
+              hrUser = (DB.getUsers() || []).find(u => u.role === 'hr');
+              mgrUser = (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+            } else if (!hrUser) {
+              hrUser = (DB.getUsers() || []).find(u => u.role === 'hr' && u.id !== (mgrUser ? mgrUser.id : ''));
+            } else if (!mgrUser) {
+              mgrUser = (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+            }
 
             const hrInfo = parsePerson(hrUser, 'HR Manager');
-            const mgrInfo = parsePerson(mgrUser, 'Operations Manager');
+            let mgrInfo = parsePerson(mgrUser, 'Operations Manager');
+
+            // Prevent duplicate display if HR and Manager resolve to the same person
+            if (hrInfo && mgrInfo) {
+              const hrId = hrUser ? hrUser.id : null;
+              const mgrId = mgrUser ? mgrUser.id : null;
+              if ((hrId && mgrId && hrId === mgrId) || (hrInfo.name.trim().toLowerCase() === mgrInfo.name.trim().toLowerCase())) {
+                mgrInfo = null;
+              }
+            }
 
             const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
             const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
@@ -5818,15 +5836,17 @@ function renderEmployeeProfile() {
               <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
                   
-                  <!-- Left Group: Both HR and Manager -->
+                  <!-- Left Group: Assigned HR / Manager -->
                   <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
                     
-                    <!-- HR Section -->
+                    <!-- HR / Primary Assigner Section -->
                     ${hrInfo ? `
                     <div style="display: flex; align-items: center; gap: 12px;">
                       <div class="staff-banner-avatar">${hrInfo.initials}</div>
                       <div>
-                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Registered / Assigned HR</div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">
+                          ${(hrUser && hrUser.role === 'manager') ? 'Assigned Manager' : 'Registered / Assigned HR'}
+                        </div>
                         <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(hrInfo.name)}</div>
                         <div style="font-size: 11.5px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(hrInfo.role)}</div>
                       </div>
