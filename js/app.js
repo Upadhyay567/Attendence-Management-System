@@ -4435,6 +4435,15 @@ function showAccountModal(editUser = null) {
 
     const currentUser = Auth.getCurrentUser() || {};
 
+    // Employees cannot create employee profiles. Only authorized HR or Manager users can create accounts.
+    if (!isEdit && currentUser.role === 'employee') {
+      errorEl.textContent = '⚠️ Access Denied: Employee profiles can only be created by authorized HR or Manager users.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const defaultHrId = (DB.getUsers() || []).find(u => u.role === 'hr' || u.role === 'admin')?.id || 'usr_admin';
+
     const payload = {
       name,
       username,
@@ -4448,7 +4457,7 @@ function showAccountModal(editUser = null) {
       designation,
       photo: uploadedPhotoDataUrl,
       managerId: isEdit ? (editUser.managerId || '') : (currentUser.role === 'manager' ? currentUser.id : ''),
-      assignedById: isEdit ? (editUser.assignedById || '') : (currentUser.role === 'hr' || currentUser.role === 'manager' ? currentUser.id : '')
+      assignedById: isEdit ? (editUser.assignedById || defaultHrId) : (currentUser.role === 'hr' || currentUser.role === 'manager' ? currentUser.id : defaultHrId)
     };
 
     if (password) {
@@ -5808,18 +5817,26 @@ function renderEmployeeProfile() {
             let hrUser = user.assignedById ? DB.getUser(user.assignedById) : null;
             let mgrUser = user.managerId ? DB.getUser(user.managerId) : null;
 
+            // Employees cannot be their own Registered / Assigned HR or Manager
+            if (hrUser && (hrUser.role === 'employee' || hrUser.id === user.id)) {
+              hrUser = null;
+            }
+            if (mgrUser && (mgrUser.role === 'employee' || mgrUser.id === user.id)) {
+              mgrUser = null;
+            }
+
             const allUsers = DB.getUsers() || [];
 
             if (!hrUser) {
-              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr')));
+              hrUser = allUsers.find(u => (u.role === 'hr' || u.role === 'admin' || (u.designation && u.designation.toLowerCase().includes('hr'))) && u.role !== 'employee' && u.id !== user.id);
             }
             if (!mgrUser) {
-              mgrUser = allUsers.find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+              mgrUser = allUsers.find(u => (u.role === 'manager' || (u.designation && u.designation.toLowerCase().includes('manager'))) && u.role !== 'employee' && u.id !== user.id && u.id !== (hrUser ? hrUser.id : ''));
             }
 
             // Guaranteed Fallback if neither HR nor Manager found in DB
             if (!hrUser && !mgrUser) {
-              hrUser = allUsers[0] || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
+              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin') || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
             }
 
             const hrInfo = hrUser ? parsePerson(hrUser, 'HR Manager') : null;
