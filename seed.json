@@ -4,8 +4,8 @@
       "_id": "6a8d3b8e94e235d28a4e9701",
       "id": "usr_admin",
       "employeeId": "HR100",
-      "scheduleId": "sch_1",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "scheduleId": "sch_mfl8wvv",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 95000,
       "allowanceHRA": 14250,
       "allowanceTravel": 3000,
@@ -22,7 +22,7 @@
       "designation": "HR Admin Manager",
       "dateOfJoining": "2020-04-15",
       "emergencyContact": "+91 98765 43201",
-      "name": "DEEPAK SHARMA HR Admin Manager",
+      "name": "HR Admin Manager",
       "username": "admin",
       "role": "hr",
       "status": "Active",
@@ -31,19 +31,19 @@
       "profileVerificationComment": "",
       "pendingProfileEdits": null,
       "profileEditCount": 0,
-      "passwordResetCount": 1,
+      "passwordResetCount": 0,
       "scheduleIds": [
-        "sch_1"
+        "sch_mfl8wvv"
       ],
       "shiftLocations": {
-        "sch_1": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_mfl8wvv": "Noida sector 61"
       },
       "__v": 0,
       "documents": [],
       "resume": null,
       "aadhar": null,
       "managerId": "",
-      "assignedById": "usr_admin",
+      "assignedById": "usr_hr",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
@@ -351,7 +351,7 @@
       "aadhar": null,
       "bankDetails": null,
       "managerId": "usr_manager",
-      "assignedById": "usr_admin",
+      "assignedById": "usr_7kek2wc",
       "state": "delhi",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },

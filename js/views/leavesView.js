@@ -28,8 +28,9 @@ export function renderEmployeeLeaves() {
     }
 
     const assignedId = currentUser ? (currentUser.managerId || currentUser.assignedById) : null;
+    const hasAssignedMatch = assignedId && approverProfiles.some(u => u.id === assignedId);
 
-    return approverProfiles.map(u => {
+    return approverProfiles.map((u, idx) => {
       let roleLabel = 'Operations Manager';
       if (u.role === 'hr' || (u.role || '').toLowerCase().includes('hr')) {
         roleLabel = 'HR Manager';
@@ -41,8 +42,8 @@ export function renderEmployeeLeaves() {
         roleLabel = 'Operations Manager';
       }
 
-      const isSelected = (assignedId && u.id === assignedId) ? 'selected' : (currentUser && u.id !== currentUser.id ? 'selected' : '');
-      return `<option value="${Utils.escape(u.id)}" ${isSelected}>${Utils.escape(u.name)} (${Utils.escape(roleLabel)})</option>`;
+      const isSelected = hasAssignedMatch ? (u.id === assignedId) : (idx === 0);
+      return `<option value="${Utils.escape(u.id)}" ${isSelected ? 'selected' : ''}>${Utils.escape(u.name)} (${Utils.escape(roleLabel)})</option>`;
     }).join('');
   };
 

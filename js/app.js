@@ -4442,7 +4442,7 @@ function showAccountModal(editUser = null) {
       return;
     }
 
-    const defaultHrId = (DB.getUsers() || []).find(u => u.role === 'hr' || u.role === 'admin')?.id || 'usr_admin';
+    const defaultHrId = (DB.getUsers() || []).find(u => (u.role === 'hr' || u.role === 'manager') && u.status !== 'Inactive')?.id || '';
 
     const payload = {
       name,
@@ -5849,7 +5849,7 @@ function renderEmployeeProfile() {
             }
 
             if (!hrUser && !mgrUser) {
-              hrUser = allUsers.find(u => u.role === 'hr' || u.role === 'admin') || { name: 'DEEPAK SHARMA', designation: 'HR Admin Manager', role: 'hr' };
+              hrUser = allUsers.find(u => (u.role === 'hr' || u.role === 'manager' || u.role === 'admin') && u.status !== 'Inactive') || null;
             }
 
             const hrInfo = hrUser ? parsePerson(hrUser, 'HR Manager') : null;

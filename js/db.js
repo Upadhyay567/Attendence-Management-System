@@ -14,7 +14,7 @@ const defaultUsers = [
     "id": "usr_admin",
     "username": "admin",
     "employeeId": "HR100",
-    "name": "DEEPAK SHARMA HR Admin Manager",
+    "name": "HR Admin Manager",
     "password": "Deepak@123",
     "role": "hr",
     "scheduleId": "sch_1",
@@ -39,7 +39,7 @@ const defaultUsers = [
     "aadhar": null,
     "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
     "managerId": "",
-    "assignedById": "usr_admin",
+    "assignedById": "usr_7kek2wc",
     "profileVerificationStatus": "Approved",
     "profileVerificationComment": "",
     "pendingProfileEdits": null
@@ -73,7 +73,7 @@ const defaultUsers = [
     "aadhar": null,
     "preferredLocation": "Noida sector 61",
     "managerId": "",
-    "assignedById": "usr_admin",
+    "assignedById": "usr_7kek2wc",
     "profileVerificationStatus": "Approved",
     "profileVerificationComment": "",
     "pendingProfileEdits": null
@@ -107,7 +107,7 @@ const defaultUsers = [
     "aadhar": null,
     "preferredLocation": "Noida sector 61",
     "managerId": "",
-    "assignedById": "usr_admin",
+    "assignedById": "usr_7kek2wc",
     "profileVerificationStatus": "Approved",
     "profileVerificationComment": "",
     "pendingProfileEdits": null
@@ -258,7 +258,7 @@ const defaultUsers = [
     "role": "employee",
     "preferredLocation": "Noida sector 61",
     "managerId": "usr_manager",
-    "assignedById": "usr_admin"
+    "assignedById": "usr_7kek2wc"
   },
   {
     "id": "usr_7kek2wc",
@@ -634,7 +634,7 @@ export const DB = {
       if (u.deductionPT === undefined) { u.deductionPT = 200; modified = true; }
       if (u.deductionTDS === undefined) { u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5; modified = true; }
       if (u.assignedById === undefined && u.role === 'employee') {
-        const hrIds = ['usr_hr', 'usr_7kek2wc', 'usr_admin'];
+        const hrIds = ['usr_hr', 'usr_7kek2wc', 'usr_6af1y3c'];
         u.assignedById = hrIds[index % hrIds.length];
         modified = true;
       }

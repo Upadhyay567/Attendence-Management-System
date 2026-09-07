@@ -774,11 +774,33 @@ app.get('/api/db-state', authenticateToken, async (req, res) => {
       });
     }
 
-    // Role-based Isolation: If regular employee, filter datasets down to their own records only
+    // Role-based Isolation: If regular employee, provide their full profile and sanitized public profiles for active users (HR, Managers, staff) so Approval Heads and Assigned Leaders resolve properly
     if (req.user.role === 'employee') {
       const uId = req.user.userId;
       if (stateData.users) {
-        stateData.users = stateData.users.filter(u => u.id === uId);
+        stateData.users = stateData.users.map(u => {
+          if (u.id === uId) {
+            return u;
+          }
+          if (u.status === 'Inactive') {
+            return null;
+          }
+          return {
+            id: u.id,
+            employeeId: u.employeeId,
+            name: u.name,
+            username: u.username,
+            role: u.role,
+            designation: u.designation,
+            department: u.department,
+            status: u.status,
+            managerId: u.managerId,
+            assignedById: u.assignedById,
+            photo: u.photo || null,
+            phone: u.phone || u.mobile || '',
+            email: u.email || ''
+          };
+        }).filter(Boolean);
       }
       if (stateData.attendanceLogs) {
         stateData.attendanceLogs = stateData.attendanceLogs.filter(l => l.userId === uId);
