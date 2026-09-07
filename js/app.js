@@ -5785,40 +5785,72 @@ function renderEmployeeProfile() {
             </div>
           </div>
 
-          <!-- Registration & Verified Staff Banner Card -->
+          <!-- Registration & Verified Staff Banner Card (Displays both HR and Manager) -->
           ${(() => {
-            let assigner = user.assignedById || user.managerId ? DB.getUser(user.assignedById || user.managerId) : null;
-            if (!assigner) {
-              assigner = (DB.getUsers() || []).find(u => u.role === 'hr' || u.role === 'manager') || { name: 'HR Admin Manager', role: 'hr' };
-            }
-            
-            let rawName = assigner.name || 'HR Admin Manager';
-            let roleLabel = assigner.designation || (assigner.role === 'hr' ? 'HR Manager' : assigner.role === 'manager' ? 'Operations Manager' : assigner.role || 'HR Coordinator');
+            const parsePerson = (personObj, defaultRole) => {
+              if (!personObj) return null;
+              let rawName = personObj.name || '';
+              let roleLabel = personObj.designation || (personObj.role === 'hr' ? 'HR Manager' : personObj.role === 'manager' ? 'Operations Manager' : personObj.role || defaultRole);
 
-            // Clean up name if designation is concatenated in name
-            const roleKeywords = ['Operations Manager', 'HR Admin Manager', 'HR Coordinator', 'HR Manager', 'Finance Manager', 'Manager'];
-            let cleanName = rawName;
-            for (const kw of roleKeywords) {
-              if (cleanName.endsWith(kw) && cleanName.length > kw.length) {
-                cleanName = cleanName.substring(0, cleanName.length - kw.length).trim();
-                break;
+              const roleKeywords = ['Operations Manager', 'HR Admin Manager', 'HR Coordinator', 'HR Manager', 'Finance Manager', 'Manager'];
+              let cleanName = rawName;
+              for (const kw of roleKeywords) {
+                if (cleanName.endsWith(kw) && cleanName.length > kw.length) {
+                  cleanName = cleanName.substring(0, cleanName.length - kw.length).trim();
+                  break;
+                }
               }
-            }
 
-            const initials = (cleanName || 'HR').split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().substring(0, 2) || 'HR';
+              const initials = (cleanName || 'U').split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().substring(0, 2) || 'U';
+              return { name: cleanName, role: roleLabel, initials };
+            };
+
+            const hrUser = user.assignedById ? DB.getUser(user.assignedById) : (DB.getUsers() || []).find(u => u.role === 'hr');
+            const mgrUser = user.managerId ? DB.getUser(user.managerId) : (DB.getUsers() || []).find(u => u.role === 'manager' && u.id !== (hrUser ? hrUser.id : ''));
+
+            const hrInfo = parsePerson(hrUser, 'HR Manager');
+            const mgrInfo = parsePerson(mgrUser, 'Operations Manager');
+
             const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
             const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
 
             return `
               <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
-                <div class="staff-banner-grid">
-                  <div class="staff-banner-avatar">${initials}</div>
-                  <div class="staff-banner-main">
-                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Registered / Assigned By</div>
-                    <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(cleanName)}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(roleLabel)}</div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+                  
+                  <!-- Left Group: Both HR and Manager -->
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+                    
+                    <!-- HR Section -->
+                    ${hrInfo ? `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="staff-banner-avatar">${hrInfo.initials}</div>
+                      <div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Registered / Assigned HR</div>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(hrInfo.name)}</div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(hrInfo.role)}</div>
+                      </div>
+                    </div>
+                    ` : ''}
+
+                    ${hrInfo && mgrInfo ? `<div style="height: 36px; width: 1px; background: var(--border); margin: 0 4px;"></div>` : ''}
+
+                    <!-- Manager Section -->
+                    ${mgrInfo ? `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div class="staff-banner-avatar" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #60a5fa;">${mgrInfo.initials}</div>
+                      <div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Assigned Manager</div>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(mgrInfo.name)}</div>
+                        <div style="font-size: 11.5px; color: var(--text-secondary); font-weight: 500;">${Utils.escape(mgrInfo.role)}</div>
+                      </div>
+                    </div>
+                    ` : ''}
+
                   </div>
-                  <div class="staff-banner-meta">
+
+                  <!-- Right Group: Joining Date & Verified Staff Batch -->
+                  <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                     <div style="text-align: left;">
                       <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 4px;">Date of Joining</div>
                       <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${joinedDate}</div>
@@ -5830,6 +5862,7 @@ function renderEmployeeProfile() {
                       </span>
                     </div>
                   </div>
+
                 </div>
               </div>
             `;
