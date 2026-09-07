@@ -5913,7 +5913,7 @@ function renderEmployeeProfile() {
                     <div style="display: flex; align-items: center;">
                       <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
                         <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        Verified Staff Batch (${Utils.escape(batchText)})
+                        Verified Staff
                       </span>
                     </div>
                   </div>
@@ -6019,8 +6019,8 @@ function renderEmployeeProfile() {
                 <input class="prof-input" type="text" id="prof-workshift" value="${Utils.escape(shiftText)}" readonly disabled>
               </div>
               <div>
-                <label class="prof-label" for="prof-verified-batch">Verified Staff Batch</label>
-                <input class="prof-input" type="text" id="prof-verified-batch" value="${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')}" required disabled style="font-weight:700; color:var(--primary);">
+                <label class="prof-label" for="prof-verified-batch">Verified Staff Status</label>
+                <input class="prof-input" type="text" id="prof-verified-batch" value="Verified Staff" required disabled style="font-weight:700; color:var(--primary);">
               </div>
             </div>
           </div>
@@ -6227,7 +6227,7 @@ function renderEmployeeProfile() {
     const designation = document.getElementById('prof-designation').value.trim();
     const dateOfJoining = document.getElementById('prof-doj').value;
     const verifiedStaffBatchEl = document.getElementById('prof-verified-batch');
-    const verifiedStaffBatch = verifiedStaffBatchEl ? verifiedStaffBatchEl.value.trim() : (user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026');
+    const verifiedStaffBatch = verifiedStaffBatchEl ? verifiedStaffBatchEl.value.trim() : 'Verified Staff';
 
     const baseSalaryEl = document.getElementById('prof-salary');
     const baseSalary = baseSalaryEl ? (baseSalaryEl.value === '' ? null : Number(baseSalaryEl.value)) : (user.baseSalary || null);

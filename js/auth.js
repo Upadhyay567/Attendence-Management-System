@@ -32,6 +32,19 @@ export const Auth = {
       if (freshUser) {
         this.currentUser = freshUser;
       }
+    } else {
+      const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+      if (raw) {
+        try {
+          const session = JSON.parse(raw);
+          if (session && session.id) {
+            const user = DB.getUser(session.id);
+            if (user && user.status !== 'Inactive') {
+              this.currentUser = user;
+            }
+          }
+        } catch (e) {}
+      }
     }
     return this.currentUser;
   },

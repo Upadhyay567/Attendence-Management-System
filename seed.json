@@ -180,7 +180,7 @@
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "__v": 0,
-      "managerId": "usr_manager",
+      "managerId": "",
       "documents": [],
       "resume": {
         "name": "John_Doe_Resume.pdf",
@@ -197,10 +197,12 @@
         "size": "512 KB",
         "date": "2026-06-10"
       },
-      "assignedById": "usr_manager",
+      "assignedById": "usr_6af1y3c",
       "state": "delhi",
       "verificationStatuses": {
-        "resume": "Rejected"
+        "resume": "Approved",
+        "aadhar": "Approved",
+        "bank": "Approved"
       },
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
     },
