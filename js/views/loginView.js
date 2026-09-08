@@ -19,7 +19,8 @@ export function renderLoginView() {
 
   const root = document.getElementById('app-root');
 
-  const allUsers = DB.getUsers();
+  const rawUsers = DB.getUsers();
+  const allUsers = (rawUsers && rawUsers.length > 0) ? rawUsers : (DB.getUserByUsernameOrId('admin') ? [DB.getUserByUsernameOrId('admin')] : []);
   const hrUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'hr');
   const managerUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'finance_manager');
   const employeeUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
