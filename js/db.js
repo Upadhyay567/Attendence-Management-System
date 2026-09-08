@@ -851,13 +851,47 @@ export const DB = {
   },
 
   getUserByUsernameOrId(loginKey) {
-    if (!loginKey) return null;
-    const key = loginKey.toLowerCase().trim();
-    return this.data.users.find(u => 
-      (u.username && u.username.toLowerCase() === key) || 
-      (u.email && u.email.toLowerCase() === key) ||
-      (u.employeeId && u.employeeId.toLowerCase() === key)
-    );
+    if (!loginKey || typeof loginKey !== 'string') return null;
+    const rawKey = loginKey.trim();
+    if (!rawKey) return null;
+
+    const lowerKey = rawKey.toLowerCase();
+    const upperKey = rawKey.toUpperCase();
+    const cleanAlphaNumKey = upperKey.replace(/[^A-Z0-9]/g, '');
+    const digitsOnlyKey = rawKey.replace(/\D/g, '');
+
+    return (this.data.users || []).find(u => {
+      if (!u) return false;
+
+      // 1. Employee ID exact or normalized
+      if (u.employeeId) {
+        const empUpper = String(u.employeeId).toUpperCase();
+        if (empUpper === upperKey) return true;
+        if (cleanAlphaNumKey && empUpper.replace(/[^A-Z0-9]/g, '') === cleanAlphaNumKey) return true;
+      }
+
+      // 2. Username match
+      if (u.username && String(u.username).toLowerCase() === lowerKey) return true;
+
+      // 3. Email match
+      if (u.email && String(u.email).toLowerCase() === lowerKey) return true;
+
+      // 4. Account ID match
+      if (u.id && String(u.id).toLowerCase() === lowerKey) return true;
+
+      // 5. Name match (case-insensitive)
+      if (u.name && String(u.name).toLowerCase() === lowerKey) return true;
+
+      // 6. Phone / Mobile digit matching (e.g. 9536885675, +91 9876543211)
+      if (digitsOnlyKey && digitsOnlyKey.length >= 7) {
+        const uPhoneDigits = (u.phone ? String(u.phone).replace(/\D/g, '') : '');
+        const uMobileDigits = (u.mobile ? String(u.mobile).replace(/\D/g, '') : '');
+        if (uPhoneDigits && (uPhoneDigits === digitsOnlyKey || uPhoneDigits.endsWith(digitsOnlyKey) || digitsOnlyKey.endsWith(uPhoneDigits))) return true;
+        if (uMobileDigits && (uMobileDigits === digitsOnlyKey || uMobileDigits.endsWith(digitsOnlyKey) || digitsOnlyKey.endsWith(uMobileDigits))) return true;
+      }
+
+      return false;
+    });
   },
 
   addUser(user) {

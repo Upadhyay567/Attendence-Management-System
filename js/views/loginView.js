@@ -378,13 +378,7 @@ export function renderLoginView() {
         // Server unreachable: fall back to client-side login without server token
         warningEl.textContent = '⚠️ Server unreachable. Continuing in offline mode.';
         warningEl.style.display = 'block';
-        const allUsers = DB.getUsers();
-        const matchedUser = allUsers.find(u =>
-          (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-          (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-          (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-        );
+        const matchedUser = DB.getUserByUsernameOrId(enteredId);
         setTimeout(() => {
           warningEl.style.display = 'none';
           if (matchedUser) proceedLogin(matchedUser, null);
@@ -409,14 +403,7 @@ export function renderLoginView() {
     const handleSkip = () => {
       const enteredId = inputEl.value.trim();
       const defaultUser = getDefaultUserForRole();
-      const userToLogin = enteredId
-        ? (DB.getUsers().find(u => 
-            (u.employeeId && u.employeeId.toUpperCase() === enteredId.toUpperCase()) ||
-            (u.username && u.username.toLowerCase() === enteredId.toLowerCase()) ||
-            (u.email && u.email.toLowerCase() === enteredId.toLowerCase()) ||
-            (u.id && u.id.toLowerCase() === enteredId.toLowerCase())
-          ) || defaultUser)
-        : defaultUser;
+      const userToLogin = enteredId ? (DB.getUserByUsernameOrId(enteredId) || defaultUser) : defaultUser;
 
       // Call backend with skipCheck so it creates a real server session token
       const apiBase = window.apiBaseUrl || '';

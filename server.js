@@ -286,6 +286,50 @@ async function connectMongoose() {
   }
 }
 
+function findUserByLoginKey(users, loginKey) {
+  if (!loginKey || typeof loginKey !== 'string') return null;
+  const rawKey = loginKey.trim();
+  if (!rawKey) return null;
+  
+  const lowerKey = rawKey.toLowerCase();
+  const upperKey = rawKey.toUpperCase();
+  const cleanAlphaNumKey = upperKey.replace(/[^A-Z0-9]/g, '');
+  const digitsOnlyKey = rawKey.replace(/\D/g, '');
+
+  return users.find(u => {
+    if (!u) return false;
+    
+    // 1. Employee ID exact or normalized (ignoring spaces/hyphens)
+    if (u.employeeId) {
+      const empUpper = String(u.employeeId).toUpperCase();
+      if (empUpper === upperKey) return true;
+      if (cleanAlphaNumKey && empUpper.replace(/[^A-Z0-9]/g, '') === cleanAlphaNumKey) return true;
+    }
+    
+    // 2. Username match
+    if (u.username && String(u.username).toLowerCase() === lowerKey) return true;
+    
+    // 3. Email match
+    if (u.email && String(u.email).toLowerCase() === lowerKey) return true;
+    
+    // 4. Account ID match
+    if (u.id && String(u.id).toLowerCase() === lowerKey) return true;
+    
+    // 5. Name match (case-insensitive)
+    if (u.name && String(u.name).toLowerCase() === lowerKey) return true;
+    
+    // 6. Phone / Mobile digit matching (e.g. 9536885675, +91 9876543211)
+    if (digitsOnlyKey && digitsOnlyKey.length >= 7) {
+      const uPhoneDigits = (u.phone ? String(u.phone).replace(/\D/g, '') : '');
+      const uMobileDigits = (u.mobile ? String(u.mobile).replace(/\D/g, '') : '');
+      if (uPhoneDigits && (uPhoneDigits === digitsOnlyKey || uPhoneDigits.endsWith(digitsOnlyKey) || digitsOnlyKey.endsWith(uPhoneDigits))) return true;
+      if (uMobileDigits && (uMobileDigits === digitsOnlyKey || uMobileDigits.endsWith(digitsOnlyKey) || digitsOnlyKey.endsWith(uMobileDigits))) return true;
+    }
+    
+    return false;
+  });
+}
+
 // 0. Server-Side Authentication
 app.post('/api/auth/login', authRateLimiter, async (req, res) => {
   try {
@@ -312,21 +356,10 @@ app.post('/api/auth/login', authRateLimiter, async (req, res) => {
     if (useLocalFileDB || !online) {
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
       const users = JSON.parse(rawSeed).users || [];
-      matchedUser = users.find(u =>
-        (u.employeeId && u.employeeId.toUpperCase() === targetUsername.toUpperCase()) ||
-        (u.username && u.username.toLowerCase() === targetUsername.toLowerCase()) ||
-        (u.email && u.email.toLowerCase() === targetUsername.toLowerCase()) ||
-        (u.id && u.id.toLowerCase() === targetUsername.toLowerCase())
-      );
+      matchedUser = findUserByLoginKey(users, targetUsername);
     } else {
-      matchedUser = await User.findOne({
-        $or: [
-          { employeeId: new RegExp(`^${targetUsername}$`, 'i') },
-          { username: new RegExp(`^${targetUsername}$`, 'i') },
-          { email: new RegExp(`^${targetUsername}$`, 'i') },
-          { id: new RegExp(`^${targetUsername}$`, 'i') }
-        ]
-      }).lean();
+      const allUsers = await User.find({}).lean();
+      matchedUser = findUserByLoginKey(allUsers, targetUsername);
     }
     
     if (!matchedUser) {
@@ -337,22 +370,12 @@ app.post('/api/auth/login', authRateLimiter, async (req, res) => {
       return res.status(403).json({ error: 'Access Denied: Account is inactive.' });
     }
     
-    // Verify role match
-    let isRoleValid = false;
-    if (role === 'hr' && matchedUser.role === 'hr') isRoleValid = true;
-    if (role === 'manager' && (matchedUser.role === 'manager' || matchedUser.role === 'finance_manager')) isRoleValid = true;
-    if (role === 'employee' && matchedUser.role === 'employee') isRoleValid = true;
-    
-    if (!isRoleValid) {
-      return res.status(403).json({ error: `Access Denied: Account role mismatch for ${role.toUpperCase()} portal.` });
-    }
-    
-    const isHrOrManager = role === 'hr' || role === 'manager';
+    const isHrOrManager = role === 'hr' || role === 'manager' || matchedUser.role === 'hr' || matchedUser.role === 'manager' || matchedUser.role === 'finance_manager';
     if (isHrOrManager && !skipCheck) {
       if (!password) {
         return res.status(400).json({ error: 'Password is required for HR/Manager login.' });
       }
-      // If user has no password stored, allow any non-empty password (first-time login)
+      // If user has password stored, verify it
       if (matchedUser.password) {
         const isValid = verifyPassword(password, matchedUser.password);
         if (!isValid) {
