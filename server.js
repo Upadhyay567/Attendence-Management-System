@@ -1159,8 +1159,7 @@ function freePort(port) {
         } catch (e) {}
       });
       
-      // Give the OS a brief moment to release the socket
-      try { execSync('timeout /t 1 /nobreak', { stdio: 'ignore' }); } catch (e) {}
+      // Stale process cleared if present
     } catch (err) {
       // netstat exits with code 1 if no match is found, which is fine
     }
