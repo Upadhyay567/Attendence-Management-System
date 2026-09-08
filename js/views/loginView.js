@@ -456,16 +456,19 @@ export function renderLoginView() {
     sessionStorage.setItem('attendance_current_session', sessionData);
     localStorage.setItem('attendance_current_session', sessionData);
     
-    const baseRole = DB.getUserBaseRole(user.role);
-    const targetHash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') 
-      ? '#admin-dashboard' 
-      : '#dashboard';
+    // Sync DB with backend server for this session before navigating to dashboard
+    DB.init().finally(() => {
+      const baseRole = DB.getUserBaseRole(user.role);
+      const targetHash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') 
+        ? '#admin-dashboard' 
+        : '#dashboard';
 
-    if (window.location.hash === targetHash) {
-      window.dispatchEvent(new Event('hashchange'));
-    } else {
-      window.location.hash = targetHash;
-    }
+      if (window.location.hash === targetHash) {
+        window.dispatchEvent(new Event('hashchange'));
+      } else {
+        window.location.hash = targetHash;
+      }
+    });
   };
 
   // Bootstrap login view with Role Selector list

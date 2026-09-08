@@ -416,23 +416,27 @@ export const DB = {
 
   async resolveApiBase() {
     if (typeof window.apiBaseUrl === 'undefined') {
-      window.apiBaseUrl = '';
+      const defaultPort = 8080;
+      let targetPort = defaultPort;
       try {
         const configRes = await fetch('/server-config.json?v=' + Date.now());
         if (configRes.ok) {
           const config = await configRes.json();
           if (config && config.port) {
-            const currentPort = window.location.port;
-            if (currentPort !== String(config.port)) {
-              window.apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:${config.port}`;
-            }
+            targetPort = config.port;
           }
         }
       } catch (configErr) {
-        console.warn('Failed to fetch server-config.json. Defaulting to port 8080.', configErr);
-        if (window.location.port !== '8080') {
-          window.apiBaseUrl = `${window.location.protocol}//${window.location.hostname}:8080`;
-        }
+        console.warn('Failed to fetch server-config.json, defaulting target port to 8080:', configErr);
+      }
+
+      const currentPort = window.location.port;
+      if (currentPort !== String(targetPort)) {
+        const host = window.location.hostname || 'localhost';
+        const protocol = window.location.protocol && window.location.protocol.startsWith('http') ? window.location.protocol : 'http:';
+        window.apiBaseUrl = `${protocol}//${host}:${targetPort}`;
+      } else {
+        window.apiBaseUrl = '';
       }
     }
   },
