@@ -413,14 +413,23 @@ app.post('/api/auth/login', authRateLimiter, async (req, res) => {
     }
     
     let matchedUser = null;
-    const online = await connectMongoose();
-    if (useLocalFileDB || !online) {
+    try {
+      const online = await connectMongoose();
+      if (useLocalFileDB || !online) {
+        const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        const users = JSON.parse(rawSeed).users || [];
+        matchedUser = findUserByLoginKey(users, targetUsername);
+      } else {
+        const allUsers = await User.find({}).lean();
+        matchedUser = findUserByLoginKey(allUsers, targetUsername);
+      }
+    } catch (mongoErr) {
+      console.warn('⚠️ MongoDB user query failed, falling back to local seed.json:', mongoErr.message);
+      useLocalFileDB = true;
+      isMongoConnected = false;
       const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
       const users = JSON.parse(rawSeed).users || [];
       matchedUser = findUserByLoginKey(users, targetUsername);
-    } else {
-      const allUsers = await User.find({}).lean();
-      matchedUser = findUserByLoginKey(allUsers, targetUsername);
     }
     
     if (!matchedUser) {
@@ -786,67 +795,75 @@ app.get('/api/db-state', authenticateToken, async (req, res) => {
     }
 
     let stateData = null;
-    const online = await connectMongoose();
+    try {
+      const online = await connectMongoose();
 
-    if (useLocalFileDB || !online) {
-      const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      stateData = JSON.parse(rawSeed);
-    } else {
-      // Query all collections concurrently
-      const [
-        usersDocs,
-        attendanceDocs,
-        leaveDocs,
-        swapDocs,
-        scheduleDocs,
-        noticeDocs,
-        officeDocs
-      ] = await Promise.all([
-        User.find({}).lean(),
-        AttendanceLog.find({}).lean(),
-        LeaveRequest.find({}).lean(),
-        ShiftSwap.find({}).lean(),
-        Schedule.find({}).lean(),
-        Notice.find({}).lean(),
-        OfficeCoordinate.find({}).lean()
-      ]);
-
-      // If database is completely empty (e.g. fresh MongoDB run), seed it from default seed.json
-      if (usersDocs.length === 0 && scheduleDocs.length === 0) {
-        console.log('MongoDB collections are empty. Seeding from default seed.json...');
+      if (useLocalFileDB || !online) {
         const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
         stateData = JSON.parse(rawSeed);
-        
-        // Seed Mongoose collections
-        await Promise.all([
-          User.insertMany(stateData.users || []),
-          AttendanceLog.insertMany(stateData.attendanceLogs || []),
-          LeaveRequest.insertMany(stateData.leaveRequests || []),
-          ShiftSwap.insertMany(stateData.shiftSwaps || []),
-          Schedule.insertMany(stateData.schedules || []),
-          Notice.insertMany(stateData.notices || []),
-          OfficeCoordinate.insertMany(
-            Object.entries(stateData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
-          )
-        ]);
-        console.log('Database successfully seeded via Mongoose.');
       } else {
-        // Transform officeCoordinates array back into key-value map
-        const officeCoordinates = {};
-        officeDocs.forEach(d => {
-          officeCoordinates[d.name] = { lat: d.lat, lng: d.lng };
-        });
+        // Query all collections concurrently
+        const [
+          usersDocs,
+          attendanceDocs,
+          leaveDocs,
+          swapDocs,
+          scheduleDocs,
+          noticeDocs,
+          officeDocs
+        ] = await Promise.all([
+          User.find({}).lean(),
+          AttendanceLog.find({}).lean(),
+          LeaveRequest.find({}).lean(),
+          ShiftSwap.find({}).lean(),
+          Schedule.find({}).lean(),
+          Notice.find({}).lean(),
+          OfficeCoordinate.find({}).lean()
+        ]);
 
-        stateData = {
-          users: usersDocs,
-          attendanceLogs: attendanceDocs,
-          leaveRequests: leaveDocs,
-          shiftSwaps: swapDocs,
-          schedules: scheduleDocs,
-          notices: noticeDocs,
-          officeCoordinates
-        };
+        // If database is completely empty (e.g. fresh MongoDB run), seed it from default seed.json
+        if (usersDocs.length === 0 && scheduleDocs.length === 0) {
+          console.log('MongoDB collections are empty. Seeding from default seed.json...');
+          const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+          stateData = JSON.parse(rawSeed);
+          
+          // Seed Mongoose collections
+          await Promise.all([
+            User.insertMany(stateData.users || []),
+            AttendanceLog.insertMany(stateData.attendanceLogs || []),
+            LeaveRequest.insertMany(stateData.leaveRequests || []),
+            ShiftSwap.insertMany(stateData.shiftSwaps || []),
+            Schedule.insertMany(stateData.schedules || []),
+            Notice.insertMany(stateData.notices || []),
+            OfficeCoordinate.insertMany(
+              Object.entries(stateData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
+            )
+          ]);
+          console.log('Database successfully seeded via Mongoose.');
+        } else {
+          // Transform officeCoordinates array back into key-value map
+          const officeCoordinates = {};
+          officeDocs.forEach(d => {
+            officeCoordinates[d.name] = { lat: d.lat, lng: d.lng };
+          });
+
+          stateData = {
+            users: usersDocs,
+            attendanceLogs: attendanceDocs,
+            leaveRequests: leaveDocs,
+            shiftSwaps: swapDocs,
+            schedules: scheduleDocs,
+            notices: noticeDocs,
+            officeCoordinates
+          };
+        }
       }
+    } catch (mongoErr) {
+      console.warn('⚠️ Mongo query failed in /api/db-state, using seed.json fallback:', mongoErr.message);
+      useLocalFileDB = true;
+      isMongoConnected = false;
+      const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      stateData = JSON.parse(rawSeed);
     }
 
     // Security Projection: Remove all password hashes so no client gets sensitive authentication material
