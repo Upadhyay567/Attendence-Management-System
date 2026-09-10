@@ -3,6 +3,7 @@ import { DB } from './db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
 import { triggerBirthdayCelebration } from './celebration.js';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js';
 
 // Custom dialog modal manager
 const CustomDialog = {
@@ -16770,6 +16771,7 @@ function renderEmployeeNotices(userId) {
     });
   }
 }
+window.renderEmployeeNotices = renderEmployeeNotices;
 
 function renderAdminAnnouncementsList() {
   const container = document.getElementById('admin-announcements-list');
@@ -16827,6 +16829,7 @@ function renderAdminAnnouncementsList() {
     });
   });
 }
+window.renderAdminAnnouncementsList = renderAdminAnnouncementsList;
 
 // -------------------------------------------------------------
 // GLOBAL NOTIFICATIONS CONTROLLER
@@ -17008,6 +17011,7 @@ function updateNotificationsUI() {
     console.error("Error updating notifications UI:", err);
   }
 }
+window.updateNotificationsUI = updateNotificationsUI;
 
 // -------------------------------------------------------------
 // INTERNAL MESSAGING SYSTEM CONTROLLERS

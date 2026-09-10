@@ -35,13 +35,17 @@ window.openFullScreenImageModal = openFullScreenImageModal;
 export function showNotificationDetailModal(notif) {
   if (!notif) return;
 
+  // Remove any existing notification detail modals first to avoid stacking
+  document.querySelectorAll('.modal-overlay.notif-detail-overlay').forEach(el => el.remove());
+
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay notif-detail-overlay';
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(10, 15, 29, 0.88); backdrop-filter: blur(14px);
-    display: flex; justify-content: center; align-items: center; z-index: 12000;
-    animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    background: rgba(10, 15, 29, 0.90); backdrop-filter: blur(16px);
+    display: flex; justify-content: center; align-items: center; z-index: 999999;
+    animation: fadeIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    cursor: pointer; padding: 16px; box-sizing: border-box;
   `;
 
   const category = notif.category || 'Notification';
@@ -59,12 +63,12 @@ export function showNotificationDetailModal(notif) {
   const modal = document.createElement('div');
   modal.className = 'modal-content card-panel';
   modal.style.cssText = `
-    max-width: 520px; width: 92%; padding: 26px;
+    max-width: 540px; width: 92%; padding: 28px;
     background: #1e1e24 !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.6) !important;
-    display: flex; flex-direction: column; gap: 16px;
-    position: relative;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.7) !important;
+    display: flex; flex-direction: column; gap: 18px;
+    position: relative; margin: auto; cursor: default;
   `;
 
   const escapeHTML = (str) => {
@@ -84,7 +88,7 @@ export function showNotificationDetailModal(notif) {
       <button id="btn-close-notif-modal-x" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); width:32px; height:32px; border-radius:50%; font-size:18px; color:#94a3b8; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0">&times;</button>
     </div>
 
-    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:18px; font-size:13.5px; color:#cbd5e1; line-height:1.6; white-space:pre-wrap; max-height:280px; overflow-y:auto">
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:18px; font-size:13.5px; color:#cbd5e1; line-height:1.6; white-space:pre-wrap; max-height:300px; overflow-y:auto">
       ${escapeHTML(descText)}
     </div>
 
@@ -97,9 +101,9 @@ export function showNotificationDetailModal(notif) {
 
     <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid rgba(255,255,255,0.08); padding-top:14px; margin-top:4px">
       ${notif.link && notif.link !== '#' ? `
-        <button id="btn-action-notif-modal" class="btn" style="font-size:12.5px; padding:8px 18px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700">Open Module</button>
+        <button id="btn-action-notif-modal" class="btn" style="font-size:12.5px; padding:9px 20px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Open Module</button>
       ` : ''}
-      <button id="btn-done-notif-modal" class="btn" style="font-size:12.5px; padding:8px 18px; background:rgba(255,255,255,0.06); color:#f8fafc; border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-weight:600">Close</button>
+      <button id="btn-done-notif-modal" class="btn" style="font-size:12.5px; padding:9px 20px; background:rgba(255,255,255,0.08); color:#f8fafc; border:1px solid rgba(255,255,255,0.12); border-radius:8px; cursor:pointer; font-weight:600">Close</button>
     </div>
   `;
 
@@ -110,8 +114,15 @@ export function showNotificationDetailModal(notif) {
     closeModal(overlay);
   };
 
-  modal.querySelector('#btn-close-notif-modal-x').addEventListener('click', closeMe);
-  modal.querySelector('#btn-done-notif-modal').addEventListener('click', closeMe);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeMe();
+  });
+
+  const btnX = modal.querySelector('#btn-close-notif-modal-x');
+  if (btnX) btnX.addEventListener('click', closeMe);
+
+  const btnDone = modal.querySelector('#btn-done-notif-modal');
+  if (btnDone) btnDone.addEventListener('click', closeMe);
 
   const actionBtn = modal.querySelector('#btn-action-notif-modal');
   if (actionBtn && notif.link) {
@@ -122,3 +133,4 @@ export function showNotificationDetailModal(notif) {
   }
 }
 window.showNotificationDetailModal = showNotificationDetailModal;
+
