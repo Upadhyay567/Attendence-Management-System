@@ -418,6 +418,12 @@ export const DB = {
     if (typeof window.apiBaseUrl === 'undefined') {
       const defaultPort = 8080;
       let targetPort = defaultPort;
+
+      if (window.location.protocol === 'file:') {
+        window.apiBaseUrl = `http://localhost:${defaultPort}`;
+        return;
+      }
+
       try {
         const configRes = await fetch('/server-config.json?v=' + Date.now());
         if (configRes.ok) {

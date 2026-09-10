@@ -31,16 +31,20 @@
   </div>
 
   <!-- App Bootstrapper script module -->
-  <script type="module" src="js/app.js?v=29"></script>
+  <script type="module" src="js/app.js?v=32"></script>
   <script>
-    setTimeout(function() {
+    function checkAndForceBoot() {
       var root = document.getElementById('app-root');
       if (root && root.innerHTML.indexOf('ESTABLISHING SECURE PROTOCOLS') !== -1) {
         if (typeof window.bootstrapperReady === 'function') {
           window.bootstrapperReady();
+        } else if (typeof window.appHandleRoute === 'function') {
+          window.appHandleRoute();
         }
       }
-    }, 800);
+    }
+    setTimeout(checkAndForceBoot, 500);
+    setTimeout(checkAndForceBoot, 1200);
   </script>
 </body>
 </html>

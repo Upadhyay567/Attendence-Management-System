@@ -1,9 +1,9 @@
 // app.js - SPA Router & Controller
-import { DB } from './db.js';
-import { Auth } from './auth.js';
-import { Utils } from './utils.js';
-import { triggerBirthdayCelebration } from './celebration.js';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js';
+import { DB } from './db.js?v=32';
+import { Auth } from './auth.js?v=32';
+import { Utils } from './utils.js?v=32';
+import { triggerBirthdayCelebration } from './celebration.js?v=32';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=32';
 
 // Custom dialog modal manager
 const CustomDialog = {
