@@ -123,6 +123,17 @@ const OfficeCoordinateSchema = new mongoose.Schema({
   lng: Number
 }, { strict: false, minimize: false });
 
+const AuditLogSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  actorId: String,
+  actorRole: String,
+  actionType: String,
+  targetEntity: String,
+  changes: String,
+  timestamp: String,
+  ipAddress: String
+}, { strict: false, minimize: false });
+
 // Register models
 const User = mongoose.model('User', UserSchema);
 const AttendanceLog = mongoose.model('AttendanceLog', AttendanceLogSchema);
@@ -131,6 +142,7 @@ const LeaveRequest = mongoose.model('LeaveRequest', LeaveRequestSchema);
 const ShiftSwap = mongoose.model('ShiftSwap', ShiftSwapSchema);
 const Notice = mongoose.model('Notice', NoticeSchema);
 const OfficeCoordinate = mongoose.model('OfficeCoordinate', OfficeCoordinateSchema);
+const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
 
 // Map frontend DB key names to Mongoose models
 const modelsMap = {
@@ -139,8 +151,40 @@ const modelsMap = {
   schedules: Schedule,
   leaveRequests: LeaveRequest,
   shiftSwaps: ShiftSwap,
-  notices: Notice
+  notices: Notice,
+  auditLogs: AuditLog
 };
+
+async function recordAuditLog(actorId, actorRole, actionType, targetEntity, changes, ipAddress) {
+  try {
+    const entry = {
+      id: 'audit_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
+      actorId: actorId || 'system',
+      actorRole: actorRole || 'system',
+      actionType,
+      targetEntity,
+      changes: typeof changes === 'object' ? JSON.stringify(changes) : String(changes),
+      timestamp: new Date().toISOString(),
+      ipAddress: ipAddress || '127.0.0.1'
+    };
+
+    const online = await connectMongoose();
+    if (online && !useLocalFileDB) {
+      await AuditLog.create(entry);
+    }
+    
+    if (fs.existsSync(LOCAL_DB_FILE)) {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (!data.auditLogs) data.auditLogs = [];
+      data.auditLogs.unshift(entry);
+      if (data.auditLogs.length > 500) data.auditLogs.pop();
+      fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    console.warn('Audit log entry failed:', err.message);
+  }
+}
 
 // Cryptographic helpers for password security (bcrypt-based by default, with backwards compatibility)
 function hashPassword(password) {
@@ -255,6 +299,36 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
+});
+
+// Server-Sent Events (SSE) Client Connections Pool for Live Real-Time Updates
+const sseClients = new Set();
+
+function broadcastSSEEvent(eventType, data = {}) {
+  const payload = `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`;
+  sseClients.forEach(client => {
+    try {
+      client.write(payload);
+    } catch (e) {
+      sseClients.delete(client);
+    }
+  });
+}
+
+// SSE Endpoint for Live Real-Time Dashboard Updates
+app.get('/api/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+  sseClients.add(res);
+  res.write(`event: connected\ndata: ${JSON.stringify({ status: 'connected', timestamp: Date.now() })}\n\n`);
+
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
 });
 
 // Serve static frontend files and uploads
@@ -1179,6 +1253,17 @@ app.post('/api/mutate-granular', authenticateToken, async (req, res) => {
     applyLocalUpdate(stateObj);
     fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
 
+    // Broadcast SSE live update signal & write audit log
+    broadcastSSEEvent('db_updated', { type, key, timestamp: Date.now() });
+    recordAuditLog(
+      req.user ? req.user.userId : 'public',
+      req.user ? req.user.role : 'user',
+      type + '_' + key,
+      key,
+      payload || updates || query,
+      req.ip
+    );
+
     res.json({ success: true, type, key });
   } catch (err) {
     console.error('Error applying granular mutation:', err);
@@ -1212,6 +1297,150 @@ app.use((req, res, next) => {
     return res.sendFile(path.join(__dirname, 'index.html'));
   }
   next();
+});
+
+// 4. Fetch Audit Logs Endpoint
+app.get('/api/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user || (req.user.role !== 'hr' && req.user.role !== 'manager' && req.user.role !== 'finance_manager')) {
+      return res.status(403).json({ error: 'Access Denied: Permission required for audit logs.' });
+    }
+    const online = await connectMongoose();
+    if (online && !useLocalFileDB) {
+      const logs = await AuditLog.find({}).sort({ _id: -1 }).limit(100).lean();
+      return res.json(logs);
+    } else {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      return res.json((data.auditLogs || []).slice(0, 100));
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+// 5. Printable HTML Payslip Generator Endpoint
+app.get('/api/reports/payslip-pdf', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.query.userId || (req.user ? req.user.userId : null);
+    if (!userId) return res.status(400).send('User ID parameter required.');
+
+    let user = null;
+    const online = await connectMongoose();
+    if (online && !useLocalFileDB) {
+      user = await User.findOne({ id: userId }).lean();
+    } else {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      user = (JSON.parse(raw).users || []).find(u => u.id === userId);
+    }
+    if (!user) return res.status(404).send('User profile not found.');
+
+    const baseSalary = user.baseSalary || 50000;
+    const hra = user.allowanceHRA || Math.round(baseSalary * 0.15);
+    const travel = user.allowanceTravel || 3000;
+    const gross = baseSalary + hra + travel;
+    const pf = user.deductionPF || Math.round(baseSalary * 0.08);
+    const pt = user.deductionPT || 200;
+    const tds = user.deductionTDS || 5;
+    const totalDeductions = pf + pt + tds;
+    const netSalary = gross - totalDeductions;
+    const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Payslip - ${user.name}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background: #fff; color: #1e293b; }
+          .header { text-align: center; border-bottom: 3px solid #89201B; padding-bottom: 20px; margin-bottom: 30px; }
+          .company { font-size: 24px; font-weight: bold; color: #89201B; }
+          .sub { font-size: 14px; color: #64748b; margin-top: 4px; }
+          .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .table th, .table td { border: 1px solid #cbd5e1; padding: 12px; font-size: 13px; text-align: left; }
+          .table th { background: #f8fafc; }
+          .summary { margin-top: 30px; text-align: right; font-size: 16px; font-weight: bold; }
+          .print-btn { background: #89201B; color: #fff; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; float: right; margin-bottom: 20px; }
+          @media print { .print-btn { display: none; } }
+        </style>
+      </head>
+      <body>
+        <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <div class="header">
+          <div class="company">HS GROUP DELHI</div>
+          <div class="sub">House of Surya — Official Employee Payslip Statement</div>
+          <div style="margin-top: 10px; font-size: 12px; font-weight: bold; color: #475569;">PAY PERIOD: ${monthYear.toUpperCase()}</div>
+        </div>
+        <table class="table">
+          <tr><th>Employee ID</th><td>${user.employeeId || user.username || 'EMP100'}</td><th>Employee Name</th><td>${user.name}</td></tr>
+          <tr><th>Department</th><td>${user.department || 'N/A'}</td><th>Designation</th><td>${user.designation || 'N/A'}</td></tr>
+          <tr><th>Date of Joining</th><td>${user.dateOfJoining || 'N/A'}</td><th>Bank / Account Status</th><td>Verified Active</td></tr>
+        </table>
+        <h4 style="margin-top:30px; color:#89201B;">Earning & Deduction Breakup</h4>
+        <table class="table">
+          <thead>
+            <tr><th>Earnings Component</th><th>Amount (₹)</th><th>Deduction Component</th><th>Amount (₹)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Basic Salary</td><td>₹${baseSalary.toLocaleString()}</td><td>Provident Fund (PF)</td><td>₹${pf.toLocaleString()}</td></tr>
+            <tr><td>House Rent Allowance (HRA)</td><td>₹${hra.toLocaleString()}</td><td>Professional Tax (PT)</td><td>₹${pt.toLocaleString()}</td></tr>
+            <tr><td>Travel Allowance</td><td>₹${travel.toLocaleString()}</td><td>TDS / Tax Deduction</td><td>₹${tds.toLocaleString()}</td></tr>
+            <tr style="font-weight:bold; background:#f1f5f9;">
+              <td>Gross Earnings</td><td>₹${gross.toLocaleString()}</td>
+              <td>Total Deductions</td><td>₹${totalDeductions.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="summary">NET PAYABLE SALARY: ₹${netSalary.toLocaleString()}</div>
+        <div style="margin-top: 60px; font-size: 11px; color: #94a3b8; text-align: center;">
+          This is a computer-generated official payslip from HS Group Delhi workforce portal. Signature not required.
+        </div>
+      </body>
+      </html>
+    `;
+    res.setHeader('Content-Type', 'text/html');
+    res.send(htmlContent);
+  } catch (err) {
+    res.status(500).send('Error generating payslip statement');
+  }
+});
+
+// 6. Export Monthly Attendance Register as CSV
+app.get('/api/reports/attendance-csv', authenticateToken, async (req, res) => {
+  try {
+    let logs = [];
+    let users = [];
+    const online = await connectMongoose();
+    if (online && !useLocalFileDB) {
+      logs = await AttendanceLog.find({}).lean();
+      users = await User.find({}).lean();
+    } else {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      logs = data.attendanceLogs || [];
+      users = data.users || [];
+    }
+
+    const userMap = {};
+    users.forEach(u => { userMap[u.id] = u; });
+
+    let csv = 'Log ID,Employee ID,Employee Name,Role,Department,Date,Check In,Check Out,Status,Location,GPS Distance (m)\n';
+    logs.forEach(l => {
+      const u = userMap[l.userId] || {};
+      const empId = (u.employeeId || u.username || l.userId).replace(/,/g, '');
+      const empName = (u.name || 'Unknown').replace(/,/g, '');
+      const dept = (u.department || 'Staff').replace(/,/g, '');
+      const loc = (l.location || 'Office Headquarters').replace(/,/g, '');
+      const distM = Math.round((parseFloat(l.distance) || 0) * 1000);
+      csv += `${l.id},${empId},${empName},${u.role || 'employee'},${dept},${l.date},${l.checkIn || ''},${l.checkOut || ''},${l.status || 'Present'},"${loc}",${distM}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="attendance_register_export.csv"');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).send('Error generating attendance CSV ledger');
+  }
 });
 
 // Express Error Handling Middleware (prevents raw HTML crashes on payload errors)

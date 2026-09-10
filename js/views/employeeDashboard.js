@@ -483,6 +483,16 @@ export function renderEmployeeDashboard() {
         return;
       }
 
+      // Anti-GPS Spoofing & Precision Threshold Check (>500m precision threshold)
+      if (coords.accuracy && coords.accuracy > 500) {
+        const proceed = confirm(`⚠️ Anti-Spoofing & GPS Precision Alert!\n\nYour location accuracy is ±${Math.round(coords.accuracy)}m, which exceeds the acceptable precision threshold (500m).\n\nDo you want to proceed with submitting check-in for manual supervisor verification?`);
+        if (!proceed) {
+          if (regIn) { regIn.removeAttribute('disabled'); regIn.style.opacity = '1'; }
+          geoCheckIn.removeAttribute('disabled'); geoCheckIn.style.opacity = '1';
+          return;
+        }
+      }
+
       const todayStr = new Date().toISOString().split('T')[0];
       const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
 

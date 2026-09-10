@@ -114,6 +114,7 @@ export function renderAdminUsers() {
                          <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
                        ` : ''}
                        <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
+                       <button class="btn btn-secondary btn-payslip-pdf" data-empid="${u.employeeId}" style="padding:6px 10px;width:auto;font-size:11px;background:rgba(6,182,212,0.1);color:var(--cyan);border:1px solid rgba(6,182,212,0.3)" title="Download Payslip PDF">📄 Payslip</button>
                        <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
                      </div>
                    `
@@ -196,6 +197,16 @@ export function renderAdminUsers() {
     container.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
     container.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleApproveProfile(e.target.closest('.btn-approve-profile-direct').dataset.id)));
     container.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleRejectProfile(e.target.closest('.btn-reject-profile-direct').dataset.id)));
+    container.querySelectorAll('.btn-payslip-pdf').forEach(btn => btn.addEventListener('click', (e) => {
+      const empId = e.currentTarget.getAttribute('data-empid');
+      let token = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) token = JSON.parse(sess).token;
+      } catch (err) {}
+      const url = (window.apiBaseUrl || '') + '/api/reports/payslip-pdf?token=' + encodeURIComponent(token) + '&employeeId=' + encodeURIComponent(empId);
+      window.open(url, '_blank');
+    }));
   };
 
   bindUserRowEvents();

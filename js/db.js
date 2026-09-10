@@ -439,6 +439,21 @@ export const DB = {
         window.apiBaseUrl = '';
       }
     }
+
+    // Connect to Server-Sent Events (SSE) stream for instant real-time DB updates across all tabs
+    if (typeof window.EventSource !== 'undefined' && !window.sseSource) {
+      try {
+        const streamUrl = (window.apiBaseUrl || '') + '/api/events';
+        window.sseSource = new EventSource(streamUrl);
+        window.sseSource.addEventListener('db_updated', async () => {
+          console.log('⚡ Real-time SSE DB update signal received from backend.');
+          await DB.init();
+          window.dispatchEvent(new CustomEvent('db_updated'));
+        });
+      } catch (e) {
+        console.warn('Failed to establish SSE stream:', e);
+      }
+    }
   },
 
   async init() {
