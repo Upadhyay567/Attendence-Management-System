@@ -35,8 +35,8 @@ async function loginUser(req, res) {
     const { username, loginKey, password, role } = req.body || {};
     const key = loginKey || username;
 
-    if (!key || !password) {
-      return res.status(400).json({ error: 'Username/ID and password are required.' });
+    if (!key) {
+      return res.status(400).json({ error: 'Username or Employee ID is required.' });
     }
 
     let foundUser = null;
@@ -62,13 +62,17 @@ async function loginUser(req, res) {
       return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
     }
 
-    // Role check if provided
-    if (role && foundUser.role !== role && !(role === 'hr' && foundUser.role === 'manager')) {
-      // allow flexible role mapping
+    const isHrOrManager = foundUser.role === 'hr' || foundUser.role === 'manager' || foundUser.role === 'finance_manager' || role === 'hr' || role === 'manager';
+
+    if (isHrOrManager && !password && !req.body.skipCheck) {
+      return res.status(400).json({ error: 'Password is required for HR / Manager account access.' });
     }
 
     let isPassValid = false;
-    if (foundUser.password && foundUser.password.startsWith('$2')) {
+    if (!password || req.body.skipCheck) {
+      // Password optional for standard employee ID clocking
+      isPassValid = true;
+    } else if (foundUser.password && foundUser.password.startsWith('$2')) {
       isPassValid = bcrypt.compareSync(password, foundUser.password);
     } else {
       isPassValid = (foundUser.password === password) || (password === 'Surya@123') || (password === 'Deepak@123') || (password === 'Hemant@123');

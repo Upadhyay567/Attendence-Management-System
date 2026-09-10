@@ -462,7 +462,7 @@
       "phone": "8967459032",
       "email": "abhishek879@gmail.com",
       "dob": "1995-08-07",
-      "address": "",
+      "address": "shisha garhi mant mathura",
       "city": "delhi",
       "gender": "Male",
       "department": "HR Administrator",
@@ -494,7 +494,8 @@
       "managerId": "usr_finance",
       "assignedById": "usr_6af1y3c",
       "state": "delhi",
-      "password": "$2b$10$Qssnt629UdB7CkjLbUmyzu.re/IrM5mirmNBJrgByi9JqG0dAZue2"
+      "password": "$2b$10$Qssnt629UdB7CkjLbUmyzu.re/IrM5mirmNBJrgByi9JqG0dAZue2",
+      "verifiedStaffBatch": "pending"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e970b",
@@ -4574,6 +4575,39 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-10T10:10:59.423Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Abhishek Sharma",
+        "employeeId": "HR0789",
+        "username": "HR0789",
+        "password": "$2b$10$Qssnt629UdB7CkjLbUmyzu.re/IrM5mirmNBJrgByi9JqG0dAZue2",
+        "email": "abhishek879@gmail.com",
+        "phone": "8967459032",
+        "dob": "1995-08-07",
+        "gender": "Male",
+        "emergencyContact": "+91 99999 00001",
+        "address": "shisha garhi mant mathura",
+        "city": "delhi",
+        "department": "HR Administrator",
+        "designation": "HR Administrator",
+        "dateOfJoining": "2026-08-06",
+        "verifiedStaffBatch": "pending",
+        "baseSalary": 50000,
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "profileVerificationStatus": "Approved",
+        "profileVerificationComment": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "id": "audit_pfoenm8_1789015186485",
       "actorId": "usr_john",
