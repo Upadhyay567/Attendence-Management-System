@@ -463,16 +463,10 @@ export const DB = {
     try {
       const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
       if (sess) {
-        token = JSON.parse(sess).token;
+        token = JSON.parse(sess).token || '';
       }
     } catch (e) {}
 
-    // Enforce data isolation: If not logged in, empty database state on client to prevent leak
-    if (!token) {
-      this.data = { users: [], attendanceLogs: [], leaveRequests: [], shiftSwaps: [], schedules: [], notices: [] };
-      return;
-    }
-    
     // Skip server fetch if a local write occurred recently (to prevent race conditions with async mutations)
     const isRecentLocalWrite = this.lastLocalWrite && (Date.now() - this.lastLocalWrite < 2500);
     
@@ -493,28 +487,23 @@ export const DB = {
         
         clearTimeout(timeoutId);
         
-        if (res.status === 401) {
-          console.warn('Session expired or unauthorized. Clearing client data cache.');
-          sessionStorage.removeItem('attendance_current_session');
-          localStorage.removeItem('attendance_current_session');
-          localStorage.removeItem(DB_KEY);
-          this.data = { users: [], attendanceLogs: [], leaveRequests: [], shiftSwaps: [], schedules: [], notices: [] };
-          return;
+        if (res.ok) {
+          const fetchedData = await res.json();
+          if (fetchedData && typeof fetchedData === 'object') {
+            this.data = fetchedData;
+            try {
+              localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+            } catch (storageErr) {}
+            try {
+              this.validateAndMigrateState(false);
+            } catch (migErr) {}
+            console.log('Database state initialized from backend API.');
+            return;
+          }
         }
-        
-        if (!res.ok) throw new Error('API server returned error status');
-        this.data = await res.json();
-        try {
-          localStorage.setItem(DB_KEY, JSON.stringify(this.data));
-        } catch (storageErr) {}
-        try {
-          this.validateAndMigrateState(false);
-        } catch (migErr) {}
-        console.log('Database state initialized from backend API.');
-        return;
       } catch (e) {
         if (window.apiBaseUrl) {
-          console.error('Failed to fetch from backend API. Falling back to local cache.', e);
+          console.warn('Failed to fetch from backend API. Falling back to local cache.', e);
         }
       }
     } else {
