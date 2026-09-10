@@ -1598,17 +1598,17 @@ function openUserModal(userId = null) {
 
   document.getElementById('user-editor-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('editor-name').value.trim();
-    const employeeId = document.getElementById('editor-empid').value.trim();
-    const email = document.getElementById('editor-email').value.trim();
-    const phone = document.getElementById('editor-phone').value.trim();
-    const dob = document.getElementById('editor-dob').value;
+    const name = document.getElementById('editor-name') ? document.getElementById('editor-name').value.trim() : (isEdit ? user.name : '');
+    const employeeId = document.getElementById('editor-empid') ? document.getElementById('editor-empid').value.trim() : (isEdit ? user.employeeId : '');
+    const email = document.getElementById('editor-email') ? document.getElementById('editor-email').value.trim() : (isEdit ? user.email : '');
+    const phone = document.getElementById('editor-phone') ? document.getElementById('editor-phone').value.trim() : (isEdit ? user.phone : '');
+    const dob = document.getElementById('editor-dob') ? document.getElementById('editor-dob').value : (isEdit ? user.dob : '');
     const username = document.getElementById('editor-username') ? document.getElementById('editor-username').value.trim() : '';
-    const password = document.getElementById('editor-pass').value.trim();
-    const city = document.getElementById('editor-city').value.trim();
-    const state = document.getElementById('editor-state').value.trim();
-    const baseSalaryVal = document.getElementById('editor-salary').value.trim();
-    const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
+    const password = document.getElementById('editor-pass') ? document.getElementById('editor-pass').value.trim() : '';
+    const city = document.getElementById('editor-city') ? document.getElementById('editor-city').value.trim() : (isEdit ? user.city || '' : '');
+    const state = document.getElementById('editor-state') ? document.getElementById('editor-state').value.trim() : (isEdit ? user.state || '' : '');
+    const baseSalaryVal = document.getElementById('editor-salary') ? document.getElementById('editor-salary').value.trim() : '';
+    const baseSalary = baseSalaryVal === '' ? (isEdit ? user.baseSalary : null) : Number(baseSalaryVal);
     
     // Multiple shift schedules & their separate locations
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
@@ -1628,23 +1628,29 @@ function openUserModal(userId = null) {
 
     const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations)[0] || 'Kohat Enclave, Pitampura, Delhi');
 
-    const role = document.getElementById('editor-role').value;
-    const gender = document.getElementById('editor-gender').value;
-    const department = document.getElementById('editor-dept').value.trim();
-    const designation = document.getElementById('editor-desg').value.trim();
-    const dateOfJoining = document.getElementById('editor-doj').value;
-    const emergencyContact = document.getElementById('editor-emergency').value.trim();
+    const roleEl = document.getElementById('editor-role');
+    const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');
+    const genderEl = document.getElementById('editor-gender');
+    const gender = genderEl ? genderEl.value : (isEdit ? user.gender : 'Male');
+    const deptEl = document.getElementById('editor-dept');
+    const department = deptEl ? deptEl.value.trim() : (isEdit ? user.department || 'Staff' : 'Staff');
+    const desgEl = document.getElementById('editor-desg');
+    const designation = desgEl ? desgEl.value.trim() : (isEdit ? user.designation || 'Employee' : 'Employee');
+    const dojEl = document.getElementById('editor-doj');
+    const dateOfJoining = dojEl ? dojEl.value : (isEdit ? user.dateOfJoining || '' : '');
+    const emergencyEl = document.getElementById('editor-emergency');
+    const emergencyContact = emergencyEl ? emergencyEl.value.trim() : (isEdit ? user.emergencyContact || '' : '');
 
-    const hraVal = document.getElementById('editor-hra').value.trim();
-    const allowanceHRA = hraVal === '' ? null : Number(hraVal);
-    const travelVal = document.getElementById('editor-travel').value.trim();
-    const allowanceTravel = travelVal === '' ? null : Number(travelVal);
-    const pfVal = document.getElementById('editor-pf').value.trim();
-    const deductionPF = pfVal === '' ? null : Number(pfVal);
-    const ptVal = document.getElementById('editor-pt').value.trim();
-    const deductionPT = ptVal === '' ? null : Number(ptVal);
-    const tdsVal = document.getElementById('editor-tds').value.trim();
-    const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
+    const hraVal = document.getElementById('editor-hra') ? document.getElementById('editor-hra').value.trim() : '';
+    const allowanceHRA = hraVal === '' ? (isEdit ? user.allowanceHRA : null) : Number(hraVal);
+    const travelVal = document.getElementById('editor-travel') ? document.getElementById('editor-travel').value.trim() : '';
+    const allowanceTravel = travelVal === '' ? (isEdit ? user.allowanceTravel : null) : Number(travelVal);
+    const pfVal = document.getElementById('editor-pf') ? document.getElementById('editor-pf').value.trim() : '';
+    const deductionPF = pfVal === '' ? (isEdit ? user.deductionPF : null) : Number(pfVal);
+    const ptVal = document.getElementById('editor-pt') ? document.getElementById('editor-pt').value.trim() : '';
+    const deductionPT = ptVal === '' ? (isEdit ? user.deductionPT : null) : Number(ptVal);
+    const tdsVal = document.getElementById('editor-tds') ? document.getElementById('editor-tds').value.trim() : '';
+    const deductionTDS = tdsVal === '' ? (isEdit ? user.deductionTDS : null) : Number(tdsVal);
 
     if (password) {
       const rules = Auth.validatePassword(password);
@@ -1709,11 +1715,10 @@ function openUserModal(userId = null) {
     let plainPassword = '';
 
     if (isEdit) {
-      const finalPassword = password || user.password;
       const targetUserObj = DB.getUser(userId);
       const existingUserCloned = targetUserObj ? JSON.parse(JSON.stringify(targetUserObj)) : null;
       const updates = { 
-        name, employeeId, email, phone, dob, password: hashedPass, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -1722,6 +1727,9 @@ function openUserModal(userId = null) {
         profileVerificationComment: '',
         pendingProfileEdits: null
       };
+      if (password) {
+        updates.password = Utils.hashPassword(password);
+      }
       DB.updateUser(userId, updates);
       const diffText = DB.generateProfileChangeDiff ? DB.generateProfileChangeDiff(existingUserCloned, updates, currentUser ? currentUser.name : 'HR/Manager') : `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`;
       DB.notifyEmployeeProfileChange(userId, 'updated', diffText, currentUser);
