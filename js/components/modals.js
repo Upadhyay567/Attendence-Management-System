@@ -105,6 +105,13 @@ export function showNotificationDetailModal(notif) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
 
+  const currentUser = (window.Auth && typeof window.Auth.getCurrentUser === 'function') 
+    ? window.Auth.getCurrentUser() 
+    : (typeof Auth !== 'undefined' && Auth && Auth.getCurrentUser ? Auth.getCurrentUser() : null);
+
+  const rawRole = currentUser ? (currentUser.role || '').toLowerCase() : '';
+  const canEdit = ['hr', 'manager', 'admin', 'finance_manager'].includes(rawRole);
+
   modal.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid ${dividerClr}; padding-bottom:14px">
       <div style="display:flex; flex-direction:column; gap:6px; max-width:85%">
@@ -131,8 +138,8 @@ export function showNotificationDetailModal(notif) {
     ` : ''}
 
     <div style="display:flex; justify-content:flex-end; gap:10px; border-top:1px solid ${dividerClr}; padding-top:14px; margin-top:4px">
-      ${notif.link && notif.link !== '#' ? `
-        <button id="btn-action-notif-modal" class="btn" style="font-size:12.5px; padding:9px 20px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Open Module</button>
+      ${canEdit ? `
+        <button id="btn-action-notif-modal" class="btn" style="font-size:12.5px; padding:9px 20px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; box-shadow:0 4px 14px rgba(137,32,27,0.4)">Edit</button>
       ` : ''}
       <button id="btn-done-notif-modal" class="btn" style="font-size:12.5px; padding:9px 20px; background:${closeBtnBg}; color:${closeBtnText}; border:1px solid ${closeBtnBorder}; border-radius:8px; cursor:pointer; font-weight:600">Close</button>
     </div>
@@ -156,10 +163,27 @@ export function showNotificationDetailModal(notif) {
   if (btnDone) btnDone.addEventListener('click', closeMe);
 
   const actionBtn = modal.querySelector('#btn-action-notif-modal');
-  if (actionBtn && notif.link) {
+  if (actionBtn && canEdit) {
     actionBtn.addEventListener('click', () => {
       closeMe();
-      window.location.hash = notif.link;
+      const targetId = notif.targetUserId || notif.userId;
+      if (targetId) {
+        if (window.location.hash !== '#user-management' && window.location.hash !== '#admin-users') {
+          window.location.hash = '#user-management';
+        }
+        setTimeout(() => {
+          if (typeof window.openUserModal === 'function') {
+            window.openUserModal(targetId);
+          } else if (typeof window.showAccountModal === 'function') {
+            const targetU = window.DB ? window.DB.getUser(targetId) : null;
+            if (targetU) window.showAccountModal(targetU);
+          }
+        }, 150);
+      } else if (notif.link && notif.link !== '#') {
+        window.location.hash = notif.link;
+      } else {
+        window.location.hash = '#user-management';
+      }
     });
   }
 }

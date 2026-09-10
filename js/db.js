@@ -2019,6 +2019,102 @@ export const DB = {
     return newAnn;
   },
 
+  generateProfileChangeDiff(oldUser, updates, actorName = 'HR/Manager') {
+    if (!oldUser || !updates) return `Your profile details have been updated by ${actorName}.`;
+
+    const changes = [];
+    
+    const fieldLabels = {
+      name: 'Full Name',
+      designation: 'Designation',
+      department: 'Department',
+      role: 'Role',
+      baseSalary: 'Base Salary',
+      email: 'Email Address',
+      phone: 'Mobile Number',
+      dob: 'Date of Birth',
+      dateOfJoining: 'Date of Joining',
+      gender: 'Gender',
+      city: 'City',
+      state: 'State',
+      emergencyContact: 'Emergency Contact',
+      preferredLocation: 'Preferred Work Location',
+      shiftLocations: 'Work Shift Locations',
+      scheduleId: 'Primary Work Shift',
+      scheduleIds: 'Assigned Work Shifts',
+      allowanceHRA: 'HRA Allowance',
+      allowanceTravel: 'Travel Allowance',
+      deductionPF: 'PF Deduction',
+      deductionPT: 'PT Deduction',
+      deductionTDS: 'TDS Tax Rate (%)',
+      managerId: 'Reporting Manager',
+      status: 'Account Status'
+    };
+
+    const schedules = this.getSchedules ? this.getSchedules() : [];
+    const scheduleMap = new Map(schedules.map(s => [s.id, s.name]));
+
+    const users = this.getUsers ? this.getUsers() : [];
+    const userMap = new Map(users.map(u => [u.id, u.name]));
+
+    for (const [key, label] of Object.entries(fieldLabels)) {
+      if (Object.prototype.hasOwnProperty.call(updates, key) && updates[key] !== undefined) {
+        let oldVal = oldUser[key];
+        let newVal = updates[key];
+
+        // Format Schedule IDs to Shift Names
+        if (key === 'scheduleId') {
+          oldVal = oldVal ? (scheduleMap.get(oldVal) || oldVal) : 'Not Assigned';
+          newVal = newVal ? (scheduleMap.get(newVal) || newVal) : 'Not Assigned';
+        } else if (key === 'scheduleIds') {
+          if (Array.isArray(oldVal)) oldVal = oldVal.map(id => scheduleMap.get(id) || id).join(', ');
+          if (Array.isArray(newVal)) newVal = newVal.map(id => scheduleMap.get(id) || id).join(', ');
+        } else if (key === 'managerId') {
+          oldVal = oldVal ? (userMap.get(oldVal) || oldVal) : 'None';
+          newVal = newVal ? (userMap.get(newVal) || newVal) : 'None';
+        } else if (key === 'shiftLocations') {
+          if (typeof oldVal === 'object' && oldVal !== null) {
+            oldVal = Object.entries(oldVal).map(([sid, loc]) => `${scheduleMap.get(sid) || sid}: ${loc}`).join('; ');
+          }
+          if (typeof newVal === 'object' && newVal !== null) {
+            newVal = Object.entries(newVal).map(([sid, loc]) => `${scheduleMap.get(sid) || sid}: ${loc}`).join('; ');
+          }
+        }
+
+        // Handle general Arrays
+        if (Array.isArray(oldVal) || Array.isArray(newVal)) {
+          const oldStr = Array.isArray(oldVal) ? oldVal.join(', ') : String(oldVal || 'None');
+          const newStr = Array.isArray(newVal) ? newVal.join(', ') : String(newVal || 'None');
+          if (oldStr !== newStr) {
+            changes.push(`• ${label}: ${oldStr || 'None'} ➔ ${newStr || 'None'}`);
+          }
+          continue;
+        }
+
+        const oldValClean = (oldVal === undefined || oldVal === null || oldVal === '') ? 'Not Set' : String(oldVal).trim();
+        const newValClean = (newVal === undefined || newVal === null || newVal === '') ? 'Not Set' : String(newVal).trim();
+
+        if (oldValClean !== newValClean) {
+          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'deductionPF', 'deductionPT'].includes(key)) {
+            const oldNum = isNaN(Number(oldValClean)) ? oldValClean : `₹${Number(oldValClean).toLocaleString('en-IN')}`;
+            const newNum = isNaN(Number(newValClean)) ? newValClean : `₹${Number(newValClean).toLocaleString('en-IN')}`;
+            changes.push(`• ${label}: ${oldNum} ➔ ${newNum}`);
+          } else if (key === 'deductionTDS') {
+            changes.push(`• ${label}: ${oldValClean}% ➔ ${newValClean}%`);
+          } else {
+            changes.push(`• ${label}: ${oldValClean} ➔ ${newValClean}`);
+          }
+        }
+      }
+    }
+
+    let message = `Your profile details have been updated by ${actorName}.`;
+    if (changes.length > 0) {
+      message += `\n\nExact Changes Made:\n${changes.join('\n')}`;
+    }
+    return message;
+  },
+
   notifyEmployeeProfileChange(targetUserId, actionType, details, actorUser = null) {
     const targetUser = this.getUser(targetUserId);
     if (!targetUser) return null;
@@ -2043,6 +2139,10 @@ export const DB = {
     }
 
     const newAnn = this.addAnnouncement(title, details, category, actorName, targetUserId);
+    if (newAnn) {
+      newAnn.targetUserId = targetUserId;
+      newAnn.link = '#user-management';
+    }
     return newAnn;
   },
 

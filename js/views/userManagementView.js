@@ -365,6 +365,7 @@ export function renderAdminUsers() {
 }
 
 function openUserModal(userId = null) {
+  window.openUserModal = openUserModal;
   const currentUser = Auth.getCurrentUser();
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;
@@ -832,8 +833,10 @@ function openUserModal(userId = null) {
       if (password) {
         updates.password = Utils.hashPassword(password);
       }
+      const existingUserCloned = user ? JSON.parse(JSON.stringify(user)) : null;
       DB.updateUser(userId, updates);
-      DB.notifyEmployeeProfileChange(userId, 'updated', `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
+      const diffText = DB.generateProfileChangeDiff ? DB.generateProfileChangeDiff(existingUserCloned, updates, currentUser ? currentUser.name : 'HR/Manager') : `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`;
+      DB.notifyEmployeeProfileChange(userId, 'updated', diffText, currentUser);
 
       try {
         let sessionToken = '';

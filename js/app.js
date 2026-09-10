@@ -9717,9 +9717,9 @@ function openUserModal(userId = null) {
     let plainPassword = '';
 
     if (isEdit) {
-      const finalPassword = password || user.password;
-      const hashedPass = Utils.hashPassword(finalPassword);
-      DB.updateUser(userId, { 
+      const targetUserObj = DB.getUser(userId);
+      const existingUserCloned = targetUserObj ? JSON.parse(JSON.stringify(targetUserObj)) : null;
+      const updates = { 
         name, employeeId, email, phone, dob, password: hashedPass, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
@@ -9728,8 +9728,10 @@ function openUserModal(userId = null) {
         city, state,
         profileVerificationComment: '',
         pendingProfileEdits: null
-      });
-      DB.notifyEmployeeProfileChange(userId, 'updated', `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
+      };
+      DB.updateUser(userId, updates);
+      const diffText = DB.generateProfileChangeDiff ? DB.generateProfileChangeDiff(existingUserCloned, updates, currentUser ? currentUser.name : 'HR/Manager') : `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`;
+      DB.notifyEmployeeProfileChange(userId, 'updated', diffText, currentUser);
     } else {
       let maxId = 99;
       DB.data.users.forEach(u => {
