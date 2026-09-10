@@ -145,7 +145,7 @@
       "_id": "6a8d3b8e94e235d28a4e9704",
       "id": "usr_john",
       "employeeId": "EMP103",
-      "scheduleId": "sch_3ebecon",
+      "scheduleId": "sch_mfl8wvv",
       "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": 55000,
       "allowanceHRA": 8259,
@@ -155,7 +155,7 @@
       "deductionTDS": 5,
       "phone": "+91 9999911111",
       "email": "john.doe345@gmail.com",
-      "dob": "1992-09-07",
+      "dob": "1992-09-10",
       "address": "H.No. 45, Sector 15 - Updated",
       "city": "Noida",
       "gender": "Male",
@@ -174,9 +174,11 @@
       "profileEditCount": 3,
       "passwordResetCount": 0,
       "scheduleIds": [
+        "sch_mfl8wvv",
         "sch_3ebecon"
       ],
       "shiftLocations": {
+        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "__v": 0,
@@ -203,7 +205,8 @@
         "resume": "Approved",
         "aadhar": "Approved",
         "bank": "Approved"
-      }
+      },
+      "password": ""
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9705",
@@ -4173,6 +4176,26 @@
   "tickets": [],
   "announcements": [
     {
+      "id": "ann_pg30b2b",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details (designation, salary, work shifts, or locations) have been updated by Abhishek Sharma.",
+      "category": "Update",
+      "date": "2026-09-10",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_john",
+      "createdAt": "2026-09-10T10:41:23.766Z"
+    },
+    {
+      "id": "ann_pg30b2b",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details (designation, salary, work shifts, or locations) have been updated by Abhishek Sharma.",
+      "category": "Update",
+      "date": "2026-09-10",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_john",
+      "createdAt": "2026-09-10T10:41:23.766Z"
+    },
+    {
       "id": "ann_1",
       "title": "Welcome to the New Attendance & Onboarding Portal",
       "content": "We are thrilled to launch our new employee self-service hub. You can now complete your onboarding documentation online and request shift swaps directly.",
@@ -4611,6 +4634,80 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-10T10:41:23.847Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_pg30b2b",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details (designation, salary, work shifts, or locations) have been updated by Abhishek Sharma.",
+        "category": "Update",
+        "date": "2026-09-10",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_john",
+        "createdAt": "2026-09-10T10:41:23.766Z"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-10T10:41:23.813Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "John Doe",
+        "employeeId": "EMP103",
+        "email": "john.doe345@gmail.com",
+        "phone": "+91 9999911111",
+        "dob": "1992-09-10",
+        "password": "",
+        "baseSalary": 55000,
+        "scheduleId": "sch_mfl8wvv",
+        "scheduleIds": [
+          "sch_mfl8wvv",
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "Software Engineer",
+        "dateOfJoining": "2023-11-12",
+        "emergencyContact": "+91 99999 00001",
+        "resume": {
+          "name": "John_Doe_Resume.pdf",
+          "size": "380 KB",
+          "date": "2026-06-10"
+        },
+        "aadhar": {
+          "name": "Aadhar_Card.pdf",
+          "size": "1.4 MB",
+          "date": "2026-06-10"
+        },
+        "allowanceHRA": 8259,
+        "allowanceTravel": 3000,
+        "deductionPF": 4400,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "usr_7yuu1l5",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Noida",
+        "state": "delhi",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-10T10:17:39.631Z",
       "action": "PUSH_attendanceLogs",

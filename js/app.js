@@ -16577,6 +16577,7 @@ function renderEmployeeNotices(userId) {
   // Bind mark as read events
   container.querySelectorAll('.btn-mark-notice-read').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = e.target.getAttribute('data-id');
       readIds.push(id);
       localStorage.setItem(readKey, JSON.stringify(readIds));
@@ -16587,10 +16588,31 @@ function renderEmployeeNotices(userId) {
   // Bind delete single notice events
   container.querySelectorAll('.btn-del-notice').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = e.currentTarget.getAttribute('data-id');
       delIds.push(id);
       localStorage.setItem(delKey, JSON.stringify(delIds));
       renderEmployeeNotices(userId);
+    });
+  });
+
+  // Bind click on notice card to open full-screen detail modal
+  container.querySelectorAll('.notice-item').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-del-notice') || e.target.closest('.btn-mark-notice-read')) return;
+      const id = card.getAttribute('data-id');
+      const noticeObj = notices.find(n => n.id === id);
+      if (noticeObj) {
+        if (!readIds.includes(id)) {
+          readIds.push(id);
+          localStorage.setItem(readKey, JSON.stringify(readIds));
+        }
+        if (typeof window.showNotificationDetailModal === 'function') {
+          window.showNotificationDetailModal(noticeObj);
+        }
+        renderEmployeeNotices(userId);
+      }
     });
   });
 
@@ -16626,7 +16648,7 @@ function renderAdminAnnouncementsList() {
     if (a.category === 'Urgent') badgeClass = 'badge-late';
 
     return `
-      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px">
+      <div class="admin-notice-item-card" data-id="${a.id}" style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:all 0.2s ease">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
           <span style="font-size:11px;color:var(--text-muted)">${a.date}</span>
@@ -16644,10 +16666,23 @@ function renderAdminAnnouncementsList() {
   // Bind delete events
   container.querySelectorAll('.btn-delete-announcement').forEach(btn => {
     btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const id = e.target.getAttribute('data-id');
       if (await CustomDialog.confirm('Are you sure you want to delete this notice?')) {
         DB.deleteAnnouncement(id);
         renderAdminAnnouncementsList();
+      }
+    });
+  });
+
+  // Bind card click event to open full-screen detail modal
+  container.querySelectorAll('.admin-notice-item-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-delete-announcement')) return;
+      const id = card.getAttribute('data-id');
+      const noticeObj = notices.find(n => n.id === id);
+      if (noticeObj && typeof window.showNotificationDetailModal === 'function') {
+        window.showNotificationDetailModal(noticeObj);
       }
     });
   });
@@ -16799,6 +16834,8 @@ function updateNotificationsUI() {
           const link = row.getAttribute('data-link');
           const category = row.getAttribute('data-category');
 
+          const notif = notifications.find(item => item.id === id);
+
           if (category === 'Announcement') {
             const readKey = `hs_read_notices_${user.id}`;
             const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
@@ -16809,13 +16846,14 @@ function updateNotificationsUI() {
           }
 
           if (dropdown) dropdown.style.display = 'none';
-          window.location.hash = link;
+          
+          if (typeof window.showNotificationDetailModal === 'function') {
+            window.showNotificationDetailModal(notif || { id, title: 'Notification Details', desc: 'Message details', category, link });
+          } else {
+            if (link && link !== '#') window.location.hash = link;
+          }
           
           updateNotificationsUI();
-          
-          if (link === '#dashboard' && window.location.hash === '#dashboard') {
-            renderEmployeeDashboard();
-          }
         });
         
         row.addEventListener('mouseenter', () => {

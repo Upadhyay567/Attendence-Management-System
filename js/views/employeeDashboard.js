@@ -1884,6 +1884,7 @@ export function renderEmployeeNotices(userId) {
   // Bind mark as read events
   container.querySelectorAll('.btn-mark-notice-read').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = e.target.getAttribute('data-id');
       readIds.push(id);
       localStorage.setItem(readKey, JSON.stringify(readIds));
@@ -1894,10 +1895,31 @@ export function renderEmployeeNotices(userId) {
   // Bind delete single notice events
   container.querySelectorAll('.btn-del-notice').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = e.currentTarget.getAttribute('data-id');
       delIds.push(id);
       localStorage.setItem(delKey, JSON.stringify(delIds));
       renderEmployeeNotices(userId);
+    });
+  });
+
+  // Bind click on notice card to open full-screen detail modal
+  container.querySelectorAll('.notice-item').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-del-notice') || e.target.closest('.btn-mark-notice-read')) return;
+      const id = card.getAttribute('data-id');
+      const noticeObj = notices.find(n => n.id === id);
+      if (noticeObj) {
+        if (!readIds.includes(id)) {
+          readIds.push(id);
+          localStorage.setItem(readKey, JSON.stringify(readIds));
+        }
+        if (typeof window.showNotificationDetailModal === 'function') {
+          window.showNotificationDetailModal(noticeObj);
+        }
+        renderEmployeeNotices(userId);
+      }
     });
   });
 
