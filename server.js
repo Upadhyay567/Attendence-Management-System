@@ -1502,19 +1502,26 @@ async function syncLocalToMongo(seedData) {
   if (isSyncing) return;
   isSyncing = true;
   try {
+    const safeInsert = (model, docs) => {
+      if (!docs || !Array.isArray(docs) || docs.length === 0) return Promise.resolve();
+      return model.deleteMany({})
+        .then(() => model.insertMany(docs, { ordered: false }))
+        .catch(err => console.warn(`⚠️ Warning: non-fatal sync issue on ${model.modelName}:`, err.message));
+    };
+
+    const officeDocs = Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }));
+
     await Promise.all([
-      User.deleteMany({}).then(() => User.insertMany(seedData.users || [])),
-      AttendanceLog.deleteMany({}).then(() => AttendanceLog.insertMany(seedData.attendanceLogs || [])),
-      LeaveRequest.deleteMany({}).then(() => LeaveRequest.insertMany(seedData.leaveRequests || [])),
-      ShiftSwap.deleteMany({}).then(() => ShiftSwap.insertMany(seedData.shiftSwaps || [])),
-      Schedule.deleteMany({}).then(() => Schedule.insertMany(seedData.schedules || [])),
-      Notice.deleteMany({}).then(() => Notice.insertMany(seedData.notices || [])),
-      OfficeCoordinate.deleteMany({}).then(() => 
-        OfficeCoordinate.insertMany(
-          Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }))
-        )
-      )
+      safeInsert(User, seedData.users || []),
+      safeInsert(AttendanceLog, seedData.attendanceLogs || []),
+      safeInsert(LeaveRequest, seedData.leaveRequests || []),
+      safeInsert(ShiftSwap, seedData.shiftSwaps || []),
+      safeInsert(Schedule, seedData.schedules || []),
+      safeInsert(Notice, seedData.notices || []),
+      safeInsert(OfficeCoordinate, officeDocs)
     ]);
+  } catch (err) {
+    console.warn('⚠️ Non-fatal syncLocalToMongo warning:', err.message);
   } finally {
     isSyncing = false;
   }
