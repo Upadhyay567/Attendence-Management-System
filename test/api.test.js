@@ -12,12 +12,24 @@ describe('Attendance System Core & Security API Tests', () => {
   });
 
   it('Verify real-time SSE stream & audit log endpoints in server architecture', () => {
+    const appPath = path.join(__dirname, '..', 'src', 'server', 'app.js');
+    const appCode = fs.readFileSync(appPath, 'utf8');
+    expect(appCode).toContain('/api/events');
+    expect(appCode).toContain('createAuditRouter');
+    expect(appCode).toContain('createReportsRouter');
+    expect(appCode).toContain('broadcastSSEEvent');
+
+    const auditRoutePath = path.join(__dirname, '..', 'src', 'server', 'routes', 'audit.routes.js');
+    const auditRouteCode = fs.readFileSync(auditRoutePath, 'utf8');
+    expect(auditRouteCode).toContain('/audit-logs');
+
+    const reportsRoutePath = path.join(__dirname, '..', 'src', 'server', 'routes', 'reports.routes.js');
+    const reportsRouteCode = fs.readFileSync(reportsRoutePath, 'utf8');
+    expect(reportsRouteCode).toContain('/attendance-csv');
+    expect(reportsRouteCode).toContain('/payslip-pdf');
+
     const serverPath = path.join(__dirname, '..', 'server.js');
     const serverCode = fs.readFileSync(serverPath, 'utf8');
-    expect(serverCode).toContain('/api/events');
-    expect(serverCode).toContain('/api/audit-logs');
-    expect(serverCode).toContain('/api/reports/payslip-pdf');
-    expect(serverCode).toContain('/api/reports/attendance-csv');
     expect(serverCode).toContain('broadcastSSEEvent');
     expect(serverCode).toContain('recordAuditLog');
   });
