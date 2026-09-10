@@ -1806,4 +1806,120 @@ function showForgotPasswordModal(initialId = '') {
 
 // =========================================================================
 // ACCOUNT MANAGEMENT MODULE (HR & Manager Only)
-// =========================================================================
+// =========================================================================
+
+export function renderEmployeeNotices(userId) {
+  const container = document.getElementById('employee-notices-container');
+  if (!container) return;
+
+  let notices = DB.getAnnouncements();
+  
+  // Filter for this specific user's targeted notices OR global notices
+  notices = notices.filter(a => !a.targetUserId || a.targetUserId === userId);
+
+  // Instant Push Alert check for newly arrived notices
+  if (!window._seenNoticeIds) window._seenNoticeIds = new Set();
+  notices.forEach(n => {
+    if (!window._seenNoticeIds.has(n.id)) {
+      if (window._seenNoticeIds.size > 0) {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`📢 HR Notification Alert: ${n.title}\n${n.content}`, 'info');
+        }
+        const bellBtn = document.getElementById('btn-notifications-toggle');
+        if (bellBtn) {
+          bellBtn.style.animation = 'pulse 0.6s ease 3';
+        }
+      }
+      window._seenNoticeIds.add(n.id);
+    }
+  });
+
+  const readKey = `hs_read_notices_${userId}`;
+  const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+  
+  const delKey = `hs_del_notices_${userId}`;
+  const delIds = JSON.parse(localStorage.getItem(delKey) || '[]');
+
+  notices = notices.filter(a => !delIds.includes(a.id));
+
+  const btnDeleteAll = document.getElementById('btn-delete-all-notices');
+  if (btnDeleteAll) {
+    btnDeleteAll.style.display = notices.length > 0 ? 'block' : 'none';
+  }
+
+  if (notices.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:12px">No active notifications.</div>`;
+    return;
+  }
+
+  container.innerHTML = notices.map(a => {
+    const isRead = readIds.includes(a.id);
+    let badgeClass = 'badge-on-time';
+    if (a.category === 'General') badgeClass = 'badge-pending';
+    if (a.category === 'Update') badgeClass = 'badge-half-day';
+    if (a.category === 'Urgent') badgeClass = 'badge-late';
+
+    return `
+      <div class="notice-item" data-id="${a.id}" style="background:rgba(255,255,255,${isRead ? '0.01' : '0.03'});border:1px solid ${isRead ? 'var(--border)' : 'rgba(251,191,36,0.2)'};border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;opacity:${isRead ? '0.6' : '1'}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span class="badge ${badgeClass}" style="font-size:10px;padding:2px 8px">${a.category}</span>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span style="font-size:10.5px;color:var(--text-muted)">${a.date}</span>
+            <button class="btn-del-notice" data-id="${a.id}" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7" title="Delete">🗑️</button>
+          </div>
+        </div>
+        <strong style="font-size:13px;color:var(--text-primary)">${Utils.escape(a.title)}</strong>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin:0">${Utils.escape(a.content)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;border-top:1px solid rgba(255,255,255,0.03);padding-top:6px">
+          <span style="font-size:10px;color:var(--text-muted)">By: ${Utils.escape(a.author)}</span>
+          ${isRead 
+            ? `<span style="font-size:11.5px;color:var(--cyan);display:flex;align-items:center;gap:3px;font-weight:600">✓ Read</span>` 
+            : `<button class="btn-mark-notice-read" data-id="${a.id}" style="background:transparent;border:none;color:var(--primary);cursor:pointer;font-size:11px;padding:0;text-decoration:underline">Mark as Read</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Bind mark as read events
+  container.querySelectorAll('.btn-mark-notice-read').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.getAttribute('data-id');
+      readIds.push(id);
+      localStorage.setItem(readKey, JSON.stringify(readIds));
+      renderEmployeeNotices(userId);
+    });
+  });
+
+  // Bind delete single notice events
+  container.querySelectorAll('.btn-del-notice').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      delIds.push(id);
+      localStorage.setItem(delKey, JSON.stringify(delIds));
+      renderEmployeeNotices(userId);
+    });
+  });
+
+  // Bind delete all notices event
+  if (btnDeleteAll) {
+    btnDeleteAll.replaceWith(btnDeleteAll.cloneNode(true));
+    const newBtn = document.getElementById('btn-delete-all-notices');
+    newBtn.addEventListener('click', async () => {
+      if (typeof CustomDialog !== 'undefined' && await CustomDialog.confirm('Are you sure you want to delete all notifications?')) {
+        notices.forEach(n => delIds.push(n.id));
+        localStorage.setItem(delKey, JSON.stringify(delIds));
+        renderEmployeeNotices(userId);
+      }
+    });
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('db_updated', () => {
+    const user = Auth.getCurrentUser();
+    if (user && user.role === 'employee') {
+      renderEmployeeNotices(user.id);
+    }
+  });
+}

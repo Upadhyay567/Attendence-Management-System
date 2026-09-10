@@ -1044,20 +1044,47 @@ function renderAdminUsers() {
   const dlProfileBtn = document.getElementById('btn-download-profile-users');
   if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => openProfileDownloadModal());
 
-  const handleApproveProfile = (id) => {
+  const triggerAdminPushSync = async () => {
+    try {
+      let sessionToken = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) sessionToken = JSON.parse(sess).token || '';
+      } catch (e) {}
+      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+        },
+        body: JSON.stringify({ action: 'sync', data: DB.data })
+      });
+    } catch (err) {
+      console.warn('Network error synchronizing mutation with backend database:', err);
+    }
+  };
+
+  const handleApproveProfile = async (id) => {
     const u = DB.getUser(id);
-    if (u && u.pendingProfileEdits) {
-      Object.assign(u, u.pendingProfileEdits);
+    const currentUser = Auth.getCurrentUser();
+    if (u) {
+      Object.assign(u, u.pendingProfileEdits || {});
       u.pendingProfileEdits = null;
       u.profileVerificationStatus = 'Approved';
       u.profileVerificationComment = '';
+      DB.notifyEmployeeProfileChange(id, 'approved', `Your profile edit request has been reviewed and approved by ${currentUser ? currentUser.name : 'HR'}.`, currentUser);
       DB.save();
+      await triggerAdminPushSync();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`✅ Profile edits approved for ${u.name}. Alert notification sent.`, 'success');
+      }
       renderAdminUsers();
     }
   };
 
   const handleRejectProfile = async (id) => {
     const u = DB.getUser(id);
+    const currentUser = Auth.getCurrentUser();
     if (u) {
       const comment = await CustomDialog.prompt('Please enter the profile issue details / reason for rejection:');
       if (comment === null) return;
@@ -1068,7 +1095,12 @@ function renderAdminUsers() {
       u.profileVerificationStatus = 'Rejected';
       u.profileVerificationComment = comment.trim();
       u.pendingProfileEdits = null;
+      DB.notifyEmployeeProfileChange(id, 'rejected', `Your profile edit request was rejected by ${currentUser ? currentUser.name : 'HR'}. Reason: ${comment.trim()}`, currentUser);
       DB.save();
+      await triggerAdminPushSync();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`❌ Profile edits rejected for ${u.name}. Alert notification sent.`, 'warning');
+      }
       renderAdminUsers();
     }
   };
@@ -1076,7 +1108,12 @@ function renderAdminUsers() {
   const handleDeleteUser = async (id) => {
     const u = DB.getUser(id);
     if (u && await CustomDialog.confirm(`Remove employee ${u.name}? All log items will be permanently cleared.`)) {
+      const empName = u.name;
       DB.deleteUser(id);
+      await triggerAdminPushSync();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`🗑️ Employee profile for ${empName} deleted successfully.`, 'info');
+      }
       renderAdminUsers();
     }
   };
@@ -1684,6 +1721,7 @@ function openUserModal(userId = null) {
         profileVerificationComment: '',
         pendingProfileEdits: null
       });
+      DB.notifyEmployeeProfileChange(userId, 'updated', `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
     } else {
       let maxId = 99;
       DB.data.users.forEach(u => {
@@ -1714,6 +1752,9 @@ function openUserModal(userId = null) {
       }
       const hashedPass = Utils.hashPassword(finalPassword);
       createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      if (createdUser) {
+        DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee portal profile was registered by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
+      }
     }
 
     try {

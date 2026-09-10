@@ -769,6 +769,24 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
+      "userId": "usr_sarah",
+      "date": "2026-09-10",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "15:47",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "chandani chowk",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null,
+      "latitude": 28.6978,
+      "longitude": 77.1408
+    },
+    {
       "id": "log_usr_john_2026-09-09_sch_3ebecon",
       "userId": "usr_john",
       "date": "2026-09-09",
@@ -3877,6 +3895,24 @@
       "facePhoto": null,
       "latitude": 28.695271115093313,
       "longitude": 77.18607004817201
+    },
+    {
+      "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
+      "userId": "usr_sarah",
+      "date": "2026-09-10",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "15:47",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "chandani chowk",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null,
+      "latitude": 28.6978,
+      "longitude": 77.1408
     }
   ],
   "leaveRequests": [
@@ -4576,6 +4612,32 @@
   "customRoles": [],
   "auditLogs": [
     {
+      "timestamp": "2026-09-10T10:17:39.631Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_sarah",
+      "userName": "Sarah Connor",
+      "userRole": "employee",
+      "details": {
+        "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
+        "userId": "usr_sarah",
+        "date": "2026-09-10",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "15:47",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "chandani chowk",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.697800° N, 77.140800° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.6978,
+        "longitude": 77.1408
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
       "timestamp": "2026-09-10T10:10:59.423Z",
       "action": "UPDATE_users",
       "userId": "usr_6af1y3c",
@@ -4618,5 +4680,6 @@
       "timestamp": "2026-09-10T04:39:46.485Z",
       "ipAddress": "127.0.0.1"
     }
-  ]
+  ],
+  "messages": []
 }

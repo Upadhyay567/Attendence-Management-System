@@ -2005,7 +2005,7 @@ export const DB = {
     return this.data.announcements;
   },
 
-  addAnnouncement(title, content, category, author) {
+  addAnnouncement(title, content, category, author, targetUserId = null) {
     if (!this.data.announcements) {
       this.data.announcements = [];
     }
@@ -2015,10 +2015,39 @@ export const DB = {
       content,
       category,
       date: new Date().toISOString().split('T')[0],
-      author
+      author,
+      targetUserId: targetUserId || null,
+      createdAt: new Date().toISOString()
     };
     this.data.announcements.unshift(newAnn);
     this.save({ type: 'push', key: 'announcements', payload: newAnn });
+    return newAnn;
+  },
+
+  notifyEmployeeProfileChange(targetUserId, actionType, details, actorUser = null) {
+    const targetUser = this.getUser(targetUserId);
+    if (!targetUser) return null;
+    const actorName = actorUser ? actorUser.name : 'HR / Management';
+    let title = '📢 Profile Notification';
+    let category = 'Update';
+    if (actionType === 'approved') {
+      title = '✅ Profile Edit Approved';
+      category = 'General';
+    } else if (actionType === 'rejected') {
+      title = '❌ Profile Edit Rejected';
+      category = 'Urgent';
+    } else if (actionType === 'updated') {
+      title = '📢 Profile Updated by HR/Manager';
+      category = 'Update';
+    } else if (actionType === 'created') {
+      title = '🎉 Welcome! Account Created';
+      category = 'General';
+    } else if (actionType === 'document') {
+      title = '📄 Document Verification Status';
+      category = 'Update';
+    }
+
+    const newAnn = this.addAnnouncement(title, details, category, actorName, targetUserId);
     return newAnn;
   },
 
