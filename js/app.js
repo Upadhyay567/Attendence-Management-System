@@ -16810,6 +16810,8 @@ function updateNotificationsUI() {
     if (!countBadge || !listContainer) return;
 
     let notifications = [];
+    const readKey = `hs_read_notices_${user.id}`;
+    const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
 
     if (user.role === 'hr' || user.role === 'manager') {
       // 1. Leave Requests pending manager approval
@@ -16831,10 +16833,11 @@ function updateNotificationsUI() {
         const u = DB.getUser(lv.userId);
         notifications.push({
           id: lv.id,
-          title: `Leave: ${u ? u.name : 'Employee'}`,
+          title: `Leave Request: ${u ? u.name : 'Employee'}`,
           desc: `Requested ${lv.type} leave from ${lv.startDate} to ${lv.endDate}`,
           link: '#admin-approvals',
-          category: 'Request'
+          category: 'Request',
+          date: lv.startDate || new Date().toISOString().split('T')[0]
         });
       });
 
@@ -16848,7 +16851,8 @@ function updateNotificationsUI() {
           title: 'Shift Swap Request',
           desc: `${sender ? sender.name : 'Employee'} requested to swap shift with ${receiver ? receiver.name : 'Employee'}`,
           link: '#admin-approvals',
-          category: 'Swap'
+          category: 'Swap',
+          date: s.date || new Date().toISOString().split('T')[0]
         });
       });
     } else if (user.role === 'finance_manager') {
@@ -16859,32 +16863,41 @@ function updateNotificationsUI() {
           title: al.title,
           desc: al.desc,
           link: '#admin-finance',
-          category: 'Finance'
-        });
-      });
-    } else {
-      // Employee Notifications: Unread Announcements
-      const announcements = DB.getAnnouncements();
-      const readKey = `hs_read_notices_${user.id}`;
-      const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
-      const unread = announcements.filter(a => (!a.targetUserId || a.targetUserId === user.id) && !readIds.includes(a.id));
-
-      unread.forEach(a => {
-        notifications.push({
-          id: a.id,
-          title: a.title,
-          desc: a.content,
-          link: '#dashboard',
-          category: 'Announcement'
+          category: 'Finance',
+          date: new Date().toISOString().split('T')[0]
         });
       });
     }
+
+    // Common Unread Announcements for ALL roles (targeted or global)
+    const announcements = DB.getAnnouncements();
+    const unread = announcements.filter(a => (!a.targetUserId || a.targetUserId === user.id) && !readIds.includes(a.id));
+    unread.forEach(a => {
+      notifications.push({
+        id: a.id,
+        title: a.title,
+        desc: a.content,
+        link: (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard',
+        category: a.category || 'Announcement',
+        date: a.date || new Date().toISOString().split('T')[0],
+        author: a.author || ''
+      });
+    });
 
     const delKey = `hs_del_notices_${user.id}`;
     const delIds = JSON.parse(localStorage.getItem(delKey) || '[]');
 
     // Filter out deleted notifications
     notifications = notifications.filter(n => !delIds.includes(n.id));
+
+    // Sort notifications by category priority & date descending
+    const categoryPriority = { 'Urgent': 1, 'Request': 2, 'Swap': 3, 'Update': 4, 'Finance': 5, 'Announcement': 6, 'General': 7 };
+    notifications.sort((a, b) => {
+      const pA = categoryPriority[a.category] || 99;
+      const pB = categoryPriority[b.category] || 99;
+      if (pA !== pB) return pA - pB;
+      return (b.date || '').localeCompare(a.date || '');
+    });
 
     // Update Badge
     if (notifications.length > 0) {
