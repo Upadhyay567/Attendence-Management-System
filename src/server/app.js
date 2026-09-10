@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const { 
   User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog,
-  connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE 
+  connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE, mongoose 
 } = require('./config/db');
 
 const authRoutes = require('./routes/auth.routes');
