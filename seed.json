@@ -3887,7 +3887,7 @@
       "date": "2026-09-10",
       "shiftId": "sch_3ebecon",
       "checkIn": "10:09",
-      "checkOut": null,
+      "checkOut": "16:22",
       "status": "Late",
       "biometricUsed": "none",
       "location": "HS Group Worksite (28.6952, 77.1860)",
@@ -3897,7 +3897,8 @@
       "distance": 0.01,
       "facePhoto": null,
       "latitude": 28.695271115093313,
-      "longitude": 77.18607004817201
+      "longitude": 77.18607004817201,
+      "facePhotoOut": null
     },
     {
       "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
@@ -4175,6 +4176,16 @@
   "uploadHistory": [],
   "tickets": [],
   "announcements": [
+    {
+      "id": "ann_vng3djq",
+      "title": "ram navami",
+      "content": "ohfguiuhjb",
+      "category": "Holiday",
+      "date": "2026-09-10",
+      "author": "Abhishek Sharma",
+      "targetUserId": null,
+      "createdAt": "2026-09-10T10:51:08.708Z"
+    },
     {
       "id": "ann_pg30b2b",
       "title": "📢 Profile Updated by HR/Manager",
@@ -4634,6 +4645,38 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-10T10:52:37.814Z",
+      "action": "UPDATE_attendanceLogs",
+      "userId": "usr_john",
+      "userName": "John Doe",
+      "userRole": "employee",
+      "details": {
+        "checkOut": "16:22",
+        "biometricUsed": "none",
+        "facePhotoOut": null,
+        "status": "Late"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-10T10:51:08.735Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_vng3djq",
+        "title": "ram navami",
+        "content": "ohfguiuhjb",
+        "category": "Holiday",
+        "date": "2026-09-10",
+        "author": "Abhishek Sharma",
+        "targetUserId": null,
+        "createdAt": "2026-09-10T10:51:08.708Z"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-10T10:41:23.847Z",
       "action": "PUSH_announcements",

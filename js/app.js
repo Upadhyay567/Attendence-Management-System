@@ -564,6 +564,146 @@ const startApp = async () => {
       handleLiveReRender();
     }
   });
+
+  // Global Event Delegation for Notification Clicks across ALL roles & views
+  document.body.addEventListener('click', (e) => {
+    // 1. Header Bell Toggle Button click
+    const toggleBtn = e.target.closest('#btn-notifications-toggle');
+    if (toggleBtn) {
+      e.stopPropagation();
+      const dropdown = document.getElementById('notifications-dropdown');
+      if (dropdown) {
+        const isVisible = dropdown.style.display === 'block';
+        dropdown.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible && typeof updateNotificationsUI === 'function') {
+          updateNotificationsUI();
+        }
+      }
+      return;
+    }
+
+    // 2. Notification Row / Notice Card Click
+    const notifCard = e.target.closest('.notification-item-row, .notice-item, .admin-notice-item-card');
+    if (notifCard) {
+      // Ignore click if clicking internal action buttons (delete, mark as read)
+      if (e.target.closest('.btn-del-dropdown-notice, .btn-del-notice, .btn-mark-notice-read, .btn-delete-announcement')) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const id = notifCard.getAttribute('data-id');
+      const link = notifCard.getAttribute('data-link') || '#';
+      const category = notifCard.getAttribute('data-category') || 'Notification';
+
+      // Hide navbar dropdown if visible
+      const dropdown = document.getElementById('notifications-dropdown');
+      if (dropdown) dropdown.style.display = 'none';
+
+      const user = Auth.getCurrentUser();
+      let notifObj = null;
+
+      // Search DB announcements
+      const announcements = (typeof DB !== 'undefined' && DB.getAnnouncements) ? DB.getAnnouncements() : [];
+      const ann = announcements.find(a => a.id === id);
+      if (ann) {
+        notifObj = {
+          id: ann.id,
+          title: ann.title,
+          content: ann.content,
+          category: ann.category || 'Announcement',
+          date: ann.date,
+          author: ann.author,
+          link: link !== '#' ? link : '#dashboard'
+        };
+        if (user) {
+          const readKey = `hs_read_notices_${user.id}`;
+          const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');
+          if (!readIds.includes(id)) {
+            readIds.push(id);
+            localStorage.setItem(readKey, JSON.stringify(readIds));
+          }
+        }
+      }
+
+      // Search Leave Requests
+      if (!notifObj && typeof DB !== 'undefined' && DB.getLeaveRequests) {
+        const leaves = DB.getLeaveRequests();
+        const lv = leaves.find(l => l.id === id);
+        if (lv) {
+          const applicant = DB.getUser(lv.userId);
+          notifObj = {
+            id: lv.id,
+            title: `Leave Request: ${applicant ? applicant.name : 'Employee'}`,
+            content: `Applicant: ${applicant ? applicant.name : 'Employee'} (${applicant ? applicant.employeeId : ''})\nLeave Type: ${lv.type}\nDuration: ${lv.startDate} to ${lv.endDate}\nReason: ${lv.reason || 'No reason specified'}`,
+            category: 'Request',
+            date: lv.startDate,
+            author: applicant ? applicant.name : 'Employee',
+            link: '#admin-approvals'
+          };
+        }
+      }
+
+      // Search Shift Swaps
+      if (!notifObj && typeof DB !== 'undefined' && DB.data && DB.data.shiftSwaps) {
+        const sw = DB.data.shiftSwaps.find(s => s.id === id);
+        if (sw) {
+          const sender = DB.getUser(sw.senderId);
+          const receiver = DB.getUser(sw.receiverId);
+          notifObj = {
+            id: sw.id,
+            title: 'Shift Swap Request',
+            content: `Sender: ${sender ? sender.name : 'Employee'}\nReceiver: ${receiver ? receiver.name : 'Employee'}\nSwap Type: ${sw.swapType || 'both'}\nReason: ${sw.reason || 'No reason specified'}`,
+            category: 'Swap',
+            date: sw.date,
+            author: sender ? sender.name : 'Employee',
+            link: '#admin-approvals'
+          };
+        }
+      }
+
+      // Search Finance Alerts
+      if (!notifObj && typeof DB !== 'undefined' && DB.data && DB.data.financeAlerts) {
+        const al = DB.data.financeAlerts.find(a => a.id === id);
+        if (al) {
+          notifObj = {
+            id: al.id,
+            title: al.title,
+            content: al.desc,
+            category: 'Finance',
+            date: new Date().toISOString().split('T')[0],
+            author: 'Finance Department',
+            link: '#admin-finance'
+          };
+        }
+      }
+
+      // Fallback from DOM element content
+      if (!notifObj) {
+        const titleEl = notifCard.querySelector('strong');
+        const descEl = notifCard.querySelector('p');
+        notifObj = {
+          id,
+          title: titleEl ? titleEl.textContent.trim() : 'System Notification',
+          content: descEl ? descEl.textContent.trim() : 'Notification details',
+          category: category || 'Notification',
+          date: new Date().toISOString().split('T')[0],
+          author: 'System',
+          link: link || '#'
+        };
+      }
+
+      // Show Middle Full-Screen Message Modal!
+      if (typeof window.showNotificationDetailModal === 'function') {
+        window.showNotificationDetailModal(notifObj);
+      }
+
+      if (typeof updateNotificationsUI === 'function') {
+        updateNotificationsUI();
+      }
+    }
+  });
 };
 
 window.bootstrapperReady = startApp;
