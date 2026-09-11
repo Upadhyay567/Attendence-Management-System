@@ -1310,7 +1310,8 @@ function openUserModal(userId = null) {
             </select>
           </div>
           <div>
-            <!-- Visual alignment placeholder -->
+            <label class="form-label" for="editor-biometric-id">Biometric User ID <span style="color:var(--text-muted);font-size:11px">(Machine ID)</span></label>
+            <input class="form-input" type="text" id="editor-biometric-id" value="${isEdit ? Utils.escape(user.biometricUserId || user.biometricId || '') : ''}" placeholder="e.g. BIO-101">
           </div>
         </div>
         <!-- City & State Fields -->
@@ -1632,6 +1633,8 @@ function openUserModal(userId = null) {
     const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');
     const genderEl = document.getElementById('editor-gender');
     const gender = genderEl ? genderEl.value : (isEdit ? user.gender : 'Male');
+    const biometricEl = document.getElementById('editor-biometric-id');
+    const biometricUserId = biometricEl ? biometricEl.value.trim() : (isEdit ? (user.biometricUserId || user.biometricId || '') : '');
     const deptEl = document.getElementById('editor-dept');
     const department = deptEl ? deptEl.value.trim() : (isEdit ? user.department || 'Staff' : 'Staff');
     const desgEl = document.getElementById('editor-desg');
@@ -1718,7 +1721,7 @@ function openUserModal(userId = null) {
       const targetUserObj = DB.getUser(userId);
       const existingUserCloned = targetUserObj ? JSON.parse(JSON.stringify(targetUserObj)) : null;
       const updates = { 
-        name, employeeId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
+        name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -1762,7 +1765,7 @@ function openUserModal(userId = null) {
         return;
       }
       const hashedPass = Utils.hashPassword(finalPassword);
-      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, biometricUserId, biometricId: biometricUserId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
       if (createdUser) {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee portal profile was registered by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
       }

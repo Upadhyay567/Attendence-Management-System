@@ -986,6 +986,8 @@ export const DB = {
     const newUser = {
       id: newId,
       employeeId: user.employeeId || nextEmpId,
+      biometricUserId: user.biometricUserId || user.biometricId || null,
+      biometricId: user.biometricUserId || user.biometricId || null,
       scheduleId: user.scheduleId || null,
       preferredLocation: user.preferredLocation || null,
       baseSalary: null,
@@ -1010,6 +1012,8 @@ export const DB = {
       bankDetails: null,
       ...user
     };
+    if (newUser.biometricUserId && !newUser.biometricId) newUser.biometricId = newUser.biometricUserId;
+    if (newUser.biometricId && !newUser.biometricUserId) newUser.biometricUserId = newUser.biometricId;
     this.data.users.push(newUser);
     this.save({ type: 'push', key: 'users', payload: newUser });
     return newUser;
@@ -1036,6 +1040,12 @@ export const DB = {
   updateUser(id, updates) {
     const userIndex = this.data.users.findIndex(u => u.id === id);
     if (userIndex !== -1) {
+      if (updates.biometricUserId !== undefined && updates.biometricId === undefined) {
+        updates.biometricId = updates.biometricUserId;
+      }
+      if (updates.biometricId !== undefined && updates.biometricUserId === undefined) {
+        updates.biometricUserId = updates.biometricId;
+      }
       this.data.users[userIndex] = { ...this.data.users[userIndex], ...updates };
       this.save({ type: 'update', key: 'users', query: { id: id }, updates });
       return this.data.users[userIndex];
@@ -2035,6 +2045,8 @@ export const DB = {
       dob: 'Date of Birth',
       dateOfJoining: 'Date of Joining',
       gender: 'Gender',
+      biometricUserId: 'Biometric User ID',
+      biometricId: 'Biometric User ID',
       city: 'City',
       state: 'State',
       emergencyContact: 'Emergency Contact',

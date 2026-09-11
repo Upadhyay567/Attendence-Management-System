@@ -336,7 +336,10 @@ export function renderAdminUsers() {
                   ${profileBadgeHTML}
                 </div>
               </td>
-              <td>${Utils.escape(u.employeeId)}</td>
+              <td>
+                ${Utils.escape(u.employeeId)}
+                ${u.biometricUserId || u.biometricId ? `<br><span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:2px;" title="Biometric Machine ID">🪪 ${Utils.escape(u.biometricUserId || u.biometricId)}</span>` : ''}
+              </td>
               <td><code>••••••••</code></td>
               <td>${shiftNames}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
@@ -432,7 +435,8 @@ function openUserModal(userId = null) {
             </select>
           </div>
           <div>
-            <!-- Visual alignment placeholder -->
+            <label class="form-label" for="editor-biometric-id">Biometric User ID <span style="color:var(--text-muted);font-size:11px">(Machine ID)</span></label>
+            <input class="form-input" type="text" id="editor-biometric-id" value="${isEdit ? Utils.escape(user.biometricUserId || user.biometricId || '') : ''}" placeholder="e.g. BIO-101">
           </div>
         </div>
         <!-- City & State Fields -->
@@ -754,6 +758,8 @@ function openUserModal(userId = null) {
     const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');
     const genderEl = document.getElementById('editor-gender');
     const gender = genderEl ? genderEl.value : (isEdit ? user.gender : 'Male');
+    const biometricEl = document.getElementById('editor-biometric-id');
+    const biometricUserId = biometricEl ? biometricEl.value.trim() : (isEdit ? (user.biometricUserId || user.biometricId || '') : '');
     const deptEl = document.getElementById('editor-dept');
     const department = deptEl ? deptEl.value.trim() : (isEdit ? user.department || 'Staff' : 'Staff');
     const desgEl = document.getElementById('editor-desg');
@@ -826,7 +832,7 @@ function openUserModal(userId = null) {
       // Only include the password field in the update if the admin entered a new one.
       // If left blank, omit it so the existing hashed password on the server is preserved.
       const updates = {
-        name, employeeId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact,
+        name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact,
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -863,6 +869,11 @@ function openUserModal(userId = null) {
       }
 
       closeModal(overlay);
+      if (window.location.hash === '#admin-dashboard' && typeof renderAdminDashboard === 'function') {
+        await renderAdminDashboard();
+      } else if (typeof renderAdminUsers === 'function') {
+        renderAdminUsers();
+      }
       if (typeof showToastNotification === 'function') {
         showToastNotification('✅ Employee details updated successfully.', 'success');
       } else {
@@ -896,7 +907,7 @@ function openUserModal(userId = null) {
         }
         return;
       }
-      const createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      const createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, biometricUserId, biometricId: biometricUserId, email, phone, dob, username: finalUsername, password: finalPassword, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
       if (createdUser) {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee portal profile was registered by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
       }
