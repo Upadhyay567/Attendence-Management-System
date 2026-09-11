@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
-const MONGO_URL = process.env.MONGO_URL || 'mongodb+srv://hemant:Hemant%40123@cluster0.ffmxs9k.mongodb.net';
+const MONGO_URL = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
 const DB_NAME = process.env.DB_NAME || 'attendance_system';
 const LOCAL_DB_FILE = path.join(__dirname, '..', '..', '..', 'seed.json');
 
@@ -141,7 +141,12 @@ async function connectMongoose() {
   if (useLocalFileDB) return false;
   if (isMongoConnected) return true;
   try {
-    await mongoose.connect(`${MONGO_URL}/${DB_NAME}`, {
+    const rawUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+    const targetUrl = (rawUrl.includes('://') && rawUrl.includes('/', rawUrl.indexOf('://') + 3) && !rawUrl.endsWith('/'))
+      ? rawUrl
+      : `${rawUrl.replace(/\/$/, '')}/${DB_NAME}`;
+
+    await mongoose.connect(targetUrl, {
       connectTimeoutMS: 1500,
       serverSelectionTimeoutMS: 1500
     });
