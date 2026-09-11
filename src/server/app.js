@@ -13,6 +13,7 @@ const attendanceRoutes = require('./routes/attendance.routes');
 const createReportsRouter = require('./routes/reports.routes');
 const createAuditRouter = require('./routes/audit.routes');
 const { eventsRouter, broadcastSSEEvent } = require('./routes/events.routes');
+const biometricRoutes = require('./routes/biometric.routes');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use(express.static(ROOT_DIR));
 // Mount Modular Express API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', attendanceRoutes);
+app.use('/api', biometricRoutes);
 app.use('/api', createReportsRouter(User, AttendanceLog, getUseLocalFileDB));
 app.use('/api', createAuditRouter(AuditLog, getUseLocalFileDB));
 app.use('/api', eventsRouter);

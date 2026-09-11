@@ -11,6 +11,10 @@ const {
   connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE 
 } = require('./src/server/config/db');
 
+const {
+  startBiometricScheduler
+} = require('./src/server/biometric/biometricScheduler');
+
 const { broadcastSSEEvent, sseClients } = require('./src/server/routes/events.routes');
 const { recordAuditLog } = require('./src/server/middleware/audit.middleware');
 
@@ -67,6 +71,8 @@ function startExpressServer(portToTry) {
     console.log(`===================================================`);
 
     await syncLocalToMongoOnBoot();
+
+    startBiometricScheduler();
 
     try {
       fs.writeFileSync(path.join(__dirname, 'server-config.json'), JSON.stringify({ port: portToTry, started_at: Date.now() }));

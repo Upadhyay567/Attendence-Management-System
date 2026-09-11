@@ -13,6 +13,12 @@ let isSyncing = false;
 
 // Define Mongoose Schemas
 const UserSchema = new mongoose.Schema({
+  // ZKTeco K40 Pro User ID
+  biometricUserId: {
+    type: String,
+    default: null,
+    index: true
+  },
   id: { type: String, required: true, unique: true },
   employeeId: String,
   scheduleId: String,
@@ -47,6 +53,18 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const AttendanceLogSchema = new mongoose.Schema({
+  biometricDeviceId: String,
+
+  biometricUserId: String,
+
+  biometricPunchId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+
+  lastBiometricPunchAt: String,
   id: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
   date: { type: String, required: true },
