@@ -40,7 +40,8 @@
       "managerId": "usr_manager",
       "assignedById": "usr_6af1y3c",
       "photo": null,
-      "state": "Uttar Pradesh"
+      "state": "Uttar Pradesh",
+      "status": "Active"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9701",
@@ -810,48 +811,6 @@
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
-    },
-    {
-      "id": "usr_68s5s48",
-      "employeeId": "EMP1",
-      "biometricUserId": "HR0789",
-      "biometricId": "HR0789",
-      "scheduleId": "sch_3ebecon",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
-      "baseSalary": null,
-      "allowanceHRA": null,
-      "allowanceTravel": null,
-      "deductionPF": 1,
-      "deductionPT": null,
-      "deductionTDS": null,
-      "phone": "7856907641",
-      "email": "hemantupadhyay070@gmail.com",
-      "dob": "1994-10-11",
-      "address": "",
-      "city": "Mathura",
-      "gender": "Male",
-      "department": "Engineering",
-      "designation": "AI Software Engineer",
-      "dateOfJoining": "2026-09-15",
-      "emergencyContact": "9089765431",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
-      "name": "Ajay Tripathi",
-      "username": "ajaytripathi",
-      "password": "$hash$dea51775",
-      "role": "employee",
-      "scheduleIds": [
-        "sch_3ebecon"
-      ],
-      "shiftLocations": {
-        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
-      },
-      "managerId": "usr_manager",
-      "assignedById": "usr_6af1y3c",
-      "photo": null,
-      "state": "Uttar Pradesh"
     }
   ],
   "attendanceLogs": [
@@ -927,24 +886,6 @@
       "latitude": 28.695271115093313,
       "longitude": 77.18607004817201,
       "facePhotoOut": null
-    },
-    {
-      "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
-      "userId": "usr_sarah",
-      "date": "2026-09-10",
-      "shiftId": "sch_q8jji9v",
-      "checkIn": "15:47",
-      "checkOut": null,
-      "status": "Late",
-      "biometricUsed": "none",
-      "location": "chandani chowk",
-      "deviationFlag": false,
-      "justification": "",
-      "coords": "28.697800° N, 77.140800° E",
-      "distance": 0,
-      "facePhoto": null,
-      "latitude": 28.6978,
-      "longitude": 77.1408
     },
     {
       "id": "log_usr_john_2026-09-09_sch_3ebecon",
@@ -4323,19 +4264,19 @@
     }
   },
   "uploadHistory": [],
-  "tickets": [],
-  "announcements": [
+  "tickets": [
     {
-      "id": "ann_org4dc3",
-      "title": "🎉 Welcome! Account Created",
-      "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Abhishek Sharma.",
-      "category": "General",
+      "id": "tkt_wl1jdsb",
+      "userId": "usr_john",
+      "category": "Shift/Schedule",
+      "subject": "dzdf",
+      "message": "KLDGFHUKJMN",
       "date": "2026-09-15",
-      "author": "Abhishek Sharma",
-      "targetUserId": "usr_68s5s48",
-      "createdAt": "2026-09-15T04:49:36.868Z",
-      "link": "#user-management"
-    },
+      "status": "Open",
+      "responses": []
+    }
+  ],
+  "announcements": [
     {
       "id": "ann_org4dc3",
       "title": "🎉 Welcome! Account Created",
@@ -4369,28 +4310,6 @@
       "link": "#user-management"
     },
     {
-      "id": "ann_fbigupb",
-      "title": "🎉 Welcome! Account Created",
-      "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Manjit  kour Operations Manager.",
-      "category": "General",
-      "date": "2026-09-11",
-      "author": "Manjit  kour Operations Manager",
-      "targetUserId": "usr_bb1fc83",
-      "createdAt": "2026-09-11T10:37:15.387Z",
-      "link": "#user-management"
-    },
-    {
-      "id": "ann_7tmyngg",
-      "title": "📢 Profile Updated by HR/Manager",
-      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Gender: Female ➔ Male",
-      "category": "Update",
-      "date": "2026-09-10",
-      "author": "Abhishek Sharma",
-      "targetUserId": "usr_john",
-      "createdAt": "2026-09-10T13:38:51.585Z",
-      "link": "#user-management"
-    },
-    {
       "id": "ann_7tmyngg",
       "title": "📢 Profile Updated by HR/Manager",
       "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Gender: Female ➔ Male",
@@ -4420,16 +4339,6 @@
       "author": "Abhishek Sharma",
       "targetUserId": null,
       "createdAt": "2026-09-10T10:51:08.708Z"
-    },
-    {
-      "id": "ann_pg30b2b",
-      "title": "📢 Profile Updated by HR/Manager",
-      "content": "Your profile details (designation, salary, work shifts, or locations) have been updated by Abhishek Sharma.",
-      "category": "Update",
-      "date": "2026-09-10",
-      "author": "Abhishek Sharma",
-      "targetUserId": "usr_john",
-      "createdAt": "2026-09-10T10:41:23.766Z"
     },
     {
       "id": "ann_pg30b2b",

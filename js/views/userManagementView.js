@@ -8,7 +8,14 @@ import { showToastNotification } from '../components/toast.js';
 export function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
-  const users = DB.getUsers().filter(u => {
+  const rawUsers = DB.getUsers();
+  const seenUserIds = new Set();
+  const users = rawUsers.filter(u => {
+    if (!u) return false;
+    const uid = u.id || (u.employeeId ? String(u.employeeId).toUpperCase() : null);
+    if (uid && seenUserIds.has(uid)) return false;
+    if (uid) seenUserIds.add(uid);
+
     if (user.role === 'manager') {
       return u.managerId === user.id && u.role === 'employee';
     } else if (user.role === 'hr') {
@@ -896,10 +903,11 @@ function openUserModal(userId = null) {
       const finalPassword = Utils.hashPassword(rawPassword);
 
       const enteredId = employeeId.trim();
-      const existingUserById = DB.getUserByUsernameOrId(enteredId);
-      const existingUserByUsername = DB.getUserByUsernameOrId(finalUsername);
-      if ((existingUserById && (!isEdit || existingUserById.id !== user.id)) ||
-          (existingUserByUsername && (!isEdit || existingUserByUsername.id !== user.id))) {
+      const allUsersList = DB.getUsers();
+      const existingUserById = enteredId ? allUsersList.find(u => u && u.employeeId && String(u.employeeId).trim().toUpperCase() === enteredId.toUpperCase()) : null;
+      const existingUserByUsername = finalUsername ? allUsersList.find(u => u && u.username && String(u.username).trim().toLowerCase() === finalUsername.toLowerCase()) : null;
+      if ((existingUserById && (!isEdit || existingUserById.id !== (user ? user.id : null))) ||
+          (existingUserByUsername && (!isEdit || existingUserByUsername.id !== (user ? user.id : null)))) {
         await CustomDialog.alert('Employee ID / HR ID or Username is already taken.');
         if (submitBtn) {
           submitBtn.disabled = false;

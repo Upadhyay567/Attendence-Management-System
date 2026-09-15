@@ -818,6 +818,17 @@ export const DB = {
 
   // Users API
   getUsers() {
+    if (!this.data.users || !Array.isArray(this.data.users)) return [];
+    const seen = new Set();
+    const unique = [];
+    for (const u of this.data.users) {
+      if (!u) continue;
+      const key = u.id || (u.employeeId ? String(u.employeeId).trim().toUpperCase() : null);
+      if (key && seen.has(key)) continue;
+      if (key) seen.add(key);
+      unique.push(u);
+    }
+    this.data.users = unique;
     return this.data.users;
   },
 
@@ -972,13 +983,35 @@ export const DB = {
   },
 
   addUser(user) {
-    const newId = 'usr_' + Math.random().toString(36).substring(2, 9);
+    if (!user) return null;
+    if (user.id) {
+      const existing = this.data.users.find(u => u && u.id === user.id);
+      if (existing) {
+        Object.assign(existing, user);
+        this.save({ type: 'update', key: 'users', query: { id: existing.id }, updates: user });
+        return existing;
+      }
+    }
+    if (user.employeeId) {
+      const empKey = String(user.employeeId).trim().toUpperCase();
+      const existing = this.data.users.find(u => u && u.employeeId && String(u.employeeId).trim().toUpperCase() === empKey);
+      if (existing) {
+        Object.assign(existing, user);
+        this.save({ type: 'update', key: 'users', query: { id: existing.id }, updates: user });
+        return existing;
+      }
+    }
+
+    const newId = user.id || ('usr_' + Math.random().toString(36).substring(2, 9));
     let maxId = 99;
     this.data.users.forEach(u => {
-      if (u.employeeId && u.employeeId.startsWith('EMP')) {
-        const num = parseInt(u.employeeId.substring(3), 10);
-        if (!isNaN(num) && num > maxId) {
-          maxId = num;
+      if (u && u.employeeId) {
+        const numMatch = String(u.employeeId).match(/\d+/);
+        if (numMatch) {
+          const num = parseInt(numMatch[0], 10);
+          if (!isNaN(num) && num > maxId) {
+            maxId = num;
+          }
         }
       }
     });

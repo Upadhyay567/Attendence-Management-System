@@ -900,7 +900,14 @@ export async function renderAdminDashboard() {
 function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
-  const users = DB.getUsers().filter(u => {
+  const rawUsers = DB.getUsers();
+  const seenUserIds = new Set();
+  const users = rawUsers.filter(u => {
+    if (!u) return false;
+    const uid = u.id || (u.employeeId ? String(u.employeeId).toUpperCase() : null);
+    if (uid && seenUserIds.has(uid)) return false;
+    if (uid) seenUserIds.add(uid);
+
     if (user.role === 'manager' || user.role === 'hr') {
       return true; // show all employee, hr, and manager profiles, including their own!
     } else if (user.role === 'finance_manager') {

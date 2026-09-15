@@ -29,6 +29,20 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
 
   if (type === 'push' && payload) {
     if (Array.isArray(stateObj[key])) {
+      if (payload && payload.id) {
+        const existingIdx = stateObj[key].findIndex(item => item && item.id === payload.id);
+        if (existingIdx !== -1) {
+          stateObj[key][existingIdx] = { ...stateObj[key][existingIdx], ...payload };
+          return;
+        }
+      }
+      if (key === 'users' && payload && payload.employeeId) {
+        const existingIdx = stateObj[key].findIndex(item => item && item.employeeId && String(item.employeeId).toUpperCase() === String(payload.employeeId).toUpperCase());
+        if (existingIdx !== -1) {
+          stateObj[key][existingIdx] = { ...stateObj[key][existingIdx], ...payload };
+          return;
+        }
+      }
       stateObj[key].unshift(payload);
     }
   } else if (type === 'update' && query && updates) {
