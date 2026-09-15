@@ -1371,10 +1371,15 @@ export const DB = {
 
   getUserShiftLocation(user, shiftId) {
     if (!user) return null;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const res = this.resolveUserShiftForDate(user, todayStr, shiftId);
+    if (res && res.preferredLocation) {
+      return res.preferredLocation;
+    }
     if (user.shiftLocations && shiftId && user.shiftLocations[shiftId]) {
       return user.shiftLocations[shiftId];
     }
-    return user.preferredLocation || null;
+    return user.preferredLocation || (res && res.schedule ? res.schedule.location : null) || 'Kohat Enclave, Pitampura, Delhi';
   },
 
   getSchedules() {
@@ -1965,10 +1970,12 @@ export const DB = {
             receiver.scheduleId = tempSched;
           }
           if (type === 'both' || type === 'location') {
-            const loc1 = sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
-            const loc2 = receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+            const loc1 = (sender.shiftLocations && sender.scheduleId && sender.shiftLocations[sender.scheduleId]) || sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+            const loc2 = (receiver.shiftLocations && receiver.scheduleId && receiver.shiftLocations[receiver.scheduleId]) || receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
             sender.preferredLocation = loc2;
             receiver.preferredLocation = loc1;
+            if (sender.shiftLocations && sender.scheduleId) sender.shiftLocations[sender.scheduleId] = loc2;
+            if (receiver.shiftLocations && receiver.scheduleId) receiver.shiftLocations[receiver.scheduleId] = loc1;
           }
         }
       }

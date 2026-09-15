@@ -12529,10 +12529,13 @@ function renderAdminApprovals() {
             ${allSwaps.map(s => {
               const sender = DB.getUser(s.senderId);
               const receiver = DB.getUser(s.receiverId);
-              const senderSched = sender ? DB.getSchedule(sender.scheduleId) : null;
-              const receiverSched = receiver ? DB.getSchedule(receiver.scheduleId) : null;
-              const senderLoc = senderSched && senderSched.location ? senderSched.location : (sender ? (sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
-              const receiverLoc = receiverSched && receiverSched.location ? receiverSched.location : (receiver ? (receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+              const todayStr = new Date().toISOString().split('T')[0];
+              const senderShiftRes = sender ? DB.resolveUserShiftForDate(sender, todayStr) : null;
+              const receiverShiftRes = receiver ? DB.resolveUserShiftForDate(receiver, todayStr) : null;
+              const senderSched = senderShiftRes ? senderShiftRes.schedule : (sender ? DB.getSchedule(sender.scheduleId) : null);
+              const receiverSched = receiverShiftRes ? receiverShiftRes.schedule : (receiver ? DB.getSchedule(receiver.scheduleId) : null);
+              const senderLoc = (senderShiftRes && senderShiftRes.preferredLocation) || (sender && sender.shiftLocations && senderSched && sender.shiftLocations[senderSched.id]) || (sender ? sender.preferredLocation : null) || (senderSched ? senderSched.location : 'Kohat Enclave, Pitampura, Delhi');
+              const receiverLoc = (receiverShiftRes && receiverShiftRes.preferredLocation) || (receiver && receiver.shiftLocations && receiverSched && receiver.shiftLocations[receiverSched.id]) || (receiver ? receiver.preferredLocation : null) || (receiverSched ? receiverSched.location : 'Kohat Enclave, Pitampura, Delhi');
               const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
               let statusClass = 'badge-pending';
               if (s.status === 'Pending Manager') statusClass = 'badge-approved';
@@ -16382,7 +16385,10 @@ function openStaffDetailModal(userId) {
 function renderEmployeeSwapsView() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
-  const userSchedule = DB.getSchedule(user.scheduleId);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const userShiftRes = DB.resolveUserShiftForDate(user, todayStr);
+  const userSchedule = userShiftRes.schedule || (userShiftRes.scheduleId ? DB.getSchedule(userShiftRes.scheduleId) : (user ? DB.getSchedule(user.scheduleId) : null));
+  const userLoc = (userShiftRes && userShiftRes.preferredLocation) || (user && user.shiftLocations && userSchedule && user.shiftLocations[userSchedule.id]) || (user ? user.preferredLocation : null) || (userSchedule ? userSchedule.location : 'Not Assigned');
 
   main.innerHTML = `
     <div class="content-header">
@@ -16396,7 +16402,7 @@ function renderEmployeeSwapsView() {
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Request a Shift Swap</h3></div>
           <div style="background:rgba(251,191,36,0.05);border-left:4px solid var(--primary);padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;line-height:1.4">
-            <strong>My Current Shift:</strong> ${userSchedule ? `${Utils.escape(userSchedule.name)} (${formatTime12h(userSchedule.startTime)} - ${formatTime12h(userSchedule.endTime)}) at <span style="color:var(--primary);font-weight:600">${Utils.escape(userSchedule.location || 'Not Assigned')}</span>` : '<span style="color:var(--text-muted)">Not Assigned</span>'}
+            <strong>My Current Shift:</strong> ${userSchedule ? `${Utils.escape(userSchedule.name)} (${formatTime12h(userSchedule.startTime)} - ${formatTime12h(userSchedule.endTime)}) at <span style="color:var(--primary);font-weight:600">${Utils.escape(userLoc)}</span>` : '<span style="color:var(--text-muted)">Not Assigned</span>'}
           </div>
           <form id="shift-swap-request-form">
             <div class="form-group">
@@ -16478,8 +16484,10 @@ function renderEmployeeSwapsView() {
         return;
       }
       validatedCoworkerId = coworker.id;
-      const s = DB.getSchedule(coworker.scheduleId);
-      const coworkerLoc = s && s.location ? s.location : (coworker.preferredLocation || 'Not Assigned');
+      const todayStr = new Date().toISOString().split('T')[0];
+      const coworkerShiftRes = DB.resolveUserShiftForDate(coworker, todayStr);
+      const s = coworkerShiftRes.schedule || (coworkerShiftRes.scheduleId ? DB.getSchedule(coworkerShiftRes.scheduleId) : (coworker ? DB.getSchedule(coworker.scheduleId) : null));
+      const coworkerLoc = (coworkerShiftRes && coworkerShiftRes.preferredLocation) || (coworker && coworker.shiftLocations && s && coworker.shiftLocations[s.id]) || (coworker ? coworker.preferredLocation : null) || (s ? s.location : 'Not Assigned');
       
       previewDiv.style.display = 'block';
       previewDiv.innerHTML = `
@@ -16525,8 +16533,10 @@ function renderEmployeeSwapsData(userId) {
 
   receivedTbody.innerHTML = received.length === 0 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No received requests.</td></tr>` : received.map(s => {
     const sender = DB.getUser(s.senderId);
-    const senderSchedule = sender ? DB.getSchedule(sender.scheduleId) : null;
-    const senderLoc = senderSchedule && senderSchedule.location ? senderSchedule.location : (sender ? (sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const senderShiftRes = sender ? DB.resolveUserShiftForDate(sender, todayStr) : null;
+    const senderSchedule = senderShiftRes ? senderShiftRes.schedule : (sender ? DB.getSchedule(sender.scheduleId) : null);
+    const senderLoc = (senderShiftRes && senderShiftRes.preferredLocation) || (sender && sender.shiftLocations && senderSchedule && sender.shiftLocations[senderSchedule.id]) || (sender ? sender.preferredLocation : null) || (senderSchedule ? senderSchedule.location : 'Kohat Enclave, Pitampura, Delhi');
     const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
     let statusClass = 'badge-pending';
     if (s.status === 'Pending Manager') statusClass = 'badge-approved';
@@ -16560,8 +16570,10 @@ function renderEmployeeSwapsData(userId) {
 
   sentTbody.innerHTML = sent.length === 0 ? `<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No sent requests.</td></tr>` : sent.map(s => {
     const receiver = DB.getUser(s.receiverId);
-    const receiverSchedule = receiver ? DB.getSchedule(receiver.scheduleId) : null;
-    const receiverLoc = receiverSchedule && receiverSchedule.location ? receiverSchedule.location : (receiver ? (receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : 'Kohat Enclave, Pitampura, Delhi');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const receiverShiftRes = receiver ? DB.resolveUserShiftForDate(receiver, todayStr) : null;
+    const receiverSchedule = receiverShiftRes ? receiverShiftRes.schedule : (receiver ? DB.getSchedule(receiver.scheduleId) : null);
+    const receiverLoc = (receiverShiftRes && receiverShiftRes.preferredLocation) || (receiver && receiver.shiftLocations && receiverSchedule && receiver.shiftLocations[receiverSchedule.id]) || (receiver ? receiver.preferredLocation : null) || (receiverSchedule ? receiverSchedule.location : 'Kohat Enclave, Pitampura, Delhi');
     const modeLabel = s.swapType === 'both' ? 'Shift & Location' : (s.swapType === 'location' ? 'Location Only' : 'Shift Only');
     let statusClass = 'badge-pending';
     if (s.status === 'Pending Manager') statusClass = 'badge-approved';

@@ -1,6 +1,48 @@
 {
   "users": [
     {
+      "id": "usr_68s5s48",
+      "employeeId": "EMP1",
+      "biometricUserId": "HR0789",
+      "biometricId": "HR0789",
+      "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "baseSalary": null,
+      "allowanceHRA": null,
+      "allowanceTravel": null,
+      "deductionPF": 1,
+      "deductionPT": null,
+      "deductionTDS": null,
+      "phone": "7856907641",
+      "email": "hemantupadhyay070@gmail.com",
+      "dob": "1994-10-11",
+      "address": "",
+      "city": "Mathura",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "AI Software Engineer",
+      "dateOfJoining": "2026-09-15",
+      "emergencyContact": "9089765431",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "name": "Ajay Tripathi",
+      "username": "ajaytripathi",
+      "password": "$hash$dea51775",
+      "role": "employee",
+      "scheduleIds": [
+        "sch_3ebecon"
+      ],
+      "shiftLocations": {
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "managerId": "usr_manager",
+      "assignedById": "usr_6af1y3c",
+      "photo": null,
+      "state": "Uttar Pradesh"
+    },
+    {
       "_id": "6a8d3b8e94e235d28a4e9701",
       "id": "usr_admin",
       "employeeId": "HR100",
@@ -768,6 +810,48 @@
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+    },
+    {
+      "id": "usr_68s5s48",
+      "employeeId": "EMP1",
+      "biometricUserId": "HR0789",
+      "biometricId": "HR0789",
+      "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "baseSalary": null,
+      "allowanceHRA": null,
+      "allowanceTravel": null,
+      "deductionPF": 1,
+      "deductionPT": null,
+      "deductionTDS": null,
+      "phone": "7856907641",
+      "email": "hemantupadhyay070@gmail.com",
+      "dob": "1994-10-11",
+      "address": "",
+      "city": "Mathura",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "AI Software Engineer",
+      "dateOfJoining": "2026-09-15",
+      "emergencyContact": "9089765431",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "bankDetails": null,
+      "name": "Ajay Tripathi",
+      "username": "ajaytripathi",
+      "password": "$hash$dea51775",
+      "role": "employee",
+      "scheduleIds": [
+        "sch_3ebecon"
+      ],
+      "shiftLocations": {
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "managerId": "usr_manager",
+      "assignedById": "usr_6af1y3c",
+      "photo": null,
+      "state": "Uttar Pradesh"
     }
   ],
   "attendanceLogs": [
@@ -3953,6 +4037,24 @@
       "biometricUsed": "none",
       "location": "Kohat Enclave, Pitampura, Delhi",
       "__v": 0
+    },
+    {
+      "id": "log_usr_john_2026-09-15_sch_3ebecon",
+      "userId": "usr_john",
+      "date": "2026-09-15",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "10:12",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.695171° N, 77.186003° E",
+      "distance": 0,
+      "facePhoto": null,
+      "latitude": 28.695170581245563,
+      "longitude": 77.18600272930604
     }
   ],
   "leaveRequests": [
@@ -4056,6 +4158,17 @@
     }
   ],
   "shiftSwaps": [
+    {
+      "id": "swap_l53fvn8",
+      "senderId": "usr_68s5s48",
+      "receiverId": "usr_john",
+      "reason": "EMERGENCY",
+      "swapType": "both",
+      "status": "Pending Coworker",
+      "date": "2026-09-15",
+      "managerComment": "",
+      "coworkerComment": ""
+    },
     {
       "_id": "6a8d3b8e94e235d28a4e9712",
       "id": "swap_1",
@@ -4212,6 +4325,28 @@
   "uploadHistory": [],
   "tickets": [],
   "announcements": [
+    {
+      "id": "ann_org4dc3",
+      "title": "🎉 Welcome! Account Created",
+      "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Abhishek Sharma.",
+      "category": "General",
+      "date": "2026-09-15",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-15T04:49:36.868Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_org4dc3",
+      "title": "🎉 Welcome! Account Created",
+      "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Abhishek Sharma.",
+      "category": "General",
+      "date": "2026-09-15",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-15T04:49:36.868Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_yucyot1",
       "title": "📢 Profile Updated by HR/Manager",
@@ -4745,6 +4880,94 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-15T04:58:50.895Z",
+      "action": "PUSH_shiftSwaps",
+      "userId": "usr_68s5s48",
+      "userName": "Ajay Tripathi",
+      "userRole": "employee",
+      "details": {
+        "id": "swap_l53fvn8",
+        "senderId": "usr_68s5s48",
+        "receiverId": "usr_john",
+        "reason": "EMERGENCY",
+        "swapType": "both",
+        "status": "Pending Coworker",
+        "date": "2026-09-15",
+        "managerComment": "",
+        "coworkerComment": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-15T04:49:37.020Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_org4dc3",
+        "title": "🎉 Welcome! Account Created",
+        "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Abhishek Sharma.",
+        "category": "General",
+        "date": "2026-09-15",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-15T04:49:36.868Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-15T04:49:36.968Z",
+      "action": "PUSH_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "usr_68s5s48",
+        "employeeId": "EMP1",
+        "biometricUserId": "HR0789",
+        "biometricId": "HR0789",
+        "scheduleId": "sch_3ebecon",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "baseSalary": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "phone": "7856907641",
+        "email": "hemantupadhyay070@gmail.com",
+        "dob": "1994-10-11",
+        "address": "",
+        "city": "Mathura",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "documents": [],
+        "resume": null,
+        "aadhar": null,
+        "bankDetails": null,
+        "name": "Ajay Tripathi",
+        "username": "ajaytripathi",
+        "password": "$hash$dea51775",
+        "role": "employee",
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "photo": null,
+        "state": "Uttar Pradesh"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-11T13:24:19.093Z",
       "action": "PULL_leaveRequests",
