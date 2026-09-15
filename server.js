@@ -18,6 +18,14 @@ const {
 const { broadcastSSEEvent, sseClients } = require('./src/server/routes/events.routes');
 const { recordAuditLog } = require('./src/server/middleware/audit.middleware');
 
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Server Uncaught Exception caught (bypassed process crash):', err ? (err.message || err) : 'Unknown error');
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️ Server Unhandled Rejection caught (bypassed process crash):', reason ? (reason.message || reason) : 'Unknown reason');
+});
+
 const PORT = parseInt(process.env.PORT || '8080', 10);
 
 function getLocalNetworkIP() {

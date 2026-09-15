@@ -32,7 +32,19 @@ async function createDeviceConnection() {
     'tcp'
   );
 
+  try {
+    if (zk.zklibudp && zk.zklibudp.socket) {
+      zk.zklibudp.socket.on('error', () => {});
+    }
+  } catch (_) {}
+
   await zk.createSocket();
+
+  try {
+    if (zk.zklibudp && zk.zklibudp.socket) {
+      zk.zklibudp.socket.on('error', () => {});
+    }
+  } catch (_) {}
 
   console.log(
     `✅ Biometric device connected: ${DEVICE.name} ${DEVICE.ip}:${DEVICE.port}`
