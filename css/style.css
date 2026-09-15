@@ -3326,13 +3326,13 @@ body.light-theme .equify-filter-select option {
 }
 
 .custom-dialog-card {
-  max-width: 450px;
+  max-width: 480px;
   width: 92%;
-  padding: 32px 28px;
-  background: linear-gradient(150deg, #1e293b 0%, #0f172a 100%) !important;
+  padding: 36px 30px;
+  background: linear-gradient(160deg, #192033 0%, #0d121f 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 35px rgba(99, 102, 241, 0.18) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), 0 0 45px rgba(16, 185, 129, 0.15) !important;
   animation: customDialogScaleUp 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   color: #f8fafc !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -3346,9 +3346,9 @@ body.light-theme .equify-filter-select option {
 }
 
 .custom-dialog-icon-badge {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3362,8 +3362,10 @@ body.light-theme .equify-filter-select option {
 }
 
 .custom-dialog-icon-alert {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.04) !important;
+  color: #f8fafc !important;
 }
 
 .custom-dialog-icon-confirm {

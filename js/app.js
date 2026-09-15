@@ -424,7 +424,21 @@ const Translations = {
     leaves: "Leave Requests",
     payslips: "My Payslips",
     profile: "My Profile",
-    settings: "Settings"
+    settings: "Settings",
+    settingsTitle: "System Settings",
+    settingsSub: "Change appearance theme gradients, system language, and system mode.",
+    appearanceTitle: "System Mode & Appearance",
+    darkTheme: "Dark Mode",
+    darkThemeDesc: "Sunset burgundy & gold dark theme",
+    lightTheme: "Light Mode",
+    lightThemeDesc: "Sunrise cream & gold light theme",
+    langTitle: "Interface Language",
+    saveLangBtn: "Apply Language & Mode",
+    versionTitle: "Build & Version Checks",
+    versionBtn: "Check for Version Updates",
+    sessionTitle: "Account Session",
+    logoutBtn: "Log Out Account",
+    langSuccess: "Language updated successfully / भाषा सफलतापूर्वक अपडेट की गई"
   },
   hi: {
     brand: "एचएस ग्रुप दिल्ली",
@@ -438,7 +452,21 @@ const Translations = {
     leaves: "छुट्टी के अनुरोध",
     payslips: "मेरी वेतन पर्ची",
     profile: "मेरी प्रोफाइल",
-    settings: "सेटिंग्स"
+    settings: "सेटिंग्स",
+    settingsTitle: "सिस्टम सेटिंग्स",
+    settingsSub: "रंग थीम बदलें, भाषा अपडेट करें और वर्ज़न जांचें।",
+    appearanceTitle: "सिस्टम मोड और स्वरूप",
+    darkTheme: "डार्क मोड",
+    darkThemeDesc: "सनसेट बर्गंडी और गोल्ड डार्क थीम",
+    lightTheme: "लाइट मोड",
+    lightThemeDesc: "सनराइज क्रीम और गोल्ड लाइट थीम",
+    langTitle: "इंटरफेस भाषा",
+    saveLangBtn: "भाषा और मोड लागू करें",
+    versionTitle: "बिल्ड एवं वर्ज़न जांच",
+    versionBtn: "वर्ज़न अपडेट जांचें",
+    sessionTitle: "खाता सत्र",
+    logoutBtn: "लॉग आउट करें",
+    langSuccess: "भाषा सफलतापूर्वक अपडेट की गई / Language updated successfully"
   }
 };
 
@@ -5076,29 +5104,30 @@ async function handleClockOut(userId, shiftId = null) {
 function renderSettingsView() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
+  const labels = Translations[currentLang] || Translations.en;
 
   main.innerHTML = `
     <div class="content-header">
       <div>
-        <h1 class="content-title">System Settings</h1>
-        <div class="content-subtitle">Change theme color gradients, update languages, and check builds.</div>
+        <h1 class="content-title">${labels.settingsTitle}</h1>
+        <div class="content-subtitle">${labels.settingsSub}</div>
       </div>
     </div>
 
     <div class="content-body">
       <div class="settings-section-grid">
-        <!-- Theme Card (Cleaned Solar labels) -->
+        <!-- Appearance Theme Card -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">Appearance Theme</h3>
+            <h3 class="card-panel-title">${labels.appearanceTitle}</h3>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px">
             <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:rgba(255,255,255,0.01)">
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:18px">🌇</span>
                 <div>
-                  <strong style="display:block;font-size:13px">Dark Mode</strong>
-                  <span style="font-size:11px;color:var(--text-muted)">Sunset burgundy/gold theme</span>
+                  <strong style="display:block;font-size:13px">${labels.darkTheme}</strong>
+                  <span style="font-size:11px;color:var(--text-muted)">${labels.darkThemeDesc}</span>
                 </div>
               </div>
               <input type="radio" name="settings-theme" value="dark" ${activeTheme === 'dark' ? 'checked' : ''}>
@@ -5108,8 +5137,8 @@ function renderSettingsView() {
               <div style="display:flex;align-items:center;gap:10px">
                 <span style="font-size:18px">🌅</span>
                 <div>
-                  <strong style="display:block;font-size:13px">Light Mode</strong>
-                  <span style="font-size:11px;color:var(--text-muted)">Sunrise cream/gold theme</span>
+                  <strong style="display:block;font-size:13px">${labels.lightTheme}</strong>
+                  <span style="font-size:11px;color:var(--text-muted)">${labels.lightThemeDesc}</span>
                 </div>
               </div>
               <input type="radio" name="settings-theme" value="light" ${activeTheme === 'light' ? 'checked' : ''}>
@@ -5120,28 +5149,28 @@ function renderSettingsView() {
         <!-- Language Card -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">Interface Language</h3>
+            <h3 class="card-panel-title">${labels.langTitle}</h3>
           </div>
           <div class="form-group">
             <select class="form-input" id="settings-lang-select" style="padding:12px">
-              <option value="en" ${currentLang === 'en' ? 'selected' : ''}>English (US)</option>
-              <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>Hindi (हिन्दी)</option>
+              <option value="en" ${currentLang === 'en' ? 'selected' : ''}>🇺🇸 English (US)</option>
+              <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>🇮🇳 Hindi (हिन्दी)</option>
             </select>
           </div>
-          <button class="btn btn-secondary" id="btn-save-lang" style="font-size:13px">Change Language</button>
+          <button class="btn btn-secondary" id="btn-save-lang" style="font-size:13px">${labels.saveLangBtn}</button>
         </div>
 
         <!-- Version updates checker -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">Build & Version Checks</h3>
+            <h3 class="card-panel-title">${labels.versionTitle}</h3>
           </div>
           <div style="font-size:14px;margin-bottom:15px">
             <div>Current Version: <strong>v1.3.0</strong></div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Last verified: Today</div>
           </div>
           
-          <button class="btn" id="btn-check-version" style="font-size:13px">Check for Version Updates</button>
+          <button class="btn" id="btn-check-version" style="font-size:13px">${labels.versionBtn}</button>
           
           <div id="version-check-status" style="display:none;margin-top:15px;font-size:12px;color:var(--text-secondary);align-items:center;gap:8px"></div>
         </div>
@@ -5149,7 +5178,7 @@ function renderSettingsView() {
         <!-- Account Session Card -->
         <div class="card-panel">
           <div class="card-panel-header">
-            <h3 class="card-panel-title">Account Session</h3>
+            <h3 class="card-panel-title">${labels.sessionTitle}</h3>
           </div>
           <div style="font-size:14px;margin-bottom:15px;display:flex;flex-direction:column;gap:8px">
             <div>Logged in as: <strong>${Utils.escape(user ? user.name : 'Unknown')}</strong></div>
@@ -5160,7 +5189,7 @@ function renderSettingsView() {
             <svg style="width:16px;height:16px;fill:currentColor" viewBox="0 0 24 24">
               <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
             </svg>
-            Log Out Account
+            ${labels.logoutBtn}
           </button>
         </div>
       </div>
@@ -5175,38 +5204,45 @@ function renderSettingsView() {
     });
   });
 
-  document.getElementById('btn-save-lang').addEventListener('click', () => {
+  document.getElementById('btn-save-lang').addEventListener('click', async () => {
     const val = document.getElementById('settings-lang-select').value;
     currentLang = val;
     localStorage.setItem('hs_app_lang', currentLang);
+    applyGlobalTheme();
     renderAppShell();
     renderSettingsView();
-    alert('Language updated successfully / भाषा सफलतापूर्वक अपडेट की गई');
+    const curLabels = Translations[currentLang] || Translations.en;
+    await CustomDialog.alert(curLabels.langSuccess);
   });
 
   const verBtn = document.getElementById('btn-check-version');
   const verStatus = document.getElementById('version-check-status');
 
-  verBtn.addEventListener('click', () => {
-    verBtn.disabled = true;
-    verStatus.style.display = 'flex';
-    verStatus.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulseScan 1s infinite;display:inline-block"></span> Checking HS Group server hubs...`;
-    
-    setTimeout(() => {
-      verStatus.innerHTML = `✓ System is up to date. Latest version <strong>v1.3.0</strong> is active.`;
-      verBtn.disabled = false;
-    }, 2000);
-  });
+  if (verBtn) {
+    verBtn.addEventListener('click', () => {
+      verBtn.disabled = true;
+      verStatus.style.display = 'flex';
+      verStatus.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulseScan 1s infinite;display:inline-block"></span> Checking HS Group server hubs...`;
+      
+      setTimeout(() => {
+        verStatus.innerHTML = `✓ System is up to date. Latest version <strong>v1.3.0</strong> is active.`;
+        verBtn.disabled = false;
+      }, 2000);
+    });
+  }
 
-  document.getElementById('btn-settings-logout').addEventListener('click', () => {
-    Auth.logout();
-    sessionStorage.removeItem('hs_pending_auto_checkin_time');
-    sessionStorage.removeItem('hs_mock_location');
-    sessionStorage.removeItem('hs_current_resolved_coords');
-    sessionStorage.removeItem('hs_current_resolved_distance');
-    sessionStorage.removeItem('hs_current_resolved_in_range');
-    window.location.hash = '#login';
-  });
+  const logoutBtn = document.getElementById('btn-settings-logout');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      Auth.logout();
+      sessionStorage.removeItem('hs_pending_auto_checkin_time');
+      sessionStorage.removeItem('hs_mock_location');
+      sessionStorage.removeItem('hs_current_resolved_coords');
+      sessionStorage.removeItem('hs_current_resolved_distance');
+      sessionStorage.removeItem('hs_current_resolved_in_range');
+      window.location.hash = '#login';
+    });
+  }
 }
 
 // -------------------------------------------------------------
