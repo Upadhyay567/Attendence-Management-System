@@ -33,6 +33,34 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.body).toHaveProperty('user');
       expect(response.body.user.role).toBe('hr');
     });
+
+    it('should reject Manager credentials when attempting to log in via HR Portal', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'manager', password: 'ManagerPassword123!', role: 'hr' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toContain('Access Denied');
+    });
+
+    it('should reject HR credentials when attempting to log in via Manager Portal', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'Surya@123', role: 'manager' });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toContain('Access Denied');
+    });
+
+    it('should login successfully via Manager Portal with valid Manager credentials', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'manager', password: 'Surya@123', role: 'manager' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('token');
+      expect(response.body.user.role).toBe('manager');
+    });
   });
 
   describe('Geofence Verification via POST /api/mutate-granular', () => {

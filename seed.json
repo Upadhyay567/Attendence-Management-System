@@ -1,48 +1,6 @@
 {
   "users": [
     {
-      "id": "usr_bb1fc83",
-      "employeeId": "EMP00001",
-      "biometricUserId": "1",
-      "biometricId": "1",
-      "scheduleId": "sch_q8jji9v",
-      "preferredLocation": "chandani chowk",
-      "baseSalary": null,
-      "allowanceHRA": null,
-      "allowanceTravel": null,
-      "deductionPF": null,
-      "deductionPT": null,
-      "deductionTDS": null,
-      "phone": "+918533920083",
-      "email": "hemantupadhyay070@gmail.com",
-      "dob": "2000-01-01",
-      "address": "",
-      "city": "Mathura",
-      "gender": "Male",
-      "department": "Engineering",
-      "designation": "Software Engineer",
-      "dateOfJoining": "2026-09-11",
-      "emergencyContact": "9876543211",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
-      "name": "Ajay Tripathi",
-      "username": "ajaytripathi",
-      "password": "$hash$2c7c47e3",
-      "role": "employee",
-      "scheduleIds": [
-        "sch_q8jji9v"
-      ],
-      "shiftLocations": {
-        "sch_q8jji9v": "chandani chowk"
-      },
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
-      "photo": null,
-      "state": "Uttar Pradesh"
-    },
-    {
       "_id": "6a8d3b8e94e235d28a4e9701",
       "id": "usr_admin",
       "employeeId": "HR100",
@@ -810,48 +768,6 @@
       "managerId": "",
       "assignedById": "",
       "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
-    },
-    {
-      "id": "usr_bb1fc83",
-      "employeeId": "EMP00001",
-      "biometricUserId": "1",
-      "biometricId": "1",
-      "scheduleId": "sch_q8jji9v",
-      "preferredLocation": "chandani chowk",
-      "baseSalary": null,
-      "allowanceHRA": null,
-      "allowanceTravel": null,
-      "deductionPF": null,
-      "deductionPT": null,
-      "deductionTDS": null,
-      "phone": "+918533920083",
-      "email": "hemantupadhyay070@gmail.com",
-      "dob": "2000-01-01",
-      "address": "",
-      "city": "Mathura",
-      "gender": "Male",
-      "department": "Engineering",
-      "designation": "Software Engineer",
-      "dateOfJoining": "2026-09-11",
-      "emergencyContact": "9876543211",
-      "documents": [],
-      "resume": null,
-      "aadhar": null,
-      "bankDetails": null,
-      "name": "Ajay Tripathi",
-      "username": "ajaytripathi",
-      "password": "$hash$2c7c47e3",
-      "role": "employee",
-      "scheduleIds": [
-        "sch_q8jji9v"
-      ],
-      "shiftLocations": {
-        "sch_q8jji9v": "chandani chowk"
-      },
-      "managerId": "usr_manager",
-      "assignedById": "usr_manager",
-      "photo": null,
-      "state": "Uttar Pradesh"
     }
   ],
   "attendanceLogs": [
@@ -4297,6 +4213,16 @@
   "tickets": [],
   "announcements": [
     {
+      "id": "ann_yucyot1",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.",
+      "category": "Update",
+      "date": "2026-09-11",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_bb1fc83",
+      "createdAt": "2026-09-11T13:24:11.054Z"
+    },
+    {
       "id": "ann_fbigupb",
       "title": "🎉 Welcome! Account Created",
       "content": "Welcome Ajay Tripathi! Your employee portal profile was registered by Manjit  kour Operations Manager.",
@@ -4819,6 +4745,39 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-11T13:24:19.093Z",
+      "action": "PULL_leaveRequests",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "userId": "usr_bb1fc83"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-11T13:24:19.060Z",
+      "action": "PULL_attendanceLogs",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "userId": "usr_bb1fc83"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-11T13:24:19.031Z",
+      "action": "PULL_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "usr_bb1fc83"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-11T10:37:15.783Z",
       "action": "PUSH_announcements",

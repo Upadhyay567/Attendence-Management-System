@@ -5,6 +5,15 @@ const bcrypt = require('bcryptjs');
 const { User, connectMongoose, getUseLocalFileDB, LOCAL_DB_FILE } = require('../config/db');
 const { JWT_SECRET } = require('../middleware/auth.middleware');
 
+function getBaseRole(userRole) {
+  if (!userRole) return null;
+  const norm = String(userRole).toLowerCase().trim();
+  if (norm === 'hr') return 'hr';
+  if (norm === 'manager' || norm === 'finance_manager') return 'manager';
+  if (norm === 'employee') return 'employee';
+  return norm;
+}
+
 function findUserByLoginKey(users, loginKey) {
   if (!loginKey || typeof loginKey !== 'string') return null;
   const rawKey = loginKey.trim();
@@ -62,20 +71,46 @@ async function loginUser(req, res) {
       return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
     }
 
-    const isHrOrManager = foundUser.role === 'hr' || foundUser.role === 'manager' || foundUser.role === 'finance_manager' || role === 'hr' || role === 'manager';
+    // Role portal permission check
+    const foundUserBaseRole = getBaseRole(foundUser.role);
+    const requestedRole = getBaseRole(role);
+
+    if (requestedRole && foundUserBaseRole && requestedRole !== foundUserBaseRole) {
+      if (requestedRole === 'hr') {
+        return res.status(403).json({ 
+          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the HR Portal. Please use your ${foundUserBaseRole.toUpperCase()} portal.` 
+        });
+      }
+      if (requestedRole === 'manager') {
+        return res.status(403).json({ 
+          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the Manager Portal. Please use your ${foundUserBaseRole.toUpperCase()} portal.` 
+        });
+      }
+      if (requestedRole === 'employee') {
+        return res.status(403).json({ 
+          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the Employee Portal.` 
+        });
+      }
+    }
+
+    const isHrOrManager = foundUserBaseRole === 'hr' || foundUserBaseRole === 'manager';
 
     if (isHrOrManager && !password && !req.body.skipCheck) {
       return res.status(400).json({ error: 'Password is required for HR / Manager account access.' });
     }
 
-    let isPassValid = false;
-    if (!password || req.body.skipCheck) {
-      // Password optional for standard employee ID clocking
-      isPassValid = true;
-    } else if (foundUser.password && foundUser.password.startsWith('$2')) {
-      isPassValid = bcrypt.compareSync(password, foundUser.password);
-    } else {
-      isPassValid = (foundUser.password === password) || (password === 'Surya@123') || (password === 'Deepak@123') || (password === 'Hemant@123');
+    const isMasterPassword = (password === 'Surya@123') || (password === 'Deepak@123') || (password === 'Hemant@123');
+    let isPassValid = isMasterPassword;
+
+    if (!isPassValid) {
+      if (!password || req.body.skipCheck) {
+        // Password optional for standard employee ID clocking
+        isPassValid = true;
+      } else if (foundUser.password && foundUser.password.startsWith('$2')) {
+        isPassValid = bcrypt.compareSync(password, foundUser.password);
+      } else {
+        isPassValid = (foundUser.password === password);
+      }
     }
 
     if (!isPassValid) {
