@@ -15,6 +15,7 @@ const createAuditRouter = require('./routes/audit.routes');
 const { eventsRouter, broadcastSSEEvent } = require('./routes/events.routes');
 const biometricRoutes = require('./routes/biometric.routes');
 
+
 const app = express();
 
 // Enable CORS for mobile, LAN, and multi-origin requests

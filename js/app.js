@@ -8219,6 +8219,7 @@ async function renderAdminDashboard() {
       </div>
 
       <div id="dashboard-worksite-panel-container"></div>
+      <div id="dashboard-biometric-panel-container"></div>
     </div>
   `;
 
@@ -8883,6 +8884,141 @@ async function renderAdminDashboard() {
     // Update Database Connection and Sync Status
     if (typeof updateDatabaseStatusComponent === 'function') {
       updateDatabaseStatusComponent();
+    }
+
+    // Biometric Device Attendance Feed
+    renderBiometricDashboardPanel();
+  }
+
+  function renderBiometricDashboardPanel() {
+    const container = document.getElementById('dashboard-biometric-panel-container');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="card-panel" style="margin-top: 20px;" id="biometric-attendance-panel">
+        <div class="card-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <h3 class="card-panel-title" style="display: flex; align-items: center; gap: 8px;">
+            <span>📟</span> Biometric Device Attendance (ZKTeco K40 Pro)
+          </h3>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="biometric-status-badge" class="badge badge-pending" style="font-size: 11px;">Checking Device...</span>
+            <button id="btn-refresh-biometric-feed" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; height: auto; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+              <span>↻</span> Refresh Punches
+            </button>
+          </div>
+        </div>
+        <div class="table-container" style="overflow-x: auto;">
+          <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 12px 14px;">Employee Name</th>
+                <th style="text-align: left; padding: 12px 14px;">User ID</th>
+                <th style="text-align: left; padding: 12px 14px;">Biometric ID</th>
+                <th style="text-align: left; padding: 12px 14px;">Employee ID</th>
+                <th style="padding: 12px 14px; text-align: center;">Today's Attendance</th>
+                <th style="padding: 12px 14px; text-align: center;">Check In</th>
+                <th style="padding: 12px 14px; text-align: center;">Check Out</th>
+                <th style="padding: 12px 14px; text-align: center;">Latest Punch</th>
+                <th style="padding: 12px 14px; text-align: center;">Total Punches</th>
+                <th style="padding: 12px 14px; text-align: center;">Biometric Device</th>
+              </tr>
+            </thead>
+            <tbody id="biometric-dashboard-tbody">
+              <tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    const refreshBtn = document.getElementById('btn-refresh-biometric-feed');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        loadBiometricDashboardData();
+      });
+    }
+
+    loadBiometricDashboardData();
+  }
+
+  async function loadBiometricDashboardData() {
+    const tbody = document.getElementById('biometric-dashboard-tbody');
+    const badge = document.getElementById('biometric-status-badge');
+    if (!tbody) return;
+
+    try {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>';
+      if (badge) {
+        badge.className = 'badge badge-pending';
+        badge.textContent = 'Connecting...';
+      }
+
+      const res = await fetch('/api/biometric/dashboard');
+      const result = await res.json();
+
+      if (!result.success || !Array.isArray(result.data)) {
+        if (badge) {
+          badge.className = 'badge badge-half-day';
+          badge.textContent = 'Device Busy / Unreachable';
+        }
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
+          '⚠️ ' + Utils.escape(result.message || result.error || 'Biometric device unreachable or busy. (Click Refresh to retry)') +
+          '</td></tr>';
+        return;
+      }
+
+      if (badge) {
+        badge.className = 'badge badge-on-time';
+        badge.textContent = (result.device?.name || 'ZKTeco K40') + ' Online (' + result.data.length + ' records)';
+      }
+
+      if (result.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">No biometric employee records found on device.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = result.data.map(emp => {
+        const isPresent = emp.todayAttendance === 'Present';
+        const statusBadge = isPresent 
+          ? '<span class="badge badge-on-time">Present</span>' 
+          : '<span class="badge badge-neutral">No Punch</span>';
+
+        const checkInStr = emp.todayCheckIn 
+          ? new Date(emp.todayCheckIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 
+          : (emp.checkIn || '—');
+
+        const checkOutStr = emp.todayCheckOut 
+          ? new Date(emp.todayCheckOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 
+          : (emp.checkOut || '—');
+
+        const latestPunchStr = emp.latestPunch 
+          ? new Date(emp.latestPunch).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true }) 
+          : '—';
+
+        return `
+          <tr>
+            <td style="font-weight: 600; text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeName || 'Unknown')}</td>
+            <td style="text-align: left; padding: 12px 14px;"><code style="font-size: 11.5px;">${Utils.escape(emp.userId || '—')}</code></td>
+            <td style="text-align: left; padding: 12px 14px;"><span class="badge badge-neutral" style="font-weight: 700;">${Utils.escape(emp.biometricId || '—')}</span></td>
+            <td style="text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeId || '—')}</td>
+            <td style="padding: 12px 14px; text-align: center;">${statusBadge}</td>
+            <td style="padding: 12px 14px; text-align: center; font-weight: 600; color: ${isPresent ? 'var(--success, #10b981)' : 'var(--text-muted)'};">${checkInStr}</td>
+            <td style="padding: 12px 14px; text-align: center;">${checkOutStr}</td>
+            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">${latestPunchStr}</td>
+            <td style="padding: 12px 14px; text-align: center; font-weight: 700;">${emp.totalPunches ?? 0}</td>
+            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">📟 ${Utils.escape(emp.device || 'ZKTeco K40 Pro')}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch (err) {
+      if (badge) {
+        badge.className = 'badge badge-half-day';
+        badge.textContent = 'Connection Error';
+      }
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
+        '⚠️ Failed to fetch biometric dashboard: ' + Utils.escape(err.message || String(err)) +
+        '</td></tr>';
     }
   }
 
