@@ -933,17 +933,18 @@ async function syncBiometricAttendance() {
     };
 
   } catch (error) {
-    console.error(
-      '❌ Biometric synchronization failed:',
-      error
-    );
+    const isOffline = error && (error.isOffline || (error.message && (error.message.includes('timeout') || error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT') || error.message.includes('ENETUNREACH'))));
+    
+    if (isOffline) {
+      console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — operating in local database mode.`);
+    } else {
+      console.warn(`⚠️ Biometric sync status: ${error.message || String(error)}`);
+    }
 
     return {
       success: false,
-
-      error:
-        error.message ||
-        String(error)
+      offline: true,
+      error: error.message || String(error)
     };
 
   } finally {

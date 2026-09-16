@@ -136,21 +136,21 @@ function describeError(err) {
 // the old code were silently ignored.
 // =====================================================
 
-const MAX_ATTEMPTS = 3;
-const RETRY_DELAY_MS = 750;
+const MAX_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 500;
 
 async function createDeviceConnection() {
   let lastError = null;
+  const timeoutMs = Math.min(Number(DEVICE.timeout || 3000), 3000);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let zk = null;
 
     try {
-      // node-zklib v1.3.0 takes 4 args: ip, port, timeout, inport
       zk = new ZKLib(
         DEVICE.ip,
         DEVICE.port,
-        DEVICE.timeout,
+        timeoutMs,
         DEVICE.inport
       );
 
@@ -164,11 +164,13 @@ async function createDeviceConnection() {
         }),
         new Promise((_, reject) =>
           setTimeout(
-            () => reject(new Error(`TCP connect timeout after ${DEVICE.timeout}ms`)),
-            DEVICE.timeout || 8000
+            () => reject(new Error(`Connect timeout after ${timeoutMs}ms`)),
+            timeoutMs
           )
         )
       ]);
+
+      suppressSocketErrors(zk);
 
       console.log(
         `✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}` +
@@ -180,12 +182,9 @@ async function createDeviceConnection() {
     } catch (err) {
       lastError = err;
 
-      console.warn(
-        `⚠️  K40 connection attempt ${attempt}/${MAX_ATTEMPTS} failed: ${describeError(err)}`
-      );
-
       // Destroy the partial socket before retrying
       if (zk) {
+        suppressSocketErrors(zk);
         await forceDisconnect(zk);
       }
 
@@ -195,18 +194,12 @@ async function createDeviceConnection() {
     }
   }
 
-  // All attempts exhausted — throw a descriptive error
+  // All attempts exhausted — throw a clean offline error
   const detail = describeError(lastError);
-
-  const richErr = new Error(
-    `K40 connection failed after ${MAX_ATTEMPTS} attempts: ${detail}`
-  );
-  richErr.step    = 'TCP CONNECT';
-  richErr.command = 'TCP CONNECT';
-  richErr.ip      = DEVICE.ip;
-  richErr.port    = DEVICE.port;
-  richErr.original = lastError;
-
+  const richErr = new Error(`Biometric hardware offline or unreachable (${DEVICE.ip}:${DEVICE.port}): ${detail}`);
+  richErr.isOffline = true;
+  richErr.ip = DEVICE.ip;
+  richErr.port = DEVICE.port;
   throw richErr;
 }
 
@@ -228,9 +221,11 @@ async function withDevice(callback) {
       return await callback(zk);
 
     } catch (error) {
-      console.error(
-        `❌ K40 operation error (${DEVICE.ip}:${DEVICE.port}): ${describeError(error)}`
-      );
+      if (error && error.isOffline) {
+        console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — local DB active.`);
+      } else {
+        console.warn(`⚠️ Biometric device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
+      }
       throw error;
 
     } finally {
