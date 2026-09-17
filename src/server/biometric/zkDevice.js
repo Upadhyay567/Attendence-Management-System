@@ -8,16 +8,21 @@ const ZKLib = require('node-zklib');
 // Reads from .env — do NOT hard-code these values.
 // =====================================================
 
+const net = require('net');
+const { execSync } = require('child_process');
+
 const DEVICE = {
-  name:    process.env.BIOMETRIC_DEVICE_NAME   || 'ZKTeco K40 Pro',
-  ip:      process.env.BIOMETRIC_DEVICE_IP     || '192.168.1.51',
-  port:    Number(process.env.BIOMETRIC_DEVICE_PORT    || 4370),
+  name: process.env.BIOMETRIC_DEVICE_NAME || 'ZKTeco K40 Pro',
+  get ip() {
+    return process.env.BIOMETRIC_DEVICE_IP || '192.168.1.7';
+  },
+  set ip(val) {
+    process.env.BIOMETRIC_DEVICE_IP = val;
+  },
+  port: Number(process.env.BIOMETRIC_DEVICE_PORT || 4370),
   timeout: Number(process.env.BIOMETRIC_DEVICE_TIMEOUT || 10000),
-  inport:  Number(process.env.BIOMETRIC_DEVICE_INPORT  || 5200),
-
-  // K40 Pro Comm Key — must remain 0
+  inport: Number(process.env.BIOMETRIC_DEVICE_INPORT || 5200),
   commCode: Number(process.env.BIOMETRIC_COMM_KEY || 0),
-
   serial: process.env.BIOMETRIC_DEVICE_SERIAL || 'CJOU232660306'
 };
 
@@ -136,21 +141,34 @@ function describeError(err) {
 
 
 // =====================================================
-// CREATE DEVICE CONNECTION — with retry logic
-//
-// Attempts up to MAX_ATTEMPTS times with a short delay
-// between each attempt. Ensures any partially-opened
-// socket from a failed attempt is destroyed before
-// the next attempt.
+// CREATE DEVICE CONNECTION — with retry logic & auto-discovery
 // =====================================================
-
-const { execSync } = require('child_process');
 
 const MAX_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 500;
 const CONNECT_TIMEOUT_MS = 2500; // 2.5s per attempt for fast responsiveness
 
 let lastLoggedOffline = false;
+
+function checkPort4370(ip, timeoutMs = 400) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(timeoutMs);
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('error', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(DEVICE.port, ip);
+  });
+}
 
 /**
  * Scan system ARP table for active ZKTeco MAC addresses (vendor prefix 10-ff-e0).
@@ -172,6 +190,41 @@ function getArpZkTecoIps() {
   } catch (_) {
     return [];
   }
+}
+
+async function autoDiscoverZkIp() {
+  const currentIp = DEVICE.ip;
+  if (currentIp && await checkPort4370(currentIp, 400)) {
+    return currentIp;
+  }
+
+  // 1. Try ARP table match for 10-ff-e0 ZKTeco MAC vendor prefix
+  const arpIps = getArpZkTecoIps();
+  for (const ip of arpIps) {
+    if (await checkPort4370(ip, 400)) {
+      console.log(`🔍 [ZKTeco] Found active device via ARP at IP: ${ip}`);
+      DEVICE.ip = ip;
+      return ip;
+    }
+  }
+
+  // 2. Fast parallel scan 192.168.1.1 to 254 for open port 4370
+  const base = currentIp.includes('.') ? currentIp.substring(0, currentIp.lastIndexOf('.') + 1) : '192.168.1.';
+  const promises = [];
+  for (let i = 1; i < 255; i++) {
+    const target = base + i;
+    promises.push(checkPort4370(target, 400).then(ok => ok ? target : null));
+  }
+
+  const results = await Promise.all(promises);
+  const foundIp = results.find(x => x !== null);
+  if (foundIp) {
+    console.log(`🔍 [ZKTeco] Auto-discovered hardware at IP: ${foundIp}:${DEVICE.port}`);
+    DEVICE.ip = foundIp;
+    return foundIp;
+  }
+
+  return currentIp;
 }
 
 async function trySingleConnection(ip) {
@@ -214,24 +267,45 @@ async function trySingleConnection(ip) {
 async function createDeviceConnection() {
   let lastError = null;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      const zk = await trySingleConnection(DEVICE.ip);
+  // 1. Try currently configured IP
+  try {
+    const zk = await trySingleConnection(DEVICE.ip);
+    if (lastLoggedOffline) {
+      console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}`);
+      lastLoggedOffline = false;
+    }
+    return zk;
+  } catch (err) {
+    lastError = err;
+  }
 
+  // 2. If configured IP failed, auto-discover active ZK device IP on local network
+  const discoveredIp = await autoDiscoverZkIp();
+  if (discoveredIp && discoveredIp !== DEVICE.ip) {
+    try {
+      const zk = await trySingleConnection(discoveredIp);
+      if (lastLoggedOffline) {
+        console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${discoveredIp}:${DEVICE.port}`);
+        lastLoggedOffline = false;
+      }
+      return zk;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  // 3. Retry on target IP
+  for (let attempt = 2; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await sleep(RETRY_DELAY_MS);
+      const zk = await trySingleConnection(DEVICE.ip);
       if (lastLoggedOffline) {
         console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}`);
         lastLoggedOffline = false;
-      } else if (attempt > 1) {
-        console.log(`✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (attempt ${attempt})`);
       }
-
       return zk;
-
     } catch (err) {
       lastError = err;
-      if (attempt < MAX_ATTEMPTS) {
-        await sleep(RETRY_DELAY_MS);
-      }
     }
   }
 
