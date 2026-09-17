@@ -855,10 +855,13 @@ export const DB = {
     let found = this.data.users.find(u => u.id === cleanId);
     if (!found) {
       const lower = cleanId.toLowerCase();
+      const upper = cleanId.toUpperCase();
       found = this.data.users.find(u => 
         (u.employeeId && u.employeeId.toLowerCase() === lower) ||
         (u.username && u.username.toLowerCase() === lower) ||
-        (u.email && u.email.toLowerCase() === lower)
+        (u.email && u.email.toLowerCase() === lower) ||
+        (u.biometricUserId && String(u.biometricUserId).toUpperCase() === upper) ||
+        (u.biometricId && String(u.biometricId).toUpperCase() === upper)
       );
     }
     return found;
@@ -897,6 +900,18 @@ export const DB = {
         const empUpper = String(u.employeeId).toUpperCase();
         if (empUpper === upperKey) return true;
         if (cleanAlphaNumKey && empUpper.replace(/[^A-Z0-9]/g, '') === cleanAlphaNumKey) return true;
+      }
+
+      // 1b. Biometric User ID / Biometric ID exact or normalized
+      if (u.biometricUserId) {
+        const bioUpper = String(u.biometricUserId).toUpperCase();
+        if (bioUpper === upperKey) return true;
+        if (cleanAlphaNumKey && bioUpper.replace(/[^A-Z0-9]/g, '') === cleanAlphaNumKey) return true;
+      }
+      if (u.biometricId) {
+        const bioUpper = String(u.biometricId).toUpperCase();
+        if (bioUpper === upperKey) return true;
+        if (cleanAlphaNumKey && bioUpper.replace(/[^A-Z0-9]/g, '') === cleanAlphaNumKey) return true;
       }
 
       // 2. Username match

@@ -587,7 +587,7 @@
       "biometricUserId": "1",
       "biometricPunchId": "CJOU232660306_1_2026-09-17T10:27:07.000Z",
       "lastBiometricPunchAt": "2026-09-17T10:27:07.000Z",
-      "updatedAt": "2026-09-17T11:25:13.504Z"
+      "updatedAt": "2026-09-17T11:28:33.542Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-17",
@@ -635,7 +635,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T11:25:13.499Z"
+      "updatedAt": "2026-09-17T11:28:33.538Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -731,7 +731,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T11:25:13.498Z"
+      "updatedAt": "2026-09-17T11:28:33.537Z"
     },
     {
       "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
@@ -5363,7 +5363,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T11:25:13.505Z",
+    "lastSyncAt": "2026-09-17T11:28:33.542Z",
     "lastLogCount": 15
   }
 }

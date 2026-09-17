@@ -27,12 +27,16 @@ function findUserByLoginKey(users, loginKey) {
     if (!u) return false;
     const uName = (u.username || '').trim().toLowerCase();
     const uEmp = (u.employeeId || '').trim().toUpperCase();
+    const uBio = (u.biometricUserId || u.biometricId || '').trim().toUpperCase();
     const uPhone = (u.phone || u.mobile || '').replace(/[^0-9]/g, '');
     const cleanEmp = uEmp.replace(/[^A-Z0-9]/g, '');
+    const cleanBio = uBio.replace(/[^A-Z0-9]/g, '');
 
     if (uName && uName === lowerKey) return true;
     if (uEmp && uEmp === upperKey) return true;
     if (cleanEmp && cleanEmp === cleanAlphaNumKey) return true;
+    if (uBio && uBio === upperKey) return true;
+    if (cleanBio && cleanBio === cleanAlphaNumKey) return true;
     if (uPhone && cleanAlphaNumKey && uPhone.includes(cleanAlphaNumKey)) return true;
     if (u.id && u.id === rawKey) return true;
     return false;
