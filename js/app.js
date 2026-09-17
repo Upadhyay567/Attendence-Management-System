@@ -4874,51 +4874,74 @@ function renderCalendarScheduleTab(userId, activeTab) {
   }
 
   const { status, color, log, schedule } = getAttendanceStatusForDate(userId, dStr);
+  const userObj = DB.getUser(userId);
+  const allLogsForDate = (DB.data.attendanceLogs || []).filter(l => l.userId === userId && l.date === dStr);
 
-  let checkInTime = '--:--';
-  let checkOutTime = '--:--';
-  let workDuration = '00h 00m';
+  let logsHTML = '';
+  if (allLogsForDate.length > 0) {
+    logsHTML = allLogsForDate.map(l => {
+      const sch = (l.shiftId ? DB.getSchedule(l.shiftId) : null) || schedule;
+      let inT = l.checkIn || '--:--';
+      let outT = l.checkOut || '--:--';
+      let duration = '00h 00m';
 
-  if (log) {
-    checkInTime = log.checkIn || '--:--';
-    checkOutTime = log.checkOut || '--:--';
-    if (log.checkIn && log.checkOut) {
-      const [inH, inM] = log.checkIn.split(':').map(Number);
-      const [outH, outM] = log.checkOut.split(':').map(Number);
-      const mins = (outH * 60 + outM) - (inH * 60 + inM);
-      if (mins > 0) {
-        workDuration = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+      if (inT !== '--:--' && outT !== '--:--') {
+        const getMins = (t) => {
+          const parts = t.split(':').map(Number);
+          return parts[0] * 60 + (parts[1] || 0);
+        };
+        if (getMins(inT) > getMins(outT)) {
+          const tmp = inT;
+          inT = outT;
+          outT = tmp;
+        }
+        const diff = getMins(outT) - getMins(inT);
+        if (diff > 0) {
+          duration = `${Math.floor(diff / 60)}h ${String(diff % 60).padStart(2, '0')}m`;
+        }
+      } else if (l.checkIn) {
+        duration = 'Active Session';
       }
-    } else if (log.checkIn) {
-      workDuration = 'Active Session';
-    }
-  }
 
-  const isWorkDay = schedule.workDays.includes(targetDate.getDay());
-  const showShiftInfo = isWorkDay && status !== 'Leave';
+      return `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
+          <div>
+            <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
+            <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${Utils.escape(sch ? sch.name : 'Standard Shift')}</div>
+            <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${sch ? formatTimeRange12h(sch.startTime, sch.endTime) : '--:--'}</div>
+          </div>
+          <div>
+            <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+            <div style="font-weight:600; color:var(--text-primary); margin-top:2px">In: ${inT} | Out: ${outT}</div>
+            <div style="color:var(--cyan); font-size:11px; margin-top:1px">Duration: ${duration}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    const isWorkDay = schedule.workDays.includes(targetDate.getDay());
+    logsHTML = `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
+        <div>
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
+          <div style="font-weight:600; color:${isWorkDay ? 'var(--text-primary)' : 'var(--text-muted)'}; margin-top:2px">${isWorkDay ? Utils.escape(schedule.name) : (status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)')}</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${isWorkDay ? formatTimeRange12h(schedule.startTime, schedule.endTime) : 'No active shift scheduled'}</div>
+        </div>
+        <div>
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+          <div style="font-weight:600; color:var(--text-muted); margin-top:2px">In: --:-- | Out: --:--</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">Duration: 00h 00m</div>
+        </div>
+      </div>
+    `;
+  }
 
   container.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center">
       <strong style="color:var(--text-primary); font-size:13.5px">${activeTab === 'today' ? 'Today' : (activeTab === 'next' ? 'Tomorrow' : 'Yesterday')} - ${Utils.formatDate(dStr)}</strong>
       <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:11px">${status}</span>
     </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px">
-      <div>
-        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
-        ${showShiftInfo ? `
-          <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${Utils.escape(schedule.name)}</div>
-          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</div>
-        ` : `
-          <div style="font-weight:600; color:var(--text-muted); margin-top:2px">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</div>
-          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">No active shift scheduled</div>
-        `}
-      </div>
-      <div>
-        <span style="font-size:10.5px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
-        <div style="font-weight:600; color:var(--text-primary); margin-top:2px">In: ${checkInTime} | Out: ${checkOutTime}</div>
-        <div style="color:var(--cyan); font-size:11px; margin-top:1px">Duration: ${workDuration}</div>
-      </div>
-    </div>
+    ${logsHTML}
   `;
 }
 
@@ -4926,70 +4949,84 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   
-  let checkInTime = '--:--';
-  let checkOutTime = '--:--';
-  let workDuration = '00h 00m';
-  let checkInLoc = 'N/A';
-  let checkOutLoc = 'N/A';
+  const allLogsForDate = (DB.data.attendanceLogs || []).filter(l => l.userId === userId && l.date === dateStr);
+  let sessionsHTML = '';
 
-  if (log) {
-    checkInTime = log.checkIn || '--:--';
-    checkOutTime = log.checkOut || '--:--';
-    checkInLoc = log.location || 'Kohat Enclave, Pitampura, Delhi';
-    checkOutLoc = log.checkOutLocation || log.location || 'Kohat Enclave, Pitampura, Delhi';
-    
-    if (log.checkIn && log.checkOut) {
-      const [inH, inM] = log.checkIn.split(':').map(Number);
-      const [outH, outM] = log.checkOut.split(':').map(Number);
-      const mins = (outH * 60 + outM) - (inH * 60 + inM);
-      if (mins > 0) {
-        workDuration = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  if (allLogsForDate.length > 0) {
+    sessionsHTML = allLogsForDate.map((l, index) => {
+      const sch = (l.shiftId ? DB.getSchedule(l.shiftId) : null) || schedule;
+      let inT = l.checkIn || '--:--';
+      let outT = l.checkOut || '--:--';
+      let duration = '00h 00m';
+      const checkInLoc = l.location || 'Kohat Enclave, Pitampura, Delhi';
+      const checkOutLoc = l.checkOutLocation || l.location || 'Kohat Enclave, Pitampura, Delhi';
+
+      if (inT !== '--:--' && outT !== '--:--') {
+        const getMins = (t) => {
+          const parts = t.split(':').map(Number);
+          return parts[0] * 60 + (parts[1] || 0);
+        };
+        if (getMins(inT) > getMins(outT)) {
+          const tmp = inT;
+          inT = outT;
+          outT = tmp;
+        }
+        const diff = getMins(outT) - getMins(inT);
+        if (diff > 0) {
+          duration = `${Math.floor(diff / 60)}h ${String(diff % 60).padStart(2, '0')}m`;
+        }
+      } else if (l.checkIn) {
+        duration = 'Active Session';
       }
-    } else if (log.checkIn) {
-      workDuration = 'Active Session';
-    }
+
+      return `
+        <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-top:8px">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <h4 style="margin:0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Session ${allLogsForDate.length > 1 ? `#${index + 1}` : ''}: ${Utils.escape(sch ? sch.name : 'Shift')}</h4>
+            <span class="badge" style="font-size:10.5px;">${sch ? formatTimeRange12h(sch.startTime, sch.endTime) : ''}</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; font-size:12.5px">
+            <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(DB.getUserShiftLocation(DB.getUser(userId), sch ? sch.id : null))}</strong></div>
+            <div style="display:flex; justify-content:space-between; border-top:1px dashed var(--border); padding-top:6px"><span style="color:var(--text-secondary)">Check-in Time:</span><strong style="color:var(--text-primary)">${inT}</strong></div>
+            <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkInLoc)}</strong></div>
+            <div style="display:flex; justify-content:space-between; margin-top:2px"><span style="color:var(--text-secondary)">Check-out Time:</span><strong style="color:var(--text-primary)">${outT}</strong></div>
+            <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-out Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkOutLoc)}</strong></div>
+            <div style="display:flex; justify-content:space-between; margin-top:4px; border-top:1px dashed var(--border); padding-top:6px"><span style="color:var(--text-secondary)">Work Duration:</span><strong style="color:var(--cyan)">${duration}</strong></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    const date = new Date(dateStr);
+    const isWorkDay = schedule.workDays.includes(date.getDay());
+    sessionsHTML = `
+      <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-top:8px">
+        <h4 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Details</h4>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:12.5px">
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:${isWorkDay ? 'var(--text-primary)' : 'var(--text-muted)'}">${isWorkDay ? Utils.escape(schedule.name) : (status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)')}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:${isWorkDay ? 'var(--text-primary)' : 'var(--text-muted)'}">${isWorkDay ? formatTimeRange12h(schedule.startTime, schedule.endTime) : 'None (Rest Day)'}</strong></div>
+          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:${isWorkDay ? 'var(--text-primary)' : 'var(--text-muted)'}">${isWorkDay ? Utils.escape(DB.getUserShiftLocation(DB.getUser(userId), schedule ? schedule.id : null)) : 'None (Rest Day)'}</strong></div>
+        </div>
+      </div>
+    `;
   }
 
-  const date = new Date(dateStr);
-  const isWorkDay = schedule.workDays.includes(date.getDay());
-  const showShiftInfo = isWorkDay && status !== 'Leave';
-
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 420px; padding: 24px; display:flex; flex-direction:column; gap:14px">
+    <div class="modal-content" style="max-width: 440px; padding: 24px; display:flex; flex-direction:column; gap:12px">
       <div class="modal-header" style="margin-bottom: 2px">
         <h3 class="modal-title">📅 Date Attendance Summary</h3>
         <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))">✕</button>
       </div>
       
-      <div style="font-size: 15px; font-weight: 700; color: var(--text-primary)">
-        ${Utils.formatDate(dateStr)}
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm)">
-        <span style="font-size: 12.5px; color: var(--text-secondary)">Status:</span>
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary)">
+          ${Utils.formatDate(dateStr)}
+        </div>
         <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:12px; padding: 4px 10px">${status}</span>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px">
-        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Pattern</h4>
-        ${showShiftInfo ? `
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-primary)">${Utils.escape(schedule.name)}</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-primary)">${formatTimeRange12h(schedule.startTime, schedule.endTime)}</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(DB.getUserShiftLocation(DB.getUser(userId), schedule ? schedule.id : null))}</strong></div>
-        ` : `
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Shift Name:</span><strong style="color:var(--text-muted)">${status === 'Leave' ? 'Approved Leave' : 'Weekly Off (Holiday)'}</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Work Timings:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
-          <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Assigned Worksite:</span><strong style="color:var(--text-muted)">None (Rest Day)</strong></div>
-        `}
-      </div>
-
-      <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px; border-top: 1px solid var(--border); padding-top: 12px">
-        <h4 style="margin:0 0 4px 0; font-size:13px; font-weight:700; color:var(--primary)">🕒 Clock Activity</h4>
-        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Time:</span><strong style="color:var(--text-primary)">${checkInTime}</strong></div>
-        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-in Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkInLoc)}</strong></div>
-        <div style="display:flex; justify-content:space-between; margin-top:4px"><span style="color:var(--text-secondary)">Check-out Time:</span><strong style="color:var(--text-primary)">${checkOutTime}</strong></div>
-        <div style="display:flex; justify-content:space-between"><span style="color:var(--text-secondary)">Check-out Location:</span><strong style="color:var(--text-primary); max-width: 200px; text-align:right">${Utils.escape(checkOutLoc)}</strong></div>
-        <div style="display:flex; justify-content:space-between; margin-top:4px; border-top:1px dashed var(--border); padding-top:6px"><span style="color:var(--text-secondary)">Total Work Duration:</span><strong style="color:var(--cyan)">${workDuration}</strong></div>
+      <div style="max-height:360px; overflow-y:auto; padding-right:2px">
+        ${sessionsHTML}
       </div>
     </div>
   `;

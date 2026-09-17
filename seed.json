@@ -32,13 +32,15 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
-        "sch_q8jji9v"
+        "sch_q8jji9v",
+        "sch_mfl8wvv"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "omaxe Office"
+        "sch_q8jji9v": "omaxe Office",
+        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
       },
       "managerId": "usr_manager",
-      "assignedById": "usr_6af1y3c",
+      "assignedById": "usr_manager",
       "photo": null,
       "state": "Uttar Pradesh",
       "status": "Active",
@@ -2313,7 +2315,7 @@
       "biometricUserId": "1",
       "biometricPunchId": "CJOU232660306_1_2026-09-17T09:49:19.000Z",
       "lastBiometricPunchAt": "2026-09-17T09:49:19.000Z",
-      "updatedAt": "2026-09-17T10:14:40.940Z"
+      "updatedAt": "2026-09-17T10:24:10.873Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-17",
@@ -3537,7 +3539,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T10:14:40.935Z"
+      "updatedAt": "2026-09-17T10:24:10.868Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -8361,7 +8363,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T10:14:40.931Z"
+      "updatedAt": "2026-09-17T10:24:10.866Z"
     },
     {
       "id": "BIO_usr_bio_1159_2026-09-11",
@@ -117037,10 +117039,10 @@
     {
       "_id": "6a8d3b8e94e235d28a4e96fc",
       "id": "sch_mfl8wvv",
-      "name": "Night  Shift 56",
-      "startTime": "11:00",
+      "name": "Afternoon shift",
+      "startTime": "15:41",
       "endTime": "17:00",
-      "gracePeriod": 5,
+      "gracePeriod": 15,
       "weeklyOffs": [],
       "__v": 0,
       "halfDayLimit": 120,
@@ -117129,6 +117131,17 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_e0cmpt1",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift: omaxe Office ➔ Morning Shift: omaxe Office; Afternoon shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift ➔ Morning Shift, Afternoon shift",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-17T10:17:41.026Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_xccxc6k",
       "title": "📢 Profile Updated by HR/Manager",
@@ -117707,6 +117720,47 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-17T10:17:41.966Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_e0cmpt1",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift: omaxe Office ➔ Morning Shift: omaxe Office; Afternoon shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift ➔ Morning Shift, Afternoon shift",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-17T10:17:41.026Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T10:17:13.142Z",
+      "action": "UPDATE_schedules",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "Afternoon shift",
+        "startTime": "15:41",
+        "endTime": "17:00",
+        "gracePeriod": 15,
+        "workDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "location": "omaxe Office"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-17T10:00:44.440Z",
       "action": "PUSH_attendanceLogs",
@@ -118583,7 +118637,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T10:14:40.946Z",
+    "lastSyncAt": "2026-09-17T10:24:10.882Z",
     "lastLogCount": 14
   }
 }
