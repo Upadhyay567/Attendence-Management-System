@@ -527,7 +527,12 @@ function processLocalPunch(
    * first punch as check-in and latest punch
    * as check-out.
    */
-  attendance.checkOut = time;
+  if (attendance.checkIn && time < attendance.checkIn) {
+    attendance.checkOut = attendance.checkIn;
+    attendance.checkIn = time;
+  } else {
+    attendance.checkOut = time;
+  }
 
   attendance.status = 'Present';
 
@@ -845,8 +850,12 @@ async function syncMongoDatabase(
       continue;
     }
 
-    attendance.checkOut =
-      time;
+    if (attendance.checkIn && time < attendance.checkIn) {
+      attendance.checkOut = attendance.checkIn;
+      attendance.checkIn = time;
+    } else {
+      attendance.checkOut = time;
+    }
 
     attendance.status =
       'Present';

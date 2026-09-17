@@ -729,11 +729,19 @@ export async function renderAdminDashboard() {
       } else {
         feedBody.innerHTML = todayLogs.map(l => {
           const u = DB.getUser(l.userId);
-          const sch = DB.getSchedule(u.scheduleId);
+          const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
           let statusClass = 'badge-on-time';
           if (l.status === 'Late') statusClass = 'badge-late';
           if (l.status === 'Half Day') statusClass = 'badge-half-day';
           if (l.status === 'Pending Verification') statusClass = 'badge-late';
+
+          let checkInVal = l.checkIn || '--:--';
+          let checkOutVal = l.checkOut || '--:--';
+          if (checkInVal !== '--:--' && checkOutVal !== '--:--' && checkInVal > checkOutVal) {
+            const tmp = checkInVal;
+            checkInVal = checkOutVal;
+            checkOutVal = tmp;
+          }
 
           const distKm = parseFloat(l.distance) || 0;
           const distM = Math.round(distKm * 1000);
@@ -764,10 +772,10 @@ export async function renderAdminDashboard() {
           }
           return `
             <tr>
-              <td style="font-weight:600">${Utils.escape(u.name)}</td>
+              <td style="font-weight:600">${Utils.escape(u ? u.name : 'Employee')}</td>
               <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-              <td>${l.checkIn || '--:--'}</td>
-              <td>${l.checkOut || '--:--'}</td>
+              <td>${checkInVal}</td>
+              <td>${checkOutVal}</td>
               <td>${gpsCellHTML}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
               <td><span class="badge ${statusClass}">${l.status}</span></td>
@@ -882,7 +890,7 @@ export async function renderAdminDashboard() {
         badge.textContent = 'Connecting...';
       }
 
-      const res = await fetch('/api/biometric/dashboard');
+      const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/dashboard');
       const result = await res.json();
 
       if (!result.success || !Array.isArray(result.data)) {
@@ -991,6 +999,9 @@ export async function renderAdminDashboard() {
   const onSseDbUpdate = () => {
     if (window.location.hash === '#admin-dashboard') {
       updateDashboardViews();
+      if (typeof loadBiometricDashboardData === 'function') {
+        loadBiometricDashboardData();
+      }
     }
   };
   window.removeEventListener('db_updated', window._adminSseHandler);
