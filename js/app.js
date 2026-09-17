@@ -2688,10 +2688,10 @@ function renderEmployeeDashboard() {
     const geoCheckOut = document.getElementById('btn-geofence-checkout');
 
     const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
-    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
+    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (schedule ? schedule.location : null) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
     const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
 
-    const todayLog = DB.getTodayLog(user.id);
+    const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id);
     const isOffline = !!(todayLog && todayLog.checkOut);
 
     if (isOffline) {

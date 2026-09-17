@@ -4,9 +4,9 @@
       "id": "usr_68s5s48",
       "employeeId": "EMP1",
       "biometricUserId": "1",
-      "biometricId": "EMP1",
-      "scheduleId": "sch_3ebecon",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "biometricId": "1",
+      "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "omaxe Office",
       "baseSalary": null,
       "allowanceHRA": null,
       "allowanceTravel": null,
@@ -32,10 +32,10 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
-        "sch_3ebecon"
+        "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_q8jji9v": "omaxe Office"
       },
       "managerId": "usr_manager",
       "assignedById": "usr_6af1y3c",
@@ -605,7 +605,18 @@
       "username": "bio_5174",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-16T13:55:17.112Z"
+      "createdAt": "2026-09-16T13:55:17.112Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432013",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_780",
@@ -616,7 +627,18 @@
       "username": "bio_780",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.450Z"
+      "createdAt": "2026-09-17T08:46:55.450Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432014",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1043",
@@ -627,7 +649,18 @@
       "username": "bio_1043",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.501Z"
+      "createdAt": "2026-09-17T08:46:55.501Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432015",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1063",
@@ -638,7 +671,18 @@
       "username": "bio_1063",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.502Z"
+      "createdAt": "2026-09-17T08:46:55.502Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432016",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_40425",
@@ -649,7 +693,18 @@
       "username": "bio_40425",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.503Z"
+      "createdAt": "2026-09-17T08:46:55.503Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432017",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_556",
@@ -660,7 +715,18 @@
       "username": "bio_556",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.504Z"
+      "createdAt": "2026-09-17T08:46:55.504Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432018",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_568",
@@ -671,7 +737,18 @@
       "username": "bio_568",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.506Z"
+      "createdAt": "2026-09-17T08:46:55.506Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432019",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_781",
@@ -682,7 +759,18 @@
       "username": "bio_781",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.509Z"
+      "createdAt": "2026-09-17T08:46:55.509Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432020",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_533",
@@ -693,7 +781,18 @@
       "username": "bio_533",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.510Z"
+      "createdAt": "2026-09-17T08:46:55.510Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432021",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_525",
@@ -704,7 +803,18 @@
       "username": "bio_525",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.512Z"
+      "createdAt": "2026-09-17T08:46:55.512Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432022",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_606",
@@ -715,7 +825,18 @@
       "username": "bio_606",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.515Z"
+      "createdAt": "2026-09-17T08:46:55.515Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432023",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_511",
@@ -726,7 +847,18 @@
       "username": "bio_511",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.516Z"
+      "createdAt": "2026-09-17T08:46:55.516Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432024",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1024",
@@ -737,7 +869,18 @@
       "username": "bio_1024",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.518Z"
+      "createdAt": "2026-09-17T08:46:55.518Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432025",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1087",
@@ -748,7 +891,18 @@
       "username": "bio_1087",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.518Z"
+      "createdAt": "2026-09-17T08:46:55.518Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432026",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1101",
@@ -759,7 +913,18 @@
       "username": "bio_1101",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.521Z"
+      "createdAt": "2026-09-17T08:46:55.521Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432027",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_873",
@@ -770,7 +935,18 @@
       "username": "bio_873",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.522Z"
+      "createdAt": "2026-09-17T08:46:55.522Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432028",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_913",
@@ -781,7 +957,18 @@
       "username": "bio_913",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.522Z"
+      "createdAt": "2026-09-17T08:46:55.522Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432029",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_836",
@@ -792,7 +979,18 @@
       "username": "bio_836",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.522Z"
+      "createdAt": "2026-09-17T08:46:55.522Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432030",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_912",
@@ -803,7 +1001,18 @@
       "username": "bio_912",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.523Z"
+      "createdAt": "2026-09-17T08:46:55.523Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432031",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_747",
@@ -814,7 +1023,18 @@
       "username": "bio_747",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.523Z"
+      "createdAt": "2026-09-17T08:46:55.523Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432032",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1102",
@@ -825,7 +1045,18 @@
       "username": "bio_1102",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.523Z"
+      "createdAt": "2026-09-17T08:46:55.523Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432033",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_727",
@@ -836,7 +1067,18 @@
       "username": "bio_727",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.524Z"
+      "createdAt": "2026-09-17T08:46:55.524Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432034",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_825",
@@ -847,7 +1089,18 @@
       "username": "bio_825",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.524Z"
+      "createdAt": "2026-09-17T08:46:55.524Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432035",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_907",
@@ -858,7 +1111,18 @@
       "username": "bio_907",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.525Z"
+      "createdAt": "2026-09-17T08:46:55.525Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432036",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_998",
@@ -869,7 +1133,18 @@
       "username": "bio_998",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.525Z"
+      "createdAt": "2026-09-17T08:46:55.525Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432037",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_0542",
@@ -880,7 +1155,18 @@
       "username": "bio_0542",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.526Z"
+      "createdAt": "2026-09-17T08:46:55.526Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432038",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_713",
@@ -891,7 +1177,18 @@
       "username": "bio_713",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.526Z"
+      "createdAt": "2026-09-17T08:46:55.526Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432039",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_660",
@@ -902,7 +1199,18 @@
       "username": "bio_660",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.526Z"
+      "createdAt": "2026-09-17T08:46:55.526Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432040",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_614",
@@ -913,7 +1221,18 @@
       "username": "bio_614",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.527Z"
+      "createdAt": "2026-09-17T08:46:55.527Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432041",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_541",
@@ -924,7 +1243,18 @@
       "username": "bio_541",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.537Z"
+      "createdAt": "2026-09-17T08:46:55.537Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432042",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_703",
@@ -935,7 +1265,18 @@
       "username": "bio_703",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.572Z"
+      "createdAt": "2026-09-17T08:46:55.572Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432043",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_680",
@@ -946,7 +1287,18 @@
       "username": "bio_680",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.575Z"
+      "createdAt": "2026-09-17T08:46:55.575Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432044",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1112",
@@ -957,7 +1309,18 @@
       "username": "bio_1112",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.608Z"
+      "createdAt": "2026-09-17T08:46:55.608Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432045",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1114",
@@ -968,7 +1331,18 @@
       "username": "bio_1114",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.609Z"
+      "createdAt": "2026-09-17T08:46:55.609Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432046",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_537",
@@ -979,7 +1353,18 @@
       "username": "bio_537",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.609Z"
+      "createdAt": "2026-09-17T08:46:55.609Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432047",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1093",
@@ -990,7 +1375,18 @@
       "username": "bio_1093",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.636Z"
+      "createdAt": "2026-09-17T08:46:55.636Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432048",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1115",
@@ -1001,7 +1397,18 @@
       "username": "bio_1115",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.698Z"
+      "createdAt": "2026-09-17T08:46:55.698Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432049",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1116",
@@ -1012,7 +1419,18 @@
       "username": "bio_1116",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.699Z"
+      "createdAt": "2026-09-17T08:46:55.699Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432050",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_820",
@@ -1023,7 +1441,18 @@
       "username": "bio_820",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.830Z"
+      "createdAt": "2026-09-17T08:46:55.830Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432051",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_972",
@@ -1034,7 +1463,18 @@
       "username": "bio_972",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.917Z"
+      "createdAt": "2026-09-17T08:46:55.917Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432052",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1118",
@@ -1045,7 +1485,18 @@
       "username": "bio_1118",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:55.957Z"
+      "createdAt": "2026-09-17T08:46:55.957Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432053",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1365",
@@ -1056,7 +1507,18 @@
       "username": "bio_1365",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:46:56.018Z"
+      "createdAt": "2026-09-17T08:46:56.018Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432054",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_949",
@@ -1067,7 +1529,18 @@
       "username": "bio_949",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:22.652Z"
+      "createdAt": "2026-09-17T08:47:22.652Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432055",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_656",
@@ -1078,7 +1551,18 @@
       "username": "bio_656",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:22.831Z"
+      "createdAt": "2026-09-17T08:47:22.831Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432056",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_837",
@@ -1089,7 +1573,18 @@
       "username": "bio_837",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:22.915Z"
+      "createdAt": "2026-09-17T08:47:22.915Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432057",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_5110",
@@ -1100,7 +1595,18 @@
       "username": "bio_5110",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:22.938Z"
+      "createdAt": "2026-09-17T08:47:22.938Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432058",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_421",
@@ -1111,7 +1617,18 @@
       "username": "bio_421",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.022Z"
+      "createdAt": "2026-09-17T08:47:23.022Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432059",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_648",
@@ -1122,7 +1639,18 @@
       "username": "bio_648",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.023Z"
+      "createdAt": "2026-09-17T08:47:23.023Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432060",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_549",
@@ -1133,7 +1661,18 @@
       "username": "bio_549",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.023Z"
+      "createdAt": "2026-09-17T08:47:23.023Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432061",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_309",
@@ -1144,7 +1683,18 @@
       "username": "bio_309",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.130Z"
+      "createdAt": "2026-09-17T08:47:23.130Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432062",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_2631",
@@ -1155,7 +1705,18 @@
       "username": "bio_2631",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.232Z"
+      "createdAt": "2026-09-17T08:47:23.232Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432063",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1124",
@@ -1166,7 +1727,18 @@
       "username": "bio_1124",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.240Z"
+      "createdAt": "2026-09-17T08:47:23.240Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432064",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_5171",
@@ -1177,7 +1749,18 @@
       "username": "bio_5171",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.333Z"
+      "createdAt": "2026-09-17T08:47:23.333Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432065",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_4056",
@@ -1188,7 +1771,18 @@
       "username": "bio_4056",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.658Z"
+      "createdAt": "2026-09-17T08:47:23.658Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432066",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1174",
@@ -1199,7 +1793,18 @@
       "username": "bio_1174",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.662Z"
+      "createdAt": "2026-09-17T08:47:23.662Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432067",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1172",
@@ -1210,7 +1815,18 @@
       "username": "bio_1172",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.665Z"
+      "createdAt": "2026-09-17T08:47:23.665Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432068",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1163",
@@ -1221,7 +1837,18 @@
       "username": "bio_1163",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.667Z"
+      "createdAt": "2026-09-17T08:47:23.667Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432069",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1157",
@@ -1232,7 +1859,18 @@
       "username": "bio_1157",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.668Z"
+      "createdAt": "2026-09-17T08:47:23.668Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432070",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1162",
@@ -1243,7 +1881,18 @@
       "username": "bio_1162",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.669Z"
+      "createdAt": "2026-09-17T08:47:23.669Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432071",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1148",
@@ -1254,7 +1903,18 @@
       "username": "bio_1148",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.672Z"
+      "createdAt": "2026-09-17T08:47:23.672Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432072",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1159",
@@ -1265,7 +1925,18 @@
       "username": "bio_1159",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.673Z"
+      "createdAt": "2026-09-17T08:47:23.673Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432073",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1171",
@@ -1276,7 +1947,18 @@
       "username": "bio_1171",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.676Z"
+      "createdAt": "2026-09-17T08:47:23.676Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432074",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1164",
@@ -1287,7 +1969,18 @@
       "username": "bio_1164",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.682Z"
+      "createdAt": "2026-09-17T08:47:23.682Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432075",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1179",
@@ -1298,7 +1991,18 @@
       "username": "bio_1179",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.827Z"
+      "createdAt": "2026-09-17T08:47:23.827Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432076",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1149",
@@ -1309,7 +2013,18 @@
       "username": "bio_1149",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.911Z"
+      "createdAt": "2026-09-17T08:47:23.911Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432077",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1076",
@@ -1320,7 +2035,18 @@
       "username": "bio_1076",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:23.921Z"
+      "createdAt": "2026-09-17T08:47:23.921Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432078",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1206",
@@ -1331,7 +2057,18 @@
       "username": "bio_1206",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:24.326Z"
+      "createdAt": "2026-09-17T08:47:24.326Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432079",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1224",
@@ -1342,7 +2079,18 @@
       "username": "bio_1224",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:47:24.859Z"
+      "createdAt": "2026-09-17T08:47:24.859Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432080",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_589",
@@ -1353,7 +2101,18 @@
       "username": "bio_589",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:49:43.452Z"
+      "createdAt": "2026-09-17T08:49:43.452Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432081",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1252",
@@ -1364,7 +2123,18 @@
       "username": "bio_1252",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:49:58.340Z"
+      "createdAt": "2026-09-17T08:49:58.340Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432082",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1256",
@@ -1375,7 +2145,18 @@
       "username": "bio_1256",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:01.508Z"
+      "createdAt": "2026-09-17T08:50:01.508Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432083",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1264",
@@ -1386,7 +2167,18 @@
       "username": "bio_1264",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:02.241Z"
+      "createdAt": "2026-09-17T08:50:02.241Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432084",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1267",
@@ -1397,7 +2189,18 @@
       "username": "bio_1267",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:02.871Z"
+      "createdAt": "2026-09-17T08:50:02.871Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432085",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1268",
@@ -1408,7 +2211,18 @@
       "username": "bio_1268",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:02.874Z"
+      "createdAt": "2026-09-17T08:50:02.874Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432086",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1274",
@@ -1419,7 +2233,18 @@
       "username": "bio_1274",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:03.494Z"
+      "createdAt": "2026-09-17T08:50:03.494Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432087",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1291",
@@ -1430,7 +2255,18 @@
       "username": "bio_1291",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:14.011Z"
+      "createdAt": "2026-09-17T08:50:14.011Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432088",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1276",
@@ -1441,7 +2277,18 @@
       "username": "bio_1276",
       "role": "employee",
       "status": "Active",
-      "createdAt": "2026-09-17T08:50:16.298Z"
+      "createdAt": "2026-09-17T08:50:16.298Z",
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432089",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     }
   ],
   "attendanceLogs": [
@@ -1451,13 +2298,13 @@
       "date": "2026-09-17",
       "shiftId": "sch_3ebecon",
       "checkIn": "13:42:47",
-      "checkOut": "14:50:50",
+      "checkOut": "15:19:19",
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:20:50.000Z",
-      "lastBiometricPunchAt": "2026-09-17T09:20:50.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:49:19.000Z",
+      "lastBiometricPunchAt": "2026-09-17T09:49:19.000Z",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
@@ -1467,7 +2314,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-17T09:06:38.141Z",
-      "updatedAt": "2026-09-17T09:35:58.679Z"
+      "updatedAt": "2026-09-17T09:56:16.364Z"
     },
     {
       "id": "BIO_usr_bio_1118_2026-09-17",
@@ -2667,7 +3514,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T09:35:58.676Z"
+      "updatedAt": "2026-09-17T09:56:16.354Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -7491,7 +8338,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T09:35:58.671Z"
+      "updatedAt": "2026-09-17T09:56:16.350Z"
     },
     {
       "id": "BIO_usr_bio_1159_2026-09-11",
@@ -116149,9 +116996,9 @@
       "_id": "6a8d3b8e94e235d28a4e96fb",
       "id": "sch_q8jji9v",
       "name": "Morning Shift",
-      "startTime": "11:30",
-      "endTime": "16:00",
-      "gracePeriod": 12,
+      "startTime": "15:00",
+      "endTime": "20:00",
+      "gracePeriod": 20,
       "weeklyOffs": [],
       "__v": 0,
       "halfDayLimit": 120,
@@ -116162,7 +117009,7 @@
         4,
         5
       ],
-      "location": "chandani chowk"
+      "location": "HS Group Worksite (28.6952, 77.1860)"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e96fc",
@@ -116259,6 +117106,39 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_xccxc6k",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: HS Group Worksite (28.6952, 77.1860) ➔ omaxe Office\n• Work Shift Locations: Morning Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: omaxe Office",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-17T09:47:49.545Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_yqh94it",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift, MAIN OFFICE  Shift ➔ Morning Shift",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-17T09:47:01.214Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_bzr6l8j",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Biometric User ID: EMP1 ➔ 1\n• Work Shift Locations: MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: MAIN OFFICE  Shift ➔ Morning Shift\n• Assigned Work Shifts: MAIN OFFICE  Shift ➔ Morning Shift, MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-17T09:40:35.284Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_cckbzvx",
       "title": "📢 Profile Updated by HR/Manager",
@@ -116804,6 +117684,179 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-17T09:47:50.508Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_xccxc6k",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: HS Group Worksite (28.6952, 77.1860) ➔ omaxe Office\n• Work Shift Locations: Morning Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: omaxe Office",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-17T09:47:49.545Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T09:47:50.110Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        },
+        "role": "employee",
+        "preferredLocation": "omaxe Office",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T09:47:02.282Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_yqh94it",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift, MAIN OFFICE  Shift ➔ Morning Shift",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-17T09:47:01.214Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T09:47:01.894Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T09:45:12.512Z",
+      "action": "UPDATE_schedules",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Morning Shift",
+        "startTime": "15:00",
+        "endTime": "20:00",
+        "gracePeriod": 20,
+        "workDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "location": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T09:40:36.252Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_bzr6l8j",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Biometric User ID: EMP1 ➔ 1\n• Work Shift Locations: MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: MAIN OFFICE  Shift ➔ Morning Shift\n• Assigned Work Shifts: MAIN OFFICE  Shift ➔ Morning Shift, MAIN OFFICE  Shift",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-17T09:40:35.284Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-16T06:50:47.048Z",
       "action": "PUSH_announcements",
@@ -117481,7 +118534,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T09:35:58.689Z",
-    "lastLogCount": 10
+    "lastSyncAt": "2026-09-17T09:56:16.391Z",
+    "lastLogCount": 13
   }
 }

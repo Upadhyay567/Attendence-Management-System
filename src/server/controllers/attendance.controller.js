@@ -136,11 +136,25 @@ async function handleGranularMutation(req, res) {
   try {
     const { type, key, payload, updates, query } = req.body || {};
 
-    // Geofence Validation for attendance logs check-in
+    // Geofence Validation for attendance logs check-in (dynamically resolves shift worksite coordinates)
     if (key === 'attendanceLogs' && type === 'push' && payload && payload.latitude && payload.longitude) {
-      const defaultOfficeLat = 28.6978;
-      const defaultOfficeLng = 77.1408;
-      const dist = calculateHaversineDistance(payload.latitude, payload.longitude, defaultOfficeLat, defaultOfficeLng);
+      let targetLat = 28.6978;
+      let targetLng = 77.1408;
+
+      const localState = readLocalDbStateCached();
+      if (localState && payload.userId) {
+        const u = (localState.users || []).find(emp => String(emp.id) === String(payload.userId));
+        const sId = payload.shiftId || (u ? u.scheduleId : null);
+        const sched = (localState.schedules || []).find(s => String(s.id) === String(sId));
+        const locName = (u && u.shiftLocations && sId && u.shiftLocations[sId]) || (sched ? sched.location : null) || (u ? u.preferredLocation : null);
+        
+        if (locName && localState.officeCoordinates && localState.officeCoordinates[locName]) {
+          targetLat = localState.officeCoordinates[locName].lat;
+          targetLng = localState.officeCoordinates[locName].lng;
+        }
+      }
+
+      const dist = calculateHaversineDistance(payload.latitude, payload.longitude, targetLat, targetLng);
       
       if (dist > 100) {
         return res.status(400).json({ 

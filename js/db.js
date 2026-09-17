@@ -1390,8 +1390,8 @@ export const DB = {
     }
 
     const resolvedLocation = (user && user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) ||
-                             (user && user.preferredLocation) ||
-                             (selectedSchedule ? selectedSchedule.location : null);
+                             (selectedSchedule ? selectedSchedule.location : null) ||
+                             (user && user.preferredLocation);
 
     return {
       scheduleId: selectedSchedule ? selectedSchedule.id : null,
@@ -1412,7 +1412,7 @@ export const DB = {
     if (user.shiftLocations && shiftId && user.shiftLocations[shiftId]) {
       return user.shiftLocations[shiftId];
     }
-    return user.preferredLocation || (res && res.schedule ? res.schedule.location : null) || 'Kohat Enclave, Pitampura, Delhi';
+    return (res && res.schedule ? res.schedule.location : null) || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
   },
 
   getSchedules() {
