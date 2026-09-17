@@ -243,6 +243,7 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
 
   // Auto-register biometric user if missing from HRMS list
   if (targetName && targetName !== 'admin') {
+    const defaultSch = 'sch_q8jji9v';
     const newEmp = {
       _id: 'usr_bio_' + String(biometricUserId).trim(),
       id: 'usr_bio_' + String(biometricUserId).trim(),
@@ -252,6 +253,9 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       username: 'bio_' + String(biometricUserId).trim(),
       role: 'employee',
       status: 'Active',
+      scheduleId: defaultSch,
+      scheduleIds: [defaultSch],
+      shiftLocations: { [defaultSch]: LOCATION },
       createdAt: new Date().toISOString()
     };
     users.push(newEmp);

@@ -618,7 +618,15 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "biometricId": "5174",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_780",
@@ -640,7 +648,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1043",
@@ -662,7 +677,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1063",
@@ -684,7 +706,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_40425",
@@ -706,7 +735,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_556",
@@ -728,7 +764,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_568",
@@ -750,7 +793,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_781",
@@ -772,7 +822,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_533",
@@ -794,7 +851,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_525",
@@ -816,7 +880,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_606",
@@ -838,7 +909,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_511",
@@ -860,7 +938,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1024",
@@ -882,7 +967,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1087",
@@ -904,7 +996,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1101",
@@ -926,7 +1025,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_873",
@@ -948,7 +1054,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_913",
@@ -970,7 +1083,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_836",
@@ -992,7 +1112,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_912",
@@ -1014,7 +1141,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_747",
@@ -1036,7 +1170,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1102",
@@ -1058,7 +1199,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_727",
@@ -1080,7 +1228,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_825",
@@ -1102,7 +1257,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_907",
@@ -1124,7 +1286,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_998",
@@ -1146,7 +1315,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_0542",
@@ -1168,7 +1344,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_713",
@@ -1190,7 +1373,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_660",
@@ -1212,7 +1402,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_614",
@@ -1234,7 +1431,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_541",
@@ -1256,7 +1460,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_703",
@@ -1278,7 +1489,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_680",
@@ -1300,7 +1518,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1112",
@@ -1322,7 +1547,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1114",
@@ -1344,7 +1576,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_537",
@@ -1366,7 +1605,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1093",
@@ -1388,7 +1634,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1115",
@@ -1410,7 +1663,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1116",
@@ -1432,7 +1692,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_820",
@@ -1454,7 +1721,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_972",
@@ -1476,7 +1750,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1118",
@@ -1498,7 +1779,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1365",
@@ -1520,7 +1808,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_949",
@@ -1542,7 +1837,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_656",
@@ -1564,7 +1866,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_837",
@@ -1586,7 +1895,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_5110",
@@ -1608,7 +1924,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_421",
@@ -1630,7 +1953,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_648",
@@ -1652,7 +1982,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_549",
@@ -1674,7 +2011,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_309",
@@ -1696,7 +2040,15 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "biometricId": "309",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_2631",
@@ -1718,7 +2070,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1124",
@@ -1740,7 +2099,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_5171",
@@ -1762,7 +2128,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_4056",
@@ -1784,7 +2157,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1174",
@@ -1806,7 +2186,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1172",
@@ -1828,7 +2215,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1163",
@@ -1850,7 +2244,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1157",
@@ -1872,7 +2273,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1162",
@@ -1894,7 +2302,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1148",
@@ -1916,7 +2331,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1159",
@@ -1938,7 +2360,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1171",
@@ -1960,7 +2389,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1164",
@@ -1982,7 +2418,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1179",
@@ -2004,7 +2447,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1149",
@@ -2026,7 +2476,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1076",
@@ -2048,7 +2505,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1206",
@@ -2070,7 +2534,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1224",
@@ -2092,7 +2563,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_589",
@@ -2114,7 +2592,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1252",
@@ -2136,7 +2621,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1256",
@@ -2158,7 +2650,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1264",
@@ -2180,7 +2679,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1267",
@@ -2202,7 +2708,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1268",
@@ -2224,7 +2737,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1274",
@@ -2246,7 +2766,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1291",
@@ -2268,7 +2795,14 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
     },
     {
       "_id": "usr_bio_1276",
@@ -2290,7 +2824,161 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      }
+    },
+    {
+      "_id": "usr_bio_1094",
+      "id": "usr_bio_1094",
+      "employeeId": "1094",
+      "biometricUserId": "1094",
+      "biometricId": "1094",
+      "name": "Ravit Singh",
+      "username": "bio_1094",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.710Z"
+    },
+    {
+      "_id": "usr_bio_1200",
+      "id": "usr_bio_1200",
+      "employeeId": "1200",
+      "biometricUserId": "1200",
+      "biometricId": "1200",
+      "name": "BHUPENDRA VISHWAKARMA",
+      "username": "bio_1200",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.712Z"
+    },
+    {
+      "_id": "usr_bio_1253",
+      "id": "usr_bio_1253",
+      "employeeId": "1253",
+      "biometricUserId": "1253",
+      "biometricId": "1253",
+      "name": "Mansi Tomar",
+      "username": "bio_1253",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.713Z"
+    },
+    {
+      "_id": "usr_bio_293",
+      "id": "usr_bio_293",
+      "employeeId": "293",
+      "biometricUserId": "845",
+      "biometricId": "845",
+      "name": "KAMLESH",
+      "username": "bio_293",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.713Z"
+    },
+    {
+      "_id": "usr_bio_3980",
+      "id": "usr_bio_3980",
+      "employeeId": "3980",
+      "biometricUserId": "3980",
+      "biometricId": "3980",
+      "name": "SACHIN",
+      "username": "bio_3980",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.713Z"
+    },
+    {
+      "_id": "usr_bio_1269",
+      "id": "usr_bio_1269",
+      "employeeId": "1269",
+      "biometricUserId": "1269",
+      "biometricId": "1269",
+      "name": "Kriti",
+      "username": "bio_1269",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.713Z"
+    },
+    {
+      "_id": "usr_bio_1275",
+      "id": "usr_bio_1275",
+      "employeeId": "1275",
+      "biometricUserId": "1275",
+      "biometricId": "1275",
+      "name": "Mukesh singh",
+      "username": "bio_1275",
+      "role": "employee",
+      "status": "Active",
+      "department": "Operations",
+      "designation": "Staff",
+      "scheduleId": "sch_q8jji9v",
+      "scheduleIds": [
+        "sch_q8jji9v"
+      ],
+      "shiftLocations": {
+        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+      },
+      "createdAt": "2026-09-17T11:14:53.713Z"
     }
   ],
   "attendanceLogs": [
@@ -2299,8 +2987,8 @@
       "userId": "usr_68s5s48",
       "date": "2026-09-17",
       "shiftId": "sch_q8jji9v",
-      "checkIn": "15:30",
-      "checkOut": "15:19:19",
+      "checkIn": "13:42:47",
+      "checkOut": "15:57:07",
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "location": "omaxe Office",
@@ -2313,9 +3001,9 @@
       "longitude": 77.1408,
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:49:19.000Z",
-      "lastBiometricPunchAt": "2026-09-17T09:49:19.000Z",
-      "updatedAt": "2026-09-17T10:24:41.780Z"
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T10:27:07.000Z",
+      "lastBiometricPunchAt": "2026-09-17T10:27:07.000Z",
+      "updatedAt": "2026-09-17T11:16:28.017Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-17",
@@ -3539,7 +4227,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T10:24:41.776Z"
+      "updatedAt": "2026-09-17T11:16:28.013Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -8363,7 +9051,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T10:24:41.774Z"
+      "updatedAt": "2026-09-17T11:16:28.012Z"
     },
     {
       "id": "BIO_usr_bio_1159_2026-09-11",
@@ -118637,7 +119325,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T10:24:41.795Z",
-    "lastLogCount": 14
+    "lastSyncAt": "2026-09-17T11:16:28.022Z",
+    "lastLogCount": 15
   }
 }
