@@ -183,67 +183,94 @@ function writeLocalDatabase(state) {
    FIND HRMS USER
 ========================================================= */
 
-function findLocalEmployee(users, biometricUserId) {
-  const target = String(
-    biometricUserId
-  ).trim()
-  .toLowerCase();
+function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
+  const target = String(biometricUserId || '').trim().toLowerCase();
+  const targetName = String(deviceUserName || '').trim().toLowerCase();
 
-  return users.find(user => {
+  let employee = users.find(user => {
     if (!user) return false;
 
-    // Preferred mapping
+    // 1. Preferred mapping: biometricUserId
     if (
       user.biometricUserId &&
-      String(user.biometricUserId)
-        .trim()
-        .toLowerCase() === target
+      String(user.biometricUserId).trim().toLowerCase() === target
     ) {
       return true;
     }
 
-    // Backward-compatible mappings
+    // 2. Backward-compatible mappings
     if (
       user.employeeId &&
-      String(user.employeeId)
-        .trim()
-        .toLowerCase() === target
+      String(user.employeeId).trim().toLowerCase() === target
     ) {
       return true;
     }
 
     if (
       user.id &&
-      String(user.id)
-        .trim()
-        .toLowerCase() === target
+      String(user.id).trim().toLowerCase() === target
     ) {
       return true;
     }
 
     if (
       user.username &&
-      String(user.username)
-        .trim()
-        .toLowerCase() === target
+      String(user.username).trim().toLowerCase() === target
     ) {
       return true;
     }
 
+    // 3. Name matching fallback (e.g. K40 "Hemant" <-> HRMS "Hemant" or "Hemant upadhyay")
+    if (targetName && user.name) {
+      const uName = String(user.name).trim().toLowerCase();
+      if (uName === targetName) return true;
+
+      const firstUName = uName.split(' ')[0];
+      const firstTargetName = targetName.split(' ')[0];
+      if (firstUName && firstTargetName && firstUName === firstTargetName) return true;
+    }
+
     return false;
-  }) || null;
+  });
+
+  // Auto-bind biometricUserId if found and not yet set
+  if (employee) {
+    if (!employee.biometricUserId || employee.biometricUserId !== String(biometricUserId).trim()) {
+      employee.biometricUserId = String(biometricUserId).trim();
+    }
+    return employee;
+  }
+
+  // Auto-register biometric user if missing from HRMS list
+  if (targetName && targetName !== 'admin') {
+    const newEmp = {
+      _id: 'usr_bio_' + String(biometricUserId).trim(),
+      id: 'usr_bio_' + String(biometricUserId).trim(),
+      employeeId: String(biometricUserId).trim(),
+      biometricUserId: String(biometricUserId).trim(),
+      name: deviceUserName || ('Employee ' + biometricUserId),
+      username: 'bio_' + String(biometricUserId).trim(),
+      role: 'employee',
+      status: 'Active',
+      createdAt: new Date().toISOString()
+    };
+    users.push(newEmp);
+    console.log(`✨ Auto-registered biometric user in HRMS: ${newEmp.name} (ID: ${newEmp.biometricUserId})`);
+    return newEmp;
+  }
+
+  return null;
 }
 
 
 /**
  * MongoDB employee lookup.
  */
-async function findMongoEmployee(biometricUserId) {
-  const target = String(
-    biometricUserId
-  ).trim();
+async function findMongoEmployee(biometricUserId, deviceUserName = '') {
+  const target = String(biometricUserId || '').trim();
+  const targetName = String(deviceUserName || '').trim();
 
-  return User.findOne({
+  let employee = await User.findOne({
     $or: [
       { biometricUserId: target },
       { employeeId: target },
@@ -251,6 +278,22 @@ async function findMongoEmployee(biometricUserId) {
       { username: target }
     ]
   }).lean();
+
+  if (!employee && targetName) {
+    const firstName = targetName.split(' ')[0];
+    employee = await User.findOne({
+      $or: [
+        { name: new RegExp('^' + targetName, 'i') },
+        { name: new RegExp('^' + firstName, 'i') }
+      ]
+    }).lean();
+  }
+
+  if (employee && !employee.biometricUserId) {
+    await User.updateOne({ id: employee.id }, { $set: { biometricUserId: target } }).catch(() => {});
+  }
+
+  return employee;
 }
 
 
@@ -339,7 +382,8 @@ function processLocalPunch(
   const employee =
     findLocalEmployee(
       users,
-      punch.biometricUserId
+      punch.biometricUserId,
+      biometricUser ? biometricUser.name : ''
     );
 
   if (!employee) {
@@ -700,7 +744,8 @@ async function syncMongoDatabase(
 
     const employee =
       await findMongoEmployee(
-        punch.biometricUserId
+        punch.biometricUserId,
+        biometricUser ? biometricUser.name : ''
       );
 
     if (!employee) {

@@ -32,7 +32,6 @@ const DEVICE = {
 let _deviceQueue = Promise.resolve();
 
 
-
 // =====================================================
 // HELPERS
 // =====================================================
@@ -44,12 +43,12 @@ function sleep(ms) {
 /**
  * Silently suppress any stray socket errors on the
  * internal TCP/UDP socket objects created by node-zklib.
- * Without this, Node crashes on uncaught ECONNRESET events.
+ * Without this, Node crashes on uncaught ECONNRESET / ETIMEDOUT events.
  */
 function suppressSocketErrors(zk) {
   if (!zk) return;
-  const tcp = zk.zklibtcp || zk.zklibTcp;
-  const udp = zk.zklibudp || zk.zklibUdp;
+  const tcp = zk.zklibTcp || zk.zklibtcp;
+  const udp = zk.zklibUdp || zk.zklibudp;
 
   try {
     if (tcp && tcp.socket) {
@@ -70,10 +69,11 @@ function suppressSocketErrors(zk) {
 async function forceDisconnect(zk) {
   if (!zk) return;
   suppressSocketErrors(zk);
+
   try { await zk.disconnect(); } catch (_) {}
 
-  const tcp = zk.zklibtcp || zk.zklibTcp;
-  const udp = zk.zklibudp || zk.zklibUdp;
+  const tcp = zk.zklibTcp || zk.zklibtcp;
+  const udp = zk.zklibUdp || zk.zklibudp;
 
   try {
     if (tcp && tcp.socket) {
@@ -101,13 +101,10 @@ async function forceDisconnect(zk) {
 function describeError(err) {
   if (!err) return 'Unknown error';
 
-  // ZKError objects have err, command, ip fields
   const parts = [];
 
   if (err.err) {
-    parts.push(
-      err.err.message || String(err.err)
-    );
+    parts.push(err.err.message || String(err.err));
   } else if (err.message) {
     parts.push(err.message);
   } else {
@@ -128,20 +125,14 @@ function describeError(err) {
 // between each attempt. Ensures any partially-opened
 // socket from a failed attempt is destroyed before
 // the next attempt.
-//
-// NOTE: node-zklib v1.3.0 ZKLib constructor signature:
-//   new ZKLib(ip, port, timeout, inport)
-// The library itself decides TCP vs UDP inside
-// createSocket(). The extra commCode / 'tcp' args in
-// the old code were silently ignored.
 // =====================================================
 
 const MAX_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 500;
+const CONNECT_TIMEOUT_MS = 3000; // 3 seconds per attempt (plenty for local LAN 192.168.1.51)
 
 async function createDeviceConnection() {
   let lastError = null;
-  const timeoutMs = Math.min(Number(DEVICE.timeout || 3000), 3000);
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let zk = null;
@@ -150,24 +141,30 @@ async function createDeviceConnection() {
       zk = new ZKLib(
         DEVICE.ip,
         DEVICE.port,
-        timeoutMs,
-        DEVICE.inport
+        CONNECT_TIMEOUT_MS,
+        DEVICE.inport,
+        DEVICE.commCode,
+        'tcp'
       );
 
       suppressSocketErrors(zk);
 
-      // Add connection timeout race guard
+      // Add connection timeout race guard with explicit socket destruction
+      let timeoutTimer = null;
       await Promise.race([
         zk.createSocket().then(() => {
+          if (timeoutTimer) clearTimeout(timeoutTimer);
           suppressSocketErrors(zk);
           return zk;
         }),
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error(`Connect timeout after ${timeoutMs}ms`)),
-            timeoutMs
-          )
-        )
+        new Promise((_, reject) => {
+          timeoutTimer = setTimeout(() => {
+            if (zk && zk.zklibTcp && zk.zklibTcp.socket) {
+              try { zk.zklibTcp.socket.destroy(); } catch (_) {}
+            }
+            reject(new Error(`TCP connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
+          }, CONNECT_TIMEOUT_MS);
+        })
       ]);
 
       suppressSocketErrors(zk);
@@ -182,7 +179,6 @@ async function createDeviceConnection() {
     } catch (err) {
       lastError = err;
 
-      // Destroy the partial socket before retrying
       if (zk) {
         suppressSocketErrors(zk);
         await forceDisconnect(zk);
@@ -194,12 +190,19 @@ async function createDeviceConnection() {
     }
   }
 
-  // All attempts exhausted — throw a clean offline error
+  // All attempts exhausted — throw a descriptive error
   const detail = describeError(lastError);
-  const richErr = new Error(`Biometric hardware offline or unreachable (${DEVICE.ip}:${DEVICE.port}): ${detail}`);
+
+  const richErr = new Error(
+    `K40 connection failed after ${MAX_ATTEMPTS} attempts: ${detail}`
+  );
+  richErr.step      = 'TCP CONNECT';
+  richErr.command   = 'TCP CONNECT';
+  richErr.ip        = DEVICE.ip;
+  richErr.port      = DEVICE.port;
   richErr.isOffline = true;
-  richErr.ip = DEVICE.ip;
-  richErr.port = DEVICE.port;
+  richErr.original  = lastError;
+
   throw richErr;
 }
 
@@ -222,9 +225,9 @@ async function withDevice(callback) {
 
     } catch (error) {
       if (error && error.isOffline) {
-        console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — local DB active.`);
+        console.log(`ℹ️ K40 device status (${DEVICE.ip}:${DEVICE.port}): Offline / unreachable — using local DB.`);
       } else {
-        console.warn(`⚠️ Biometric device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
+        console.warn(`⚠️ K40 device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
       }
       throw error;
 
@@ -283,13 +286,12 @@ async function getAttendanceLogs() {
  */
 async function getDeviceSnapshot() {
   return withDevice(async (zk) => {
-
-    console.log('📡 [K40] Fetching users...');
+    console.log('📡 [K40] Fetching users sequentially...');
     const usersResult = await zk.getUsers();
     const users = usersResult?.data || [];
     console.log(`👥 [K40] Users received: ${users.length}`);
 
-    console.log('📡 [K40] Fetching attendance logs...');
+    console.log('📡 [K40] Fetching attendance logs sequentially...');
     const attendanceResult = await zk.getAttendances();
     const logs = attendanceResult?.data || [];
     console.log(`📝 [K40] Attendance logs received: ${logs.length}`);

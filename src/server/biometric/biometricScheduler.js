@@ -58,12 +58,7 @@ function startBiometricScheduler() {
 
 
 async function runSync() {
-
   if (running) {
-    console.log(
-      '⏳ Previous biometric sync still running. Skipping.'
-    );
-
     return;
   }
 
