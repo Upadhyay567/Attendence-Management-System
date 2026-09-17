@@ -188,30 +188,22 @@ async function trySingleConnection(ip, protocol = 'tcp') {
 
 async function createDeviceConnection() {
   let lastError = null;
-  const primaryIp = DEVICE.ip || '192.168.1.55';
-  const fallbackIp = primaryIp === '192.168.1.55' ? '192.168.1.51' : '192.168.1.55';
-  const ipsToTry = [primaryIp, fallbackIp];
+  const targetIp = DEVICE.ip || '192.168.1.51';
 
-  for (const targetIp of ipsToTry) {
-    for (const proto of ['tcp', 'udp']) {
-      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        try {
-          if (attempt > 1) await sleep(RETRY_DELAY_MS);
-          const zk = await trySingleConnection(targetIp, proto);
+  for (const proto of ['tcp', 'udp']) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        if (attempt > 1) await sleep(RETRY_DELAY_MS);
+        const zk = await trySingleConnection(targetIp, proto);
 
-          if (lastLoggedOffline || targetIp !== primaryIp) {
-            console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${targetIp}:${DEVICE.port} (${proto.toUpperCase()})`);
-            lastLoggedOffline = false;
-          }
-          // Update active IP if fallback connected
-          if (targetIp !== DEVICE.ip) {
-            DEVICE.ip = targetIp;
-          }
-          return zk;
-
-        } catch (err) {
-          lastError = err;
+        if (lastLoggedOffline) {
+          console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${targetIp}:${DEVICE.port} (${proto.toUpperCase()})`);
+          lastLoggedOffline = false;
         }
+        return zk;
+
+      } catch (err) {
+        lastError = err;
       }
     }
   }
