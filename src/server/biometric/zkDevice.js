@@ -104,17 +104,34 @@ function describeError(err) {
   const parts = [];
 
   if (err.err) {
-    parts.push(err.err.message || String(err.err));
-  } else if (err.message) {
+    if (typeof err.err === 'string') {
+      parts.push(err.err);
+    } else if (err.err.message) {
+      parts.push(err.err.message);
+    } else if (err.err.code) {
+      parts.push(`Code: ${err.err.code}`);
+    } else {
+      try {
+        const str = JSON.stringify(err.err);
+        if (str && str !== '{}') parts.push(str);
+      } catch (_) {}
+    }
+  }
+
+  if (err.message && !parts.includes(err.message)) {
     parts.push(err.message);
-  } else {
-    parts.push(String(err));
   }
 
   if (err.command) parts.push(`command=${err.command}`);
   if (err.ip)      parts.push(`ip=${err.ip}`);
 
-  return parts.join(' | ') || String(err);
+  const result = parts.filter(Boolean).join(' | ');
+
+  if (!result || result === '{}' || result === '[object Object]') {
+    return err.command ? `Device command ${err.command} failed` : 'Connection timeout / device offline';
+  }
+
+  return result;
 }
 
 
