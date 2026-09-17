@@ -150,14 +150,14 @@ const CONNECT_TIMEOUT_MS = 3500;
 
 let lastLoggedOffline = false;
 
-async function trySingleConnection(ip) {
+async function trySingleConnection(ip, protocol = 'tcp') {
   let zk = new ZKLib(
     ip,
     DEVICE.port,
     CONNECT_TIMEOUT_MS,
     DEVICE.inport,
     DEVICE.commCode,
-    'tcp'
+    protocol
   );
 
   suppressSocketErrors(zk);
@@ -166,42 +166,53 @@ async function trySingleConnection(ip) {
   await Promise.race([
     zk.createSocket().then(() => {
       if (timeoutTimer) clearTimeout(timeoutTimer);
-      zk.connectionType = 'tcp';
+      zk.connectionType = protocol;
       suppressSocketErrors(zk);
       return zk;
     }),
     new Promise((_, reject) => {
       timeoutTimer = setTimeout(() => {
-        if (zk && zk.zklibTcp && zk.zklibTcp.socket) {
-          try { zk.zklibTcp.socket.destroy(); } catch (_) {}
+        const sockObj = protocol === 'tcp' ? (zk.zklibTcp && zk.zklibTcp.socket) : (zk.zklibUdp && zk.zklibUdp.socket);
+        if (sockObj) {
+          try { sockObj.destroy(); } catch (_) {}
         }
-        reject(new Error(`TCP connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
+        reject(new Error(`${protocol.toUpperCase()} connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
       }, CONNECT_TIMEOUT_MS);
     })
   ]);
 
-  zk.connectionType = 'tcp';
+  zk.connectionType = protocol;
   suppressSocketErrors(zk);
   return zk;
 }
 
 async function createDeviceConnection() {
   let lastError = null;
-  const targetIp = DEVICE.ip;
+  const primaryIp = DEVICE.ip || '192.168.1.55';
+  const fallbackIp = primaryIp === '192.168.1.55' ? '192.168.1.51' : '192.168.1.55';
+  const ipsToTry = [primaryIp, fallbackIp];
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      if (attempt > 1) await sleep(RETRY_DELAY_MS);
-      const zk = await trySingleConnection(targetIp);
+  for (const targetIp of ipsToTry) {
+    for (const proto of ['tcp', 'udp']) {
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          if (attempt > 1) await sleep(RETRY_DELAY_MS);
+          const zk = await trySingleConnection(targetIp, proto);
 
-      if (lastLoggedOffline) {
-        console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${targetIp}:${DEVICE.port}`);
-        lastLoggedOffline = false;
+          if (lastLoggedOffline || targetIp !== primaryIp) {
+            console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${targetIp}:${DEVICE.port} (${proto.toUpperCase()})`);
+            lastLoggedOffline = false;
+          }
+          // Update active IP if fallback connected
+          if (targetIp !== DEVICE.ip) {
+            DEVICE.ip = targetIp;
+          }
+          return zk;
+
+        } catch (err) {
+          lastError = err;
+        }
       }
-      return zk;
-
-    } catch (err) {
-      lastError = err;
     }
   }
 
@@ -211,9 +222,9 @@ async function createDeviceConnection() {
   const richErr = new Error(
     `K40 connection failed: ${detail}`
   );
-  richErr.step      = 'TCP CONNECT';
-  richErr.command   = 'TCP CONNECT';
-  richErr.ip        = targetIp;
+  richErr.step      = 'CONNECT';
+  richErr.command   = 'CONNECT';
+  richErr.ip        = primaryIp;
   richErr.port      = DEVICE.port;
   richErr.isOffline = true;
   richErr.original  = lastError;
