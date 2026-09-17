@@ -301,20 +301,41 @@ router.get('/biometric/dashboard', async (req, res) => {
 
     let biometricUsers = [];
     let biometricLogs  = [];
+    let isConnected = true;
 
     try {
       const snapshot = await getDeviceSnapshot();
       biometricUsers = Array.isArray(snapshot.users) ? snapshot.users : [];
       biometricLogs  = Array.isArray(snapshot.logs)  ? snapshot.logs  : [];
     } catch (err) {
-      // Annotate with a step tag before re-throwing so
-      // the outer catch can identify this stage.
-      const e = new Error(`K40 snapshot failed: ${describeError(err)}`);
-      e.step    = 'TCP CONNECT';
-      e.command = err.command || 'TCP CONNECT';
-      e.ip      = err.ip      || DEVICE.ip;
-      e.port    = err.port    || DEVICE.port;
-      throw e;
+      console.log(`ℹ️ K40 hardware offline (${DEVICE.ip}:${DEVICE.port}) during dashboard request — operating in local database mode.`);
+      isConnected = false;
+
+      // Read synced attendance and users from local database file
+      try {
+        if (fs.existsSync(LOCAL_DB_FILE)) {
+          const rawDb = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+          const dbState = JSON.parse(rawDb);
+          const rawLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
+          const rawUsers = Array.isArray(dbState.users) ? dbState.users : [];
+
+          biometricLogs = rawLogs.map(l => ({
+            userSn: l.id,
+            deviceUserId: l.biometricUserId || l.userId,
+            recordTime: l.lastBiometricPunchAt || (l.date && l.checkIn ? `${l.date}T${l.checkIn}:00.000Z` : new Date().toISOString()),
+            ip: l.biometricDeviceId || DEVICE.ip
+          }));
+
+          biometricUsers = rawUsers.map((u, index) => ({
+            uid: index + 1,
+            role: 0,
+            name: u.name,
+            userId: u.biometricUserId || u.employeeId || u.id
+          }));
+        }
+      } catch (localErr) {
+        console.warn('⚠️ Local DB fallback read warning:', localErr.message);
+      }
     }
 
     console.log(`👥 K40 users: ${biometricUsers.length}`);
@@ -432,7 +453,7 @@ router.get('/biometric/dashboard', async (req, res) => {
         ip:        DEVICE.ip,
         port:      DEVICE.port,
         serial:    DEVICE.serial,
-        connected: true
+        connected: isConnected
       },
       counts: {
         biometricUsers:   biometricUsers.length,
