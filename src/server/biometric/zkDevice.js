@@ -127,74 +127,116 @@ function describeError(err) {
 // the next attempt.
 // =====================================================
 
+const { execSync } = require('child_process');
+
 const MAX_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 500;
-const CONNECT_TIMEOUT_MS = 3000; // 3 seconds per attempt (plenty for local LAN 192.168.1.51)
+const CONNECT_TIMEOUT_MS = 2500; // 2.5s per attempt for fast responsiveness
+
+let lastLoggedOffline = false;
+
+/**
+ * Scan system ARP table for active ZKTeco MAC addresses (vendor prefix 10-ff-e0).
+ */
+function getArpZkTecoIps() {
+  try {
+    const arpOut = execSync('arp -a', { encoding: 'utf8' });
+    const ips = [];
+    const lines = arpOut.split('\n');
+    for (const line of lines) {
+      if (line.toLowerCase().includes('10-ff-e0')) {
+        const parts = line.trim().split(/\s+/);
+        if (parts[0] && parts[0].startsWith('192.168.')) {
+          ips.push(parts[0]);
+        }
+      }
+    }
+    return ips;
+  } catch (_) {
+    return [];
+  }
+}
+
+async function trySingleConnection(ip) {
+  let zk = new ZKLib(
+    ip,
+    DEVICE.port,
+    CONNECT_TIMEOUT_MS,
+    DEVICE.inport,
+    DEVICE.commCode,
+    'tcp'
+  );
+
+  suppressSocketErrors(zk);
+
+  let timeoutTimer = null;
+  await Promise.race([
+    zk.createSocket().then(() => {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      suppressSocketErrors(zk);
+      return zk;
+    }),
+    new Promise((_, reject) => {
+      timeoutTimer = setTimeout(() => {
+        if (zk && zk.zklibTcp && zk.zklibTcp.socket) {
+          try { zk.zklibTcp.socket.destroy(); } catch (_) {}
+        }
+        reject(new Error(`TCP connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
+      }, CONNECT_TIMEOUT_MS);
+    })
+  ]);
+
+  suppressSocketErrors(zk);
+  return zk;
+}
 
 async function createDeviceConnection() {
   let lastError = null;
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    let zk = null;
+  // 1. Try configured DEVICE.ip first
+  const targetIps = [DEVICE.ip];
 
-    try {
-      zk = new ZKLib(
-        DEVICE.ip,
-        DEVICE.port,
-        CONNECT_TIMEOUT_MS,
-        DEVICE.inport,
-        DEVICE.commCode,
-        'tcp'
-      );
+  // Add ARP-discovered ZKTeco IPs as fallback candidates
+  const arpIps = getArpZkTecoIps();
+  for (const arpIp of arpIps) {
+    if (!targetIps.includes(arpIp)) {
+      targetIps.push(arpIp);
+    }
+  }
 
-      suppressSocketErrors(zk);
+  for (const ip of targetIps) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const zk = await trySingleConnection(ip);
 
-      // Add connection timeout race guard with explicit socket destruction
-      let timeoutTimer = null;
-      await Promise.race([
-        zk.createSocket().then(() => {
-          if (timeoutTimer) clearTimeout(timeoutTimer);
-          suppressSocketErrors(zk);
-          return zk;
-        }),
-        new Promise((_, reject) => {
-          timeoutTimer = setTimeout(() => {
-            if (zk && zk.zklibTcp && zk.zklibTcp.socket) {
-              try { zk.zklibTcp.socket.destroy(); } catch (_) {}
-            }
-            reject(new Error(`TCP connect timeout after ${CONNECT_TIMEOUT_MS}ms`));
-          }, CONNECT_TIMEOUT_MS);
-        })
-      ]);
+        if (ip !== DEVICE.ip) {
+          console.log(`📡 [Auto-Discovery] Detected K40 hardware on dynamic IP: ${ip} (configured: ${DEVICE.ip})`);
+          DEVICE.ip = ip;
+        }
 
-      suppressSocketErrors(zk);
+        if (lastLoggedOffline) {
+          console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}`);
+          lastLoggedOffline = false;
+        } else if (attempt > 1) {
+          console.log(`✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (attempt ${attempt})`);
+        }
 
-      console.log(
-        `✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}` +
-        (attempt > 1 ? ` (attempt ${attempt})` : '')
-      );
+        return zk;
 
-      return zk;
-
-    } catch (err) {
-      lastError = err;
-
-      if (zk) {
-        suppressSocketErrors(zk);
-        await forceDisconnect(zk);
-      }
-
-      if (attempt < MAX_ATTEMPTS) {
-        await sleep(RETRY_DELAY_MS);
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_ATTEMPTS) {
+          await sleep(RETRY_DELAY_MS);
+        }
       }
     }
   }
 
-  // All attempts exhausted — throw a descriptive error
+  // All candidates exhausted — throw descriptive offline error
   const detail = describeError(lastError);
 
   const richErr = new Error(
-    `K40 connection failed after ${MAX_ATTEMPTS} attempts: ${detail}`
+    `K40 connection failed: ${detail}`
   );
   richErr.step      = 'TCP CONNECT';
   richErr.command   = 'TCP CONNECT';
@@ -225,7 +267,10 @@ async function withDevice(callback) {
 
     } catch (error) {
       if (error && error.isOffline) {
-        console.log(`ℹ️ K40 device status (${DEVICE.ip}:${DEVICE.port}): Offline / unreachable — using local DB.`);
+        if (!lastLoggedOffline) {
+          console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — operating in local database mode.`);
+          lastLoggedOffline = true;
+        }
       } else {
         console.warn(`⚠️ K40 device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
       }

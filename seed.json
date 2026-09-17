@@ -630,7 +630,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-16T13:55:17.168Z"
+      "updatedAt": "2026-09-17T07:48:34.795Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -726,7 +726,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-16T13:55:17.165Z"
+      "updatedAt": "2026-09-17T07:48:34.790Z"
     },
     {
       "id": "log_usr_sarah_2026-09-10_sch_q8jji9v",
@@ -5383,7 +5383,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-16T13:55:17.169Z",
+    "lastSyncAt": "2026-09-17T07:48:34.795Z",
     "lastLogCount": 7
   }
 }

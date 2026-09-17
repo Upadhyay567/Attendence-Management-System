@@ -892,12 +892,12 @@ async function syncBiometricAttendance() {
   syncRunning = true;
 
   try {
+    const snapshot =
+      await getDeviceSnapshot();
+
     console.log(
       '🔄 Starting biometric synchronization...'
     );
-
-    const snapshot =
-      await getDeviceSnapshot();
 
     const users =
       snapshot.users || [];
@@ -980,9 +980,7 @@ async function syncBiometricAttendance() {
   } catch (error) {
     const isOffline = error && (error.isOffline || (error.message && (error.message.includes('timeout') || error.message.includes('ECONNREFUSED') || error.message.includes('ETIMEDOUT') || error.message.includes('ENETUNREACH'))));
     
-    if (isOffline) {
-      console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — operating in local database mode.`);
-    } else {
+    if (!isOffline) {
       console.warn(`⚠️ Biometric sync status: ${error.message || String(error)}`);
     }
 
