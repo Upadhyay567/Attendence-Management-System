@@ -190,6 +190,8 @@ async function trySingleConnection(ip) {
   await Promise.race([
     zk.createSocket().then(() => {
       if (timeoutTimer) clearTimeout(timeoutTimer);
+      // Strictly enforce TCP connection type — K40 Pro is TCP only
+      zk.connectionType = 'tcp';
       suppressSocketErrors(zk);
       return zk;
     }),
@@ -203,6 +205,8 @@ async function trySingleConnection(ip) {
     })
   ]);
 
+  // Ensure TCP connection mode is active
+  zk.connectionType = 'tcp';
   suppressSocketErrors(zk);
   return zk;
 }
@@ -210,46 +214,28 @@ async function trySingleConnection(ip) {
 async function createDeviceConnection() {
   let lastError = null;
 
-  // 1. Try configured DEVICE.ip first
-  const targetIps = [DEVICE.ip];
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const zk = await trySingleConnection(DEVICE.ip);
 
-  // Add ARP-discovered ZKTeco IPs as fallback candidates
-  const arpIps = getArpZkTecoIps();
-  for (const arpIp of arpIps) {
-    if (!targetIps.includes(arpIp)) {
-      targetIps.push(arpIp);
-    }
-  }
+      if (lastLoggedOffline) {
+        console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}`);
+        lastLoggedOffline = false;
+      } else if (attempt > 1) {
+        console.log(`✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (attempt ${attempt})`);
+      }
 
-  for (const ip of targetIps) {
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      try {
-        const zk = await trySingleConnection(ip);
+      return zk;
 
-        if (ip !== DEVICE.ip) {
-          console.log(`📡 [Auto-Discovery] Detected K40 hardware on dynamic IP: ${ip} (configured: ${DEVICE.ip})`);
-          DEVICE.ip = ip;
-        }
-
-        if (lastLoggedOffline) {
-          console.log(`✅ K40 re-connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port}`);
-          lastLoggedOffline = false;
-        } else if (attempt > 1) {
-          console.log(`✅ K40 connected: ${DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (attempt ${attempt})`);
-        }
-
-        return zk;
-
-      } catch (err) {
-        lastError = err;
-        if (attempt < MAX_ATTEMPTS) {
-          await sleep(RETRY_DELAY_MS);
-        }
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_ATTEMPTS) {
+        await sleep(RETRY_DELAY_MS);
       }
     }
   }
 
-  // All candidates exhausted — throw descriptive offline error
+  // All attempts exhausted — throw descriptive offline error
   const detail = describeError(lastError);
 
   const richErr = new Error(
