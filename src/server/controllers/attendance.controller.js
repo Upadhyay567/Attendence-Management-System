@@ -70,6 +70,28 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
   }
 }
 
+let cachedDbState = null;
+let cachedMTime = 0;
+
+function readLocalDbStateCached() {
+  if (!fs.existsSync(LOCAL_DB_FILE)) return null;
+  try {
+    const stat = fs.statSync(LOCAL_DB_FILE);
+    if (!cachedDbState || stat.mtimeMs > cachedMTime) {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      cachedDbState = JSON.parse(raw);
+      cachedMTime = stat.mtimeMs;
+    }
+    return cachedDbState;
+  } catch (err) {
+    if (fs.existsSync(LOCAL_DB_FILE)) {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+      return JSON.parse(raw);
+    }
+    return null;
+  }
+}
+
 async function getDbState(req, res) {
   try {
     const online = await connectMongoose();
@@ -99,9 +121,9 @@ async function getDbState(req, res) {
         officeCoordinates: officeCoordinatesObj
       });
     } else {
-      if (fs.existsSync(LOCAL_DB_FILE)) {
-        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-        return res.json(JSON.parse(raw));
+      const localData = readLocalDbStateCached();
+      if (localData) {
+        return res.json(localData);
       }
       return res.status(404).json({ error: 'Seed database file missing.' });
     }

@@ -1451,13 +1451,13 @@
       "date": "2026-09-17",
       "shiftId": "sch_3ebecon",
       "checkIn": "13:42:47",
-      "checkOut": "14:09:20",
+      "checkOut": "14:50:50",
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-17T08:39:20.000Z",
-      "lastBiometricPunchAt": "2026-09-17T08:39:20.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:20:50.000Z",
+      "lastBiometricPunchAt": "2026-09-17T09:20:50.000Z",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
@@ -1467,7 +1467,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-17T09:06:38.141Z",
-      "updatedAt": "2026-09-17T09:06:38.143Z"
+      "updatedAt": "2026-09-17T09:35:58.679Z"
     },
     {
       "id": "BIO_usr_bio_1118_2026-09-17",
@@ -2667,7 +2667,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T09:06:38.137Z"
+      "updatedAt": "2026-09-17T09:35:58.676Z"
     },
     {
       "id": "log_usr_john_2026-09-16_sch_3ebecon",
@@ -7491,7 +7491,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T09:06:38.133Z"
+      "updatedAt": "2026-09-17T09:35:58.671Z"
     },
     {
       "id": "BIO_usr_bio_1159_2026-09-11",
@@ -117481,7 +117481,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T09:06:38.150Z",
-    "lastLogCount": 9
+    "lastSyncAt": "2026-09-17T09:35:58.689Z",
+    "lastLogCount": 10
   }
 }

@@ -155,9 +155,15 @@ const Notice = mongoose.model('Notice', NoticeSchema);
 const OfficeCoordinate = mongoose.model('OfficeCoordinate', OfficeCoordinateSchema);
 const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
 
+mongoose.set('bufferCommands', false);
+
 async function connectMongoose() {
   if (useLocalFileDB) return false;
-  if (isMongoConnected) return true;
+  if (isMongoConnected && mongoose.connection.readyState === 1) return true;
+  
+  // If already tried and failed recently, return false fast without blocking
+  if (isMongoConnected === false && useLocalFileDB) return false;
+
   try {
     const rawUrl = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
     const targetUrl = (rawUrl.includes('://') && rawUrl.includes('/', rawUrl.indexOf('://') + 3) && !rawUrl.endsWith('/'))
