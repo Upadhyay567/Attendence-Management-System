@@ -75,28 +75,7 @@ async function loginUser(req, res) {
       return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
     }
 
-    // Role portal permission check
     const foundUserBaseRole = getBaseRole(foundUser.role);
-    const requestedRole = getBaseRole(role);
-
-    if (requestedRole && foundUserBaseRole && requestedRole !== foundUserBaseRole) {
-      if (requestedRole === 'hr') {
-        return res.status(403).json({ 
-          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the HR Portal. Please use your ${foundUserBaseRole.toUpperCase()} portal.` 
-        });
-      }
-      if (requestedRole === 'manager') {
-        return res.status(403).json({ 
-          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the Manager Portal. Please use your ${foundUserBaseRole.toUpperCase()} portal.` 
-        });
-      }
-      if (requestedRole === 'employee') {
-        return res.status(403).json({ 
-          error: `Access Denied: Account '${foundUser.name || key}' has ${foundUserBaseRole.toUpperCase()} permissions and cannot log in through the Employee Portal.` 
-        });
-      }
-    }
-
     const isHrOrManager = foundUserBaseRole === 'hr' || foundUserBaseRole === 'manager';
 
     if (isHrOrManager && !password && !req.body.skipCheck) {

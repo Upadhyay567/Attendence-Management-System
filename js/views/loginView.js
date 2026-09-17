@@ -378,16 +378,6 @@ export function renderLoginView() {
         }
         // Server unreachable: fall back to client-side login with strict role check
         const matchedUser = DB.getUserByUsernameOrId(enteredId);
-        if (matchedUser) {
-          const userRole = DB.getUserBaseRole(matchedUser.role);
-          const reqRole = role === 'hr' ? 'hr' : (role === 'manager' ? 'manager' : 'employee');
-          if (userRole !== reqRole) {
-            const label = reqRole === 'hr' ? 'HR' : (reqRole === 'manager' ? 'Manager' : 'Employee');
-            warningEl.textContent = `⚠️ Access Denied: This ID belongs to a ${userRole.toUpperCase()} account, not a ${label} account. Only ${label} IDs can log in via the ${label} Portal.`;
-            warningEl.style.display = 'block';
-            return;
-          }
-        }
         warningEl.textContent = '⚠️ Server unreachable. Continuing in offline mode.';
         warningEl.style.display = 'block';
         setTimeout(() => {
@@ -419,14 +409,6 @@ export function renderLoginView() {
       if (enteredId) {
         const candidate = DB.getUserByUsernameOrId(enteredId);
         if (candidate) {
-          const candRole = DB.getUserBaseRole(candidate.role);
-          const targetRole = role === 'hr' ? 'hr' : (role === 'manager' ? 'manager' : 'employee');
-          if (candRole !== targetRole) {
-            const roleLabel = targetRole === 'hr' ? 'HR' : (targetRole === 'manager' ? 'Manager' : 'Employee');
-            warningEl.textContent = `⚠️ Access Denied: Account '${candidate.name || enteredId}' has '${candRole.toUpperCase()}' permissions and cannot log in through the ${roleLabel} Portal.`;
-            warningEl.style.display = 'block';
-            return;
-          }
           userToLogin = candidate;
         }
       }
