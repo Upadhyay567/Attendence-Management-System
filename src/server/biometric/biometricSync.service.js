@@ -163,19 +163,15 @@ function readLocalDatabase() {
 
 
 function writeLocalDatabase(state) {
-  const tempFile =
-    `${LOCAL_DB_FILE}.biometric.tmp`;
-
-  fs.writeFileSync(
-    tempFile,
-    JSON.stringify(state, null, 2),
-    'utf8'
-  );
-
-  fs.renameSync(
-    tempFile,
-    LOCAL_DB_FILE
-  );
+  try {
+    fs.writeFileSync(
+      LOCAL_DB_FILE,
+      JSON.stringify(state, null, 2),
+      'utf8'
+    );
+  } catch (err) {
+    console.error('⚠️ Failed to write local database:', err.message);
+  }
 }
 
 
