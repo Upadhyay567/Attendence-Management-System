@@ -302,29 +302,128 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
 
 
 /* =========================================================
+   RESOLVE SHIFT FOR PUNCH
+========================================================= */
+
+function resolveShiftForPunch(
+  employee,
+  punchRecordTime,
+  date,
+  schedules = [],
+  existingLogs = []
+) {
+  let assignedIds = [];
+  if (Array.isArray(employee.scheduleIds) && employee.scheduleIds.length > 0) {
+    assignedIds = [...employee.scheduleIds];
+  } else if (employee.scheduleId) {
+    assignedIds = [employee.scheduleId];
+  }
+
+  const assignedSchedules = assignedIds
+    .map(id => schedules.find(s => String(s.id) === String(id)))
+    .filter(Boolean);
+
+  if (assignedSchedules.length === 0) {
+    return employee.scheduleId || '';
+  }
+
+  if (assignedSchedules.length === 1) {
+    return assignedSchedules[0].id;
+  }
+
+  const punchHour = punchRecordTime.getHours();
+  const punchMin = punchRecordTime.getMinutes();
+  const punchMins = punchHour * 60 + punchMin;
+
+  // 1. Check if there's an active (checked in, not checked out) log for an assigned shift
+  for (const s of assignedSchedules) {
+    const activeLog = existingLogs.find(
+      l => String(l.userId) === String(employee.id) &&
+           String(l.date) === String(date) &&
+           String(l.shiftId) === String(s.id) &&
+           l.checkIn && !l.checkOut
+    );
+
+    if (activeLog) {
+      return s.id;
+    }
+  }
+
+  // 2. Otherwise find best matching shift window based on punch time
+  let bestShift = null;
+  let minDistance = Infinity;
+
+  for (const s of assignedSchedules) {
+    if (!s.startTime) continue;
+
+    const [sH, sM] = s.startTime.split(':').map(Number);
+    let startMins = sH * 60 + sM;
+    let endMins = startMins + 480;
+
+    if (s.endTime) {
+      const [eH, eM] = s.endTime.split(':').map(Number);
+      endMins = eH * 60 + eM;
+      if (endMins < startMins) endMins += 24 * 60;
+    }
+
+    const windowStart = startMins - 90;
+    const windowEnd = endMins + 90;
+
+    let adjustedPunchMins = punchMins;
+    if (endMins >= 24 * 60 && punchMins < startMins - 90) {
+      adjustedPunchMins += 24 * 60;
+    }
+
+    if (adjustedPunchMins >= windowStart && adjustedPunchMins <= windowEnd) {
+      return s.id;
+    }
+
+    const dist = Math.abs(adjustedPunchMins - startMins);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestShift = s;
+    }
+  }
+
+  return bestShift ? bestShift.id : (assignedSchedules[0] ? assignedSchedules[0].id : (employee.scheduleId || ''));
+}
+
+
+/* =========================================================
    FIND EXISTING ATTENDANCE
 ========================================================= */
 
 function findLocalAttendance(
   attendanceLogs,
   userId,
-  date
+  date,
+  shiftId = null
 ) {
-  return attendanceLogs.find(log =>
-    String(log.userId) === String(userId) &&
-    String(log.date) === String(date)
-  );
+  return attendanceLogs.find(log => {
+    if (String(log.userId) !== String(userId) || String(log.date) !== String(date)) {
+      return false;
+    }
+    if (shiftId) {
+      return String(log.shiftId) === String(shiftId);
+    }
+    return true;
+  });
 }
 
 
 async function findMongoAttendance(
   userId,
-  date
+  date,
+  shiftId = null
 ) {
-  return AttendanceLog.findOne({
+  const query = {
     userId: String(userId),
     date: String(date)
-  });
+  };
+  if (shiftId) {
+    query.shiftId = String(shiftId);
+  }
+  return AttendanceLog.findOne(query);
 }
 
 
@@ -334,9 +433,10 @@ async function findMongoAttendance(
 
 function createAttendanceId(
   userId,
-  date
+  date,
+  shiftId = ''
 ) {
-  return `BIO_${userId}_${date}`;
+  return shiftId ? `BIO_${userId}_${date}_${shiftId}` : `BIO_${userId}_${date}`;
 }
 
 
@@ -436,20 +536,36 @@ function processLocalPunch(
     return;
   }
 
+  const schedules = (Array.isArray(state.schedules) && state.schedules.length > 0)
+    ? state.schedules
+    : [
+        { id: 'sch_q8jji9v', name: 'Morning Shift 900', startTime: '09:00', endTime: '17:00' },
+        { id: 'sch_3ebecon', name: 'Afternoon shift', startTime: '14:00', endTime: '22:00' },
+        { id: 'sch_bgpyqv3', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00' },
+        { id: 'sch_mfl8wvv', name: 'General Shift', startTime: '09:00', endTime: '17:00' }
+      ];
+
+  const resolvedShiftId = resolveShiftForPunch(
+    employee,
+    punch.recordTime,
+    date,
+    schedules,
+    state.attendanceLogs
+  );
+
   let attendance =
     findLocalAttendance(
       state.attendanceLogs,
       employee.id,
-      date
+      date,
+      resolvedShiftId
     );
 
   /*
-   * FIRST PUNCH = CHECK IN
+   * FIRST PUNCH = CHECK IN FOR THIS SHIFT
    */
   if (!attendance) {
-    const schedules = state.schedules || [];
-    const empShiftId = employee.scheduleId || '';
-    const shift = schedules.find(s => String(s.id) === String(empShiftId));
+    const shift = schedules.find(s => String(s.id) === String(resolvedShiftId));
     let status = 'On Time';
     if (shift && shift.startTime) {
       const [startHour, startMin] = shift.startTime.split(':').map(Number);
@@ -464,7 +580,8 @@ function processLocalPunch(
     attendance = {
       id: createAttendanceId(
         employee.id,
-        date
+        date,
+        resolvedShiftId
       ),
 
       userId: String(employee.id),
@@ -472,7 +589,7 @@ function processLocalPunch(
       date,
 
       shiftId:
-        empShiftId,
+        resolvedShiftId,
 
       checkIn: time,
 
@@ -847,10 +964,19 @@ async function syncMongoDatabase(
       continue;
     }
 
+    const resolvedShiftId = resolveShiftForPunch(
+      employee,
+      punch.recordTime,
+      date,
+      [],
+      []
+    );
+
     let attendance =
       await findMongoAttendance(
         employee.id,
-        date
+        date,
+        resolvedShiftId
       );
 
     if (!attendance) {
@@ -858,7 +984,8 @@ async function syncMongoDatabase(
         id:
           createAttendanceId(
             employee.id,
-            date
+            date,
+            resolvedShiftId
           ),
 
         userId:
@@ -867,7 +994,7 @@ async function syncMongoDatabase(
         date,
 
         shiftId:
-          employee.scheduleId || '',
+          resolvedShiftId || employee.scheduleId || '',
 
         checkIn:
           time,

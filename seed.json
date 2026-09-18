@@ -46,8 +46,8 @@
       "employeeId": "EMP1",
       "biometricUserId": "1",
       "biometricId": "1",
-      "scheduleId": "sch_3ebecon",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "scheduleId": "sch_q8jji9v",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": null,
       "allowanceHRA": null,
       "allowanceTravel": null,
@@ -73,9 +73,11 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
+        "sch_q8jji9v",
         "sch_3ebecon"
       ],
       "shiftLocations": {
+        "sch_q8jji9v": "Noida sector 61",
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "managerId": "usr_manager",
@@ -582,10 +584,10 @@
   ],
   "attendanceLogs": [
     {
-      "id": "BIO_usr_68s5s48_2026-09-18",
+      "id": "BIO_usr_68s5s48_2026-09-18_sch_q8jji9v",
       "userId": "usr_68s5s48",
       "date": "2026-09-18",
-      "shiftId": "sch_3ebecon",
+      "shiftId": "sch_q8jji9v",
       "checkIn": "10:10:37",
       "checkOut": "10:51:18",
       "status": "Present",
@@ -594,6 +596,30 @@
       "biometricUserId": "1",
       "biometricPunchId": "CJOU232660306_1_2026-09-18T05:21:18.000Z",
       "lastBiometricPunchAt": "2026-09-18T05:21:18.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T07:04:39.456Z",
+      "updatedAt": "2026-09-18T07:04:39.457Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-18",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-18",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "10:10:37",
+      "checkOut": "11:45:06",
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "biometricPunchId": "CJOU232660306_1_2026-09-18T06:15:06.000Z",
+      "lastBiometricPunchAt": "2026-09-18T06:15:06.000Z",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
@@ -603,7 +629,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-18T05:01:02.440Z",
-      "updatedAt": "2026-09-18T06:08:56.984Z"
+      "updatedAt": "2026-09-18T06:14:26.600Z"
     },
     {
       "id": "log_usr_bio_1200_2026-09-17_sch_q8jji9v",
@@ -648,6 +674,30 @@
       "updatedAt": "2026-09-18T05:14:35.640Z"
     },
     {
+      "id": "BIO_usr_68s5s48_2026-09-16_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-16",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "12:13:04",
+      "checkOut": "",
+      "status": "Late",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "biometricPunchId": "CJOU232660306_1_2026-09-16T06:43:04.000Z",
+      "lastBiometricPunchAt": "2026-09-16T06:43:04.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T07:04:39.448Z",
+      "updatedAt": "2026-09-18T07:04:39.448Z"
+    },
+    {
       "id": "BIO_usr_68s5s48_2026-09-16",
       "userId": "usr_68s5s48",
       "date": "2026-09-16",
@@ -670,6 +720,30 @@
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
       "updatedAt": "2026-09-17T13:22:20.207Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-11_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-11",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "11:47:11",
+      "checkOut": "15:40:44",
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "biometricPunchId": "CJOU232660306_1_2026-09-11T10:10:44.000Z",
+      "lastBiometricPunchAt": "2026-09-11T10:10:44.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T07:04:39.443Z",
+      "updatedAt": "2026-09-18T07:04:39.445Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-11",
@@ -1107,7 +1181,7 @@
       "_id": "6a8d3b8e94e235d28a4e96fb",
       "id": "sch_q8jji9v",
       "name": "Morning Shift 900",
-      "startTime": "16:30",
+      "startTime": "11:30",
       "endTime": "20:00",
       "gracePeriod": 20,
       "weeklyOffs": [],
@@ -1217,6 +1291,17 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_y0wa6jf",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: HS Group Worksite (28.6952, 77.1860) ➔ Noida sector 61\n• Work Shift Locations: MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: MAIN OFFICE  Shift ➔ Morning Shift 900\n• Assigned Work Shifts: MAIN OFFICE  Shift ➔ Morning Shift 900, MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-18",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-18T06:13:52.916Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_oynv0hj",
       "title": "📢 Profile Updated by HR/Manager",
@@ -1872,6 +1957,96 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-18T06:13:53.007Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_y0wa6jf",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: HS Group Worksite (28.6952, 77.1860) ➔ Noida sector 61\n• Work Shift Locations: MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: MAIN OFFICE  Shift ➔ Morning Shift 900\n• Assigned Work Shifts: MAIN OFFICE  Shift ➔ Morning Shift 900, MAIN OFFICE  Shift",
+        "category": "Update",
+        "date": "2026-09-18",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-18T06:13:52.916Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T06:13:52.965Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "Noida sector 61",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T06:13:29.120Z",
+      "action": "UPDATE_schedules",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Morning Shift 900",
+        "startTime": "11:30",
+        "endTime": "20:00",
+        "gracePeriod": 20,
+        "workDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "location": "Noida sector 61"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-18T04:38:30.299Z",
       "action": "UPDATE_users",
@@ -3229,10 +3404,52 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-18T06:10:26.053Z",
-    "lastLogCount": 23
+    "lastSyncAt": "2026-09-18T07:07:19.545Z",
+    "lastLogCount": 24
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-09-18T07:04:39.456Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-18_sch_q8jji9v",
+        "checkIn": "10:10:37",
+        "status": "On Time",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T07:04:39.448Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-16_sch_q8jji9v",
+        "checkIn": "12:13:04",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T07:04:39.444Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-11_sch_q8jji9v",
+        "checkIn": "11:47:11",
+        "status": "On Time",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-18T05:01:02.440Z",
       "action": "BIOMETRIC_CHECKIN",

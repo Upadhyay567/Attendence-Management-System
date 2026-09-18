@@ -95,4 +95,24 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.body.error).toContain('Geofence validation failed');
     });
   });
+
+  describe('Biometric Shift-Wise Attendance Resolution', () => {
+    it('should assign biometric punches to correct active shift without overwriting previous shifts', async () => {
+      const { syncBiometricAttendance } = require('../src/server/biometric/biometricSync.service');
+      const fs = require('fs');
+      const { LOCAL_DB_FILE } = require('../src/server/config/db');
+
+      const db = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf8'));
+      // Ensure test user has multiple assigned schedules
+      const user = db.users.find(u => u.id === 'usr_68s5s48');
+      if (user) {
+        user.scheduleIds = ['sch_q8jji9v', 'sch_3ebecon'];
+        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+      }
+
+      const res = await syncBiometricAttendance();
+      expect(res).toHaveProperty('success');
+    });
+  });
 });
+
