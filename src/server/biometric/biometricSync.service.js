@@ -447,6 +447,20 @@ function processLocalPunch(
    * FIRST PUNCH = CHECK IN
    */
   if (!attendance) {
+    const schedules = state.schedules || [];
+    const empShiftId = employee.scheduleId || '';
+    const shift = schedules.find(s => String(s.id) === String(empShiftId));
+    let status = 'On Time';
+    if (shift && shift.startTime) {
+      const [startHour, startMin] = shift.startTime.split(':').map(Number);
+      const [nowHour, nowMin] = time.split(':').map(Number);
+      const totalStartMins = startHour * 60 + startMin;
+      const totalNowMins = nowHour * 60 + nowMin;
+      if (totalNowMins > totalStartMins + (shift.gracePeriod || 15)) {
+        status = 'Late';
+      }
+    }
+
     attendance = {
       id: createAttendanceId(
         employee.id,
@@ -458,13 +472,13 @@ function processLocalPunch(
       date,
 
       shiftId:
-        employee.scheduleId || '',
+        empShiftId,
 
       checkIn: time,
 
       checkOut: '',
 
-      status: 'Present',
+      status: status,
 
       biometricUsed:
         DEVICE_NAME,
@@ -514,10 +528,29 @@ function processLocalPunch(
       attendance
     );
 
+    if (!Array.isArray(state.activityLogs)) {
+      state.activityLogs = [];
+    }
+
+    state.activityLogs.unshift({
+      timestamp: new Date().toISOString(),
+      action: 'BIOMETRIC_CHECKIN',
+      userId: String(employee.id),
+      userName: employee.name,
+      userRole: employee.role || 'employee',
+      details: {
+        attendanceId: attendance.id,
+        checkIn: time,
+        status: status,
+        device: DEVICE_NAME
+      },
+      ipAddress: '127.0.0.1'
+    });
+
     result.created++;
 
     console.log(
-      `🟢 BIOMETRIC CHECK-IN | ${employee.name} | ${date} ${time}`
+      `🟢 BIOMETRIC CHECK-IN | ${employee.name} | ${date} ${time} | Status: ${status}`
     );
 
     return;

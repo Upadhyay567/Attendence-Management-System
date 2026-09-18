@@ -46,8 +46,8 @@
       "employeeId": "EMP1",
       "biometricUserId": "1",
       "biometricId": "1",
-      "scheduleId": "sch_q8jji9v",
-      "preferredLocation": "omaxe Office",
+      "scheduleId": "sch_3ebecon",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "baseSalary": null,
       "allowanceHRA": null,
       "allowanceTravel": null,
@@ -73,13 +73,13 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
-        "sch_q8jji9v"
+        "sch_3ebecon"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "omaxe Office"
+        "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "managerId": "usr_manager",
-      "assignedById": "usr_manager",
+      "assignedById": "usr_6af1y3c",
       "photo": null,
       "state": "Uttar Pradesh",
       "status": "Active",
@@ -1194,6 +1194,17 @@
   ],
   "announcements": [
     {
+      "id": "ann_oynv0hj",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: omaxe Office ➔ HS Group Worksite (28.6952, 77.1860)\n• Work Shift Locations: Morning Shift 900: omaxe Office ➔ MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: Morning Shift 900 ➔ MAIN OFFICE  Shift\n• Assigned Work Shifts: Morning Shift 900 ➔ MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-18",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-18T04:37:36.533Z",
+      "link": "#user-management"
+    },
+    {
       "id": "ann_11togf5",
       "title": "📢 Profile Updated by HR/Manager",
       "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Base Salary: Not Set ➔ ₹1\n• Email Address: Not Set ➔ ishu20969@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 2026-09-17\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ HS Group Worksite (28.6952, 77.1860)\n• Reporting Manager: None ➔ Manjit  kour Operations Manager",
@@ -1837,6 +1848,53 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-18T04:38:30.299Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_3ebecon",
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-17T13:22:47.093Z",
       "action": "PUSH_announcements",

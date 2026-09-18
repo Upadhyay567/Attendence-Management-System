@@ -29,7 +29,7 @@ function startBiometricScheduler() {
   const interval =
     Number(
       process.env.BIOMETRIC_SYNC_INTERVAL ||
-      30000
+      3000
     );
 
   console.log(
@@ -43,7 +43,7 @@ function startBiometricScheduler() {
     async () => {
       await runSync();
     },
-    5000
+    1000
   );
 
   /*
@@ -91,7 +91,13 @@ function stopBiometricScheduler() {
 }
 
 
+async function triggerImmediateSync() {
+  return await runSync();
+}
+
+
 module.exports = {
   startBiometricScheduler,
-  stopBiometricScheduler
+  stopBiometricScheduler,
+  triggerImmediateSync
 };

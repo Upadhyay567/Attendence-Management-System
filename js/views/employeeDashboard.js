@@ -1942,6 +1942,9 @@ if (typeof window !== 'undefined') {
     const user = Auth.getCurrentUser();
     if (user && user.role === 'employee') {
       renderEmployeeNotices(user.id);
+      if (typeof renderEmployeeDashboard === 'function') {
+        renderEmployeeDashboard();
+      }
     }
   });
 }
