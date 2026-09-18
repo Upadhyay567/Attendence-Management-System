@@ -1005,26 +1005,28 @@ async function syncBiometricAttendance() {
     }
 
     /*
-     * Notify existing HRMS dashboard.
+     * Notify existing HRMS dashboard ONLY if records were created or updated.
      */
-    broadcastSSEEvent(
-      'db_updated',
-      {
-        type:
-          'biometric_sync',
+    if (result && (result.created > 0 || result.updated > 0)) {
+      broadcastSSEEvent(
+        'db_updated',
+        {
+          type:
+            'biometric_sync',
 
-        device:
-          DEVICE_NAME,
+          device:
+            DEVICE_NAME,
 
-        deviceIp:
-          DEVICE.ip,
+          deviceIp:
+            DEVICE.ip,
 
-        timestamp:
-          Date.now(),
+          timestamp:
+            Date.now(),
 
-        result
-      }
-    );
+          result
+        }
+      );
+    }
 
     console.log(
       '✅ Biometric synchronization complete:',

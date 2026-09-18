@@ -581,9 +581,21 @@ const startApp = async () => {
       }
     }
 
-    updateNotificationsUI();
-    if (typeof window.appHandleRoute === 'function') {
-      window.appHandleRoute();
+    if (typeof updateNotificationsUI === 'function') {
+      updateNotificationsUI();
+    }
+
+    const activeHash = window.location.hash || '';
+    if (activeHash === '#admin-dashboard') {
+      if (typeof updateDashboardViews === 'function') updateDashboardViews();
+      if (typeof loadBiometricDashboardData === 'function') loadBiometricDashboardData(true);
+    } else if (activeHash === '#dashboard') {
+      if (typeof renderEmployeeDashboard === 'function') renderEmployeeDashboard();
+    } else {
+      const openModal = document.querySelector('.modal-overlay, .custom-dialog');
+      if (!openModal && typeof window.appHandleRoute === 'function') {
+        window.appHandleRoute();
+      }
     }
   };
 
@@ -854,7 +866,7 @@ function setupRouter() {
         }
       } else {
         // Management (HR / Manager / Finance) Guard
-        if (hash === '#dashboard' || (hash.startsWith('#employee-') && hash !== '#employee-work-status')) {
+        if (hash === '#dashboard') {
           window.location.hash = '#admin-dashboard';
           return;
         }
