@@ -331,61 +331,43 @@ function resolveShiftForPunch(
     return assignedSchedules[0].id;
   }
 
+  // 1. If there is an ACTIVE (open) session with checkIn but no checkOut, return that shift
+  const openLog = existingLogs.find(
+    l => String(l.userId) === String(employee.id) &&
+         String(l.date) === String(date) &&
+         l.checkIn && !l.checkOut
+  );
+  if (openLog && openLog.shiftId) {
+    return String(openLog.shiftId);
+  }
+
+  // 2. Filter out shifts that are ALREADY completed today (both checkIn and checkOut exist)
+  const completedShiftIds = existingLogs
+    .filter(l => String(l.userId) === String(employee.id) && String(l.date) === String(date) && l.checkIn && l.checkOut)
+    .map(l => String(l.shiftId));
+
+  const uncompletedSchedules = assignedSchedules.filter(s => !completedShiftIds.includes(String(s.id)));
+  const searchPool = uncompletedSchedules.length > 0 ? uncompletedSchedules : assignedSchedules;
+
   const punchHour = punchRecordTime.getHours();
   const punchMin = punchRecordTime.getMinutes();
   const punchMins = punchHour * 60 + punchMin;
 
-  // 1. Check if there's an active (checked in, not checked out) log for an assigned shift
-  for (const s of assignedSchedules) {
-    const activeLog = existingLogs.find(
-      l => String(l.userId) === String(employee.id) &&
-           String(l.date) === String(date) &&
-           String(l.shiftId) === String(s.id) &&
-           l.checkIn && !l.checkOut
-    );
-
-    if (activeLog) {
-      return s.id;
-    }
-  }
-
-  // 2. Otherwise find best matching shift window based on punch time
   let bestShift = null;
   let minDistance = Infinity;
 
-  for (const s of assignedSchedules) {
+  for (const s of searchPool) {
     if (!s.startTime) continue;
-
     const [sH, sM] = s.startTime.split(':').map(Number);
-    let startMins = sH * 60 + sM;
-    let endMins = startMins + 480;
-
-    if (s.endTime) {
-      const [eH, eM] = s.endTime.split(':').map(Number);
-      endMins = eH * 60 + eM;
-      if (endMins < startMins) endMins += 24 * 60;
-    }
-
-    const windowStart = startMins - 90;
-    const windowEnd = endMins + 90;
-
-    let adjustedPunchMins = punchMins;
-    if (endMins >= 24 * 60 && punchMins < startMins - 90) {
-      adjustedPunchMins += 24 * 60;
-    }
-
-    if (adjustedPunchMins >= windowStart && adjustedPunchMins <= windowEnd) {
-      return s.id;
-    }
-
-    const dist = Math.abs(adjustedPunchMins - startMins);
+    const startMins = sH * 60 + sM;
+    const dist = Math.abs(punchMins - startMins);
     if (dist < minDistance) {
       minDistance = dist;
       bestShift = s;
     }
   }
 
-  return bestShift ? bestShift.id : (assignedSchedules[0] ? assignedSchedules[0].id : (employee.scheduleId || ''));
+  return bestShift ? bestShift.id : (searchPool[0] ? searchPool[0].id : (employee.scheduleId || ''));
 }
 
 
@@ -455,6 +437,9 @@ function processLocalPunch(
   if (!Array.isArray(state.attendanceLogs)) {
     state.attendanceLogs = [];
   }
+  if (!Array.isArray(state.processedPunchIds)) {
+    state.processedPunchIds = [];
+  }
 
   const biometricUser =
     deviceUserMap.get(
@@ -463,11 +448,9 @@ function processLocalPunch(
 
   if (!biometricUser) {
     result.unmatched++;
-
     result.unmatchedUsers.push(
       punch.biometricUserId
     );
-
     return;
   }
 
@@ -479,7 +462,6 @@ function processLocalPunch(
     biometricUser.name.toLowerCase() === 'admin'
   ) {
     result.ignored++;
-
     return;
   }
 
@@ -492,7 +474,6 @@ function processLocalPunch(
 
   if (!employee) {
     result.unmatched++;
-
     if (
       !result.unmatchedUsers.includes(
         punch.biometricUserId
@@ -506,7 +487,6 @@ function processLocalPunch(
     console.warn(
       `⚠️ No HRMS employee mapped to biometric ID ${punch.biometricUserId} (${biometricUser.name})`
     );
-
     return;
   }
 
@@ -517,22 +497,25 @@ function processLocalPunch(
 
   const date = localParts.date;
   const time = localParts.time;
-
   const punchId =
     createPunchId(punch);
 
   /*
-   * Duplicate protection.
+   * Duplicate protection:
+   * A punch is already processed if recorded in global ledger or on any log.
    */
-  const duplicate =
+  const isAlreadyProcessed =
+    state.processedPunchIds.includes(punchId) ||
     state.attendanceLogs.some(
       log =>
-        log.biometricPunchId === punchId
+        log.biometricPunchId === punchId ||
+        log.checkInPunchId === punchId ||
+        log.checkOutPunchId === punchId ||
+        (Array.isArray(log.allPunchIds) && log.allPunchIds.includes(punchId))
     );
 
-  if (duplicate) {
+  if (isAlreadyProcessed) {
     result.duplicates++;
-
     return;
   }
 
@@ -545,7 +528,69 @@ function processLocalPunch(
         { id: 'sch_mfl8wvv', name: 'General Shift', startTime: '09:00', endTime: '17:00' }
       ];
 
-  const resolvedShiftId = resolveShiftForPunch(
+  const userLogsToday = state.attendanceLogs.filter(log =>
+    String(log.userId) === String(employee.id) && String(log.date) === String(date)
+  );
+
+  const [punchH, punchM] = time.split(':').map(Number);
+  const punchMins = (punchH || 0) * 60 + (punchM || 0);
+
+  // Check if there is an active OPEN shift session today (checkIn present, no checkOut)
+  const openLog = userLogsToday.find(log => log.checkIn && !log.checkOut);
+
+  if (openLog) {
+    const [inH, inM] = openLog.checkIn.split(':').map(Number);
+    const inMins = (inH || 0) * 60 + (inM || 0);
+
+    // If tap is within 1 minute of check-in, treat as accidental double-tap
+    if (punchMins <= inMins + 1) {
+      if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+      openLog.allPunchIds.push(punchId);
+      state.processedPunchIds.push(punchId);
+      result.duplicates++;
+      return;
+    }
+
+    // CHECK-OUT FOR THIS OPEN SHIFT
+    openLog.checkOut = time;
+    openLog.checkOutPunchId = punchId;
+    openLog.status = 'Present';
+    openLog.biometricUsed = DEVICE_NAME;
+    openLog.biometricDeviceId = DEVICE.serial;
+    openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
+    openLog.updatedAt = new Date().toISOString();
+
+    if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+    openLog.allPunchIds.push(punchId);
+    state.processedPunchIds.push(punchId);
+
+    if (!Array.isArray(state.activityLogs)) state.activityLogs = [];
+    state.activityLogs.unshift({
+      timestamp: new Date().toISOString(),
+      action: 'BIOMETRIC_CHECKOUT',
+      userId: String(employee.id),
+      userName: employee.name,
+      userRole: employee.role || 'employee',
+      details: {
+        attendanceId: openLog.id,
+        shiftId: openLog.shiftId,
+        checkIn: openLog.checkIn,
+        checkOut: time,
+        status: 'Present',
+        device: DEVICE_NAME
+      },
+      ipAddress: '127.0.0.1'
+    });
+
+    result.updated++;
+    console.log(
+      `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${time}`
+    );
+    return;
+  }
+
+  // NO open session. This punch is a BRAND NEW CHECK-IN for a new shift session!
+  const targetShiftId = resolveShiftForPunch(
     employee,
     punch.recordTime,
     date,
@@ -553,181 +598,109 @@ function processLocalPunch(
     state.attendanceLogs
   );
 
-  let attendance =
-    findLocalAttendance(
-      state.attendanceLogs,
+  const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
+  let status = 'On Time';
+  if (shiftObj && shiftObj.startTime) {
+    const [startHour, startMin] = shiftObj.startTime.split(':').map(Number);
+    const totalStartMins = startHour * 60 + startMin;
+    if (punchMins > totalStartMins + (shiftObj.gracePeriod || 15)) {
+      status = 'Late';
+    }
+  }
+
+  const newLog = {
+    id: createAttendanceId(
       employee.id,
       date,
-      resolvedShiftId
-    );
+      targetShiftId
+    ),
 
-  /*
-   * FIRST PUNCH = CHECK IN FOR THIS SHIFT
-   */
-  if (!attendance) {
-    const shift = schedules.find(s => String(s.id) === String(resolvedShiftId));
-    let status = 'On Time';
-    if (shift && shift.startTime) {
-      const [startHour, startMin] = shift.startTime.split(':').map(Number);
-      const [nowHour, nowMin] = time.split(':').map(Number);
-      const totalStartMins = startHour * 60 + startMin;
-      const totalNowMins = nowHour * 60 + nowMin;
-      if (totalNowMins > totalStartMins + (shift.gracePeriod || 15)) {
-        status = 'Late';
-      }
-    }
+    userId: String(employee.id),
 
-    attendance = {
-      id: createAttendanceId(
-        employee.id,
-        date,
-        resolvedShiftId
-      ),
+    date,
 
-      userId: String(employee.id),
+    shiftId:
+      targetShiftId,
 
-      date,
+    checkIn: time,
 
-      shiftId:
-        resolvedShiftId,
+    checkOut: '',
 
+    checkInPunchId: punchId,
+
+    biometricPunchId: punchId,
+
+    allPunchIds: [punchId],
+
+    status: status,
+
+    biometricUsed:
+      DEVICE_NAME,
+
+    biometricDeviceId:
+      DEVICE.serial,
+
+    biometricUserId:
+      punch.biometricUserId,
+
+    lastBiometricPunchAt:
+      punch.recordTime.toISOString(),
+
+    location:
+      (employee.shiftLocations && employee.shiftLocations[targetShiftId]) ||
+      employee.preferredLocation ||
+      LOCATION,
+
+    deviationFlag: false,
+
+    justification: '',
+
+    coords: '',
+
+    distance: 0,
+
+    facePhoto: '',
+
+    latitude: null,
+
+    longitude: null,
+
+    createdAt:
+      new Date().toISOString(),
+
+    updatedAt:
+      new Date().toISOString()
+  };
+
+  state.attendanceLogs.unshift(
+    newLog
+  );
+  state.processedPunchIds.push(punchId);
+
+  if (!Array.isArray(state.activityLogs)) {
+    state.activityLogs = [];
+  }
+
+  state.activityLogs.unshift({
+    timestamp: new Date().toISOString(),
+    action: 'BIOMETRIC_CHECKIN',
+    userId: String(employee.id),
+    userName: employee.name,
+    userRole: employee.role || 'employee',
+    details: {
+      attendanceId: newLog.id,
+      shiftId: targetShiftId,
       checkIn: time,
-
-      checkOut: '',
-
       status: status,
+      device: DEVICE_NAME
+    },
+    ipAddress: '127.0.0.1'
+  });
 
-      biometricUsed:
-        DEVICE_NAME,
-
-      biometricDeviceId:
-        DEVICE.serial,
-
-      biometricUserId:
-        punch.biometricUserId,
-
-      biometricPunchId:
-        punchId,
-
-      lastBiometricPunchAt:
-        punch.recordTime.toISOString(),
-
-      location:
-        employee.preferredLocation ||
-        LOCATION,
-
-      deviationFlag: false,
-
-      justification: '',
-
-      coords: '',
-
-      distance: 0,
-
-      facePhoto: '',
-
-      latitude: null,
-
-      longitude: null,
-
-      createdAt:
-        new Date().toISOString(),
-
-      updatedAt:
-        new Date().toISOString()
-    };
-
-    /*
-     * Add newest record to beginning,
-     * matching your existing local DB behavior.
-     */
-    state.attendanceLogs.unshift(
-      attendance
-    );
-
-    if (!Array.isArray(state.activityLogs)) {
-      state.activityLogs = [];
-    }
-
-    state.activityLogs.unshift({
-      timestamp: new Date().toISOString(),
-      action: 'BIOMETRIC_CHECKIN',
-      userId: String(employee.id),
-      userName: employee.name,
-      userRole: employee.role || 'employee',
-      details: {
-        attendanceId: attendance.id,
-        checkIn: time,
-        status: status,
-        device: DEVICE_NAME
-      },
-      ipAddress: '127.0.0.1'
-    });
-
-    result.created++;
-
-    console.log(
-      `🟢 BIOMETRIC CHECK-IN | ${employee.name} | ${date} ${time} | Status: ${status}`
-    );
-
-    return;
-  }
-
-  /*
-   * SECOND OR LATER PUNCH = CHECK OUT
-   *
-   * The existing AttendanceLog schema has one
-   * checkIn/checkOut pair, so we retain the
-   * first punch as check-in and latest punch
-   * as check-out.
-   */
-  if (attendance.checkIn) {
-    const [inH, inM] = attendance.checkIn.split(':').map(Number);
-    const [punchH, punchM] = time.split(':').map(Number);
-    const inMins = (inH || 0) * 60 + (inM || 0);
-    const punchMins = (punchH || 0) * 60 + (punchM || 0);
-
-    if (punchMins < inMins) {
-      attendance.checkOut = attendance.checkIn;
-      attendance.checkIn = time;
-    } else if (punchMins >= inMins + 30) {
-      if (attendance.checkOut) {
-        const [outH, outM] = attendance.checkOut.split(':').map(Number);
-        const outMins = (outH || 0) * 60 + (outM || 0);
-        if (punchMins <= outMins) {
-          return;
-        }
-      }
-      attendance.checkOut = time;
-    } else {
-      return;
-    }
-  }
-
-  attendance.status = 'Present';
-
-  attendance.biometricUsed =
-    DEVICE_NAME;
-
-  attendance.biometricDeviceId =
-    DEVICE.serial;
-
-  attendance.biometricUserId =
-    punch.biometricUserId;
-
-  attendance.biometricPunchId =
-    punchId;
-
-  attendance.lastBiometricPunchAt =
-    punch.recordTime.toISOString();
-
-  attendance.updatedAt =
-    new Date().toISOString();
-
-  result.updated++;
+  result.created++;
 
   console.log(
-    `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | ${date} ${time}`
+    `🟢 BIOMETRIC CHECK-IN | ${employee.name} | Shift: ${targetShiftId} | ${date} ${time} | Status: ${status}`
   );
 }
 
@@ -951,12 +924,16 @@ async function syncMongoDatabase(
       createPunchId(punch);
 
     /*
-     * Check duplicate.
+     * Check duplicate / already-consumed punch.
      */
     const duplicate =
       await AttendanceLog.findOne({
-        biometricPunchId:
-          punchId
+        $or: [
+          { biometricPunchId: punchId },
+          { checkInPunchId: punchId },
+          { checkOutPunchId: punchId },
+          { allPunchIds: punchId }
+        ]
       }).lean();
 
     if (duplicate) {
@@ -964,116 +941,115 @@ async function syncMongoDatabase(
       continue;
     }
 
-    const resolvedShiftId = resolveShiftForPunch(
+    const [punchH, punchM] = time.split(':').map(Number);
+    const punchMins = (punchH || 0) * 60 + (punchM || 0);
+
+    // Look for active open shift session today (checkIn present, no checkOut)
+    const openLog = await AttendanceLog.findOne({
+      userId: String(employee.id),
+      date: String(date),
+      checkIn: { $ne: '' },
+      $or: [
+        { checkOut: '' },
+        { checkOut: null },
+        { checkOut: { $exists: false } }
+      ]
+    });
+
+    if (openLog) {
+      const [inH, inM] = openLog.checkIn.split(':').map(Number);
+      const inMins = (inH || 0) * 60 + (inM || 0);
+
+      // Bounce tap within 1 minute
+      if (punchMins <= inMins + 1) {
+        if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+        openLog.allPunchIds.push(punchId);
+        await openLog.save();
+        result.duplicates++;
+        continue;
+      }
+
+      // Check-out open shift
+      openLog.checkOut = time;
+      openLog.checkOutPunchId = punchId;
+      openLog.status = 'Present';
+      openLog.biometricUsed = DEVICE_NAME;
+      openLog.biometricDeviceId = DEVICE.serial;
+      openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
+      if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+      openLog.allPunchIds.push(punchId);
+      await openLog.save();
+
+      result.updated++;
+      continue;
+    }
+
+    // No open shift. This is a NEW check-in for this employee
+    const existingLogs = await AttendanceLog.find({
+      userId: String(employee.id),
+      date: String(date)
+    }).lean();
+
+    const targetShiftId = resolveShiftForPunch(
       employee,
       punch.recordTime,
       date,
       [],
-      []
+      existingLogs
     );
 
-    let attendance =
-      await findMongoAttendance(
-        employee.id,
-        date,
-        resolvedShiftId
-      );
+    await AttendanceLog.create({
+      id:
+        createAttendanceId(
+          employee.id,
+          date,
+          targetShiftId
+        ),
 
-    if (!attendance) {
-      await AttendanceLog.create({
-        id:
-          createAttendanceId(
-            employee.id,
-            date,
-            resolvedShiftId
-          ),
+      userId:
+        String(employee.id),
 
-        userId:
-          String(employee.id),
+      date,
 
-        date,
+      shiftId:
+        targetShiftId || employee.scheduleId || '',
 
-        shiftId:
-          resolvedShiftId || employee.scheduleId || '',
+      checkIn:
+        time,
 
-        checkIn:
-          time,
+      checkOut:
+        '',
 
-        checkOut:
-          '',
+      checkInPunchId:
+        punchId,
 
-        status:
-          'Present',
+      biometricPunchId:
+        punchId,
 
-        biometricUsed:
-          DEVICE_NAME,
+      allPunchIds:
+        [punchId],
 
-        biometricDeviceId:
-          DEVICE.serial,
+      status:
+        'Present',
 
-        biometricUserId:
-          punch.biometricUserId,
+      biometricUsed:
+        DEVICE_NAME,
 
-        biometricPunchId:
-          punchId,
+      biometricDeviceId:
+        DEVICE.serial,
 
-        lastBiometricPunchAt:
-          punch.recordTime.toISOString(),
+      biometricUserId:
+        punch.biometricUserId,
 
-        location:
-          employee.preferredLocation ||
-          LOCATION
-      });
+      lastBiometricPunchAt:
+        punch.recordTime.toISOString(),
 
-      result.created++;
+      location:
+        employee.preferredLocation ||
+        LOCATION
+    });
 
-      continue;
-    }
-
-    if (attendance.checkIn) {
-      const [inH, inM] = attendance.checkIn.split(':').map(Number);
-      const [punchH, punchM] = time.split(':').map(Number);
-      const inMins = (inH || 0) * 60 + (inM || 0);
-      const punchMins = (punchH || 0) * 60 + (punchM || 0);
-
-      if (punchMins < inMins) {
-        attendance.checkOut = attendance.checkIn;
-        attendance.checkIn = time;
-      } else if (punchMins >= inMins + 30) {
-        if (attendance.checkOut) {
-          const [outH, outM] = attendance.checkOut.split(':').map(Number);
-          const outMins = (outH || 0) * 60 + (outM || 0);
-          if (punchMins <= outMins) {
-            continue;
-          }
-        }
-        attendance.checkOut = time;
-      } else {
-        continue;
-      }
-    }
-
-    attendance.status =
-      'Present';
-
-    attendance.biometricUsed =
-      DEVICE_NAME;
-
-    attendance.biometricDeviceId =
-      DEVICE.serial;
-
-    attendance.biometricUserId =
-      punch.biometricUserId;
-
-    attendance.biometricPunchId =
-      punchId;
-
-    attendance.lastBiometricPunchAt =
-      punch.recordTime.toISOString();
-
-    await attendance.save();
-
-    result.updated++;
+    result.created++;
   }
 
   return result;

@@ -78,6 +78,7 @@
       ],
       "shiftLocations": {
         "sch_q8jji9v": "Noida sector 61",
+        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
         "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
       },
       "managerId": "usr_manager",
@@ -588,14 +589,14 @@
       "userId": "usr_68s5s48",
       "date": "2026-09-18",
       "shiftId": "sch_q8jji9v",
-      "checkIn": "10:10:37",
-      "checkOut": "10:51:18",
+      "checkIn": "12:48:00",
+      "checkOut": "12:50:06",
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-18T05:21:18.000Z",
-      "lastBiometricPunchAt": "2026-09-18T05:21:18.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-18T07:20:06.000Z",
+      "lastBiometricPunchAt": "2026-09-18T07:20:06.000Z",
       "location": "Noida sector 61",
       "deviationFlag": false,
       "justification": "",
@@ -605,10 +606,16 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-18T07:04:39.456Z",
-      "updatedAt": "2026-09-18T07:04:39.457Z"
+      "updatedAt": "2026-09-18T08:35:45.920Z",
+      "checkInPunchId": "CJOU232660306_1_2026-09-18T07:17:51.000Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-18T07:20:06.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-18T07:17:51.000Z",
+        "CJOU232660306_1_2026-09-18T07:20:06.000Z"
+      ]
     },
     {
-      "id": "BIO_usr_68s5s48_2026-09-18",
+      "id": "BIO_usr_68s5s48_2026-09-18_sch_3ebecon",
       "userId": "usr_68s5s48",
       "date": "2026-09-18",
       "shiftId": "sch_3ebecon",
@@ -629,7 +636,16 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-18T05:01:02.440Z",
-      "updatedAt": "2026-09-18T06:14:26.600Z"
+      "updatedAt": "2026-09-18T06:14:26.600Z",
+      "checkInPunchId": "CJOU232660306_1_2026-09-18T04:40:37.000Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-18T06:15:06.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-18T04:40:37.000Z",
+        "CJOU232660306_1_2026-09-18T04:41:48.000Z",
+        "CJOU232660306_1_2026-09-18T04:59:09.000Z",
+        "CJOU232660306_1_2026-09-18T05:21:18.000Z",
+        "CJOU232660306_1_2026-09-18T06:15:06.000Z"
+      ]
     },
     {
       "id": "log_usr_bio_1200_2026-09-17_sch_q8jji9v",
@@ -648,6 +664,156 @@
       "facePhoto": null,
       "latitude": 28.6978,
       "longitude": 77.1408
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-17",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "17:05:13",
+      "checkOut": "18:19:04",
+      "checkInPunchId": "CJOU232660306_1_2026-09-17T11:35:13.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T11:35:13.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-17T11:35:13.000Z",
+        "CJOU232660306_1_2026-09-17T12:49:04.000Z"
+      ],
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-17T12:49:04.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T08:41:43.619Z",
+      "updatedAt": "2026-09-18T08:41:43.620Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-17T12:49:04.000Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-17",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "15:28:50",
+      "checkOut": "15:57:07",
+      "checkInPunchId": "CJOU232660306_1_2026-09-17T09:58:50.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:58:50.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-17T09:58:50.000Z",
+        "CJOU232660306_1_2026-09-17T10:27:07.000Z"
+      ],
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-17T10:27:07.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T08:41:43.618Z",
+      "updatedAt": "2026-09-18T08:41:43.619Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-17T10:27:07.000Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-17",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "15:17:14",
+      "checkOut": "15:19:19",
+      "checkInPunchId": "CJOU232660306_1_2026-09-17T09:47:14.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:47:14.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-17T09:47:14.000Z",
+        "CJOU232660306_1_2026-09-17T09:49:19.000Z"
+      ],
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-17T09:49:19.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T08:41:43.617Z",
+      "updatedAt": "2026-09-18T08:41:43.617Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-17T09:49:19.000Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-17",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "14:50:50",
+      "checkOut": "15:11:35",
+      "checkInPunchId": "CJOU232660306_1_2026-09-17T09:20:50.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:20:50.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-17T09:20:50.000Z",
+        "CJOU232660306_1_2026-09-17T09:41:35.000Z"
+      ],
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-17T09:41:35.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T08:41:43.615Z",
+      "updatedAt": "2026-09-18T08:41:43.616Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-17T09:41:35.000Z"
+    },
+    {
+      "id": "BIO_usr_68s5s48_2026-09-17_sch_3ebecon",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-17",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "13:42:47",
+      "checkOut": "14:09:20",
+      "checkInPunchId": "CJOU232660306_1_2026-09-17T08:12:47.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T08:12:47.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-17T08:12:47.000Z",
+        "CJOU232660306_1_2026-09-17T08:39:20.000Z"
+      ],
+      "status": "Present",
+      "biometricUsed": "ZKTeco K40 Pro",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-17T08:39:20.000Z",
+      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-18T08:41:43.614Z",
+      "updatedAt": "2026-09-18T08:41:43.615Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-17T08:39:20.000Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-17",
@@ -680,11 +846,16 @@
       "shiftId": "sch_q8jji9v",
       "checkIn": "12:13:04",
       "checkOut": "",
+      "checkInPunchId": "CJOU232660306_1_2026-09-16T06:43:04.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-16T06:43:04.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-16T06:43:04.000Z",
+        "CJOU232660306_1_2026-09-16T06:43:41.000Z"
+      ],
       "status": "Late",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-16T06:43:04.000Z",
       "lastBiometricPunchAt": "2026-09-16T06:43:04.000Z",
       "location": "Noida sector 61",
       "deviationFlag": false,
@@ -694,8 +865,8 @@
       "facePhoto": "",
       "latitude": null,
       "longitude": null,
-      "createdAt": "2026-09-18T07:04:39.448Z",
-      "updatedAt": "2026-09-18T07:04:39.448Z"
+      "createdAt": "2026-09-18T08:41:43.612Z",
+      "updatedAt": "2026-09-18T08:41:43.612Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-16",
@@ -728,11 +899,16 @@
       "shiftId": "sch_q8jji9v",
       "checkIn": "11:47:11",
       "checkOut": "15:40:44",
+      "checkInPunchId": "CJOU232660306_1_2026-09-11T06:17:11.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-11T06:17:11.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-11T06:17:11.000Z",
+        "CJOU232660306_1_2026-09-11T10:10:44.000Z"
+      ],
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-11T10:10:44.000Z",
       "lastBiometricPunchAt": "2026-09-11T10:10:44.000Z",
       "location": "Noida sector 61",
       "deviationFlag": false,
@@ -742,8 +918,9 @@
       "facePhoto": "",
       "latitude": null,
       "longitude": null,
-      "createdAt": "2026-09-18T07:04:39.443Z",
-      "updatedAt": "2026-09-18T07:04:39.445Z"
+      "createdAt": "2026-09-18T08:41:43.609Z",
+      "updatedAt": "2026-09-18T08:41:43.610Z",
+      "checkOutPunchId": "CJOU232660306_1_2026-09-11T10:10:44.000Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-11",
@@ -1200,8 +1377,8 @@
       "_id": "6a8d3b8e94e235d28a4e96fc",
       "id": "sch_mfl8wvv",
       "name": "Afternoon shift",
-      "startTime": "15:41",
-      "endTime": "17:00",
+      "startTime": "12:30",
+      "endTime": "22:00",
       "gracePeriod": 15,
       "weeklyOffs": [],
       "__v": 0,
@@ -1291,6 +1468,17 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_m8p7lkn",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: Noida sector 61; Afternoon shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ Morning Shift 900, Afternoon shift, MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-18",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-18T07:16:27.056Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_y0wa6jf",
       "title": "📢 Profile Updated by HR/Manager",
@@ -1957,6 +2145,124 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-18T07:18:45.787Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "id": "log_usr_68s5s48_2026-09-18_sch_mfl8wvv",
+        "userId": "usr_68s5s48",
+        "date": "2026-09-18",
+        "shiftId": "sch_mfl8wvv",
+        "checkIn": "12:48",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "HS Group Worksite (28.6952, 77.1860)",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.695177° N, 77.186014° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.695177092927818,
+        "longitude": 77.18601398086766
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T07:16:27.210Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_m8p7lkn",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: Noida sector 61; Afternoon shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ Morning Shift 900, Afternoon shift, MAIN OFFICE  Shift",
+        "category": "Update",
+        "date": "2026-09-18",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-18T07:16:27.056Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T07:16:27.132Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_mfl8wvv",
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "Noida sector 61",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T07:16:03.467Z",
+      "action": "UPDATE_schedules",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Afternoon shift",
+        "startTime": "12:30",
+        "endTime": "22:00",
+        "gracePeriod": 15,
+        "workDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "location": "omaxe Office"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-18T06:13:53.007Z",
       "action": "PUSH_announcements",
@@ -3404,10 +3710,239 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-18T07:07:19.545Z",
-    "lastLogCount": 24
+    "lastSyncAt": "2026-09-18T08:42:32.666Z",
+    "lastLogCount": 0
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-09-18T08:41:43.620Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "17:05:13",
+        "checkOut": "18:19:04",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.619Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "17:05:13",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.619Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "15:28:50",
+        "checkOut": "15:57:07",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.618Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "15:28:50",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.618Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "15:17:14",
+        "checkOut": "15:19:19",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.617Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "15:17:14",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.616Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "14:50:50",
+        "checkOut": "15:11:35",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.615Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "14:50:50",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.615Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_3ebecon",
+        "shiftId": "sch_3ebecon",
+        "checkIn": "13:42:47",
+        "checkOut": "14:09:20",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.614Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-17_sch_3ebecon",
+        "shiftId": "sch_3ebecon",
+        "checkIn": "13:42:47",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.612Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-16_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "12:13:04",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.610Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-11_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "11:47:11",
+        "checkOut": "15:40:44",
+        "status": "Present",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:41:43.609Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-11_sch_q8jji9v",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "11:47:11",
+        "status": "On Time",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:34:55.927Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-16_sch_q8jji9v",
+        "checkIn": "12:13:04",
+        "status": "Late",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-18T08:34:55.918Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-11_sch_q8jji9v",
+        "checkIn": "11:47:11",
+        "status": "On Time",
+        "device": "ZKTeco K40 Pro"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-18T07:04:39.456Z",
       "action": "BIOMETRIC_CHECKIN",
@@ -3464,5 +3999,35 @@
       },
       "ipAddress": "127.0.0.1"
     }
+  ],
+  "processedPunchIds": [
+    "CJOU232660306_1_2026-09-18T07:20:06.000Z",
+    "CJOU232660306_1_2026-09-18T07:17:51.000Z",
+    "CJOU232660306_1_2026-09-18T06:15:06.000Z",
+    "CJOU232660306_1_2026-09-18T04:40:37.000Z",
+    "CJOU232660306_1_2026-09-18T04:41:48.000Z",
+    "CJOU232660306_1_2026-09-18T04:59:09.000Z",
+    "CJOU232660306_1_2026-09-18T05:21:18.000Z",
+    "CJOU232660306_1_2026-09-17T13:11:04.000Z",
+    "CJOU232660306_1_2026-09-16T12:32:25.000Z",
+    "CJOU232660306_1_2026-09-11T10:39:09.000Z",
+    "CJOU232660306_5174_2026-08-29T06:33:23.000Z",
+    "CJOU232660306_309_2026-04-29T14:18:42.000Z",
+    "CJOU232660306_309_2026-04-19T09:47:00.000Z",
+    "CJOU232660306_309_2026-04-11T15:13:11.000Z",
+    "CJOU232660306_1_2026-09-11T06:17:11.000Z",
+    "CJOU232660306_1_2026-09-11T10:10:44.000Z",
+    "CJOU232660306_1_2026-09-16T06:43:04.000Z",
+    "CJOU232660306_1_2026-09-16T06:43:41.000Z",
+    "CJOU232660306_1_2026-09-17T08:12:47.000Z",
+    "CJOU232660306_1_2026-09-17T08:39:20.000Z",
+    "CJOU232660306_1_2026-09-17T09:20:50.000Z",
+    "CJOU232660306_1_2026-09-17T09:41:35.000Z",
+    "CJOU232660306_1_2026-09-17T09:47:14.000Z",
+    "CJOU232660306_1_2026-09-17T09:49:19.000Z",
+    "CJOU232660306_1_2026-09-17T09:58:50.000Z",
+    "CJOU232660306_1_2026-09-17T10:27:07.000Z",
+    "CJOU232660306_1_2026-09-17T11:35:13.000Z",
+    "CJOU232660306_1_2026-09-17T12:49:04.000Z"
   ]
 }
