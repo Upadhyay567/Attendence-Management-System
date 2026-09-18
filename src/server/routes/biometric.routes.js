@@ -337,7 +337,7 @@ router.get('/biometric/dashboard', async (req, res) => {
           latestPunchIp: DEVICE.ip,
           todayCheckIn: todayLog && todayLog.checkIn ? `${today}T${todayLog.checkIn}:00.000Z` : null,
           todayCheckOut: todayLog && todayLog.checkOut ? `${today}T${todayLog.checkOut}:00.000Z` : null,
-          todayAttendance: todayLog ? (todayLog.status || 'Present') : 'No Punch',
+          todayAttendance: todayLog ? (todayLog.status || 'On Time') : 'No Punch',
           punches: userLogs
         };
       });

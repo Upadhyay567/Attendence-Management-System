@@ -4757,10 +4757,24 @@ function getAttendanceStatusForDate(userId, dateStr) {
   const log = (DB.data.attendanceLogs || []).find(l => l.userId === userId && l.date === dateStr);
 
   if (log) {
-    let status = log.status || 'Present';
+    let status = log.status;
+    if (!status || status === 'Present') {
+      status = 'On Time';
+      if (schedule && schedule.startTime && log.checkIn) {
+        const [sH, sM] = schedule.startTime.split(':').map(Number);
+        const [iH, iM] = log.checkIn.split(':').map(Number);
+        const sMins = sH * 60 + (sM || 0);
+        const iMins = iH * 60 + (iM || 0);
+        const grace = schedule.gracePeriod !== undefined ? Number(schedule.gracePeriod) : 15;
+        const halfDayLimit = schedule.halfDayLimit !== undefined ? Number(schedule.halfDayLimit) : 120;
+        if (iMins > sMins + grace) status = 'Late';
+        if (iMins >= sMins + halfDayLimit) status = 'Half Day';
+      }
+    }
     let color = 'var(--success)';
     if (status === 'Late') color = 'var(--warning)';
-    if (status === 'Half Day') color = 'var(--accent)';
+    if (status === 'Half Day') color = '#3b82f6';
+    if (status === 'Absent') color = 'var(--error)';
     return { status, color, log, schedule };
   }
 
@@ -4915,6 +4929,25 @@ function renderCalendarScheduleTab(userId, activeTab) {
         duration = 'Active Session';
       }
 
+      let shiftStatus = l.status;
+      if (!shiftStatus || shiftStatus === 'Present') {
+        shiftStatus = 'On Time';
+        if (sch && sch.startTime && l.checkIn) {
+          const [sH, sM] = sch.startTime.split(':').map(Number);
+          const [iH, iM] = l.checkIn.split(':').map(Number);
+          const sMins = sH * 60 + (sM || 0);
+          const iMins = iH * 60 + (iM || 0);
+          const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
+          const halfDayLimit = sch.halfDayLimit !== undefined ? Number(sch.halfDayLimit) : 120;
+          if (iMins > sMins + grace) shiftStatus = 'Late';
+          if (iMins >= sMins + halfDayLimit) shiftStatus = 'Half Day';
+        }
+      }
+      let badgeClass = 'badge-on-time';
+      if (shiftStatus === 'Late') badgeClass = 'badge-late';
+      else if (shiftStatus === 'Half Day') badgeClass = 'badge-half-day';
+      else if (shiftStatus === 'Absent') badgeClass = 'badge-absent';
+
       return `
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
           <div>
@@ -4923,7 +4956,10 @@ function renderCalendarScheduleTab(userId, activeTab) {
             <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${sch ? formatTimeRange12h(sch.startTime, sch.endTime) : '--:--'}</div>
           </div>
           <div>
-            <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+              <span class="badge ${badgeClass}" style="font-size:9.5px; padding:1px 6px;">${shiftStatus}</span>
+            </div>
             <div style="font-weight:600; color:var(--text-primary); margin-top:2px">In: ${inT} | Out: ${outT}</div>
             <div style="color:var(--cyan); font-size:11px; margin-top:1px">Duration: ${duration}</div>
           </div>
@@ -8847,10 +8883,25 @@ async function renderAdminDashboard() {
         feedBody.innerHTML = todayLogs.map(l => {
           const u = DB.getUser(l.userId);
           const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
+          let displayStatus = l.status;
+          if (!displayStatus || displayStatus === 'Present') {
+            displayStatus = 'On Time';
+            if (sch && sch.startTime && l.checkIn) {
+              const [sH, sM] = sch.startTime.split(':').map(Number);
+              const [iH, iM] = l.checkIn.split(':').map(Number);
+              const sMins = sH * 60 + (sM || 0);
+              const iMins = iH * 60 + (iM || 0);
+              const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
+              const halfDayLimit = sch.halfDayLimit !== undefined ? Number(sch.halfDayLimit) : 120;
+              if (iMins > sMins + grace) displayStatus = 'Late';
+              if (iMins >= sMins + halfDayLimit) displayStatus = 'Half Day';
+            }
+          }
           let statusClass = 'badge-on-time';
-          if (l.status === 'Late') statusClass = 'badge-late';
-          if (l.status === 'Half Day') statusClass = 'badge-half-day';
-          if (l.status === 'Pending Verification') statusClass = 'badge-late';
+          if (displayStatus === 'Late') statusClass = 'badge-late';
+          else if (displayStatus === 'Half Day') statusClass = 'badge-half-day';
+          else if (displayStatus === 'Absent') statusClass = 'badge-absent';
+          else if (displayStatus === 'Pending Verification') statusClass = 'badge-late';
 
           let checkInVal = l.checkIn || '--:--';
           let checkOutVal = l.checkOut || '--:--';
@@ -8895,7 +8946,7 @@ async function renderAdminDashboard() {
               <td>${checkOutVal}</td>
               <td>${gpsCellHTML}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
-              <td><span class="badge ${statusClass}">${l.status}</span></td>
+              <td><span class="badge ${statusClass}">${displayStatus}</span></td>
             </tr>
           `;
         }).join('');
@@ -9040,10 +9091,13 @@ async function renderAdminDashboard() {
       }
 
       tbody.innerHTML = result.data.map(emp => {
-        const isPresent = emp.todayAttendance === 'Present';
-        const statusBadge = isPresent 
-          ? '<span class="badge badge-on-time">Present</span>' 
-          : '<span class="badge badge-neutral">No Punch</span>';
+        const att = emp.todayAttendance || 'No Punch';
+        let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
+        if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
+        else if (att === 'Late') statusBadge = '<span class="badge badge-late">Late</span>';
+        else if (att === 'Half Day') statusBadge = '<span class="badge badge-half-day">Half Day</span>';
+        else if (att === 'Absent') statusBadge = '<span class="badge badge-absent">Absent</span>';
+        else if (att !== 'No Punch') statusBadge = `<span class="badge badge-on-time">${Utils.escape(att)}</span>`;
 
         const checkInStr = emp.todayCheckIn 
           ? new Date(emp.todayCheckIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 

@@ -6,6 +6,7 @@ const path = require('path');
 const {
   User,
   AttendanceLog,
+  Schedule,
   connectMongoose,
   getUseLocalFileDB,
   LOCAL_DB_FILE
@@ -406,6 +407,56 @@ async function findMongoAttendance(
 
 
 /* =========================================================
+   COMPUTE ATTENDANCE STATUS BASED ON CHECK-IN & SHIFT RULES
+========================================================= */
+
+function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj) {
+  if (!checkInTime) return 'Absent';
+
+  const [inH, inM] = checkInTime.split(':').map(Number);
+  const inMins = (inH || 0) * 60 + (inM || 0);
+
+  let status = 'On Time';
+
+  if (shiftObj && shiftObj.startTime) {
+    const [startH, startM] = shiftObj.startTime.split(':').map(Number);
+    const startMins = (startH || 0) * 60 + (startM || 0);
+    const grace = shiftObj.gracePeriod !== undefined ? Number(shiftObj.gracePeriod) : 15;
+    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 120;
+
+    // Check-in punctuality relative to grace period
+    if (inMins > startMins + grace) {
+      status = 'Late';
+    }
+    // Check-in excessively late exceeding half-day limit cutoff
+    if (inMins >= startMins + halfDayLimit) {
+      status = 'Half Day';
+    }
+  }
+
+  // If check-out is present, evaluate total work duration vs expected shift duration
+  if (checkOutTime && shiftObj && shiftObj.startTime && shiftObj.endTime) {
+    const [outH, outM] = checkOutTime.split(':').map(Number);
+    const outMins = (outH || 0) * 60 + (outM || 0);
+    let totalWorkMins = outMins - inMins;
+    if (totalWorkMins < 0) totalWorkMins += 24 * 60; // overnight support
+
+    const [schStartH, schStartM] = shiftObj.startTime.split(':').map(Number);
+    const [schEndH, schEndM] = shiftObj.endTime.split(':').map(Number);
+    let expectedWorkMins = (schEndH * 60 + (schEndM || 0)) - (schStartH * 60 + (schStartM || 0));
+    if (expectedWorkMins < 0) expectedWorkMins += 24 * 60;
+
+    const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
+    if (totalWorkMins < halfDayThreshold) {
+      status = 'Half Day';
+    }
+  }
+
+  return status;
+}
+
+
+/* =========================================================
    CREATE ATTENDANCE ID
 ========================================================= */
 
@@ -548,9 +599,12 @@ function processLocalPunch(
     }
 
     // CHECK-OUT FOR THIS OPEN SHIFT
+    const shiftObj = schedules.find(s => String(s.id) === String(openLog.shiftId));
+    const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, time, shiftObj);
+
     openLog.checkOut = time;
     openLog.checkOutPunchId = punchId;
-    openLog.status = 'Present';
+    openLog.status = evaluatedStatus;
     openLog.biometricUsed = DEVICE_NAME;
     openLog.biometricDeviceId = DEVICE.serial;
     openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
@@ -572,7 +626,7 @@ function processLocalPunch(
         shiftId: openLog.shiftId,
         checkIn: openLog.checkIn,
         checkOut: time,
-        status: 'Present',
+        status: evaluatedStatus,
         device: DEVICE_NAME
       },
       ipAddress: '127.0.0.1'
@@ -580,7 +634,7 @@ function processLocalPunch(
 
     result.updated++;
     console.log(
-      `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${time}`
+      `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
     );
     return;
   }
@@ -595,14 +649,7 @@ function processLocalPunch(
   );
 
   const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
-  let status = 'On Time';
-  if (shiftObj && shiftObj.startTime) {
-    const [startHour, startMin] = shiftObj.startTime.split(':').map(Number);
-    const totalStartMins = startHour * 60 + startMin;
-    if (punchMins > totalStartMins + (shiftObj.gracePeriod || 15)) {
-      status = 'Late';
-    }
-  }
+  const status = computeAttendanceStatus(time, '', shiftObj);
 
   const newLog = {
     id: createAttendanceId(
@@ -966,9 +1013,15 @@ async function syncMongoDatabase(
       }
 
       // Check-out open shift
+      let shiftObj = null;
+      try {
+        shiftObj = await Schedule.findOne({ id: openLog.shiftId }).lean();
+      } catch (e) {}
+      const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, time, shiftObj);
+
       openLog.checkOut = time;
       openLog.checkOutPunchId = punchId;
-      openLog.status = 'Present';
+      openLog.status = evaluatedStatus;
       openLog.biometricUsed = DEVICE_NAME;
       openLog.biometricDeviceId = DEVICE.serial;
       openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
@@ -993,6 +1046,12 @@ async function syncMongoDatabase(
       [],
       existingLogs
     );
+
+    let shiftObj = null;
+    try {
+      shiftObj = await Schedule.findOne({ id: targetShiftId }).lean();
+    } catch (e) {}
+    const newStatus = computeAttendanceStatus(time, '', shiftObj);
 
     await AttendanceLog.create({
       id:
@@ -1026,7 +1085,7 @@ async function syncMongoDatabase(
         [punchId],
 
       status:
-        'Present',
+        newStatus,
 
       biometricUsed:
         DEVICE_NAME,
@@ -1176,5 +1235,6 @@ async function syncBiometricAttendance() {
 
 
 module.exports = {
-  syncBiometricAttendance
+  syncBiometricAttendance,
+  computeAttendanceStatus
 };

@@ -48,9 +48,16 @@ export function renderEmployeeDashboard() {
             
             let statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 7px; background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08);">⚪ Not Started</span>`;
             if (sLog && sLog.checkIn && !sLog.checkOut) {
-              statusBadge = `<span class="badge badge-on-time" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(16,185,129,0.15); color:var(--success); border:1px solid rgba(16,185,129,0.3);">🟢 In Session</span>`;
+              const inStatus = sLog.status || 'On Time';
+              const badgeClass = inStatus === 'Late' ? 'badge-late' : 'badge-on-time';
+              statusBadge = `<span class="badge ${badgeClass}" style="font-size:9.5px; padding:2px 8px; font-weight:700;">🟢 ${inStatus}</span>`;
             } else if (sLog && sLog.checkOut) {
-              statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 8px; font-weight:700; background:rgba(255,255,255,0.08); color:var(--text-muted); border:1px solid rgba(255,255,255,0.15);">🏁 Checked Out</span>`;
+              const outStatus = sLog.status || 'On Time';
+              let badgeClass = 'badge-on-time';
+              if (outStatus === 'Late') badgeClass = 'badge-late';
+              else if (outStatus === 'Half Day') badgeClass = 'badge-half-day';
+              else if (outStatus === 'Absent') badgeClass = 'badge-absent';
+              statusBadge = `<span class="badge ${badgeClass}" style="font-size:9.5px; padding:2px 8px; font-weight:700;">🏁 ${outStatus}</span>`;
             }
 
             const activeBadge = isSel 
@@ -126,7 +133,7 @@ export function renderEmployeeDashboard() {
               
               <div class="clock-status-tag ${todayLog ? 'status-clocked-in' : 'status-clocked-out'}">
                 <span style="width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block"></span>
-                <span id="clock-status-text">${todayLog ? (todayLog.checkOut ? 'Clocked Out' : 'Clocked In') : 'Clocked Out'}</span>
+                <span id="clock-status-text">${todayLog ? (todayLog.checkOut ? `Clocked Out (${todayLog.status || 'Completed'})` : `Clocked In (${todayLog.status || 'On Time'})`) : 'Clocked Out'}</span>
               </div>
 
               <!-- Fixed clock actions row -->

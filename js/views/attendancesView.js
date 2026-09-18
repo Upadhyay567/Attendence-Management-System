@@ -551,7 +551,20 @@ export function renderAdminAttendances() {
           }
         }
 
-        const s = log.status || 'On Time';
+        let s = log.status;
+        if (!s || s === 'Present') {
+          s = 'On Time';
+          if (shift && shift.startTime && log.checkIn) {
+            const [sH, sM] = shift.startTime.split(':').map(Number);
+            const [iH, iM] = log.checkIn.split(':').map(Number);
+            const sMins = sH * 60 + (sM || 0);
+            const iMins = iH * 60 + (iM || 0);
+            const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
+            const halfDayLimit = shift.halfDayLimit !== undefined ? Number(shift.halfDayLimit) : 120;
+            if (iMins > sMins + grace) s = 'Late';
+            if (iMins >= sMins + halfDayLimit) s = 'Half Day';
+          }
+        }
         let badgeClass = 'badge-on-time';
         if (s === 'Late') badgeClass = 'badge-late';
         else if (s === 'Half Day') badgeClass = 'badge-half-day';

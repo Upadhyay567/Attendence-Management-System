@@ -113,6 +113,43 @@ describe('HS Group Attendance System API Integration Tests', () => {
       const res = await syncBiometricAttendance();
       expect(res).toHaveProperty('success');
     });
+
+    it('should accurately calculate attendance status based on check-in time and shift rules', () => {
+      const { computeAttendanceStatus } = require('../src/server/biometric/biometricSync.service');
+
+      const standardShift = {
+        id: 'sch_test_1',
+        name: 'General Shift',
+        startTime: '09:00',
+        endTime: '17:00',
+        gracePeriod: 15,
+        halfDayLimit: 120
+      };
+
+      // 1. Check in within grace period (09:10 <= 09:15) -> 'On Time'
+      expect(computeAttendanceStatus('09:10', '', standardShift)).toBe('On Time');
+
+      // 2. Check in at exactly grace boundary (09:15) -> 'On Time'
+      expect(computeAttendanceStatus('09:15', '', standardShift)).toBe('On Time');
+
+      // 3. Check in after grace period (09:20 > 09:15) -> 'Late'
+      expect(computeAttendanceStatus('09:20', '', standardShift)).toBe('Late');
+
+      // 4. Check in after half-day cutoff (11:15 >= 09:00 + 120m) -> 'Half Day'
+      expect(computeAttendanceStatus('11:15', '', standardShift)).toBe('Half Day');
+
+      // 5. Check out after working less than half day (09:00 to 11:30 = 2.5h < 4h) -> 'Half Day'
+      expect(computeAttendanceStatus('09:00', '11:30', standardShift)).toBe('Half Day');
+
+      // 6. Check out after working full shift when checked in late -> retains 'Late'
+      expect(computeAttendanceStatus('09:30', '17:30', standardShift)).toBe('Late');
+
+      // 7. Check out after working full shift when checked in on time -> retains 'On Time'
+      expect(computeAttendanceStatus('09:05', '17:05', standardShift)).toBe('On Time');
+
+      // 8. Missing check-in -> 'Absent'
+      expect(computeAttendanceStatus('', '', standardShift)).toBe('Absent');
+    });
   });
 });
 

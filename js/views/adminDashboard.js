@@ -732,10 +732,25 @@ export async function renderAdminDashboard() {
         feedBody.innerHTML = todayLogs.map(l => {
           const u = DB.getUser(l.userId);
           const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
+          let displayStatus = l.status;
+          if (!displayStatus || displayStatus === 'Present') {
+            displayStatus = 'On Time';
+            if (sch && sch.startTime && l.checkIn) {
+              const [sH, sM] = sch.startTime.split(':').map(Number);
+              const [iH, iM] = l.checkIn.split(':').map(Number);
+              const sMins = sH * 60 + (sM || 0);
+              const iMins = iH * 60 + (iM || 0);
+              const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
+              const halfDayLimit = sch.halfDayLimit !== undefined ? Number(sch.halfDayLimit) : 120;
+              if (iMins > sMins + grace) displayStatus = 'Late';
+              if (iMins >= sMins + halfDayLimit) displayStatus = 'Half Day';
+            }
+          }
           let statusClass = 'badge-on-time';
-          if (l.status === 'Late') statusClass = 'badge-late';
-          if (l.status === 'Half Day') statusClass = 'badge-half-day';
-          if (l.status === 'Pending Verification') statusClass = 'badge-late';
+          if (displayStatus === 'Late') statusClass = 'badge-late';
+          else if (displayStatus === 'Half Day') statusClass = 'badge-half-day';
+          else if (displayStatus === 'Absent') statusClass = 'badge-absent';
+          else if (displayStatus === 'Pending Verification') statusClass = 'badge-late';
 
           let checkInVal = l.checkIn || '--:--';
           let checkOutVal = l.checkOut || '--:--';
@@ -780,7 +795,7 @@ export async function renderAdminDashboard() {
               <td>${checkOutVal}</td>
               <td>${gpsCellHTML}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
-              <td><span class="badge ${statusClass}">${l.status}</span></td>
+              <td><span class="badge ${statusClass}">${displayStatus}</span></td>
             </tr>
           `;
         }).join('');
@@ -920,10 +935,13 @@ export async function renderAdminDashboard() {
       }
 
       tbody.innerHTML = result.data.map(emp => {
-        const isPresent = emp.todayAttendance === 'Present';
-        const statusBadge = isPresent 
-          ? '<span class="badge badge-on-time">Present</span>' 
-          : '<span class="badge badge-neutral">No Punch</span>';
+        const att = emp.todayAttendance || 'No Punch';
+        let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
+        if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
+        else if (att === 'Late') statusBadge = '<span class="badge badge-late">Late</span>';
+        else if (att === 'Half Day') statusBadge = '<span class="badge badge-half-day">Half Day</span>';
+        else if (att === 'Absent') statusBadge = '<span class="badge badge-absent">Absent</span>';
+        else if (att !== 'No Punch') statusBadge = `<span class="badge badge-on-time">${Utils.escape(att)}</span>`;
 
         const checkInStr = emp.todayCheckIn 
           ? new Date(emp.todayCheckIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 
