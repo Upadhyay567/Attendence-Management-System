@@ -88,7 +88,7 @@ async function getLogs(req, res) {
   }
 }
 
-// -------------------------------------------------------
+// -------------------------------------------------------e
 // syncAttendance (stub — full logic is in biometricSync.service.js) 
 // -------------------------------------------------------
 async function syncAttendance(req, res) {

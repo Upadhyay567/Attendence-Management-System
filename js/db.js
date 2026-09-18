@@ -11,6 +11,43 @@ const defaultSchedules = [
 
 const defaultUsers = [
   {
+    "id": "usr_6af1y3c",
+    "username": "HR0789",
+    "employeeId": "HR0789",
+    "biometricUserId": "HR0789",
+    "biometricId": "HR0789",
+    "name": "Abhishek Sharma",
+    "password": "Surya@123",
+    "role": "hr",
+    "status": "Active",
+    "scheduleId": "sch_mfl8wvv",
+    "baseSalary": 50000,
+    "allowanceHRA": 7500,
+    "allowanceTravel": 3000,
+    "deductionPF": 4000,
+    "deductionPT": 200,
+    "deductionTDS": 5,
+    "phone": "8967459032",
+    "email": "abhishek879@gmail.com",
+    "dob": "1995-08-07",
+    "address": "shisha garhi mant mathura",
+    "city": "Delhi",
+    "gender": "Male",
+    "department": "HR Administrator",
+    "designation": "HR Administrator",
+    "dateOfJoining": "2026-08-06",
+    "emergencyContact": "+91 99999 00001",
+    "documents": [],
+    "resume": null,
+    "aadhar": null,
+    "preferredLocation": "Noida sector 61",
+    "managerId": "",
+    "assignedById": "usr_admin",
+    "profileVerificationStatus": "Approved",
+    "profileVerificationComment": "",
+    "pendingProfileEdits": null
+  },
+  {
     "id": "usr_admin",
     "username": "admin",
     "employeeId": "HR100",
@@ -1486,16 +1523,24 @@ export const DB = {
   getTodayLog(userId, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
     if (shiftId) {
-      return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (l.shiftId === shiftId || (!l.shiftId && (!this.getUser(userId) || this.getUser(userId).scheduleId === shiftId))));
+      const exactMatch = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && String(l.shiftId) === String(shiftId));
+      if (exactMatch) return exactMatch;
+      
+      const user = this.getUser(userId);
+      const isPrimarySchedule = user && String(user.scheduleId) === String(shiftId);
+      if (isPrimarySchedule) {
+        const unassignedMatch = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
+        if (unassignedMatch) return unassignedMatch;
+      }
+      return null;
     }
-    // If shiftId is not specified, prefer active open session, or match current resolved shift
     const openLog = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);
     if (openLog) return openLog;
     
     const user = this.getUser(userId);
     const resolved = user ? this.resolveUserShiftForDate(user, todayStr) : null;
     if (resolved && resolved.scheduleId) {
-      const match = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (l.shiftId === resolved.scheduleId || (!l.shiftId && user.scheduleId === resolved.scheduleId)));
+      const match = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && String(l.shiftId) === String(resolved.scheduleId));
       if (match) return match;
     }
 
@@ -1530,7 +1575,7 @@ export const DB = {
                               'Kohat Enclave, Pitampura, Delhi';
     
     let existing = this.getTodayLog(userId, resolvedShiftId);
-    if (existing && existing.checkIn && existing.status !== 'Pending Verification') {
+    if (existing && existing.checkIn && existing.status !== 'Pending Verification' && !existing.checkOut) {
       return existing;
     }
 
@@ -1555,6 +1600,7 @@ export const DB = {
 
     if (existing) {
       existing.checkIn = timeStr;
+      existing.checkOut = null;
       existing.status = status;
       existing.biometricUsed = method;
       existing.location = effectiveLocation;
@@ -1570,6 +1616,7 @@ export const DB = {
         query: { id: existing.id },
         updates: {
           checkIn: timeStr,
+          checkOut: null,
           status,
           biometricUsed: method,
           location: effectiveLocation,
@@ -1604,7 +1651,7 @@ export const DB = {
       longitude: longitude ? Number(longitude) : null
     };
 
-    this.data.attendanceLogs.push(newLog);
+    this.data.attendanceLogs.unshift(newLog);
     this.save({ type: 'push', key: 'attendanceLogs', payload: newLog });
     return newLog;
   },

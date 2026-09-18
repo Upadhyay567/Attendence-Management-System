@@ -531,11 +531,20 @@ function processLocalPunch(
    * first punch as check-in and latest punch
    * as check-out.
    */
-  if (attendance.checkIn && time < attendance.checkIn) {
-    attendance.checkOut = attendance.checkIn;
-    attendance.checkIn = time;
-  } else {
-    attendance.checkOut = time;
+  if (attendance.checkIn) {
+    const [inH, inM] = attendance.checkIn.split(':').map(Number);
+    const [punchH, punchM] = time.split(':').map(Number);
+    const inMins = (inH || 0) * 60 + (inM || 0);
+    const punchMins = (punchH || 0) * 60 + (punchM || 0);
+
+    if (punchMins < inMins) {
+      attendance.checkOut = attendance.checkIn;
+      attendance.checkIn = time;
+    } else if (punchMins >= inMins + 30) {
+      attendance.checkOut = time;
+    } else {
+      return;
+    }
   }
 
   attendance.status = 'Present';
@@ -854,11 +863,20 @@ async function syncMongoDatabase(
       continue;
     }
 
-    if (attendance.checkIn && time < attendance.checkIn) {
-      attendance.checkOut = attendance.checkIn;
-      attendance.checkIn = time;
-    } else {
-      attendance.checkOut = time;
+    if (attendance.checkIn) {
+      const [inH, inM] = attendance.checkIn.split(':').map(Number);
+      const [punchH, punchM] = time.split(':').map(Number);
+      const inMins = (inH || 0) * 60 + (inM || 0);
+      const punchMins = (punchH || 0) * 60 + (punchM || 0);
+
+      if (punchMins < inMins) {
+        attendance.checkOut = attendance.checkIn;
+        attendance.checkIn = time;
+      } else if (punchMins >= inMins + 30) {
+        attendance.checkOut = time;
+      } else {
+        continue;
+      }
     }
 
     attendance.status =

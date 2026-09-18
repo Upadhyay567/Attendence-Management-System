@@ -118,7 +118,7 @@ export function renderLoginView() {
 
         <div style="display: flex; flex-direction: column; gap: 14px;">
           <!-- HR Button -->
-          <button class="role-portal-btn" data-role="hr" style="cursor: pointer;">
+          <button type="button" class="role-portal-btn" data-role="hr" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
@@ -134,7 +134,7 @@ export function renderLoginView() {
           </button>
 
           <!-- Manager Button -->
-          <button class="role-portal-btn" data-role="manager" style="cursor: pointer;">
+          <button type="button" class="role-portal-btn" data-role="manager" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
@@ -150,7 +150,7 @@ export function renderLoginView() {
           </button>
 
           <!-- Employee Button -->
-          <button class="role-portal-btn" data-role="employee" style="cursor: pointer;">
+          <button type="button" class="role-portal-btn" data-role="employee" style="cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 16px; pointer-events: none;">
               <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(6, 182, 212, 0.15); color: #06b6d4; display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="pointer-events: none;">
@@ -210,7 +210,7 @@ export function renderLoginView() {
     const isHrOrManager = role === 'hr' || role === 'manager';
 
     const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
-      ? `<button class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
+      ? `<button type="button" class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
       : '';
 
     const passwordFieldHTML = html`
@@ -229,10 +229,10 @@ export function renderLoginView() {
     `;
 
     const loginButtonHTML = isHrOrManager
-      ? '<button class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>'
-      : '<button class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>';
+      ? '<button type="button" class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>'
+      : '<button type="button" class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>';
 
-    const skipDevButtonHTML = (!isHrOrManager && skipButtonHTML) ? '' : '<button class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>';
+    const skipDevButtonHTML = (!isHrOrManager && skipButtonHTML) ? '' : '<button type="button" class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>';
 
     const createAccountLinkHTML = isHrOrManager ? html`
       <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
@@ -268,7 +268,7 @@ export function renderLoginView() {
           ${skipDevButtonHTML}
           ${createAccountLinkHTML}
 
-          <button class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Role</button>
+          <button type="button" class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Role</button>
         </div>
         <div class="auth-policy-footer" style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px;">
           By logging in, you agree to the <a href="#" id="btn-show-policy-verify" style="color: var(--primary); text-decoration: underline; font-weight: 600;">Company Policy</a>.

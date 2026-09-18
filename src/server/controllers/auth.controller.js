@@ -26,6 +26,8 @@ function findUserByLoginKey(users, loginKey) {
   return users.find(u => {
     if (!u) return false;
     const uName = (u.username || '').trim().toLowerCase();
+    const uFullName = (u.name || '').trim().toLowerCase();
+    const uFirstName = uFullName.split(' ')[0];
     const uEmp = (u.employeeId || '').trim().toUpperCase();
     const uBio = (u.biometricUserId || u.biometricId || '').trim().toUpperCase();
     const uPhone = (u.phone || u.mobile || '').replace(/[^0-9]/g, '');
@@ -33,6 +35,7 @@ function findUserByLoginKey(users, loginKey) {
     const cleanBio = uBio.replace(/[^A-Z0-9]/g, '');
 
     if (uName && uName === lowerKey) return true;
+    if (uFullName && (uFullName === lowerKey || uFirstName === lowerKey)) return true;
     if (uEmp && uEmp === upperKey) return true;
     if (cleanEmp && cleanEmp === cleanAlphaNumKey) return true;
     if (uBio && uBio === upperKey) return true;
@@ -73,6 +76,14 @@ async function loginUser(req, res) {
 
     if (foundUser.status === 'Inactive') {
       return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
+    }
+
+    if (role) {
+      const reqBaseRole = getBaseRole(role);
+      const userBaseRole = getBaseRole(foundUser.role);
+      if (reqBaseRole && userBaseRole && reqBaseRole !== userBaseRole) {
+        return res.status(403).json({ error: `Access Denied: Account role '${foundUser.role}' is not authorized for '${role}' portal.` });
+      }
     }
 
     const foundUserBaseRole = getBaseRole(foundUser.role);

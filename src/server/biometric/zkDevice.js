@@ -186,9 +186,49 @@ async function trySingleConnection(ip, protocol = 'tcp') {
   return zk;
 }
 
+function isPortReachable(ip, port, timeoutMs = 600) {
+  return new Promise(resolve => {
+    const socket = new net.Socket();
+    let isSettled = false;
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => {
+      isSettled = true;
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('timeout', () => {
+      if (!isSettled) {
+        isSettled = true;
+        socket.destroy();
+        resolve(false);
+      }
+    });
+    socket.once('error', () => {
+      if (!isSettled) {
+        isSettled = true;
+        socket.destroy();
+        resolve(false);
+      }
+    });
+    socket.connect(port, ip);
+  });
+}
+
 async function createDeviceConnection() {
   let lastError = null;
   const targetIp = DEVICE.ip || '192.168.1.51';
+
+  // Fast LAN probe to avoid long blocking connection delays when hardware is offline
+  const reachable = await isPortReachable(targetIp, DEVICE.port, 600);
+  if (!reachable) {
+    const richErr = new Error(`K40 hardware offline (${targetIp}:${DEVICE.port})`);
+    richErr.step = 'CONNECT';
+    richErr.command = 'CONNECT';
+    richErr.ip = targetIp;
+    richErr.port = DEVICE.port;
+    richErr.isOffline = true;
+    throw richErr;
+  }
 
   for (const proto of ['tcp', 'udp']) {
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -216,7 +256,7 @@ async function createDeviceConnection() {
   );
   richErr.step      = 'CONNECT';
   richErr.command   = 'CONNECT';
-  richErr.ip        = primaryIp;
+  richErr.ip        = targetIp;
   richErr.port      = DEVICE.port;
   richErr.isOffline = true;
   richErr.original  = lastError;

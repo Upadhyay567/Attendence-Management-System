@@ -1,6 +1,47 @@
 {
   "users": [
     {
+      "_id": "6a8d3b8e94e235d28a4e9709",
+      "id": "usr_6af1y3c",
+      "employeeId": "HR0789",
+      "biometricUserId": "HR0789",
+      "biometricId": "HR0789",
+      "username": "HR0789",
+      "name": "Abhishek Sharma",
+      "role": "hr",
+      "status": "Active",
+      "password": "/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity",
+      "email": "abhishek879@gmail.com",
+      "phone": "8967459032",
+      "dob": "1995-08-07",
+      "gender": "Male",
+      "emergencyContact": "+91 99999 00001",
+      "address": "shisha garhi mant mathura",
+      "city": "delhi",
+      "department": "HR Administrator",
+      "designation": "HR Administrator",
+      "dateOfJoining": "2026-08-06",
+      "baseSalary": 50000,
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "profileVerificationStatus": "Approved",
+      "profileVerificationComment": "",
+      "scheduleId": "sch_mfl8wvv",
+      "scheduleIds": [
+        "sch_mfl8wvv"
+      ],
+      "shiftLocations": {
+        "sch_mfl8wvv": "Noida sector 61"
+      },
+      "preferredLocation": "Noida sector 61",
+      "managerId": "",
+      "assignedById": "usr_admin",
+      "state": "delhi"
+    },
+    {
       "id": "usr_68s5s48",
       "employeeId": "EMP1",
       "biometricUserId": "1",
@@ -32,12 +73,10 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
-        "sch_q8jji9v",
-        "sch_mfl8wvv"
+        "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "omaxe Office",
-        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_q8jji9v": "omaxe Office"
       },
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
@@ -222,7 +261,7 @@
     {
       "_id": "usr_bio_309",
       "id": "usr_bio_309",
-      "employeeId": "309",
+      "employeeId": "EMP309",
       "biometricUserId": "309",
       "name": "VISHAL MAHESHWARI",
       "username": "bio_309",
@@ -239,7 +278,7 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc",
+      "assignedById": "usr_manager",
       "scheduleId": "sch_q8jji9v",
       "scheduleIds": [
         "sch_q8jji9v"
@@ -247,7 +286,19 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "biometricId": "309"
+      "biometricId": "309",
+      "email": "ishu20969@gmail.com",
+      "phone": "7856907641",
+      "dob": "2026-09-17",
+      "baseSalary": 1,
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "managerId": "usr_manager",
+      "profileVerificationStatus": "Approved",
+      "photo": null,
+      "city": "Mathura",
+      "state": "Uttar Pradesh",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     },
     {
       "_id": "usr_bio_1094",
@@ -268,12 +319,21 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.121Z"
+      "createdAt": "2026-09-17T11:45:22.121Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 43208",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_1200",
       "id": "usr_bio_1200",
-      "employeeId": "1200",
+      "employeeId": "EMP1200",
       "biometricUserId": "1200",
       "biometricId": "1200",
       "name": "BHUPENDRA VISHWAKARMA",
@@ -287,9 +347,29 @@
         "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_q8jji9v": "omaxe Office"
       },
-      "createdAt": "2026-09-17T11:45:22.142Z"
+      "createdAt": "2026-09-17T11:45:22.142Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 43209",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c",
+      "email": "hemantupadhyay070@gmail.com",
+      "phone": "7856907641",
+      "dob": "1994-10-11",
+      "preferredLocation": "omaxe Office",
+      "managerId": "usr_manager",
+      "profileVerificationStatus": "Approved",
+      "photo": null,
+      "city": "Mathura",
+      "state": "Uttar Pradesh",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null
     },
     {
       "_id": "usr_bio_1253",
@@ -310,7 +390,16 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.143Z"
+      "createdAt": "2026-09-17T11:45:22.143Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432010",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_293",
@@ -331,7 +420,16 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.143Z"
+      "createdAt": "2026-09-17T11:45:22.143Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432011",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_3980",
@@ -352,7 +450,16 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.143Z"
+      "createdAt": "2026-09-17T11:45:22.143Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432012",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
     },
     {
       "_id": "usr_bio_1269",
@@ -373,7 +480,16 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.143Z"
+      "createdAt": "2026-09-17T11:45:22.143Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432013",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_hr"
     },
     {
       "_id": "usr_bio_1275",
@@ -394,7 +510,16 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "createdAt": "2026-09-17T11:45:22.143Z"
+      "createdAt": "2026-09-17T11:45:22.143Z",
+      "gender": "Male",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432014",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_7kek2wc"
     },
     {
       "_id": "usr_bio_845",
@@ -412,19 +537,59 @@
       ],
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      }
+      },
+      "gender": "Male",
+      "department": "Engineering",
+      "designation": "Junior Developer",
+      "dateOfJoining": "2024-05-10",
+      "emergencyContact": "+91 98765 432015",
+      "allowanceHRA": 7500,
+      "allowanceTravel": 3000,
+      "deductionPF": 4000,
+      "deductionPT": 200,
+      "deductionTDS": 5,
+      "assignedById": "usr_6af1y3c"
+    },
+    {
+      "id": "usr_finance",
+      "username": "finance",
+      "employeeId": "EMP106",
+      "name": "Finance Manager",
+      "password": "FinancePassword123!",
+      "role": "finance_manager",
+      "scheduleId": "sch_1",
+      "baseSalary": 78000,
+      "allowanceHRA": 11700,
+      "allowanceTravel": 3000,
+      "deductionPF": 6240,
+      "deductionPT": 200,
+      "deductionTDS": 10,
+      "phone": "+91 9876543213",
+      "email": "finance@surya.group",
+      "dob": "1990-09-15",
+      "address": "48, Surya Bhavan, Connaught Place",
+      "city": "Delhi",
+      "gender": "Male",
+      "department": "Finance",
+      "designation": "Finance Manager",
+      "dateOfJoining": "2023-01-10",
+      "emergencyContact": "+91 98765 43204",
+      "documents": [],
+      "resume": null,
+      "aadhar": null,
+      "status": "Active"
     }
   ],
   "attendanceLogs": [
     {
-      "id": "log_usr_68s5s48_2026-09-17_sch_q8jji9v",
-      "userId": "usr_68s5s48",
+      "id": "log_usr_bio_1200_2026-09-17_sch_q8jji9v",
+      "userId": "usr_bio_1200",
       "date": "2026-09-17",
       "shiftId": "sch_q8jji9v",
-      "checkIn": "13:42:47",
-      "checkOut": "17:05:13",
-      "status": "Present",
-      "biometricUsed": "ZKTeco K40 Pro",
+      "checkIn": "18:37",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
       "location": "omaxe Office",
       "deviationFlag": false,
       "justification": "",
@@ -432,27 +597,22 @@
       "distance": 0,
       "facePhoto": null,
       "latitude": 28.6978,
-      "longitude": 77.1408,
-      "biometricDeviceId": "CJOU232660306",
-      "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-17T11:35:13.000Z",
-      "lastBiometricPunchAt": "2026-09-17T11:35:13.000Z",
-      "updatedAt": "2026-09-17T11:48:30.233Z"
+      "longitude": 77.1408
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-17",
       "userId": "usr_68s5s48",
       "date": "2026-09-17",
-      "shiftId": "sch_3ebecon",
+      "shiftId": "sch_q8jji9v",
       "checkIn": "13:42:47",
-      "checkOut": "15:28:50",
+      "checkOut": "18:41:04",
       "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-17T09:58:50.000Z",
-      "lastBiometricPunchAt": "2026-09-17T09:58:50.000Z",
-      "location": "HS Group Worksite (28.6952, 77.1860)",
+      "biometricPunchId": "CJOU232660306_1_2026-09-17T13:11:04.000Z",
+      "lastBiometricPunchAt": "2026-09-17T13:11:04.000Z",
+      "location": "omaxe Office",
       "deviationFlag": false,
       "justification": "",
       "coords": "",
@@ -460,8 +620,8 @@
       "facePhoto": "",
       "latitude": null,
       "longitude": null,
-      "createdAt": "2026-09-17T09:06:38.141Z",
-      "updatedAt": "2026-09-17T10:01:10.679Z"
+      "createdAt": "2026-09-17T12:49:34.898Z",
+      "updatedAt": "2026-09-17T13:22:20.222Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-16",
@@ -485,7 +645,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.166Z",
-      "updatedAt": "2026-09-17T11:48:30.225Z"
+      "updatedAt": "2026-09-17T13:22:20.207Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-11",
@@ -509,7 +669,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-17T11:48:30.222Z"
+      "updatedAt": "2026-09-17T13:22:20.205Z"
     },
     {
       "id": "BIO_usr_bio_5174_2026-08-29",
@@ -922,8 +1082,8 @@
     {
       "_id": "6a8d3b8e94e235d28a4e96fb",
       "id": "sch_q8jji9v",
-      "name": "Morning Shift",
-      "startTime": "15:00",
+      "name": "Morning Shift 900",
+      "startTime": "16:30",
       "endTime": "20:00",
       "gracePeriod": 20,
       "weeklyOffs": [],
@@ -936,7 +1096,7 @@
         4,
         5
       ],
-      "location": "HS Group Worksite (28.6952, 77.1860)"
+      "location": "Noida sector 61"
     },
     {
       "_id": "6a8d3b8e94e235d28a4e96fc",
@@ -1033,6 +1193,61 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_11togf5",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Base Salary: Not Set ➔ ₹1\n• Email Address: Not Set ➔ ishu20969@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 2026-09-17\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ HS Group Worksite (28.6952, 77.1860)\n• Reporting Manager: None ➔ Manjit  kour Operations Manager",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_bio_309",
+      "createdAt": "2026-09-17T13:22:46.863Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_nl15dsw",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_bio_1200",
+      "createdAt": "2026-09-17T13:06:23.895Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_luaid4k",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Reporting Manager: None ➔ Manjit  kour Operations Manager",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_bio_1200",
+      "createdAt": "2026-09-17T13:05:24.508Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_bth2whu",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Email Address: Not Set ➔ hemantupadhyay070@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 1994-10-11\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ omaxe Office\n• Work Shift Locations: Morning Shift 900: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: omaxe Office",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_bio_1200",
+      "createdAt": "2026-09-17T13:04:12.143Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_bwkodq3",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift 900: omaxe Office; Afternoon shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: omaxe Office\n• Assigned Work Shifts: Morning Shift 900, Afternoon shift ➔ Morning Shift 900",
+      "category": "Update",
+      "date": "2026-09-17",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-17T13:02:26.711Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_e0cmpt1",
       "title": "📢 Profile Updated by HR/Manager",
@@ -1622,6 +1837,399 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-17T13:22:47.093Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_11togf5",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Base Salary: Not Set ➔ ₹1\n• Email Address: Not Set ➔ ishu20969@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 2026-09-17\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ HS Group Worksite (28.6952, 77.1860)\n• Reporting Manager: None ➔ Manjit  kour Operations Manager",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_bio_309",
+        "createdAt": "2026-09-17T13:22:46.863Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:22:46.937Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "VISHAL MAHESHWARI",
+        "employeeId": "EMP309",
+        "biometricUserId": "309",
+        "biometricId": "309",
+        "email": "ishu20969@gmail.com",
+        "phone": "7856907641",
+        "dob": "2026-09-17",
+        "baseSalary": 1,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "Junior Developer",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 432062",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "usr_manager",
+        "assignedById": "usr_manager",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:07:02.994Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_bio_1200",
+      "userName": "BHUPENDRA VISHWAKARMA",
+      "userRole": "employee",
+      "details": {
+        "id": "log_usr_bio_1200_2026-09-17_sch_q8jji9v",
+        "userId": "usr_bio_1200",
+        "date": "2026-09-17",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "18:37",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "omaxe Office",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.697800° N, 77.140800° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.6978,
+        "longitude": 77.1408
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:06:24.073Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_nl15dsw",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_bio_1200",
+        "createdAt": "2026-09-17T13:06:23.895Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:06:23.987Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "BHUPENDRA VISHWAKARMA",
+        "employeeId": "EMP1200",
+        "biometricUserId": "1200",
+        "biometricId": "1200",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        },
+        "role": "employee",
+        "preferredLocation": "omaxe Office",
+        "gender": "Male",
+        "department": "Operations",
+        "designation": "Staff",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 43209",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:05:24.620Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_luaid4k",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Reporting Manager: None ➔ Manjit  kour Operations Manager",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_bio_1200",
+        "createdAt": "2026-09-17T13:05:24.508Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:05:24.575Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "BHUPENDRA VISHWAKARMA",
+        "employeeId": "1200",
+        "biometricUserId": "1200",
+        "biometricId": "1200",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        },
+        "role": "employee",
+        "preferredLocation": "omaxe Office",
+        "gender": "Male",
+        "department": "Operations",
+        "designation": "Staff",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 43209",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:04:12.306Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_bth2whu",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Email Address: Not Set ➔ hemantupadhyay070@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 1994-10-11\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ omaxe Office\n• Work Shift Locations: Morning Shift 900: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: omaxe Office",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_bio_1200",
+        "createdAt": "2026-09-17T13:04:12.143Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:04:12.214Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "BHUPENDRA VISHWAKARMA",
+        "employeeId": "1200",
+        "biometricUserId": "1200",
+        "biometricId": "1200",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        },
+        "role": "employee",
+        "preferredLocation": "omaxe Office",
+        "gender": "Male",
+        "department": "Operations",
+        "designation": "Staff",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 43209",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:02:26.836Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_bwkodq3",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: Morning Shift 900: omaxe Office; Afternoon shift: HS Group Worksite (28.6952, 77.1860) ➔ Morning Shift 900: omaxe Office\n• Assigned Work Shifts: Morning Shift 900, Afternoon shift ➔ Morning Shift 900",
+        "category": "Update",
+        "date": "2026-09-17",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-17T13:02:26.711Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:02:26.767Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": null,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        },
+        "role": "employee",
+        "preferredLocation": "omaxe Office",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_manager",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T13:01:51.563Z",
+      "action": "UPDATE_schedules",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "Morning Shift 900",
+        "startTime": "16:30",
+        "endTime": "20:00",
+        "gracePeriod": 20,
+        "workDays": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "location": "Noida sector 61"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-17T12:24:31.082Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "id": "log_usr_68s5s48_2026-09-17_sch_mfl8wvv",
+        "userId": "usr_68s5s48",
+        "date": "2026-09-17",
+        "shiftId": "sch_mfl8wvv",
+        "checkIn": "17:54",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "HS Group Worksite (28.6952, 77.1860)",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.695150° N, 77.186059° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.695150231874575,
+        "longitude": 77.18605870413096
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-17T10:17:41.966Z",
       "action": "PUSH_announcements",
@@ -2539,7 +3147,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-17T11:48:30.243Z",
-    "lastLogCount": 16
+    "lastSyncAt": "2026-09-17T13:22:20.222Z",
+    "lastLogCount": 18
   }
 }

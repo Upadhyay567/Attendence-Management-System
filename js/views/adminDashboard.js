@@ -424,7 +424,8 @@ export async function renderAdminDashboard() {
     if (freshUser.role === 'manager') {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (freshUser.role === 'hr') {
-      users = users.filter(u => u.assignedById === freshUser.id);
+      const hrAssigned = users.filter(u => u.assignedById === freshUser.id);
+      if (hrAssigned.length > 0) users = hrAssigned;
     }
     return users;
   };
@@ -526,7 +527,8 @@ export async function renderAdminDashboard() {
     if (isManager) {
       users = users.filter(u => u.managerId === freshUser.id);
     } else if (isHr) {
-      users = users.filter(u => u.assignedById === freshUser.id);
+      const hrUsers = users.filter(u => u.assignedById === freshUser.id);
+      if (hrUsers.length > 0) users = hrUsers;
     }
 
     const activeEmployees = users.filter(u => u.role === 'employee');
@@ -878,16 +880,19 @@ export async function renderAdminDashboard() {
     loadBiometricDashboardData();
   }
 
-  async function loadBiometricDashboardData() {
+  async function loadBiometricDashboardData(silent = false) {
     const tbody = document.getElementById('biometric-dashboard-tbody');
     const badge = document.getElementById('biometric-status-badge');
     if (!tbody) return;
 
     try {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>';
-      if (badge) {
-        badge.className = 'badge badge-pending';
-        badge.textContent = 'Connecting...';
+      const isAlreadyPopulated = tbody.children.length > 0 && !tbody.innerText.includes('Fetching biometric records');
+      if (!silent && !isAlreadyPopulated) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>';
+        if (badge) {
+          badge.className = 'badge badge-pending';
+          badge.textContent = 'Connecting...';
+        }
       }
 
       const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/dashboard');
@@ -1000,7 +1005,7 @@ export async function renderAdminDashboard() {
     if (window.location.hash === '#admin-dashboard') {
       updateDashboardViews();
       if (typeof loadBiometricDashboardData === 'function') {
-        loadBiometricDashboardData();
+        loadBiometricDashboardData(true);
       }
     }
   };
@@ -1041,7 +1046,7 @@ export async function renderAdminDashboard() {
       clearInterval(window.adminDashboardInterval);
       window.adminDashboardInterval = null;
     }
-  }, 2000);
+  }, 10000);
 }
 
 function renderAdminUsers() {
