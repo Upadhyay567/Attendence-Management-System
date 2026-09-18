@@ -574,6 +574,9 @@ function processLocalPunch(
       attendance.checkOut = attendance.checkIn;
       attendance.checkIn = time;
     } else if (punchMins >= inMins + 30) {
+      if (attendance.checkOut === time || attendance.biometricPunchId === punchId) {
+        return;
+      }
       attendance.checkOut = time;
     } else {
       return;
@@ -906,6 +909,9 @@ async function syncMongoDatabase(
         attendance.checkOut = attendance.checkIn;
         attendance.checkIn = time;
       } else if (punchMins >= inMins + 30) {
+        if (attendance.checkOut === time || attendance.biometricPunchId === punchId) {
+          continue;
+        }
         attendance.checkOut = time;
       } else {
         continue;

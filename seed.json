@@ -645,7 +645,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-17T12:49:34.898Z",
-      "updatedAt": "2026-09-18T05:10:26.355Z"
+      "updatedAt": "2026-09-18T05:12:34.181Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-16",
@@ -693,7 +693,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-18T05:10:26.352Z"
+      "updatedAt": "2026-09-18T05:12:34.175Z"
     },
     {
       "id": "BIO_usr_bio_5174_2026-08-29",
@@ -3229,7 +3229,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-18T05:10:26.356Z",
+    "lastSyncAt": "2026-09-18T05:12:34.185Z",
     "lastLogCount": 22
   },
   "activityLogs": [
