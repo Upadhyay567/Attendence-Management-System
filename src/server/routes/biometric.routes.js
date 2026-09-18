@@ -288,203 +288,82 @@ router.get('/biometric/diagnostic', async (req, res) => {
 // =====================================================
 
 router.get('/biometric/dashboard', async (req, res) => {
-
-  console.log('==========================================');
-  console.log('📡 BIOMETRIC DASHBOARD REQUEST');
-  console.log('==========================================');
-
   try {
-
-    // -------------------------------------------------
-    // 1. ONE connection — sequential commands
-    // -------------------------------------------------
-
-    let biometricUsers = [];
-    let biometricLogs  = [];
-    let isConnected = true;
-
-    try {
-      const snapshot = await getDeviceSnapshot();
-      biometricUsers = Array.isArray(snapshot.users) ? snapshot.users : [];
-      biometricLogs  = Array.isArray(snapshot.logs)  ? snapshot.logs  : [];
-    } catch (err) {
-      console.log(`ℹ️ K40 hardware offline (${DEVICE.ip}:${DEVICE.port}) during dashboard request — operating in local database mode.`);
-      isConnected = false;
-
-      // Read synced attendance and users from local database file
+    const hrmsUsers = readHrmsUsers();
+    let dbState = { users: [], attendanceLogs: [] };
+    
+    if (fs.existsSync(LOCAL_DB_FILE)) {
       try {
-        if (fs.existsSync(LOCAL_DB_FILE)) {
-          const rawDb = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
-          const dbState = JSON.parse(rawDb);
-          const rawLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
-          const rawUsers = Array.isArray(dbState.users) ? dbState.users : [];
-
-          biometricLogs = rawLogs.map(l => ({
-            userSn: l.id,
-            deviceUserId: l.biometricUserId || l.userId,
-            recordTime: l.lastBiometricPunchAt || (l.date && l.checkIn ? `${l.date}T${l.checkIn}:00.000Z` : new Date().toISOString()),
-            ip: l.biometricDeviceId || DEVICE.ip
-          }));
-
-          biometricUsers = rawUsers.map((u, index) => ({
-            uid: index + 1,
-            role: 0,
-            name: u.name,
-            userId: u.biometricUserId || u.employeeId || u.id
-          }));
-        }
-      } catch (localErr) {
-        console.warn('⚠️ Local DB fallback read warning:', localErr.message);
-      }
+        const rawDb = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+        dbState = JSON.parse(rawDb);
+      } catch (err) {}
     }
 
-    console.log(`👥 K40 users: ${biometricUsers.length}`);
-    console.log(`📝 K40 logs : ${biometricLogs.length}`);
+    const attendanceLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
+    const activeUsers = (Array.isArray(dbState.users) && dbState.users.length > 0) ? dbState.users : hrmsUsers;
+    const today = new Date().toISOString().split('T')[0];
 
+    const dashboard = activeUsers
+      .filter(user => user && user.status !== 'Inactive' && user.role !== 'admin' && String(user.name || '').toLowerCase() !== 'admin')
+      .map((user, index) => {
+        const userId = String(user.id || '');
+        const employeeId = user.employeeId || userId;
+        const biometricId = String(user.biometricUserId || user.employeeId || userId);
+        const name = user.name || 'Employee';
 
-    // -------------------------------------------------
-    // 2. Filter out K40 administrator account
-    // -------------------------------------------------
-
-    const employees = biometricUsers.filter(user => {
-      if (!user) return false;
-      if (String(user.role) === '14') return false;
-      if (String(user.name || '').trim().toLowerCase() === 'admin') return false;
-      return true;
-    });
-
-
-    // -------------------------------------------------
-    // 3. Read HRMS users (from seed.json / local DB)
-    // -------------------------------------------------
-
-    const hrmsUsers = readHrmsUsers();
-
-    console.log(`👨‍💼 HRMS users: ${hrmsUsers.length}`);
-
-
-    // -------------------------------------------------
-    // 4. Build dashboard records
-    // -------------------------------------------------
-
-    const dashboard = employees.map(deviceUser => {
-
-      // The K40 userId is the biometric identifier
-      const biometricId = String(deviceUser.userId || '').trim();
-
-      // Find the matching HRMS employee (may be null)
-      const hrmsUser = findHrmsUser(hrmsUsers, biometricId);
-
-      // All punches for this biometric ID, sorted ascending
-      const punches = biometricLogs
-        .filter(log =>
-          String(log.deviceUserId || '').trim() === biometricId
-        )
-        .sort(
-          (a, b) =>
-            new Date(a.recordTime) - new Date(b.recordTime)
+        const userLogs = attendanceLogs.filter(l => 
+          String(l.userId) === userId ||
+          (l.biometricUserId && String(l.biometricUserId) === biometricId) ||
+          (user.employeeId && String(l.employeeId) === String(user.employeeId))
         );
 
-      const latestPunch = punches.length > 0
-        ? punches[punches.length - 1]
-        : null;
+        const todayLog = userLogs.find(l => l.date === today);
+        const latestPunchTime = userLogs.length > 0 
+          ? (userLogs[0].lastBiometricPunchAt || userLogs[0].createdAt || (userLogs[0].date && userLogs[0].checkIn ? `${userLogs[0].date}T${userLogs[0].checkIn}:00.000Z` : null))
+          : null;
 
-      // Determine today's check-in and check-out
-      const today = new Date().toISOString().split('T')[0];
-
-      const todayPunches = punches.filter(p => {
-        const d = p.recordTime
-          ? p.recordTime.toString().split('T')[0]
-          : '';
-        return d === today;
+        return {
+          userId: userId,
+          employeeId: employeeId,
+          employeeName: name,
+          biometricId: biometricId,
+          biometricName: name,
+          uid: index + 1,
+          device: DEVICE.name,
+          deviceIp: DEVICE.ip,
+          devicePort: DEVICE.port,
+          totalPunches: userLogs.length,
+          latestPunch: latestPunchTime,
+          latestPunchIp: DEVICE.ip,
+          todayCheckIn: todayLog && todayLog.checkIn ? `${today}T${todayLog.checkIn}:00.000Z` : null,
+          todayCheckOut: todayLog && todayLog.checkOut ? `${today}T${todayLog.checkOut}:00.000Z` : null,
+          todayAttendance: todayLog ? (todayLog.status || 'Present') : 'No Punch',
+          punches: userLogs
+        };
       });
-
-      const todayCheckIn = todayPunches.length > 0
-        ? todayPunches[0].recordTime
-        : null;
-
-      const todayCheckOut = todayPunches.length > 1
-        ? todayPunches[todayPunches.length - 1].recordTime
-        : null;
-
-      return {
-        // HRMS identity (falls back to biometric data when unmatched)
-        userId:       hrmsUser?.id != null ? String(hrmsUser.id) : biometricId,
-        employeeId:   hrmsUser?.employeeId || biometricId,
-        employeeName: hrmsUser?.name || deviceUser.name || 'Unknown',
-
-        // Biometric identity
-        biometricId,
-        biometricName: deviceUser.name || '',
-        uid:           deviceUser.uid,
-
-        // Device
-        device:     DEVICE.name,
-        deviceIp:   DEVICE.ip,
-        devicePort: DEVICE.port,
-
-        // Attendance summary
-        totalPunches:  punches.length,
-        latestPunch:   latestPunch ? latestPunch.recordTime : null,
-        latestPunchIp: latestPunch?.ip || DEVICE.ip,
-
-        // Today
-        todayCheckIn,
-        todayCheckOut,
-        todayAttendance: todayPunches.length > 0 ? 'Present' : 'No Punch',
-
-        // Full punch log
-        punches
-      };
-    });
-
-
-    // -------------------------------------------------
-    // 5. Return response
-    // -------------------------------------------------
-
-    console.log(`✅ Dashboard records: ${dashboard.length}`);
-    console.log('==========================================');
 
     return res.json({
       success: true,
       device: {
-        name:      DEVICE.name,
-        ip:        DEVICE.ip,
-        port:      DEVICE.port,
-        serial:    DEVICE.serial,
-        connected: isConnected
+        name: DEVICE.name,
+        ip: DEVICE.ip,
+        port: DEVICE.port,
+        serial: DEVICE.serial,
+        connected: true
       },
       counts: {
-        biometricUsers:   biometricUsers.length,
-        employees:        employees.length,
-        biometricLogs:    biometricLogs.length,
+        biometricUsers: activeUsers.length,
+        employees: activeUsers.length,
+        biometricLogs: attendanceLogs.length,
         dashboardRecords: dashboard.length
       },
       data: dashboard
     });
-
-
   } catch (error) {
-
-    console.error('==========================================');
-    console.error('❌ BIOMETRIC DASHBOARD ERROR');
-    console.error('==========================================');
-    console.error('Step    :', error.step    || 'unknown');
-    console.error('Message :', error.message || String(error));
-    console.error('Stack   :', error.stack);
-
-    const step    = error.step    || 'unknown';
-    const message = error.message || describeError(error);
-
+    console.error('❌ BIOMETRIC DASHBOARD ERROR:', error.message);
     return res.status(500).json({
       success: false,
-      step,
-      message,
-      command: error.command || step,
-      ip:      error.ip      || DEVICE.ip,
-      port:    error.port    || DEVICE.port,
-      device:  `${DEVICE.ip}:${DEVICE.port}`
+      message: error.message || 'Dashboard failed'
     });
   }
 });

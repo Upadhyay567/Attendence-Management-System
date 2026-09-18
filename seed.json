@@ -587,13 +587,13 @@
       "date": "2026-09-18",
       "shiftId": "sch_3ebecon",
       "checkIn": "10:10:37",
-      "checkOut": "",
-      "status": "Late",
+      "checkOut": "10:51:18",
+      "status": "Present",
       "biometricUsed": "ZKTeco K40 Pro",
       "biometricDeviceId": "CJOU232660306",
       "biometricUserId": "1",
-      "biometricPunchId": "CJOU232660306_1_2026-09-18T04:40:37.000Z",
-      "lastBiometricPunchAt": "2026-09-18T04:40:37.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-18T05:21:18.000Z",
+      "lastBiometricPunchAt": "2026-09-18T05:21:18.000Z",
       "location": "HS Group Worksite (28.6952, 77.1860)",
       "deviationFlag": false,
       "justification": "",
@@ -603,7 +603,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-18T05:01:02.440Z",
-      "updatedAt": "2026-09-18T05:01:02.440Z"
+      "updatedAt": "2026-09-18T06:08:56.984Z"
     },
     {
       "id": "log_usr_bio_1200_2026-09-17_sch_q8jji9v",
@@ -645,7 +645,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-17T12:49:34.898Z",
-      "updatedAt": "2026-09-18T05:12:34.181Z"
+      "updatedAt": "2026-09-18T05:14:35.640Z"
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-16",
@@ -693,7 +693,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-16T13:55:17.164Z",
-      "updatedAt": "2026-09-18T05:12:34.175Z"
+      "updatedAt": "2026-09-18T05:14:35.636Z"
     },
     {
       "id": "BIO_usr_bio_5174_2026-08-29",
@@ -3229,8 +3229,8 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-18T05:12:34.185Z",
-    "lastLogCount": 22
+    "lastSyncAt": "2026-09-18T06:09:55.946Z",
+    "lastLogCount": 23
   },
   "activityLogs": [
     {

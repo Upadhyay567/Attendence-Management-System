@@ -574,8 +574,12 @@ function processLocalPunch(
       attendance.checkOut = attendance.checkIn;
       attendance.checkIn = time;
     } else if (punchMins >= inMins + 30) {
-      if (attendance.checkOut === time || attendance.biometricPunchId === punchId) {
-        return;
+      if (attendance.checkOut) {
+        const [outH, outM] = attendance.checkOut.split(':').map(Number);
+        const outMins = (outH || 0) * 60 + (outM || 0);
+        if (punchMins <= outMins) {
+          return;
+        }
       }
       attendance.checkOut = time;
     } else {
@@ -909,8 +913,12 @@ async function syncMongoDatabase(
         attendance.checkOut = attendance.checkIn;
         attendance.checkIn = time;
       } else if (punchMins >= inMins + 30) {
-        if (attendance.checkOut === time || attendance.biometricPunchId === punchId) {
-          continue;
+        if (attendance.checkOut) {
+          const [outH, outM] = attendance.checkOut.split(':').map(Number);
+          const outMins = (outH || 0) * 60 + (outM || 0);
+          if (punchMins <= outMins) {
+            continue;
+          }
         }
         attendance.checkOut = time;
       } else {
