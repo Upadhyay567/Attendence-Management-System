@@ -347,15 +347,11 @@ async function getAttendanceLogs() {
  */
 async function getDeviceSnapshot() {
   return withDevice(async (zk) => {
-    console.log('📡 [K40] Fetching users sequentially...');
-    const usersResult = await zk.getUsers();
+    const usersResult = await zk.getUsers().catch(() => ({ data: [] }));
     const users = usersResult?.data || [];
-    console.log(`👥 [K40] Users received: ${users.length}`);
 
-    console.log('📡 [K40] Fetching attendance logs sequentially...');
-    const attendanceResult = await zk.getAttendances();
+    const attendanceResult = await zk.getAttendances().catch(() => ({ data: [] }));
     const logs = attendanceResult?.data || [];
-    console.log(`📝 [K40] Attendance logs received: ${logs.length}`);
 
     return { users, logs };
   });

@@ -361,8 +361,8 @@ async function appendSyncLog(logEntry) {
     db.biometricSyncLogs = [];
   }
   db.biometricSyncLogs.unshift(logEntry);
-  if (db.biometricSyncLogs.length > 100) {
-    db.biometricSyncLogs = db.biometricSyncLogs.slice(0, 100);
+  if (db.biometricSyncLogs.length > 20) {
+    db.biometricSyncLogs = db.biometricSyncLogs.slice(0, 20);
   }
   writeLocalDB(db);
 }
@@ -483,7 +483,8 @@ async function uploadUserToDevice(deviceConfig, userProfile) {
  * 3. Replicates missing employee profiles / templates across branches.
  * 4. Logs audit trail and broadcasts real-time SSE update.
  */
-async function replicateTemplatesAcrossDevices() {
+async function replicateTemplatesAcrossDevices(options = {}) {
+  const force = !!options.force;
   const devices = await getRegisteredDevices();
   let vault = await getVaultUsers();
   const db = readLocalDB();
@@ -635,9 +636,26 @@ async function replicateTemplatesAcrossDevices() {
     d.enrolledUsersCount = enrolledHere.length;
   });
 
+  // If nothing changed and not forced, return early without touching disk or spamming logs
+  if (replicatedCount === 0 && newlyEnrolledCount === 0 && !force) {
+    return {
+      success: true,
+      totalVaultUsers: allVaultEntries.length,
+      newlyEnrolledCount: 0,
+      replicatedCount: 0,
+      devices: updatedDevices,
+      logs: []
+    };
+  }
+
+  // Re-fetch current registered devices to prevent resurrecting any deleted device
+  const currentDevices = await getRegisteredDevices();
+  const currentDeviceIds = new Set(currentDevices.map(d => d.id));
+  const finalDevices = updatedDevices.filter(d => currentDeviceIds.has(d.id));
+
   // Persist updated state
   await saveVaultUsers(allVaultEntries);
-  await saveRegisteredDevices(updatedDevices);
+  await saveRegisteredDevices(finalDevices);
 
   // Record audit log
   const syncLogEntry = {
@@ -775,7 +793,21 @@ async function deleteBiometricDevice(id) {
   if (filtered.length === devices.length) {
     throw new Error(`Device with ID '${id}' not found`);
   }
-  await saveRegisteredDevices(filtered);
+
+  const online = await connectMongoose();
+  const useLocal = getUseLocalFileDB();
+  if (online && !useLocal) {
+    try {
+      await BiometricDevice.deleteOne({ id });
+    } catch (err) {
+      console.warn('⚠️ MongoDB device deletion warning:', err.message);
+    }
+  }
+
+  const db = readLocalDB();
+  db.biometricDevices = filtered;
+  writeLocalDB(db);
+
   return { success: true, deletedId: id };
 }
 

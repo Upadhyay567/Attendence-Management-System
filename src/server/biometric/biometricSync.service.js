@@ -20,7 +20,8 @@ const {
 const {
   getRegisteredDevices,
   withDeviceConfig,
-  replicateTemplatesAcrossDevices
+  replicateTemplatesAcrossDevices,
+  getVaultUsers
 } = require('./biometricMultiDevice.service');
 
 const {
@@ -1123,7 +1124,9 @@ async function syncMongoDatabase(
    PUBLIC SYNC FUNCTION
 ========================================================= */
 
-async function syncBiometricAttendance() {
+async function syncBiometricAttendance(options = {}) {
+  const isManual = !!options.manual;
+
   if (syncRunning) {
     return {
       success: false,
@@ -1159,7 +1162,9 @@ async function syncBiometricAttendance() {
     let allRawUsers = [];
     const deviceStatuses = [];
 
-    console.log(`🔄 Starting multi-device biometric synchronization across ${devices.length} registered device(s)...`);
+    if (isManual) {
+      console.log(`🔄 Starting multi-device biometric synchronization across ${devices.length} registered device(s)...`);
+    }
 
     for (const dev of devices) {
       if (!dev.enabled) continue;
@@ -1238,9 +1243,11 @@ async function syncBiometricAttendance() {
     });
     const combinedUsers = Array.from(uniqueUserMap.values());
 
-    console.log(
-      `📡 Aggregated ${combinedUsers.length} biometric users and ${normalizedPunches.length} punch records from ${deviceStatuses.filter(d => d.online).length} online devices.`
-    );
+    if (normalizedPunches.length > 0 || isManual) {
+      console.log(
+        `📡 Aggregated ${combinedUsers.length} biometric users and ${normalizedPunches.length} punch records from ${deviceStatuses.filter(d => d.online).length} online devices.`
+      );
+    }
 
     /*
      * Try MongoDB first.
@@ -1277,17 +1284,33 @@ async function syncBiometricAttendance() {
       );
     }
 
-    // Check if new users were detected on any device and trigger template replication across branches
+    // Check if new users were detected on any device that are not yet in the vault
     if (combinedUsers.length > 0) {
-      replicateTemplatesAcrossDevices().catch(err => {
-        console.warn('⚠️ Auto-replication background task notice:', err.message);
+      const vault = await getVaultUsers();
+      const vaultUserIds = new Set(vault.map(v => String(v.biometricUserId).trim()));
+      const hasNewUsers = combinedUsers.some(u => {
+        const uId = String(u.userId ?? u.userid ?? u.deviceUserId ?? '').trim();
+        return uId && !vaultUserIds.has(uId);
       });
+
+      if (hasNewUsers) {
+        console.log('🔄 New enrolled biometric user(s) detected, starting cross-branch template replication...');
+        replicateTemplatesAcrossDevices().catch(err => {
+          console.warn('⚠️ Auto-replication background task notice:', err.message);
+        });
+      }
     }
 
-    console.log(
-      '✅ Biometric multi-device synchronization complete:',
-      result
-    );
+    if (result && (result.created > 0 || result.updated > 0)) {
+      console.log(
+        `✅ Biometric sync: ${result.created} new punches, ${result.updated} updated.`
+      );
+    } else if (isManual) {
+      console.log(
+        '✅ Biometric multi-device synchronization complete:',
+        result
+      );
+    }
 
     return {
       success: true,

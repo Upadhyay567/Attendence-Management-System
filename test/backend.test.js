@@ -194,6 +194,10 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.body.device).toBeDefined();
       expect(response.body.device.name).toBe(newDevicePayload.name);
       expect(response.body.device.ip).toBe(newDevicePayload.ip);
+
+      if (response.body.device.id) {
+        await request(app).delete(`/api/biometric/devices/${response.body.device.id}`);
+      }
     });
 
     it('should correctly encode user profiles into ZKTeco 72-byte binary payload', () => {

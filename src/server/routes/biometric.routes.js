@@ -507,7 +507,7 @@ router.post('/biometric/devices/:id/test', async (req, res) => {
 // POST /api/biometric/sync-templates - Trigger template replication across all branch devices
 router.post('/biometric/sync-templates', async (req, res) => {
   try {
-    const result = await replicateTemplatesAcrossDevices();
+    const result = await replicateTemplatesAcrossDevices({ force: true });
     return res.json({
       success: true,
       message: `Templates successfully synchronized: ${result.replicatedCount} user template(s) replicated across branches.`,
