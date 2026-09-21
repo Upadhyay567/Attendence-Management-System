@@ -344,6 +344,31 @@ describe('HS Group Attendance System API Integration Tests', () => {
         .post('/api/auth/reset-password')
         .send({ userId: testUserId, newPassword: 'Admin@123' });
     });
+
+    it('should update employee preferredLocation and shiftLocations via granular mutation', async () => {
+      // Login as admin to get token
+      const authRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'Surya@123', role: 'hr' });
+      const token = authRes.body.token;
+
+      // Update location
+      const mutateRes = await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'update',
+          key: 'users',
+          query: { id: testUserId },
+          updates: {
+            preferredLocation: 'Noida sector 61',
+            shiftLocations: { 'sch_mfl8wvv': 'Noida sector 61' }
+          }
+        });
+
+      expect(mutateRes.status).toBe(200);
+      expect(mutateRes.body.success).toBe(true);
+    });
   });
 });
 

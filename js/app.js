@@ -10550,16 +10550,333 @@ function openUserModal(userId = null) {
 }
 
 
-function renderAdminSchedules() {
+var currentScheduleViewTab = 'shifts';
+
+function renderAdminSchedules(tab) {
+  if (tab) currentScheduleViewTab = tab;
   const main = document.getElementById('main-view');
+  if (!main) return;
+
   const schedules = DB.getSchedules();
+  const allUsers = (typeof DB.getUsers === 'function' ? DB.getUsers() : (DB.data ? DB.data.users : [])) || [];
+  const officeCoords = (typeof DB.getOfficeCoordinates === 'function' ? DB.getOfficeCoordinates() : window.OFFICE_COORDINATES) || {};
+  const allLocationNames = Object.keys(officeCoords);
+
+  const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
+
+  if (currentScheduleViewTab === 'locations') {
+    main.innerHTML = `
+      <div class="content-header">
+        <div>
+          <h1 class="content-title">📍 Employee Worksite Location Assignment</h1>
+          <div class="content-subtitle">Manually assign and update physical worksite locations for each employee across their assigned work shifts.</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-left:auto; flex-wrap:wrap">
+          <button class="btn btn-secondary" id="btn-toggle-sched-view" style="border-radius:10px; height:42px; padding:0 20px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; border:1px solid rgba(251,191,36,0.3); background:rgba(251,191,36,0.08); color:var(--primary); cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 2px 8px rgba(251,191,36,0.15); transition:all 0.2s ease">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+            ⏰ View Shift Patterns
+          </button>
+          <button class="btn btn-cyan" id="btn-express-upload-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--cyan) 0%, #0891b2 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(6, 182, 212, 0.35); transition:all 0.2s ease">Express Upload</button>
+          <button class="btn" id="btn-add-schedule-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--error) 0%, #be123c 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(225, 29, 72, 0.35); transition:all 0.2s ease">+ Add Shift Pattern</button>
+        </div>
+      </div>
+
+      <div class="content-body" style="display:flex; flex-direction:column; gap:16px">
+        <!-- Search, Filters, and Bulk Action Toolbar -->
+        <div class="card-panel" style="padding:16px 20px">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px">
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; flex:1">
+              <input type="text" id="loc-assign-search" class="form-input" placeholder="🔍 Search employee name, ID or department..." style="min-width:260px; max-width:360px; padding:8px 12px; font-size:12.5px; border-radius:8px">
+              <select id="loc-assign-dept-filter" class="form-input" style="width:auto; padding:8px 12px; font-size:12.5px; border-radius:8px">
+                <option value="">All Departments</option>
+                ${[...new Set(allUsers.map(u => u.department).filter(Boolean))].map(d => `<option value="${Utils.escape(d)}">${Utils.escape(d)}</option>`).join('')}
+              </select>
+              <select id="loc-assign-loc-filter" class="form-input" style="width:auto; padding:8px 12px; font-size:12.5px; border-radius:8px">
+                <option value="">All Worksite Locations</option>
+                ${allLocationNames.map(l => `<option value="${Utils.escape(l)}">${Utils.escape(l)}</option>`).join('')}
+              </select>
+            </div>
+            <div id="loc-assign-count-info" style="font-size:12px; color:var(--text-muted); font-weight:600">
+              Showing ${allUsers.length} employee(s)
+            </div>
+          </div>
+
+          <!-- Bulk Assignment Strip -->
+          <div style="display:flex; align-items:center; gap:10px; margin-top:14px; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; flex-wrap:wrap">
+            <span style="font-size:12.5px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+              ⚡ Bulk Assignment:
+            </span>
+            <select id="bulk-assign-location" class="form-input" style="width:auto; min-width:220px; padding:6px 10px; font-size:12px; border-radius:6px">
+              <option value="">-- Choose Target Worksite Location --</option>
+              ${allLocationNames.map(loc => `<option value="${Utils.escape(loc)}">${Utils.escape(loc)}</option>`).join('')}
+            </select>
+            <button id="btn-apply-bulk-location" class="btn btn-primary" style="padding:7px 16px; font-size:12px; font-weight:700; width:auto; border-radius:6px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; border:none; cursor:pointer">
+              Apply to Selected (<span id="bulk-selected-count">0</span>)
+            </button>
+            <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto">Select checkboxes below to assign multiple staff at once</span>
+          </div>
+        </div>
+
+        <!-- Full Employee Location Table -->
+        <div class="card-panel">
+          <div class="table-container">
+            <table class="custom-table" id="emp-locations-table">
+              <thead>
+                <tr>
+                  <th style="width:40px; text-align:center">
+                    <input type="checkbox" id="chk-select-all-emps" title="Select All" style="cursor:pointer; width:16px; height:16px; accent-color:var(--primary)">
+                  </th>
+                  <th>Employee</th>
+                  <th>Department & Role</th>
+                  <th>Assigned Shift(s)</th>
+                  <th>Assigned Worksite Location</th>
+                  <th style="text-align:center; width:120px">Status</th>
+                </tr>
+              </thead>
+              <tbody id="emp-locations-tbody">
+                ${allUsers.map(u => {
+                  const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+                    ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+                    : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+
+                  const shiftBadges = assignedSchedules.length > 0
+                    ? assignedSchedules.map(s => `
+                        <span style="display:inline-block; font-size:11px; font-weight:700; color:var(--primary); background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.2); padding:2px 8px; border-radius:6px; margin:2px">
+                          ⏰ ${Utils.escape(s.name)}
+                        </span>
+                      `).join('')
+                    : `<span style="font-size:11.5px; color:var(--text-muted)">Not Assigned</span>`;
+
+                  const currentLoc = (u.shiftLocations && u.scheduleId && u.shiftLocations[u.scheduleId])
+                    || u.preferredLocation 
+                    || (assignedSchedules[0] && assignedSchedules[0].location)
+                    || 'Kohat Enclave, Pitampura, Delhi';
+
+                  return `
+                    <tr class="emp-loc-row" data-id="${u.id}" data-name="${Utils.escape(u.name).toLowerCase()}" data-empid="${(u.employeeId || u.username || '').toLowerCase()}" data-dept="${Utils.escape(u.department || '').toLowerCase()}" data-loc="${Utils.escape(currentLoc).toLowerCase()}">
+                      <td style="text-align:center">
+                        <input type="checkbox" class="chk-emp-loc" data-id="${u.id}" style="cursor:pointer; width:15px; height:15px; accent-color:var(--primary)">
+                      </td>
+                      <td>
+                        <div style="display:flex; align-items:center; gap:12px">
+                          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}">
+                            ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+                          </div>
+                          <div>
+                            <div style="font-weight:700; color:var(--text-primary); font-size:13px">${Utils.escape(u.name)}</div>
+                            <div style="font-size:11px; color:var(--text-muted); font-family:monospace; margin-top:2px">ID: ${Utils.escape(u.employeeId || u.username || u.id)}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="font-weight:600; font-size:12.5px; color:var(--text-primary)">${Utils.escape(u.department || 'General')}</div>
+                        <div style="font-size:11px; color:var(--text-muted); text-transform:capitalize; margin-top:2px">${Utils.escape(u.role || 'employee')}</div>
+                      </td>
+                      <td>
+                        <div style="display:flex; flex-wrap:wrap; gap:4px">
+                          ${shiftBadges}
+                        </div>
+                      </td>
+                      <td>
+                        <select class="form-input emp-inline-loc-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:280px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
+                          ${allLocationNames.map(loc => `
+                            <option value="${Utils.escape(loc)}" ${currentLoc === loc ? 'selected' : ''}>${Utils.escape(loc)}</option>
+                          `).join('')}
+                        </select>
+                      </td>
+                      <td style="text-align:center">
+                        <span class="badge badge-approved" id="loc-status-${u.id}" style="font-size:11px; padding:3px 8px; background:rgba(16,185,129,0.1); color:var(--success); border-radius:6px">
+                          Saved ✓
+                        </span>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Attach Event Listeners for Location Assignment View
+    document.getElementById('btn-toggle-sched-view').addEventListener('click', () => {
+      renderAdminSchedules('shifts');
+    });
+
+    const expressUploadBtn = document.getElementById('btn-express-upload-modal');
+    if (expressUploadBtn) {
+      expressUploadBtn.addEventListener('click', () => openExpressUploadModal());
+    }
+    const addSchedBtn = document.getElementById('btn-add-schedule-modal');
+    if (addSchedBtn) {
+      addSchedBtn.addEventListener('click', () => openScheduleModal());
+    }
+
+    // Inline Individual Location Select Change Handler
+    document.querySelectorAll('.emp-inline-loc-select').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const empId = e.target.dataset.id;
+        const newLoc = e.target.value;
+        const user = DB.getUser(empId);
+        if (!user) return;
+
+        const currentShiftLocs = { ...(user.shiftLocations || {}) };
+        if (Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
+          user.scheduleIds.forEach(sid => { currentShiftLocs[sid] = newLoc; });
+        } else if (user.scheduleId) {
+          currentShiftLocs[user.scheduleId] = newLoc;
+        }
+
+        DB.updateUser(empId, {
+          preferredLocation: newLoc,
+          shiftLocations: currentShiftLocs
+        });
+
+        const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
+        if (row) row.dataset.loc = newLoc.toLowerCase();
+
+        const statusBadge = document.getElementById(`loc-status-${empId}`);
+        if (statusBadge) {
+          statusBadge.innerHTML = 'Saved ✓';
+          statusBadge.style.color = 'var(--success)';
+        }
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`✅ Worksite set to "${newLoc}" for ${user.name}`, 'success');
+        }
+      });
+    });
+
+    // Select All Checkbox Handler
+    const chkAll = document.getElementById('chk-select-all-emps');
+    const updateSelectedCount = () => {
+      const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
+      const countEl = document.getElementById('bulk-selected-count');
+      if (countEl) countEl.textContent = checkedBoxes.length;
+    };
+
+    if (chkAll) {
+      chkAll.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.querySelectorAll('.emp-loc-row').forEach(row => {
+          if (row.style.display !== 'none') {
+            const chk = row.querySelector('.chk-emp-loc');
+            if (chk) chk.checked = isChecked;
+          }
+        });
+        updateSelectedCount();
+      });
+    }
+
+    document.querySelectorAll('.chk-emp-loc').forEach(chk => {
+      chk.addEventListener('change', updateSelectedCount);
+    });
+
+    // Bulk Apply Location Handler
+    const btnApplyBulk = document.getElementById('btn-apply-bulk-location');
+    if (btnApplyBulk) {
+      btnApplyBulk.addEventListener('click', () => {
+        const targetLoc = document.getElementById('bulk-assign-location').value;
+        if (!targetLoc) {
+          alert('Please select a target worksite location from the dropdown.');
+          return;
+        }
+        const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
+        if (!checkedBoxes.length) {
+          alert('Please select at least one employee using the checkboxes.');
+          return;
+        }
+
+        checkedBoxes.forEach(chk => {
+          const empId = chk.dataset.id;
+          const user = DB.getUser(empId);
+          if (!user) return;
+
+          const currentShiftLocs = { ...(user.shiftLocations || {}) };
+          if (Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
+            user.scheduleIds.forEach(sid => { currentShiftLocs[sid] = targetLoc; });
+          } else if (user.scheduleId) {
+            currentShiftLocs[user.scheduleId] = targetLoc;
+          }
+
+          DB.updateUser(empId, {
+            preferredLocation: targetLoc,
+            shiftLocations: currentShiftLocs
+          });
+
+          const sel = document.querySelector(`.emp-inline-loc-select[data-id="${empId}"]`);
+          if (sel) sel.value = targetLoc;
+
+          const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
+          if (row) row.dataset.loc = targetLoc.toLowerCase();
+
+          const statusBadge = document.getElementById(`loc-status-${empId}`);
+          if (statusBadge) {
+            statusBadge.innerHTML = 'Saved ✓';
+            statusBadge.style.color = 'var(--success)';
+          }
+        });
+
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`✅ Updated worksite to "${targetLoc}" for ${checkedBoxes.length} employee(s).`, 'success');
+        }
+      });
+    }
+
+    // Search and Filter Filtering Logic
+    const searchInput = document.getElementById('loc-assign-search');
+    const deptFilter = document.getElementById('loc-assign-dept-filter');
+    const locFilter = document.getElementById('loc-assign-loc-filter');
+    const countInfo = document.getElementById('loc-assign-count-info');
+
+    const filterRows = () => {
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const d = (deptFilter ? deptFilter.value : '').toLowerCase().trim();
+      const l = (locFilter ? locFilter.value : '').toLowerCase().trim();
+
+      let visible = 0;
+      document.querySelectorAll('.emp-loc-row').forEach(row => {
+        const name = row.dataset.name || '';
+        const empId = row.dataset.empid || '';
+        const dept = row.dataset.dept || '';
+        const loc = row.dataset.loc || '';
+
+        const matchQ = !q || name.includes(q) || empId.includes(q) || dept.includes(q);
+        const matchD = !d || dept === d;
+        const matchL = !l || loc === l;
+
+        if (matchQ && matchD && matchL) {
+          row.style.display = '';
+          visible++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      if (countInfo) {
+        countInfo.textContent = `Showing ${visible} of ${allUsers.length} employee(s)`;
+      }
+    };
+
+    if (searchInput) searchInput.addEventListener('input', filterRows);
+    if (deptFilter) deptFilter.addEventListener('change', filterRows);
+    if (locFilter) locFilter.addEventListener('change', filterRows);
+
+    return;
+  }
+
+  // STANDARD SHIFT PATTERNS VIEW
   main.innerHTML = `
     <div class="content-header">
       <div>
         <h1 class="content-title">Shift Calendars & Shifts</h1>
         <div class="content-subtitle">Design active work hour calendars and assign shift profiles.</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-left:auto">
+      <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-left:auto; flex-wrap:wrap">
+        <button class="btn btn-secondary" id="btn-toggle-sched-view" style="border-radius:10px; height:42px; padding:0 20px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.08); color:var(--success); cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 2px 8px rgba(16,185,129,0.15); transition:all 0.2s ease">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          📍 Assign Employee Locations
+        </button>
         <button class="btn btn-cyan" id="btn-express-upload-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--cyan) 0%, #0891b2 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(6, 182, 212, 0.35); transition:all 0.2s ease">Express Upload</button>
         <button class="btn" id="btn-add-schedule-modal" style="border-radius:10px; height:42px; padding:0 22px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; background:linear-gradient(135deg, var(--error) 0%, #be123c 100%); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 14px rgba(225, 29, 72, 0.35); transition:all 0.2s ease">+ Add Shift Pattern</button>
       </div>
@@ -10587,7 +10904,7 @@ function renderAdminSchedules() {
                 <button class="btn-add-location-inline" data-id="${s.id}" title="Add New Location" style="padding:2px 8px;font-size:10px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;white-space:nowrap;width:auto">➕ Add Location</button>
               </div>
               <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:6px 8px;font-size:12px;width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
-                ${Object.keys(window.OFFICE_COORDINATES).map(loc => `
+                ${Object.keys(window.OFFICE_COORDINATES || {}).map(loc => `
                   <option value="${loc}" ${s.location === loc || (!s.location && loc === 'Kohat Enclave, Pitampura, Delhi') ? 'selected' : ''}>${loc}</option>
                 `).join('')}
               </select>
@@ -10604,6 +10921,11 @@ function renderAdminSchedules() {
       </div>
     </div>
   `;
+
+  document.getElementById('btn-toggle-sched-view').addEventListener('click', () => {
+    renderAdminSchedules('locations');
+  });
+
   document.getElementById('btn-add-schedule-modal').addEventListener('click', () => openScheduleModal());
   const expressUploadBtn = document.getElementById('btn-express-upload-modal');
   if (expressUploadBtn) {
@@ -10641,7 +10963,8 @@ function renderAdminSchedules() {
       openAddLocationDialog(schedId);
     });
   });
-}// Helper to load SheetJS dynamically from CDN
+}
+// Helper to load SheetJS dynamically from CDN
 function loadSheetJS(callback, onError) {
   if (window.XLSX) {
     callback();
