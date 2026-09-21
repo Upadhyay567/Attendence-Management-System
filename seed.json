@@ -613,13 +613,31 @@
   ],
   "attendanceLogs": [
     {
+      "id": "log_usr_manager_2026-09-21_sch_q8jji9v",
+      "userId": "usr_manager",
+      "date": "2026-09-21",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "18:56",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "omaxe Office",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null,
+      "latitude": 28.6978,
+      "longitude": 77.1408
+    },
+    {
       "id": "log_usr_6af1y3c_2026-09-21_sch_mfl8wvv",
       "userId": "usr_6af1y3c",
       "date": "2026-09-21",
       "shiftId": "sch_mfl8wvv",
       "checkIn": "14:01",
-      "checkOut": null,
-      "status": "Late",
+      "checkOut": "18:55",
+      "status": "Half Day",
       "biometricUsed": "none",
       "location": "Noida sector 61",
       "deviationFlag": false,
@@ -628,7 +646,8 @@
       "distance": 0,
       "facePhoto": null,
       "latitude": 28.6978,
-      "longitude": 77.1408
+      "longitude": 77.1408,
+      "facePhotoOut": null
     },
     {
       "id": "BIO_usr_68s5s48_2026-09-21_sch_mfl8wvv",
@@ -2584,6 +2603,46 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-21T13:26:06.304Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "log_usr_manager_2026-09-21_sch_q8jji9v",
+        "userId": "usr_manager",
+        "date": "2026-09-21",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "18:56",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "omaxe Office",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.697800° N, 77.140800° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.6978,
+        "longitude": 77.1408
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T13:25:16.691Z",
+      "action": "UPDATE_attendanceLogs",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "checkOut": "18:55",
+        "biometricUsed": "none",
+        "facePhotoOut": null,
+        "status": "Half Day"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-21T13:11:55.505Z",
       "action": "UPDATE_users",

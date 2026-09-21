@@ -112,16 +112,26 @@ app.use('/api', (req, res) => {
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/')) {
     const ext = path.extname(req.path).toLowerCase();
-    if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+    if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map', '.txt', '.xml'].includes(ext)) {
       return res.status(404).end();
     }
-    return res.sendFile(path.join(ROOT_DIR, 'index.html'));
+    return res.sendFile(path.join(ROOT_DIR, 'index.html'), (err) => {
+      if (err && !res.headersSent) {
+        if (err.code === 'ECONNABORTED' || err.code === 'ECANCELED' || err.statusCode === 404) {
+          return res.status(err.statusCode || 404).end();
+        }
+        next(err);
+      }
+    });
   }
   next();
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
   console.error('Express Payload / Request Error:', err.message);
   res.status(err.status || 400).json({ error: err.message || 'Malformed request payload.' });
 });
