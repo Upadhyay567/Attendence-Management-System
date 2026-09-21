@@ -18,6 +18,12 @@ const {
 } = require('./zkDevice');
 
 const {
+  getRegisteredDevices,
+  withDeviceConfig,
+  replicateTemplatesAcrossDevices
+} = require('./biometricMultiDevice.service');
+
+const {
   broadcastSSEEvent
 } = require('../routes/events.routes');
 
@@ -98,7 +104,7 @@ function normalizeDeviceUser(user) {
    NORMALIZE ATTENDANCE RECORD
 ========================================================= */
 
-function normalizePunch(log) {
+function normalizePunch(log, deviceConfig = null) {
   if (!log) return null;
 
   const biometricUserId = String(
@@ -120,12 +126,12 @@ function normalizePunch(log) {
 
   return {
     userSn: log.userSn ?? null,
-
     biometricUserId,
-
     recordTime,
-
-    ip: log.ip || DEVICE.ip
+    ip: log.ip || deviceConfig?.ip || DEVICE.ip,
+    deviceName: deviceConfig?.name || DEVICE_NAME,
+    deviceSerial: deviceConfig?.serial || DEVICE.serial,
+    location: deviceConfig?.location || LOCATION
   };
 }
 
@@ -136,7 +142,7 @@ function normalizePunch(log) {
 
 function createPunchId(punch) {
   return [
-    DEVICE.serial,
+    punch.deviceSerial || DEVICE.serial,
     punch.biometricUserId,
     punch.recordTime.toISOString()
   ].join('_');
@@ -605,8 +611,8 @@ function processLocalPunch(
     openLog.checkOut = time;
     openLog.checkOutPunchId = punchId;
     openLog.status = evaluatedStatus;
-    openLog.biometricUsed = DEVICE_NAME;
-    openLog.biometricDeviceId = DEVICE.serial;
+    openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
+    openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
     openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
     openLog.updatedAt = new Date().toISOString();
 
@@ -627,7 +633,7 @@ function processLocalPunch(
         checkIn: openLog.checkIn,
         checkOut: time,
         status: evaluatedStatus,
-        device: DEVICE_NAME
+        device: punch.deviceName || DEVICE_NAME
       },
       ipAddress: '127.0.0.1'
     });
@@ -678,10 +684,10 @@ function processLocalPunch(
     status: status,
 
     biometricUsed:
-      DEVICE_NAME,
+      punch.deviceName || DEVICE_NAME,
 
     biometricDeviceId:
-      DEVICE.serial,
+      punch.deviceSerial || DEVICE.serial,
 
     biometricUserId:
       punch.biometricUserId,
@@ -690,6 +696,7 @@ function processLocalPunch(
       punch.recordTime.toISOString(),
 
     location:
+      punch.location ||
       (employee.shiftLocations && employee.shiftLocations[targetShiftId]) ||
       employee.preferredLocation ||
       LOCATION,
@@ -735,7 +742,7 @@ function processLocalPunch(
       shiftId: targetShiftId,
       checkIn: time,
       status: status,
-      device: DEVICE_NAME
+      device: punch.deviceName || DEVICE_NAME
     },
     ipAddress: '127.0.0.1'
   });
@@ -1022,8 +1029,8 @@ async function syncMongoDatabase(
       openLog.checkOut = time;
       openLog.checkOutPunchId = punchId;
       openLog.status = evaluatedStatus;
-      openLog.biometricUsed = DEVICE_NAME;
-      openLog.biometricDeviceId = DEVICE.serial;
+      openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
+      openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
       openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
       if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
       openLog.allPunchIds.push(punchId);
@@ -1088,10 +1095,10 @@ async function syncMongoDatabase(
         newStatus,
 
       biometricUsed:
-        DEVICE_NAME,
+        punch.deviceName || DEVICE_NAME,
 
       biometricDeviceId:
-        DEVICE.serial,
+        punch.deviceSerial || DEVICE.serial,
 
       biometricUserId:
         punch.biometricUserId,
@@ -1100,6 +1107,7 @@ async function syncMongoDatabase(
         punch.recordTime.toISOString(),
 
       location:
+        punch.location ||
         employee.preferredLocation ||
         LOCATION
     });
@@ -1128,90 +1136,162 @@ async function syncBiometricAttendance() {
   syncRunning = true;
 
   try {
-    const snapshot =
-      await getDeviceSnapshot();
+    let devices = [];
+    try {
+      devices = await getRegisteredDevices();
+    } catch (_) {
+      devices = [];
+    }
+
+    if (!devices || devices.length === 0) {
+      devices = [{
+        id: 'dev_k40_primary',
+        name: DEVICE_NAME,
+        ip: DEVICE.ip,
+        port: DEVICE.port,
+        serial: DEVICE.serial,
+        location: LOCATION,
+        enabled: true
+      }];
+    }
+
+    let allRawPunches = [];
+    let allRawUsers = [];
+    const deviceStatuses = [];
+
+    console.log(`🔄 Starting multi-device biometric synchronization across ${devices.length} registered device(s)...`);
+
+    for (const dev of devices) {
+      if (!dev.enabled) continue;
+
+      let devUsers = [];
+      let devLogs = [];
+      let isOnline = false;
+
+      // Primary K40 connection (or same IP as env)
+      if (dev.ip === DEVICE.ip) {
+        try {
+          const snapshot = await getDeviceSnapshot();
+          devUsers = snapshot.users || [];
+          devLogs = snapshot.logs || [];
+          isOnline = true;
+        } catch (err) {
+          const isOffline = err && (err.isOffline || (err.message && (err.message.includes('timeout') || err.message.includes('ECONNREFUSED'))));
+          if (!isOffline) {
+            console.warn(`⚠️ Primary device ${dev.name} notice:`, err.message);
+          }
+        }
+      } else {
+        // Branch office / gate device connection
+        try {
+          const result = await withDeviceConfig(dev, async (zk) => {
+            const usersRes = await zk.getUsers().catch(() => ({ data: [] }));
+            const logsRes = await zk.getAttendances().catch(() => ({ data: [] }));
+            return {
+              users: usersRes?.data || [],
+              logs: logsRes?.data || []
+            };
+          });
+          devUsers = result.users || [];
+          devLogs = result.logs || [];
+          isOnline = true;
+        } catch (err) {
+          // Offline remote branch handled gracefully without failing the sync loop
+        }
+      }
+
+      deviceStatuses.push({
+        id: dev.id,
+        name: dev.name,
+        ip: dev.ip,
+        online: isOnline,
+        usersCount: devUsers.length,
+        logsCount: devLogs.length
+      });
+
+      if (devUsers.length > 0) {
+        allRawUsers.push(...devUsers);
+      }
+
+      if (devLogs.length > 0) {
+        devLogs.forEach(l => {
+          allRawPunches.push({
+            ...l,
+            _deviceConfig: dev
+          });
+        });
+      }
+    }
+
+    // Map and normalize punches with their originating device context
+    const normalizedPunches = allRawPunches.map(p => {
+      return normalizePunch(p, p._deviceConfig || null);
+    }).filter(Boolean);
+
+    // Deduplicate users by userId
+    const uniqueUserMap = new Map();
+    allRawUsers.forEach(u => {
+      const uId = String(u.userId ?? u.userid ?? u.deviceUserId ?? '').trim();
+      if (uId && !uniqueUserMap.has(uId)) {
+        uniqueUserMap.set(uId, u);
+      }
+    });
+    const combinedUsers = Array.from(uniqueUserMap.values());
 
     console.log(
-      '🔄 Starting biometric synchronization...'
-    );
-
-    const users =
-      snapshot.users || [];
-
-    const logs =
-      snapshot.logs || [];
-
-    console.log(
-      `📡 K40 returned ${users.length} users and ${logs.length} attendance records.`
+      `📡 Aggregated ${combinedUsers.length} biometric users and ${normalizedPunches.length} punch records from ${deviceStatuses.filter(d => d.online).length} online devices.`
     );
 
     /*
      * Try MongoDB first.
-     *
-     * If the application is in local mode,
-     * write directly to seed.json.
+     * If the application is in local mode, write directly to seed.json.
      */
-    const online =
-      await connectMongoose();
-
-    const useLocal =
-      getUseLocalFileDB();
+    const online = await connectMongoose();
+    const useLocal = getUseLocalFileDB();
 
     let result;
-
-    if (
-      online &&
-      !useLocal
-    ) {
-      result =
-        await syncMongoDatabase(
-          users,
-          logs
-        );
+    if (online && !useLocal) {
+      result = await syncMongoDatabase(
+        combinedUsers,
+        normalizedPunches
+      );
     } else {
-      result =
-        await syncLocalDatabase(
-          users,
-          logs
-        );
+      result = await syncLocalDatabase(
+        combinedUsers,
+        normalizedPunches
+      );
     }
 
     /*
-     * Notify existing HRMS dashboard ONLY if records were created or updated.
+     * Notify existing HRMS dashboard if records were created or updated.
      */
     if (result && (result.created > 0 || result.updated > 0)) {
       broadcastSSEEvent(
         'db_updated',
         {
-          type:
-            'biometric_sync',
-
-          device:
-            DEVICE_NAME,
-
-          deviceIp:
-            DEVICE.ip,
-
-          timestamp:
-            Date.now(),
-
+          type: 'biometric_sync',
+          timestamp: Date.now(),
+          devices: deviceStatuses,
           result
         }
       );
     }
 
+    // Check if new users were detected on any device and trigger template replication across branches
+    if (combinedUsers.length > 0) {
+      replicateTemplatesAcrossDevices().catch(err => {
+        console.warn('⚠️ Auto-replication background task notice:', err.message);
+      });
+    }
+
     console.log(
-      '✅ Biometric synchronization complete:',
+      '✅ Biometric multi-device synchronization complete:',
       result
     );
 
     return {
       success: true,
-      device: {
-        name: DEVICE_NAME,
-        ip: DEVICE.ip,
-        serial: DEVICE.serial
-      },
+      devices: deviceStatuses,
       result
     };
 

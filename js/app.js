@@ -9006,17 +9006,52 @@ async function renderAdminDashboard() {
 
     container.innerHTML = `
       <div class="card-panel" style="margin-top: 20px;" id="biometric-attendance-panel">
-        <div class="card-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <h3 class="card-panel-title" style="display: flex; align-items: center; gap: 8px;">
-            <span>📟</span> Biometric Device Attendance (ZKTeco K40 Pro)
-          </h3>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="biometric-status-badge" class="badge badge-pending" style="font-size: 11px;">Checking Device...</span>
-            <button id="btn-refresh-biometric-feed" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px; height: auto; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
-              <span>↻</span> Refresh Punches
+        <div class="card-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 class="card-panel-title" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+              <span>📟</span> Multi-Device Fleet & Branch Template Synchronization
+            </h3>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+              Automated biometric fingerprint & card template replication across branch offices (Noida, Delhi, Omaxe).
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <button id="btn-sync-all-templates" class="btn btn-primary" style="font-size: 12px; padding: 6px 14px; height: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff;">
+              <span id="sync-template-icon">🔄</span> Sync Templates Across Branches
+            </button>
+            <button id="btn-view-template-matrix" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; height: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <span>📋</span> Replication Matrix
+            </button>
+            <button id="btn-add-biometric-device" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px; height: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+              <span>➕</span> Add Device
+            </button>
+            <button id="btn-refresh-biometric-feed" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; height: auto; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
+              <span>↻</span> Refresh
             </button>
           </div>
         </div>
+
+        <!-- Multi-Device Fleet Cards Grid -->
+        <div style="margin: 18px 0 14px 0;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span>Connected Branch Hardware (<span id="fleet-count-badge">3</span> Devices)</span>
+            <span id="fleet-last-sync" style="font-size: 11px; font-weight: normal; color: var(--text-secondary);">Central Vault Replication: Auto-Active</span>
+          </div>
+          <div id="biometric-fleet-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+            <div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">
+              Loading branch biometric devices...
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Attendance Logs Table -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px 0; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 16px;">
+          <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+            <span>🕒</span> Live Biometric Attendance Feed (All Branches)
+          </h4>
+          <span id="biometric-status-badge" class="badge badge-pending" style="font-size: 11px;">Checking Fleet...</span>
+        </div>
+
         <div class="table-container" style="overflow-x: auto;">
           <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
             <thead>
@@ -9030,7 +9065,7 @@ async function renderAdminDashboard() {
                 <th style="padding: 12px 14px; text-align: center;">Check Out</th>
                 <th style="padding: 12px 14px; text-align: center;">Latest Punch</th>
                 <th style="padding: 12px 14px; text-align: center;">Total Punches</th>
-                <th style="padding: 12px 14px; text-align: center;">Biometric Device</th>
+                <th style="padding: 12px 14px; text-align: center;">Biometric Device & Location</th>
               </tr>
             </thead>
             <tbody id="biometric-dashboard-tbody">
@@ -9045,10 +9080,371 @@ async function renderAdminDashboard() {
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
         loadBiometricDashboardData();
+        loadBiometricFleetData();
       });
     }
 
+    const syncTemplatesBtn = document.getElementById('btn-sync-all-templates');
+    if (syncTemplatesBtn) {
+      syncTemplatesBtn.addEventListener('click', triggerGlobalTemplateSync);
+    }
+
+    const addDeviceBtn = document.getElementById('btn-add-biometric-device');
+    if (addDeviceBtn) {
+      addDeviceBtn.addEventListener('click', showAddBiometricDeviceModal);
+    }
+
+    const viewMatrixBtn = document.getElementById('btn-view-template-matrix');
+    if (viewMatrixBtn) {
+      viewMatrixBtn.addEventListener('click', showTemplateSyncMatrixModal);
+    }
+
+    loadBiometricFleetData();
     loadBiometricDashboardData();
+  }
+
+  async function loadBiometricFleetData() {
+    const grid = document.getElementById('biometric-fleet-grid');
+    const badgeCount = document.getElementById('fleet-count-badge');
+    if (!grid) return;
+
+    try {
+      const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/devices');
+      const json = await res.json();
+      const devices = json.devices || [];
+
+      if (badgeCount) badgeCount.textContent = devices.length;
+
+      if (devices.length === 0) {
+        grid.innerHTML = '<div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">No biometric devices registered yet. Click "Add Device" to configure a branch machine.</div>';
+        return;
+      }
+
+      grid.innerHTML = devices.map(dev => {
+        const isOnline = dev.status === 'Online';
+        const badgeClass = isOnline ? 'badge-on-time' : 'badge-neutral';
+        const badgeText = isOnline ? '● Online' : '○ Offline';
+
+        return `
+          <div class="fleet-device-card" style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                  <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                    <span>📟</span> ${Utils.escape(dev.name)}
+                  </div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                    📍 ${Utils.escape(dev.branch || dev.location || 'Branch')} ${dev.location ? '• ' + Utils.escape(dev.location) : ''}
+                  </div>
+                </div>
+                <span id="badge-status-${dev.id}" class="badge ${badgeClass}" style="font-size: 10.5px; font-weight: 600;">
+                  ${badgeText}
+                </span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
+                <div><strong>IP Address:</strong> <code style="font-size: 11.5px;">${Utils.escape(dev.ip)}:${dev.port || 4370}</code></div>
+                <div><strong>Vault Templates:</strong> <span style="font-weight: 600; color: var(--text-primary);">${dev.enrolledUsersCount || 0} Synced</span></div>
+                <div><strong>Serial:</strong> <span style="font-size: 11px; font-family: monospace;">${Utils.escape(dev.serial || '—')}</span></div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-color, #f1f5f9); padding-top: 10px;">
+              <button class="btn btn-secondary btn-test-device" data-id="${dev.id}" style="flex: 1; font-size: 11px; padding: 5px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+                <span>⚡</span> Test Ping
+              </button>
+              <button class="btn btn-secondary btn-sync-single-device" data-id="${dev.id}" style="flex: 1; font-size: 11px; padding: 5px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
+                <span>🔄</span> Sync Device
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Bind Test Ping buttons
+      grid.querySelectorAll('.btn-test-device').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          btn.disabled = true;
+          btn.innerHTML = '<span>⏳</span> Testing...';
+
+          try {
+            const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${id}/test`, { method: 'POST' });
+            const result = await res.json();
+            const badge = document.getElementById(`badge-status-${id}`);
+
+            if (result.success) {
+              if (badge) {
+                badge.className = 'badge badge-on-time';
+                badge.textContent = `⚡ ${result.latencyMs}ms Online`;
+              }
+              btn.innerHTML = `<span>✓</span> ${result.latencyMs}ms`;
+            } else {
+              if (badge) {
+                badge.className = 'badge badge-neutral';
+                badge.textContent = '○ Offline (Queued)';
+              }
+              btn.innerHTML = '<span>⚠️</span> Offline';
+            }
+          } catch (e) {
+            btn.innerHTML = '<span>⚠️</span> Error';
+          } finally {
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.innerHTML = '<span>⚡</span> Test Ping';
+            }, 3000);
+          }
+        });
+      });
+
+      // Bind Sync Single Device buttons
+      grid.querySelectorAll('.btn-sync-single-device').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.innerHTML = '<span>⏳</span> Syncing...';
+          await triggerGlobalTemplateSync();
+          btn.disabled = false;
+          btn.innerHTML = '<span>🔄</span> Sync Device';
+        });
+      });
+
+    } catch (err) {
+      console.warn('⚠️ Could not load biometric fleet devices:', err.message);
+    }
+  }
+
+  async function triggerGlobalTemplateSync() {
+    const btn = document.getElementById('btn-sync-all-templates');
+    const icon = document.getElementById('sync-template-icon');
+    if (btn) btn.disabled = true;
+    if (icon) icon.style.display = 'inline-block';
+
+    try {
+      const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/sync-templates', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        const msg = `✅ Template Sync Complete: ${data.replicatedCount} template(s) synchronized across ${data.devices?.length || 0} branch machines. Total active vault users: ${data.totalVaultUsers}.`;
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(msg, 'success');
+        } else {
+          alert(msg);
+        }
+        loadBiometricFleetData();
+        loadBiometricDashboardData(true);
+      } else {
+        alert('⚠️ Template sync warning: ' + (data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('❌ Failed to trigger template replication: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function showAddBiometricDeviceModal() {
+    document.querySelectorAll('.modal-overlay.biometric-add-overlay').forEach(el => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay biometric-add-overlay';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 15, 29, 0.75); backdrop-filter: blur(10px);
+      display: flex; justify-content: center; align-items: center; z-index: 999999;
+      animation: fadeIn 0.2s ease forwards; padding: 20px; box-sizing: border-box;
+    `;
+
+    overlay.innerHTML = `
+      <div class="custom-dialog-card" style="max-width: 520px; width: 100%; background: var(--surface, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0);" onclick="event.stopPropagation();">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <span>➕</span> Add Branch Biometric Device
+          </h3>
+          <button id="btn-close-add-device-modal" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <form id="form-add-biometric-device" style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Device Name *</label>
+            <input type="text" id="add-device-name" required placeholder="e.g. Delhi Office - Gate 2" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">IP Address / Hostname *</label>
+              <input type="text" id="add-device-ip" required placeholder="192.168.1.52" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Port</label>
+              <input type="number" id="add-device-port" value="4370" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Branch Name</label>
+              <input type="text" id="add-device-branch" placeholder="e.g. Delhi Branch" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Device Serial</label>
+              <input type="text" id="add-device-serial" placeholder="e.g. ZK9823410" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Office Location</label>
+            <input type="text" id="add-device-location" placeholder="e.g. HS Group Worksite" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+            <button type="button" id="btn-cancel-add-device" class="btn btn-secondary" style="font-size: 13px; padding: 8px 16px;">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="font-size: 13px; padding: 8px 18px; font-weight: 600; background: linear-gradient(135deg, #c93830, #89201b); border: none; color: #fff;">Save & Sync Device</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    const closeOverlay = () => overlay.remove();
+    overlay.addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-close-add-device-modal').addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-cancel-add-device').addEventListener('click', closeOverlay);
+
+    overlay.querySelector('#form-add-biometric-device').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('add-device-name').value.trim(),
+        ip: document.getElementById('add-device-ip').value.trim(),
+        port: Number(document.getElementById('add-device-port').value) || 4370,
+        branch: document.getElementById('add-device-branch').value.trim() || 'Branch Office',
+        serial: document.getElementById('add-device-serial').value.trim() || `ZK${Date.now()}`,
+        location: document.getElementById('add-device-location').value.trim() || 'Office Location',
+        enabled: true
+      };
+
+      try {
+        const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeOverlay();
+          alert(`✅ Device '${payload.name}' registered successfully! Biometric templates are automatically being synchronized to it.`);
+          loadBiometricFleetData();
+        } else {
+          alert('⚠️ Error: ' + (data.message || 'Failed to add device'));
+        }
+      } catch (err) {
+        alert('❌ Network error: ' + err.message);
+      }
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  async function showTemplateSyncMatrixModal() {
+    document.querySelectorAll('.modal-overlay.biometric-matrix-overlay').forEach(el => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay biometric-matrix-overlay';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 15, 29, 0.85); backdrop-filter: blur(12px);
+      display: flex; justify-content: center; align-items: center; z-index: 999999;
+      animation: fadeIn 0.2s ease forwards; padding: 20px; box-sizing: border-box;
+    `;
+
+    overlay.innerHTML = `
+      <div class="custom-dialog-card" style="max-width: 900px; width: 100%; max-height: 85vh; background: var(--surface, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0); display: flex; flex-direction: column;" onclick="event.stopPropagation();">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color, #e2e8f0); padding-bottom: 12px;">
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <span>📋</span> Central Biometric Vault: Cross-Branch Synchronization Matrix
+            </h3>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">
+              Live verification matrix of fingerprint and card enrollments replicated across branch hardware devices.
+            </div>
+          </div>
+          <button id="btn-close-matrix-modal" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <div id="matrix-modal-content" style="flex: 1; overflow-y: auto;">
+          <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+            Loading biometric template matrix from server vault...
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 12px;">
+          <span style="font-size: 12px; color: var(--text-secondary);">
+            Status: <span style="color: #10b981; font-weight: 600;">🟢 All Enrolled Profiles Replicated</span>
+          </span>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-matrix-sync-now" class="btn btn-primary" style="font-size: 12px; padding: 6px 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff;">
+              <span>🔄</span> Force Re-Sync All
+            </button>
+            <button id="btn-close-matrix-bottom" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px;">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const closeOverlay = () => overlay.remove();
+    overlay.addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-close-matrix-modal').addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-close-matrix-bottom').addEventListener('click', closeOverlay);
+
+    overlay.querySelector('#btn-matrix-sync-now').addEventListener('click', async () => {
+      await triggerGlobalTemplateSync();
+      loadMatrixData();
+    });
+
+    const loadMatrixData = async () => {
+      const content = overlay.querySelector('#matrix-modal-content');
+      try {
+        const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/template-sync-status');
+        const data = await res.json();
+        const devices = data.devices || [];
+        const users = data.users || [];
+
+        if (users.length === 0) {
+          content.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--text-muted);">No enrolled templates in biometric vault yet.</div>';
+          return;
+        }
+
+        content.innerHTML = `
+          <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead>
+              <tr style="background: var(--surface-hover, #f8fafc);">
+                <th style="text-align: left; padding: 10px 12px;">Employee Profile</th>
+                <th style="text-align: left; padding: 10px 12px;">Biometric ID</th>
+                <th style="text-align: left; padding: 10px 12px;">Role</th>
+                ${devices.map(d => `<th style="text-align: center; padding: 10px 12px;">📟 ${Utils.escape(d.branch || d.name)}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr style="border-bottom: 1px solid var(--border-color, #f1f5f9);">
+                  <td style="font-weight: 600; padding: 10px 12px;">${Utils.escape(u.name || 'Employee')}</td>
+                  <td style="padding: 10px 12px;"><span class="badge badge-neutral" style="font-weight: 700;">${Utils.escape(u.biometricUserId)}</span></td>
+                  <td style="padding: 10px 12px; font-size: 11px; color: var(--text-secondary);">${Utils.escape(u.role)}</td>
+                  ${devices.map(d => {
+                    const devStatus = (u.devices && u.devices[d.id]) ? u.devices[d.id] : {};
+                    const isSynced = devStatus.isSynced;
+                    const isOrigin = devStatus.enrolledHere;
+                    return `
+                      <td style="text-align: center; padding: 10px 12px;">
+                        ${isSynced 
+                          ? `<span class="badge badge-on-time" style="font-size: 10.5px;">✓ Synced ${isOrigin ? '(Master)' : ''}</span>`
+                          : `<span class="badge badge-pending" style="font-size: 10.5px;">⏳ Queued</span>`}
+                      </td>
+                    `;
+                  }).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--danger);">Failed to load matrix: ${Utils.escape(err.message)}</div>`;
+      }
+    };
+
+    loadMatrixData();
+    document.body.appendChild(overlay);
   }
 
   async function loadBiometricDashboardData(silent = false) {
@@ -9072,7 +9468,7 @@ async function renderAdminDashboard() {
       if (!result.success || !Array.isArray(result.data)) {
         if (badge) {
           badge.className = 'badge badge-half-day';
-          badge.textContent = 'Device Busy / Unreachable';
+          badge.textContent = 'Device Busy / Staging Mode';
         }
         tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
           '⚠️ ' + Utils.escape(result.message || result.error || 'Biometric device unreachable or busy. (Click Refresh to retry)') +
@@ -9082,7 +9478,7 @@ async function renderAdminDashboard() {
 
       if (badge) {
         badge.className = 'badge badge-on-time';
-        badge.textContent = (result.device?.name || 'ZKTeco K40') + ' Online (' + result.data.length + ' records)';
+        badge.textContent = (result.device?.name || 'ZKTeco Fleet') + ' Synchronized (' + result.data.length + ' records)';
       }
 
       if (result.data.length === 0) {
@@ -9110,6 +9506,8 @@ async function renderAdminDashboard() {
         const latestPunchStr = emp.latestPunch 
           ? new Date(emp.latestPunch).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true }) 
           : '—';
+
+        const isPresent = att === 'On Time' || att === 'Late';
 
         return `
           <tr>

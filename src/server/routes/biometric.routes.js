@@ -20,6 +20,21 @@ const {
   LOCAL_DB_FILE
 } = require('../config/db');
 
+const {
+  getRegisteredDevices,
+  getVaultUsers,
+  testDeviceConnectivity,
+  replicateTemplatesAcrossDevices,
+  getTemplateSyncMatrix,
+  addBiometricDevice,
+  updateBiometricDevice,
+  deleteBiometricDevice
+} = require('../biometric/biometricMultiDevice.service');
+
+const {
+  syncBiometricAttendance
+} = require('../biometric/biometricSync.service');
+
 
 // =====================================================
 // HELPERS
@@ -364,6 +379,176 @@ router.get('/biometric/dashboard', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || 'Dashboard failed'
+    });
+  }
+});
+
+// =====================================================
+// MULTI-DEVICE & CROSS-BRANCH TEMPLATE REPLICATION APIS
+// =====================================================
+
+// GET /api/biometric/devices - List all registered biometric devices
+router.get('/biometric/devices', async (req, res) => {
+  try {
+    const devices = await getRegisteredDevices();
+    return res.json({
+      success: true,
+      count: devices.length,
+      devices
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to fetch biometric devices'
+    });
+  }
+});
+
+// POST /api/biometric/devices - Register a new branch / gate device
+router.post('/biometric/devices', async (req, res) => {
+  try {
+    const { name, ip, port, serial, location, branch, enabled, isPrimary } = req.body;
+    if (!name || !ip) {
+      return res.status(400).json({
+        success: false,
+        message: 'Device name and IP address are required.'
+      });
+    }
+
+    const device = await addBiometricDevice({
+      name,
+      ip,
+      port: port ? Number(port) : 4370,
+      serial,
+      location,
+      branch,
+      enabled: enabled !== false,
+      isPrimary: isPrimary === true
+    });
+
+    return res.json({
+      success: true,
+      message: `Device '${device.name}' added successfully and queued for template replication.`,
+      device
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to add biometric device'
+    });
+  }
+});
+
+// PUT /api/biometric/devices/:id - Update existing biometric device
+router.put('/biometric/devices/:id', async (req, res) => {
+  try {
+    const updated = await updateBiometricDevice(req.params.id, req.body);
+    return res.json({
+      success: true,
+      message: `Device '${updated.name}' updated successfully.`,
+      device: updated
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to update device'
+    });
+  }
+});
+
+// DELETE /api/biometric/devices/:id - Remove biometric device
+router.delete('/biometric/devices/:id', async (req, res) => {
+  try {
+    const result = await deleteBiometricDevice(req.params.id);
+    return res.json({
+      success: true,
+      message: 'Device removed successfully.',
+      ...result
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to delete device'
+    });
+  }
+});
+
+// POST /api/biometric/devices/:id/test - Test connection to specific device
+router.post('/biometric/devices/:id/test', async (req, res) => {
+  try {
+    const devices = await getRegisteredDevices();
+    const device = devices.find(d => d.id === req.params.id);
+    if (!device) {
+      return res.status(404).json({
+        success: false,
+        message: `Device with ID '${req.params.id}' not found.`
+      });
+    }
+
+    const result = await testDeviceConnectivity(device);
+    return res.json({
+      success: result.success,
+      device: {
+        id: device.id,
+        name: device.name,
+        ip: device.ip,
+        port: device.port
+      },
+      ...result
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Test connection error'
+    });
+  }
+});
+
+// POST /api/biometric/sync-templates - Trigger template replication across all branch devices
+router.post('/biometric/sync-templates', async (req, res) => {
+  try {
+    const result = await replicateTemplatesAcrossDevices();
+    return res.json({
+      success: true,
+      message: `Templates successfully synchronized: ${result.replicatedCount} user template(s) replicated across branches.`,
+      ...result
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to synchronize biometric templates'
+    });
+  }
+});
+
+// GET /api/biometric/template-sync-status - View replication matrix and vault status
+router.get('/biometric/template-sync-status', async (req, res) => {
+  try {
+    const matrix = await getTemplateSyncMatrix();
+    return res.json({
+      success: true,
+      ...matrix
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to get template sync status'
+    });
+  }
+});
+
+// POST /api/biometric/sync - Trigger immediate multi-device attendance sync
+router.post('/biometric/sync', async (req, res) => {
+  try {
+    const syncRes = await syncBiometricAttendance();
+    return res.json({
+      success: true,
+      ...syncRes
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Sync failed'
     });
   }
 });

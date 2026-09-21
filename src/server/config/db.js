@@ -146,6 +146,35 @@ const AuditLogSchema = new mongoose.Schema({
   ipAddress: String
 }, { timestamps: true });
 
+const BiometricDeviceSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  ip: { type: String, required: true },
+  port: { type: Number, default: 4370 },
+  serial: String,
+  location: String,
+  branch: String,
+  status: { type: String, default: 'Offline' },
+  enabled: { type: Boolean, default: true },
+  isPrimary: { type: Boolean, default: false },
+  lastSyncAt: Date,
+  enrolledUsersCount: { type: Number, default: 0 },
+  totalPunchesCount: { type: Number, default: 0 }
+}, { timestamps: true });
+
+const BiometricVaultSchema = new mongoose.Schema({
+  biometricUserId: { type: String, required: true, unique: true },
+  uid: Number,
+  name: String,
+  role: { type: Number, default: 0 },
+  password: { type: String, default: '' },
+  cardno: { type: Number, default: 0 },
+  templateData: String,
+  enrolledOnDevice: String,
+  syncedDevices: [String],
+  lastReplicatedAt: Date
+}, { timestamps: true });
+
 const User = mongoose.model('User', UserSchema);
 const AttendanceLog = mongoose.model('AttendanceLog', AttendanceLogSchema);
 const LeaveRequest = mongoose.model('LeaveRequest', LeaveRequestSchema);
@@ -154,6 +183,8 @@ const Schedule = mongoose.model('Schedule', ScheduleSchema);
 const Notice = mongoose.model('Notice', NoticeSchema);
 const OfficeCoordinate = mongoose.model('OfficeCoordinate', OfficeCoordinateSchema);
 const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
+const BiometricDevice = mongoose.model('BiometricDevice', BiometricDeviceSchema);
+const BiometricVault = mongoose.model('BiometricVault', BiometricVaultSchema);
 
 mongoose.set('bufferCommands', false);
 
@@ -205,7 +236,9 @@ async function syncLocalToMongo(seedData) {
       safeInsert(ShiftSwap, seedData.shiftSwaps || []),
       safeInsert(Schedule, seedData.schedules || []),
       safeInsert(Notice, seedData.notices || []),
-      safeInsert(OfficeCoordinate, officeDocs)
+      safeInsert(OfficeCoordinate, officeDocs),
+      safeInsert(BiometricDevice, seedData.biometricDevices || []),
+      safeInsert(BiometricVault, seedData.biometricVault || [])
     ]);
   } catch (err) {
     console.warn('⚠️ Non-fatal syncLocalToMongo warning:', err.message);
@@ -240,6 +273,8 @@ module.exports = {
   Notice,
   OfficeCoordinate,
   AuditLog,
+  BiometricDevice,
+  BiometricVault,
   connectMongoose,
   syncLocalToMongo,
   syncLocalToMongoOnBoot,

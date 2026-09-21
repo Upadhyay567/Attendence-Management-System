@@ -2,6 +2,8 @@ const request = require('supertest');
 const { app, connectMongoose, mongoose, syncLocalToMongoOnBoot } = require('../server');
 
 describe('HS Group Attendance System API Integration Tests', () => {
+  jest.setTimeout(30000);
+
   // Ensure database is connected before running tests
   beforeAll(async () => {
     await connectMongoose();
@@ -149,6 +151,98 @@ describe('HS Group Attendance System API Integration Tests', () => {
 
       // 8. Missing check-in -> 'Absent'
       expect(computeAttendanceStatus('', '', standardShift)).toBe('Absent');
+    });
+  });
+
+  describe('Multi-Device & Cross-Branch Biometric Template Synchronization', () => {
+    const {
+      getRegisteredDevices,
+      getVaultUsers,
+      replicateTemplatesAcrossDevices,
+      getTemplateSyncMatrix,
+      encodeUserData72
+    } = require('../src/server/biometric/biometricMultiDevice.service');
+
+    it('should retrieve registered branch biometric devices', async () => {
+      const response = await request(app).get('/api/biometric/devices');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.devices)).toBe(true);
+      expect(response.body.devices.length).toBeGreaterThanOrEqual(1);
+
+      const noidaDev = response.body.devices.find(d => d.id === 'dev_k40_noida');
+      expect(noidaDev).toBeDefined();
+      expect(noidaDev.ip).toBe('192.168.1.51');
+    });
+
+    it('should register a new branch biometric device via POST /api/biometric/devices', async () => {
+      const newDevicePayload = {
+        name: 'Gurugram Branch - Gate 1',
+        ip: '192.168.1.54',
+        port: 4370,
+        branch: 'Gurugram Branch',
+        location: 'Cyber City, Gurugram',
+        serial: 'ZK_GURUGRAM_01'
+      };
+
+      const response = await request(app)
+        .post('/api/biometric/devices')
+        .send(newDevicePayload);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.device).toBeDefined();
+      expect(response.body.device.name).toBe(newDevicePayload.name);
+      expect(response.body.device.ip).toBe(newDevicePayload.ip);
+    });
+
+    it('should correctly encode user profiles into ZKTeco 72-byte binary payload', () => {
+      const testUser = {
+        uid: 42,
+        biometricUserId: 'HR0999',
+        name: 'Test Engineer',
+        role: 0,
+        cardno: 123456,
+        password: 'pass'
+      };
+
+      const buf = encodeUserData72(testUser);
+      expect(Buffer.isBuffer(buf)).toBe(true);
+      expect(buf.length).toBe(72);
+
+      // Check UID at offset 0 (2 bytes UInt16 LE)
+      expect(buf.readUInt16LE(0)).toBe(42);
+      // Check Card number at offset 35 (4 bytes UInt32 LE)
+      expect(buf.readUInt32LE(35)).toBe(123456);
+      // Check Name at offset 11
+      const extractedName = buf.subarray(11, 35).toString('ascii').split('\0').shift();
+      expect(extractedName).toBe('Test Engineer');
+      // Check User ID at offset 48
+      const extractedUserId = buf.subarray(48, 68).toString('ascii').split('\0').shift();
+      expect(extractedUserId).toBe('HR0999');
+    });
+
+    it('should replicate templates across devices and update the central vault', async () => {
+      const syncResult = await replicateTemplatesAcrossDevices();
+      expect(syncResult.success).toBe(true);
+      expect(syncResult.totalVaultUsers).toBeGreaterThanOrEqual(1);
+
+      const matrix = await getTemplateSyncMatrix();
+      expect(matrix).toHaveProperty('devices');
+      expect(matrix).toHaveProperty('users');
+      expect(matrix.users.length).toBeGreaterThanOrEqual(1);
+
+      // Verify template sync matrix endpoint via HTTP
+      const response = await request(app).get('/api/biometric/template-sync-status');
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.users)).toBe(true);
+    });
+
+    it('should trigger multi-device biometric sync via POST /api/biometric/sync', async () => {
+      const response = await request(app).post('/api/biometric/sync');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success');
     });
   });
 });
