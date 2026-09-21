@@ -2126,7 +2126,12 @@ function renderEmployeeDashboard() {
                             <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
                           ` 
                           : (todayLog.checkOut 
-                              ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
+                              ? `
+                                <div class="checkout-banner-badge" style="width:100%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; color: var(--success, #10b981); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                  <span>🏁</span>
+                                  <span>Checked Out Today at ${todayLog.checkOut}</span>
+                                </div>
+                              `
                               : `
                                 <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
                               `
@@ -2222,8 +2227,16 @@ function renderEmployeeDashboard() {
                       `
                       : (todayLog && todayLog.checkOut
                           ? `
-                            <div id="geofence-checked-out-msg" style="background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
-                              Checked Out Today
+                            <div id="geofence-checked-out-msg" class="checkout-banner-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                              <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+                                <span style="font-size: 18px;">🎉</span>
+                                <span>Checked Out Successfully</span>
+                              </div>
+                              <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+                                <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+                                <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${(todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--'}</strong></span>
+                                <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+                              </div>
                             </div>
                           `
                           : `
@@ -2498,10 +2511,10 @@ function renderEmployeeDashboard() {
       const log = DB.checkOut(user.id, 'none', null, schedule ? schedule.id : null);
       requestsPushDBState();
       renderEmployeeDashboard();
-      if (log) {
-        const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
-        showClockOutThankYou(log.checkOut, workingHours);
-      }
+      const finalLog = log || (schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id));
+      const checkOutTime = (finalLog && finalLog.checkOut) || new Date().toTimeString().split(' ')[0].substring(0, 5);
+      const workingHours = (finalLog && finalLog.checkIn && finalLog.checkOut) ? Utils.calculateDuration(finalLog.checkIn, finalLog.checkOut) : '--:--';
+      (window.showClockOutThankYou || showClockOutThankYou)(checkOutTime, workingHours);
     });
   }
 
@@ -2819,19 +2832,38 @@ function renderEmployeeDashboard() {
         geoCheckOut.setAttribute('title', 'Offline');
       }
 
+      const actionsContainer = document.querySelector('.geofence-direct-actions');
+      let checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       const btnGroup = document.getElementById('geofence-btn-group');
-      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
-      if (checkedOutMsg) {
-        if (todayLog && todayLog.checkOut) {
-          if (btnGroup) btnGroup.style.display = 'none';
-          checkedOutMsg.style.display = 'block';
-        } else {
-          if (btnGroup) btnGroup.style.display = 'grid';
-          checkedOutMsg.style.display = 'none';
-          if (geoCheckIn) geoCheckIn.style.display = 'block';
-          if (geoCheckOut) geoCheckOut.style.display = 'block';
-          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+      if (todayLog && todayLog.checkOut) {
+        if (btnGroup) btnGroup.style.display = 'none';
+        if (!checkedOutMsg && actionsContainer) {
+          checkedOutMsg = document.createElement('div');
+          checkedOutMsg.id = 'geofence-checked-out-msg';
+          checkedOutMsg.className = 'checkout-banner-card';
+          checkedOutMsg.style.cssText = 'background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);';
+          const dur = (todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--';
+          checkedOutMsg.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+              <span style="font-size: 18px;">🎉</span>
+              <span>Checked Out Successfully</span>
+            </div>
+            <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+              <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+              <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${dur}</strong></span>
+              <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+            </div>
+          `;
+          actionsContainer.appendChild(checkedOutMsg);
+        } else if (checkedOutMsg) {
+          checkedOutMsg.style.display = 'flex';
         }
+      } else {
+        if (btnGroup) btnGroup.style.display = 'grid';
+        if (checkedOutMsg) checkedOutMsg.style.display = 'none';
+        if (geoCheckIn) geoCheckIn.style.display = 'block';
+        if (geoCheckOut) geoCheckOut.style.display = 'block';
+        if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
       }
 
       // Draw static offline radar map
@@ -3017,28 +3049,47 @@ function renderEmployeeDashboard() {
       }
 
       // Adjust visibility/layout of geofence action buttons dynamically based on range and status
+      const actionsContainer = document.querySelector('.geofence-direct-actions');
+      let checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       const btnGroup = document.getElementById('geofence-btn-group');
-      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       
-      if (checkedOutMsg) {
-        if (currentTodayLog && currentTodayLog.checkOut) {
-          if (btnGroup) btnGroup.style.display = 'none';
-          checkedOutMsg.style.display = 'block';
-        } else {
-          if (btnGroup) btnGroup.style.display = 'grid';
-          checkedOutMsg.style.display = 'none';
+      if (currentTodayLog && currentTodayLog.checkOut) {
+        if (btnGroup) btnGroup.style.display = 'none';
+        if (!checkedOutMsg && actionsContainer) {
+          checkedOutMsg = document.createElement('div');
+          checkedOutMsg.id = 'geofence-checked-out-msg';
+          checkedOutMsg.className = 'checkout-banner-card';
+          checkedOutMsg.style.cssText = 'background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);';
+          const dur = (currentTodayLog.checkIn && currentTodayLog.checkOut) ? Utils.calculateDuration(currentTodayLog.checkIn, currentTodayLog.checkOut) : '--:--';
+          checkedOutMsg.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+              <span style="font-size: 18px;">🎉</span>
+              <span>Checked Out Successfully</span>
+            </div>
+            <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+              <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${currentTodayLog.checkOut}</strong></span>
+              <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${dur}</strong></span>
+              <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${currentTodayLog.status || 'Completed'}</span>
+            </div>
+          `;
+          actionsContainer.appendChild(checkedOutMsg);
+        } else if (checkedOutMsg) {
+          checkedOutMsg.style.display = 'flex';
+        }
+      } else {
+        if (btnGroup) btnGroup.style.display = 'grid';
+        if (checkedOutMsg) checkedOutMsg.style.display = 'none';
 
-          if (currentTodayLog && currentTodayLog.checkIn) {
-            // Active clocked in state: Hide Check In, Show only Check Out (span full width)
-            if (geoCheckIn) geoCheckIn.style.display = 'none';
-            if (geoCheckOut) geoCheckOut.style.display = 'block';
-            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
-          } else {
-            // Not clocked in: Show Check In button only
-            if (geoCheckIn) geoCheckIn.style.display = 'block';
-            if (geoCheckOut) geoCheckOut.style.display = 'none';
-            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
-          }
+        if (currentTodayLog && currentTodayLog.checkIn) {
+          // Active clocked in state: Hide Check In, Show only Check Out (span full width)
+          if (geoCheckIn) geoCheckIn.style.display = 'none';
+          if (geoCheckOut) geoCheckOut.style.display = 'block';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+        } else {
+          // Not clocked in: Show Check In button only
+          if (geoCheckIn) geoCheckIn.style.display = 'block';
+          if (geoCheckOut) geoCheckOut.style.display = 'none';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
         }
       }
     }
@@ -5182,7 +5233,7 @@ async function handleClockOut(userId, shiftId = null) {
   const user = DB.getUser(userId);
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
-  const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
+  const schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
   const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
 
   if (!inRange) {
@@ -5190,20 +5241,19 @@ async function handleClockOut(userId, shiftId = null) {
     return;
   }
 
-  if (await confirm('Clock Out?')) {
-    const log = DB.checkOut(userId, 'none', null, schedule ? schedule.id : null);
-    requestsPushDBState();
-    if (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager')) {
-      renderAdminMyAttendances();
-    } else {
-      renderEmployeeDashboard();
-    }
-    if (log) {
-      const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
-      showClockOutThankYou(log.checkOut, workingHours);
-    }
+  const log = DB.checkOut(userId, 'none', null, schedule ? schedule.id : null);
+  requestsPushDBState();
+  if (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager')) {
+    renderAdminMyAttendances();
+  } else {
+    renderEmployeeDashboard();
   }
+  const finalLog = log || (schedule ? DB.getTodayLog(userId, schedule.id) : DB.getTodayLog(userId));
+  const checkOutTime = (finalLog && finalLog.checkOut) || new Date().toTimeString().split(' ')[0].substring(0, 5);
+  const workingHours = (finalLog && finalLog.checkIn && finalLog.checkOut) ? Utils.calculateDuration(finalLog.checkIn, finalLog.checkOut) : '--:--';
+  (window.showClockOutThankYou || showClockOutThankYou)(checkOutTime, workingHours);
 }
+window.handleClockOut = handleClockOut;
 
 
 
@@ -15924,7 +15974,12 @@ function renderAdminMyAttendances() {
                             <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
                           ` 
                           : (todayLog.checkOut 
-                              ? `<button class="btn" style="background:rgba(255,255,255,0.05);cursor:not-allowed;" disabled>Checked Out Today</button>`
+                              ? `
+                                <div class="checkout-banner-badge" style="width:100%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; color: var(--success, #10b981); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                  <span>🏁</span>
+                                  <span>Checked Out Today at ${todayLog.checkOut}</span>
+                                </div>
+                              `
                               : `
                                 <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
                               `
@@ -16018,8 +16073,16 @@ function renderAdminMyAttendances() {
                       `
                       : (todayLog && todayLog.checkOut
                           ? `
-                            <div id="geofence-checked-out-msg" style="background:rgba(255,255,255,0.05); text-align:center; font-size:13px; padding:10px; border-radius:var(--radius-sm); color:var(--text-secondary); font-weight:600">
-                              Checked Out Today
+                            <div id="geofence-checked-out-msg" class="checkout-banner-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                              <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+                                <span style="font-size: 18px;">🎉</span>
+                                <span>Checked Out Successfully</span>
+                              </div>
+                              <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+                                <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+                                <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${(todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--'}</strong></span>
+                                <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+                              </div>
                             </div>
                           `
                           : `
@@ -16397,10 +16460,10 @@ function renderAdminMyAttendances() {
       const log = DB.checkOut(user.id, 'none', null, schedule ? schedule.id : null);
       requestsPushDBState();
       renderAdminMyAttendances();
-      if (log) {
-        const workingHours = Utils.calculateDuration(log.checkIn, log.checkOut);
-        showClockOutThankYou(log.checkOut, workingHours);
-      }
+      const finalLog = log || (schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id));
+      const checkOutTime = (finalLog && finalLog.checkOut) || new Date().toTimeString().split(' ')[0].substring(0, 5);
+      const workingHours = (finalLog && finalLog.checkIn && finalLog.checkOut) ? Utils.calculateDuration(finalLog.checkIn, finalLog.checkOut) : '--:--';
+      (window.showClockOutThankYou || showClockOutThankYou)(checkOutTime, workingHours);
     });
   }
 
@@ -16632,19 +16695,38 @@ function renderAdminMyAttendances() {
         geoCheckOut.setAttribute('title', 'Offline');
       }
 
+      const actionsContainer = document.querySelector('.geofence-direct-actions');
+      let checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       const btnGroup = document.getElementById('geofence-btn-group');
-      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
-      if (checkedOutMsg) {
-        if (todayLog && todayLog.checkOut) {
-          if (btnGroup) btnGroup.style.display = 'none';
-          checkedOutMsg.style.display = 'block';
-        } else {
-          if (btnGroup) btnGroup.style.display = 'grid';
-          checkedOutMsg.style.display = 'none';
-          if (geoCheckIn) geoCheckIn.style.display = 'block';
-          if (geoCheckOut) geoCheckOut.style.display = 'block';
-          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
+      if (todayLog && todayLog.checkOut) {
+        if (btnGroup) btnGroup.style.display = 'none';
+        if (!checkedOutMsg && actionsContainer) {
+          checkedOutMsg = document.createElement('div');
+          checkedOutMsg.id = 'geofence-checked-out-msg';
+          checkedOutMsg.className = 'checkout-banner-card';
+          checkedOutMsg.style.cssText = 'background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);';
+          const dur = (todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--';
+          checkedOutMsg.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+              <span style="font-size: 18px;">🎉</span>
+              <span>Checked Out Successfully</span>
+            </div>
+            <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+              <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+              <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${dur}</strong></span>
+              <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+            </div>
+          `;
+          actionsContainer.appendChild(checkedOutMsg);
+        } else if (checkedOutMsg) {
+          checkedOutMsg.style.display = 'flex';
         }
+      } else {
+        if (btnGroup) btnGroup.style.display = 'grid';
+        if (checkedOutMsg) checkedOutMsg.style.display = 'none';
+        if (geoCheckIn) geoCheckIn.style.display = 'block';
+        if (geoCheckOut) geoCheckOut.style.display = 'block';
+        if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr 1fr';
       }
 
       drawRadarMap('gps-canvas-map', targetCoords.lat, targetCoords.lng, null, null, null, null, officeName, true);
@@ -16777,25 +16859,45 @@ function renderAdminMyAttendances() {
         }
       }
 
+      const actionsContainer = document.querySelector('.geofence-direct-actions');
+      let checkedOutMsg = document.getElementById('geofence-checked-out-msg');
       const btnGroup = document.getElementById('geofence-btn-group');
-      const checkedOutMsg = document.getElementById('geofence-checked-out-msg');
-      if (checkedOutMsg) {
-        if (todayLog && todayLog.checkOut) {
-          if (btnGroup) btnGroup.style.display = 'none';
-          checkedOutMsg.style.display = 'block';
-        } else {
-          if (btnGroup) btnGroup.style.display = 'grid';
-          checkedOutMsg.style.display = 'none';
+      
+      if (todayLog && todayLog.checkOut) {
+        if (btnGroup) btnGroup.style.display = 'none';
+        if (!checkedOutMsg && actionsContainer) {
+          checkedOutMsg = document.createElement('div');
+          checkedOutMsg.id = 'geofence-checked-out-msg';
+          checkedOutMsg.className = 'checkout-banner-card';
+          checkedOutMsg.style.cssText = 'background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);';
+          const dur = (todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--';
+          checkedOutMsg.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+              <span style="font-size: 18px;">🎉</span>
+              <span>Checked Out Successfully</span>
+            </div>
+            <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+              <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+              <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${dur}</strong></span>
+              <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+            </div>
+          `;
+          actionsContainer.appendChild(checkedOutMsg);
+        } else if (checkedOutMsg) {
+          checkedOutMsg.style.display = 'flex';
+        }
+      } else {
+        if (btnGroup) btnGroup.style.display = 'grid';
+        if (checkedOutMsg) checkedOutMsg.style.display = 'none';
 
-          if (todayLog && todayLog.checkIn) {
-            if (geoCheckIn) geoCheckIn.style.display = 'none';
-            if (geoCheckOut) geoCheckOut.style.display = 'block';
-            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
-          } else {
-            if (geoCheckIn) geoCheckIn.style.display = 'block';
-            if (geoCheckOut) geoCheckOut.style.display = 'none';
-            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
-          }
+        if (todayLog && todayLog.checkIn) {
+          if (geoCheckIn) geoCheckIn.style.display = 'none';
+          if (geoCheckOut) geoCheckOut.style.display = 'block';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+        } else {
+          if (geoCheckIn) geoCheckIn.style.display = 'block';
+          if (geoCheckOut) geoCheckOut.style.display = 'none';
+          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
         }
       }
 
@@ -19470,9 +19572,14 @@ function showToastNotification(message, type = 'info') {
 }
 function showClockOutThankYou(checkOutTime, workingHours) {
   return new Promise((resolve) => {
+    const existing = document.querySelector('.custom-thankyou-overlay');
+    if (existing) {
+      try { existing.remove(); } catch (e) {}
+    }
+
     const overlay = document.createElement('div');
-    overlay.className = 'custom-dialog-overlay';
-    overlay.style.zIndex = '11000';
+    overlay.className = 'custom-dialog-overlay custom-thankyou-overlay';
+    overlay.style.zIndex = '100005';
 
     const card = document.createElement('div');
     card.className = 'custom-dialog-card custom-thankyou-card';
@@ -19599,6 +19706,7 @@ function showClockOutThankYou(checkOutTime, workingHours) {
     });
   });
 }
+window.showClockOutThankYou = showClockOutThankYou;
 
 export { executeExpressReassignments };
 

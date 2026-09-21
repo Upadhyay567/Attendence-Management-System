@@ -1544,6 +1544,9 @@ export const DB = {
         const unassignedMatch = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
         if (unassignedMatch) return unassignedMatch;
       }
+      // Fallback: check if there is an active open log for this user today
+      const openFallback = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);
+      if (openFallback) return openFallback;
       return null;
     }
     const openLog = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);

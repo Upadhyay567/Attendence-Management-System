@@ -4070,6 +4070,53 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   border-left-color: #ffffff !important;
 }
 
+/* Checkout Banner Card and Badge */
+.custom-thankyou-overlay {
+  z-index: 100005 !important;
+}
+
+.checkout-banner-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  border-radius: var(--radius-md, 12px) !important;
+  padding: 14px 16px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  animation: fadeIn 0.3s ease !important;
+}
+
+body.light-theme .checkout-banner-card {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1) !important;
+}
+
+.checkout-banner-badge {
+  width: 100% !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  border-radius: var(--radius-sm, 8px) !important;
+  padding: 10px 14px !important;
+  text-align: center !important;
+  color: var(--success, #10b981) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+}
+
+body.light-theme .checkout-banner-badge {
+  background: #ecfdf5 !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  color: #047857 !important;
+}
+
 
 
 
