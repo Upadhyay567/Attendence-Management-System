@@ -10,7 +10,7 @@
       "name": "Abhishek Sharma",
       "role": "hr",
       "status": "Active",
-      "password": "$2b$10$prTuLtAWPLV5A7BZaqInmOrA5A99LIHJf6EbCNUhpa9CNXGQXgHUi",
+      "password": "$2b$10$8YJUi1Ndip2vtvpuejU9qejPDgfEt212NJ3fPQGz.DuvDiQgW1Pvy",
       "email": "abhishek879@gmail.com",
       "phone": "8967459032",
       "dob": "1995-08-07",
@@ -40,7 +40,7 @@
       "managerId": "",
       "assignedById": "usr_admin",
       "state": "delhi",
-      "passwordResetCount": 10
+      "passwordResetCount": 12
     },
     {
       "id": "usr_68s5s48",
@@ -48,7 +48,7 @@
       "biometricUserId": "1",
       "biometricId": "1",
       "scheduleId": "sch_mfl8wvv",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 40000,
       "allowanceHRA": null,
       "allowanceTravel": null,
@@ -79,7 +79,8 @@
       ],
       "shiftLocations": {
         "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
-        "sch_3ebecon": "Noida sector 61"
+        "sch_3ebecon": "Noida sector 61",
+        "sch_q8jji9v": "Noida sector 61"
       },
       "managerId": "usr_manager",
       "assignedById": "usr_6af1y3c",
@@ -345,12 +346,10 @@
       "status": "Active",
       "department": "Operations",
       "designation": "Staff",
-      "scheduleId": "sch_q8jji9v",
-      "scheduleIds": [
-        "sch_q8jji9v"
-      ],
+      "scheduleId": "sch_4ef4kis",
+      "scheduleIds": [],
       "shiftLocations": {
-        "sch_q8jji9v": "omaxe Office"
+        "sch_4ef4kis": "omaxe Office"
       },
       "createdAt": "2026-09-17T11:45:22.142Z",
       "gender": "Male",
@@ -361,7 +360,7 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c",
+      "assignedById": "usr_manager",
       "email": "hemantupadhyay070@gmail.com",
       "phone": "7856907641",
       "dob": "1994-10-11",
@@ -391,7 +390,7 @@
         "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_q8jji9v": "Noida sector 61"
       },
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
@@ -402,7 +401,8 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "preferredLocation": "Noida sector 61"
     },
     {
       "_id": "usr_bio_293",
@@ -421,7 +421,7 @@
         "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_q8jji9v": "Noida sector 61"
       },
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
@@ -432,7 +432,8 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "preferredLocation": "Noida sector 61"
     },
     {
       "_id": "usr_bio_3980",
@@ -1745,6 +1746,17 @@
   ],
   "announcements": [
     {
+      "id": "ann_8kcpedx",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Preferred Work Location: omaxe Office ➔ Kohat Enclave, Pitampura, Delhi\n• Work Shift Locations: Morning Shift 900: omaxe Office ➔ Not Set\n• Primary Work Shift: Morning Shift 900 ➔ new shift\n• Assigned Work Shifts: Morning Shift 900 ➔ Not Set",
+      "category": "Update",
+      "date": "2026-09-21",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_bio_1200",
+      "createdAt": "2026-09-21T12:21:37.220Z",
+      "link": "#user-management"
+    },
+    {
       "id": "ann_0mhpfuf",
       "title": "📢 Profile Updated by HR/Manager",
       "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: Noida sector 61 ➔ HS Group Worksite (28.6952, 77.1860)\n• Work Shift Locations: Morning Shift 900: Noida sector 61; Afternoon shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: Noida sector 61 ➔ Afternoon shift: HS Group Worksite (28.6952, 77.1860); MAIN OFFICE  Shift: Noida sector 61\n• Primary Work Shift: Morning Shift 900 ➔ Afternoon shift\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ Afternoon shift, MAIN OFFICE  Shift",
@@ -2563,6 +2575,187 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-21T12:21:55.168Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:21:54.548Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:21:54.422Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "preferredLocation": "omaxe Office",
+        "shiftLocations": {
+          "sch_4ef4kis": "omaxe Office"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:21:51.599Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:21:37.978Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_8kcpedx",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Preferred Work Location: omaxe Office ➔ Kohat Enclave, Pitampura, Delhi\n• Work Shift Locations: Morning Shift 900: omaxe Office ➔ Not Set\n• Primary Work Shift: Morning Shift 900 ➔ new shift\n• Assigned Work Shifts: Morning Shift 900 ➔ Not Set",
+        "category": "Update",
+        "date": "2026-09-21",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_bio_1200",
+        "createdAt": "2026-09-21T12:21:37.220Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:21:37.823Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "BHUPENDRA VISHWAKARMA",
+        "employeeId": "EMP1200",
+        "biometricUserId": "1200",
+        "biometricId": "1200",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "scheduleId": "sch_4ef4kis",
+        "scheduleIds": [],
+        "shiftLocations": {},
+        "role": "employee",
+        "preferredLocation": "Kohat Enclave, Pitampura, Delhi",
+        "gender": "Male",
+        "department": "Operations",
+        "designation": "Staff",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 43209",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "usr_manager",
+        "assignedById": "usr_manager",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:12:09.298Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:12:09.236Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:10:50.540Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
+          "sch_3ebecon": "Noida sector 61",
+          "sch_q8jji9v": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:10:37.892Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "omaxe Office",
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
+          "sch_3ebecon": "omaxe Office",
+          "sch_q8jji9v": "omaxe Office"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T12:10:25.367Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "chandani chowk",
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)",
+          "sch_3ebecon": "chandani chowk",
+          "sch_q8jji9v": "chandani chowk"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-21T12:03:46.295Z",
       "action": "UPDATE_users",
@@ -5301,7 +5494,7 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-21T12:04:37.240Z",
+    "lastSyncAt": "2026-09-21T12:21:57.548Z",
     "lastLogCount": 39
   },
   "activityLogs": [

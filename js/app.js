@@ -10568,8 +10568,8 @@ function renderAdminSchedules(tab) {
     main.innerHTML = `
       <div class="content-header">
         <div>
-          <h1 class="content-title">📍 Employee Worksite Location Assignment</h1>
-          <div class="content-subtitle">Manually assign and update physical worksite locations for each employee across their assigned work shifts.</div>
+          <h1 class="content-title">📍 Employee Shift & Worksite Assignment</h1>
+          <div class="content-subtitle">Manually assign, update, and manage both work shifts and physical worksite locations for each employee.</div>
         </div>
         <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-left:auto; flex-wrap:wrap">
           <button class="btn btn-secondary" id="btn-toggle-sched-view" style="border-radius:10px; height:42px; padding:0 20px; font-size:13px; font-weight:700; white-space:nowrap; width:auto; border:1px solid rgba(251,191,36,0.3); background:rgba(251,191,36,0.08); color:var(--primary); cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 2px 8px rgba(251,191,36,0.15); transition:all 0.2s ease">
@@ -10606,18 +10606,22 @@ function renderAdminSchedules(tab) {
             <span style="font-size:12.5px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
               ⚡ Bulk Assignment:
             </span>
-            <select id="bulk-assign-location" class="form-input" style="width:auto; min-width:220px; padding:6px 10px; font-size:12px; border-radius:6px">
-              <option value="">-- Choose Target Worksite Location --</option>
+            <select id="bulk-assign-shift" class="form-input" style="width:auto; min-width:180px; padding:6px 10px; font-size:12px; border-radius:6px">
+              <option value="">-- Set Shift (Optional) --</option>
+              ${schedules.map(s => `<option value="${s.id}">⏰ ${Utils.escape(s.name)}</option>`).join('')}
+            </select>
+            <select id="bulk-assign-location" class="form-input" style="width:auto; min-width:200px; padding:6px 10px; font-size:12px; border-radius:6px">
+              <option value="">-- Set Worksite Location (Optional) --</option>
               ${allLocationNames.map(loc => `<option value="${Utils.escape(loc)}">${Utils.escape(loc)}</option>`).join('')}
             </select>
             <button id="btn-apply-bulk-location" class="btn btn-primary" style="padding:7px 16px; font-size:12px; font-weight:700; width:auto; border-radius:6px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; border:none; cursor:pointer">
               Apply to Selected (<span id="bulk-selected-count">0</span>)
             </button>
-            <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto">Select checkboxes below to assign multiple staff at once</span>
+            <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto">Select checkboxes below to update shift/location for multiple staff</span>
           </div>
         </div>
 
-        <!-- Full Employee Location Table -->
+        <!-- Full Employee Location & Shift Table -->
         <div class="card-panel">
           <div class="table-container">
             <table class="custom-table" id="emp-locations-table">
@@ -10628,8 +10632,8 @@ function renderAdminSchedules(tab) {
                   </th>
                   <th>Employee</th>
                   <th>Department & Role</th>
-                  <th>Assigned Shift(s)</th>
-                  <th>Assigned Worksite Location</th>
+                  <th>Assigned Shift ✏️</th>
+                  <th>Assigned Worksite Location ✏️</th>
                   <th style="text-align:center; width:120px">Status</th>
                 </tr>
               </thead>
@@ -10639,15 +10643,9 @@ function renderAdminSchedules(tab) {
                     ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
                     : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
 
-                  const shiftBadges = assignedSchedules.length > 0
-                    ? assignedSchedules.map(s => `
-                        <span style="display:inline-block; font-size:11px; font-weight:700; color:var(--primary); background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.2); padding:2px 8px; border-radius:6px; margin:2px">
-                          ⏰ ${Utils.escape(s.name)}
-                        </span>
-                      `).join('')
-                    : `<span style="font-size:11.5px; color:var(--text-muted)">Not Assigned</span>`;
+                  const activeShiftId = (u.scheduleIds && u.scheduleIds.length > 0) ? u.scheduleIds[0] : (u.scheduleId || '');
 
-                  const currentLoc = (u.shiftLocations && u.scheduleId && u.shiftLocations[u.scheduleId])
+                  const currentLoc = (u.shiftLocations && activeShiftId && u.shiftLocations[activeShiftId])
                     || u.preferredLocation 
                     || (assignedSchedules[0] && assignedSchedules[0].location)
                     || 'Kohat Enclave, Pitampura, Delhi';
@@ -10673,12 +10671,16 @@ function renderAdminSchedules(tab) {
                         <div style="font-size:11px; color:var(--text-muted); text-transform:capitalize; margin-top:2px">${Utils.escape(u.role || 'employee')}</div>
                       </td>
                       <td>
-                        <div style="display:flex; flex-wrap:wrap; gap:4px">
-                          ${shiftBadges}
-                        </div>
+                        <select class="form-input emp-inline-shift-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:260px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
+                          <option value="" ${(!activeShiftId) ? 'selected' : ''}>-- No Shift Assigned --</option>
+                          ${schedules.map(s => {
+                            const isSelected = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.includes(s.id)) || u.scheduleId === s.id;
+                            return `<option value="${s.id}" ${isSelected ? 'selected' : ''}>⏰ ${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})</option>`;
+                          }).join('')}
+                        </select>
                       </td>
                       <td>
-                        <select class="form-input emp-inline-loc-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:280px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
+                        <select class="form-input emp-inline-loc-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:260px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
                           ${allLocationNames.map(loc => `
                             <option value="${Utils.escape(loc)}" ${currentLoc === loc ? 'selected' : ''}>${Utils.escape(loc)}</option>
                           `).join('')}
@@ -10699,7 +10701,7 @@ function renderAdminSchedules(tab) {
       </div>
     `;
 
-    // Attach Event Listeners for Location Assignment View
+    // Attach Event Listeners for Location & Shift Assignment View
     document.getElementById('btn-toggle-sched-view').addEventListener('click', () => {
       renderAdminSchedules('shifts');
     });
@@ -10712,6 +10714,44 @@ function renderAdminSchedules(tab) {
     if (addSchedBtn) {
       addSchedBtn.addEventListener('click', () => openScheduleModal());
     }
+
+    // Inline Individual Shift Select Change Handler
+    document.querySelectorAll('.emp-inline-shift-select').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const empId = e.target.dataset.id;
+        const newShiftId = e.target.value;
+        const user = DB.getUser(empId);
+        if (!user) return;
+
+        const targetSchedule = DB.getSchedule(newShiftId);
+        const updates = {};
+        if (newShiftId) {
+          updates.scheduleId = newShiftId;
+          updates.scheduleIds = [newShiftId];
+          const currentLoc = user.preferredLocation || (targetSchedule ? targetSchedule.location : 'Kohat Enclave, Pitampura, Delhi');
+          const currentShiftLocs = { ...(user.shiftLocations || {}) };
+          currentShiftLocs[newShiftId] = currentLoc;
+          updates.shiftLocations = currentShiftLocs;
+          updates.preferredLocation = currentLoc;
+        } else {
+          updates.scheduleId = '';
+          updates.scheduleIds = [];
+        }
+
+        DB.updateUser(empId, updates);
+
+        const statusBadge = document.getElementById(`loc-status-${empId}`);
+        if (statusBadge) {
+          statusBadge.innerHTML = 'Saved ✓';
+          statusBadge.style.color = 'var(--success)';
+        }
+
+        const shiftTitle = targetSchedule ? targetSchedule.name : 'Unassigned';
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`✅ Shift updated to "${shiftTitle}" for ${user.name}`, 'success');
+        }
+      });
+    });
 
     // Inline Individual Location Select Change Handler
     document.querySelectorAll('.emp-inline-loc-select').forEach(sel => {
@@ -10772,13 +10812,15 @@ function renderAdminSchedules(tab) {
       chk.addEventListener('change', updateSelectedCount);
     });
 
-    // Bulk Apply Location Handler
+    // Bulk Apply Location & Shift Handler
     const btnApplyBulk = document.getElementById('btn-apply-bulk-location');
     if (btnApplyBulk) {
       btnApplyBulk.addEventListener('click', () => {
+        const targetShift = document.getElementById('bulk-assign-shift').value;
         const targetLoc = document.getElementById('bulk-assign-location').value;
-        if (!targetLoc) {
-          alert('Please select a target worksite location from the dropdown.');
+
+        if (!targetShift && !targetLoc) {
+          alert('Please select a target shift and/or worksite location from the dropdowns.');
           return;
         }
         const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
@@ -10792,23 +10834,36 @@ function renderAdminSchedules(tab) {
           const user = DB.getUser(empId);
           if (!user) return;
 
+          const updates = {};
           const currentShiftLocs = { ...(user.shiftLocations || {}) };
-          if (Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
-            user.scheduleIds.forEach(sid => { currentShiftLocs[sid] = targetLoc; });
-          } else if (user.scheduleId) {
-            currentShiftLocs[user.scheduleId] = targetLoc;
+
+          if (targetShift) {
+            updates.scheduleId = targetShift;
+            updates.scheduleIds = [targetShift];
+            const selShift = document.querySelector(`.emp-inline-shift-select[data-id="${empId}"]`);
+            if (selShift) selShift.value = targetShift;
           }
 
-          DB.updateUser(empId, {
-            preferredLocation: targetLoc,
-            shiftLocations: currentShiftLocs
-          });
+          const activeShiftId = targetShift || user.scheduleId || (Array.isArray(user.scheduleIds) ? user.scheduleIds[0] : null);
 
-          const sel = document.querySelector(`.emp-inline-loc-select[data-id="${empId}"]`);
-          if (sel) sel.value = targetLoc;
+          if (targetLoc) {
+            updates.preferredLocation = targetLoc;
+            if (activeShiftId) {
+              currentShiftLocs[activeShiftId] = targetLoc;
+            }
+            if (Array.isArray(updates.scheduleIds || user.scheduleIds)) {
+              (updates.scheduleIds || user.scheduleIds).forEach(sid => { currentShiftLocs[sid] = targetLoc; });
+            }
+            updates.shiftLocations = currentShiftLocs;
 
-          const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
-          if (row) row.dataset.loc = targetLoc.toLowerCase();
+            const selLoc = document.querySelector(`.emp-inline-loc-select[data-id="${empId}"]`);
+            if (selLoc) selLoc.value = targetLoc;
+
+            const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
+            if (row) row.dataset.loc = targetLoc.toLowerCase();
+          }
+
+          DB.updateUser(empId, updates);
 
           const statusBadge = document.getElementById(`loc-status-${empId}`);
           if (statusBadge) {
@@ -10817,8 +10872,16 @@ function renderAdminSchedules(tab) {
           }
         });
 
+        const msgParts = [];
+        if (targetShift) {
+          const schedObj = DB.getSchedule(targetShift);
+          msgParts.push(`Shift: ${schedObj ? schedObj.name : targetShift}`);
+        }
+        if (targetLoc) {
+          msgParts.push(`Location: ${targetLoc}`);
+        }
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`✅ Updated worksite to "${targetLoc}" for ${checkedBoxes.length} employee(s).`, 'success');
+          showToastNotification(`✅ Updated ${msgParts.join(' & ')} for ${checkedBoxes.length} employee(s).`, 'success');
         }
       });
     }
