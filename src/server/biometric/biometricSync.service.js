@@ -109,6 +109,7 @@ function normalizePunch(log, deviceConfig = null) {
   if (!log) return null;
 
   const biometricUserId = String(
+    log.biometricUserId ??
     log.deviceUserId ??
     log.userId ??
     log.userid ??
@@ -119,7 +120,7 @@ function normalizePunch(log, deviceConfig = null) {
     return null;
   }
 
-  const recordTime = new Date(log.recordTime);
+  const recordTime = log.recordTime instanceof Date ? log.recordTime : new Date(log.recordTime);
 
   if (Number.isNaN(recordTime.getTime())) {
     return null;
@@ -130,9 +131,9 @@ function normalizePunch(log, deviceConfig = null) {
     biometricUserId,
     recordTime,
     ip: log.ip || deviceConfig?.ip || DEVICE.ip,
-    deviceName: deviceConfig?.name || DEVICE_NAME,
-    deviceSerial: deviceConfig?.serial || DEVICE.serial,
-    location: deviceConfig?.location || LOCATION
+    deviceName: log.deviceName || deviceConfig?.name || DEVICE_NAME,
+    deviceSerial: log.deviceSerial || deviceConfig?.serial || DEVICE.serial,
+    location: log.location || deviceConfig?.location || LOCATION
   };
 }
 
@@ -295,6 +296,28 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
         { name: new RegExp('^' + firstName, 'i') }
       ]
     }).lean();
+  }
+
+  if (!employee && targetName && targetName.toLowerCase() !== 'admin') {
+    const defaultSch = 'sch_q8jji9v';
+    try {
+      const created = await User.create({
+        id: 'usr_bio_' + target,
+        employeeId: target,
+        biometricUserId: target,
+        name: deviceUserName || ('Employee ' + target),
+        username: 'bio_' + target,
+        role: 'employee',
+        status: 'Active',
+        scheduleId: defaultSch,
+        scheduleIds: [defaultSch],
+        shiftLocations: { [defaultSch]: LOCATION }
+      });
+      employee = created.toObject ? created.toObject() : created;
+      console.log(`✨ Auto-registered biometric user in MongoDB: ${employee.name} (ID: ${target})`);
+    } catch (e) {
+      employee = await User.findOne({ biometricUserId: target }).lean();
+    }
   }
 
   if (employee && !employee.biometricUserId) {
@@ -646,7 +669,7 @@ function processLocalPunch(
     return;
   }
 
-  // NO open session. This punch is a BRAND NEW CHECK-IN for a new shift session!
+  // NO open session. Check if target shift already has attendance today
   const targetShiftId = resolveShiftForPunch(
     employee,
     punch.recordTime,
@@ -654,6 +677,40 @@ function processLocalPunch(
     schedules,
     state.attendanceLogs
   );
+
+  const existingForShift = userLogsToday.find(l => String(l.shiftId) === String(targetShiftId));
+  if (existingForShift) {
+    const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
+    const outMins = (outH || 0) * 60 + (outM || 0);
+
+    if (punchMins > outMins) {
+      const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
+      const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
+      existingForShift.checkOut = time;
+      existingForShift.checkOutPunchId = punchId;
+      existingForShift.status = evaluatedStatus;
+      existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
+      existingForShift.updatedAt = new Date().toISOString();
+      if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+      if (!existingForShift.allPunchIds.includes(punchId)) {
+        existingForShift.allPunchIds.push(punchId);
+      }
+      state.processedPunchIds.push(punchId);
+      result.updated++;
+      console.log(
+        `🔵 BIOMETRIC CHECK-OUT (EXTENDED) | ${employee.name} | Shift: ${targetShiftId} | In: ${existingForShift.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
+      );
+      return;
+    } else {
+      if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+      if (!existingForShift.allPunchIds.includes(punchId)) {
+        existingForShift.allPunchIds.push(punchId);
+      }
+      state.processedPunchIds.push(punchId);
+      result.duplicates++;
+      return;
+    }
+  }
 
   const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
   const status = computeAttendanceStatus(time, '', shiftObj);
@@ -920,200 +977,223 @@ async function syncMongoDatabase(
     unmatchedUsers: []
   };
 
+  let allSchedules = [];
+  try {
+    allSchedules = await Schedule.find({}).lean();
+  } catch (e) {}
+
   for (const punch of sortedPunches) {
     result.processed++;
-
-    const biometricUser =
-      deviceUserMap.get(
-        punch.biometricUserId
-      );
-
-    if (!biometricUser) {
-      result.unmatched++;
-      continue;
-    }
-
-    if (
-      String(biometricUser.role) === '14' ||
-      biometricUser.name.toLowerCase() === 'admin'
-    ) {
-      result.ignored++;
-      continue;
-    }
-
-    const employee =
-      await findMongoEmployee(
-        punch.biometricUserId,
-        biometricUser ? biometricUser.name : ''
-      );
-
-    if (!employee) {
-      result.unmatched++;
-
-      if (
-        !result.unmatchedUsers.includes(
-          punch.biometricUserId
-        )
-      ) {
-        result.unmatchedUsers.push(
+    try {
+      const biometricUser =
+        deviceUserMap.get(
           punch.biometricUserId
         );
+
+      if (!biometricUser) {
+        result.unmatched++;
+        continue;
       }
 
-      continue;
-    }
+      if (
+        String(biometricUser.role) === '14' ||
+        biometricUser.name.toLowerCase() === 'admin'
+      ) {
+        result.ignored++;
+        continue;
+      }
 
-    const {
-      date,
-      time
-    } =
-      getLocalDateTimeParts(
-        punch.recordTime
-      );
+      const employee =
+        await findMongoEmployee(
+          punch.biometricUserId,
+          biometricUser ? biometricUser.name : ''
+        );
 
-    const punchId =
-      createPunchId(punch);
+      if (!employee) {
+        result.unmatched++;
 
-    /*
-     * Check duplicate / already-consumed punch.
-     */
-    const duplicate =
-      await AttendanceLog.findOne({
-        $or: [
-          { biometricPunchId: punchId },
-          { checkInPunchId: punchId },
-          { checkOutPunchId: punchId },
-          { allPunchIds: punchId }
-        ]
-      }).lean();
+        if (
+          !result.unmatchedUsers.includes(
+            punch.biometricUserId
+          )
+        ) {
+          result.unmatchedUsers.push(
+            punch.biometricUserId
+          );
+        }
 
-    if (duplicate) {
-      result.duplicates++;
-      continue;
-    }
+        continue;
+      }
 
-    const [punchH, punchM] = time.split(':').map(Number);
-    const punchMins = (punchH || 0) * 60 + (punchM || 0);
+      const {
+        date,
+        time
+      } =
+        getLocalDateTimeParts(
+          punch.recordTime
+        );
 
-    // Look for active open shift session today (checkIn present, no checkOut)
-    const openLog = await AttendanceLog.findOne({
-      userId: String(employee.id),
-      date: String(date),
-      checkIn: { $ne: '' },
-      $or: [
-        { checkOut: '' },
-        { checkOut: null },
-        { checkOut: { $exists: false } }
-      ]
-    });
+      const punchId =
+        createPunchId(punch);
 
-    if (openLog) {
-      const [inH, inM] = openLog.checkIn.split(':').map(Number);
-      const inMins = (inH || 0) * 60 + (inM || 0);
+      /*
+       * Check duplicate / already-consumed punch.
+       */
+      const duplicate =
+        await AttendanceLog.findOne({
+          $or: [
+            { biometricPunchId: punchId },
+            { checkInPunchId: punchId },
+            { checkOutPunchId: punchId },
+            { allPunchIds: punchId }
+          ]
+        }).lean();
 
-      // Bounce tap within 1 minute
-      if (punchMins <= inMins + 1) {
-        if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-        openLog.allPunchIds.push(punchId);
-        await openLog.save();
+      if (duplicate) {
         result.duplicates++;
         continue;
       }
 
-      // Check-out open shift
-      let shiftObj = null;
-      try {
-        shiftObj = await Schedule.findOne({ id: openLog.shiftId }).lean();
-      } catch (e) {}
-      const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, time, shiftObj);
+      const [punchH, punchM] = time.split(':').map(Number);
+      const punchMins = (punchH || 0) * 60 + (punchM || 0);
 
-      openLog.checkOut = time;
-      openLog.checkOutPunchId = punchId;
-      openLog.status = evaluatedStatus;
-      openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
-      openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
-      openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
-      if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-      openLog.allPunchIds.push(punchId);
-      await openLog.save();
+      // Look for active open shift session today (checkIn present, no checkOut)
+      const openLog = await AttendanceLog.findOne({
+        userId: String(employee.id),
+        date: String(date),
+        checkIn: { $ne: '' },
+        $or: [
+          { checkOut: '' },
+          { checkOut: null },
+          { checkOut: { $exists: false } }
+        ]
+      });
 
-      result.updated++;
-      continue;
+      if (openLog) {
+        const [inH, inM] = openLog.checkIn.split(':').map(Number);
+        const inMins = (inH || 0) * 60 + (inM || 0);
+
+        // Bounce tap within 1 minute
+        if (punchMins <= inMins + 1) {
+          if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+          if (!openLog.allPunchIds.includes(punchId)) {
+            openLog.allPunchIds.push(punchId);
+          }
+          await openLog.save();
+          result.duplicates++;
+          continue;
+        }
+
+        // Check-out open shift
+        const shiftObj = allSchedules.find(s => String(s.id) === String(openLog.shiftId));
+        const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, time, shiftObj);
+
+        openLog.checkOut = time;
+        openLog.checkOutPunchId = punchId;
+        openLog.status = evaluatedStatus;
+        openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
+        openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
+        openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
+        if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
+        if (!openLog.allPunchIds.includes(punchId)) {
+          openLog.allPunchIds.push(punchId);
+        }
+        await openLog.save();
+
+        result.updated++;
+        console.log(
+          `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
+        );
+        continue;
+      }
+
+      // No open shift. Check existing logs today for this user
+      const existingLogs = await AttendanceLog.find({
+        userId: String(employee.id),
+        date: String(date)
+      });
+
+      const targetShiftId = resolveShiftForPunch(
+        employee,
+        punch.recordTime,
+        date,
+        allSchedules,
+        existingLogs
+      );
+
+      const attId = createAttendanceId(employee.id, date, targetShiftId);
+      const existingForShift = existingLogs.find(l => String(l.shiftId) === String(targetShiftId) || l.id === attId);
+
+      if (existingForShift) {
+        const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
+        const outMins = (outH || 0) * 60 + (outM || 0);
+
+        if (punchMins > outMins) {
+          const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
+          const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
+
+          existingForShift.checkOut = time;
+          existingForShift.checkOutPunchId = punchId;
+          existingForShift.status = evaluatedStatus;
+          existingForShift.biometricUsed = punch.deviceName || DEVICE_NAME;
+          existingForShift.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
+          existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
+          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+          if (!existingForShift.allPunchIds.includes(punchId)) {
+            existingForShift.allPunchIds.push(punchId);
+          }
+          await existingForShift.save();
+          result.updated++;
+          console.log(
+            `🔵 BIOMETRIC CHECK-OUT (EXTENDED) | ${employee.name} | Shift: ${targetShiftId} | In: ${existingForShift.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
+          );
+          continue;
+        } else {
+          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+          if (!existingForShift.allPunchIds.includes(punchId)) {
+            existingForShift.allPunchIds.push(punchId);
+          }
+          await existingForShift.save();
+          result.duplicates++;
+          continue;
+        }
+      }
+
+      // Completely new check-in for this shift session
+      const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
+      const newStatus = computeAttendanceStatus(time, '', shiftObj);
+
+      await AttendanceLog.findOneAndUpdate(
+        { id: attId },
+        {
+          $setOnInsert: {
+            id: attId,
+            userId: String(employee.id),
+            date,
+            shiftId: targetShiftId || employee.scheduleId || '',
+            checkIn: time,
+            checkOut: '',
+            checkInPunchId: punchId,
+            biometricPunchId: punchId,
+            status: newStatus,
+            biometricUsed: punch.deviceName || DEVICE_NAME,
+            biometricDeviceId: punch.deviceSerial || DEVICE.serial,
+            biometricUserId: punch.biometricUserId,
+            lastBiometricPunchAt: punch.recordTime.toISOString(),
+            location: punch.location || employee.preferredLocation || LOCATION
+          },
+          $addToSet: { allPunchIds: punchId }
+        },
+        { upsert: true, new: true }
+      );
+
+      result.created++;
+      console.log(
+        `🟢 BIOMETRIC CHECK-IN | ${employee.name} | Shift: ${targetShiftId} | ${date} ${time} | Status: ${newStatus}`
+      );
+    } catch (punchErr) {
+      console.warn(`⚠️ Error processing MongoDB punch for ${punch.biometricUserId}:`, punchErr.message);
     }
-
-    // No open shift. This is a NEW check-in for this employee
-    const existingLogs = await AttendanceLog.find({
-      userId: String(employee.id),
-      date: String(date)
-    }).lean();
-
-    const targetShiftId = resolveShiftForPunch(
-      employee,
-      punch.recordTime,
-      date,
-      [],
-      existingLogs
-    );
-
-    let shiftObj = null;
-    try {
-      shiftObj = await Schedule.findOne({ id: targetShiftId }).lean();
-    } catch (e) {}
-    const newStatus = computeAttendanceStatus(time, '', shiftObj);
-
-    await AttendanceLog.create({
-      id:
-        createAttendanceId(
-          employee.id,
-          date,
-          targetShiftId
-        ),
-
-      userId:
-        String(employee.id),
-
-      date,
-
-      shiftId:
-        targetShiftId || employee.scheduleId || '',
-
-      checkIn:
-        time,
-
-      checkOut:
-        '',
-
-      checkInPunchId:
-        punchId,
-
-      biometricPunchId:
-        punchId,
-
-      allPunchIds:
-        [punchId],
-
-      status:
-        newStatus,
-
-      biometricUsed:
-        punch.deviceName || DEVICE_NAME,
-
-      biometricDeviceId:
-        punch.deviceSerial || DEVICE.serial,
-
-      biometricUserId:
-        punch.biometricUserId,
-
-      lastBiometricPunchAt:
-        punch.recordTime.toISOString(),
-
-      location:
-        punch.location ||
-        employee.preferredLocation ||
-        LOCATION
-    });
-
-    result.created++;
   }
 
   return result;

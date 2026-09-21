@@ -46,7 +46,7 @@
       "employeeId": "EMP1",
       "biometricUserId": "1",
       "biometricId": "1",
-      "scheduleId": "sch_4ef4kis",
+      "scheduleId": "sch_q8jji9v",
       "preferredLocation": "Noida sector 61",
       "baseSalary": 40000,
       "allowanceHRA": null,
@@ -77,7 +77,6 @@
         "sch_3ebecon"
       ],
       "shiftLocations": {
-        "sch_4ef4kis": "Noida sector 61",
         "sch_q8jji9v": "Noida sector 61",
         "sch_3ebecon": "Noida sector 61"
       },
@@ -626,6 +625,28 @@
     }
   ],
   "attendanceLogs": [
+    {
+      "id": "log_usr_68s5s48_2026-09-21_sch_q8jji9v",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-21",
+      "shiftId": "sch_q8jji9v",
+      "checkIn": "11:56",
+      "checkOut": null,
+      "status": "Late",
+      "biometricUsed": "none",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "28.697800° N, 77.140800° E",
+      "distance": 0,
+      "facePhoto": null,
+      "latitude": 28.6978,
+      "longitude": 77.1408,
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-21T06:23:49.000Z",
+        "CJOU232660306_1_2026-09-21T06:27:56.000Z"
+      ]
+    },
     {
       "id": "BIO_usr_68s5s48_2026-09-21_sch_3ebecon",
       "userId": "usr_68s5s48",
@@ -1669,6 +1690,28 @@
   ],
   "announcements": [
     {
+      "id": "ann_9a2fna3",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.",
+      "category": "Update",
+      "date": "2026-09-21",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-21T06:28:11.024Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_qwhgmu2",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: new shift: Noida sector 61; Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: Noida sector 61 ➔ Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: Noida sector 61\n• Primary Work Shift: new shift ➔ Morning Shift 900",
+      "category": "Update",
+      "date": "2026-09-21",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-21T06:25:29.153Z",
+      "link": "#user-management"
+    },
+    {
       "id": "ann_sjpx4bt",
       "title": "📢 Profile Updated by HR/Manager",
       "content": "Your profile details have been updated by Abhishek Sharma.",
@@ -2432,6 +2475,168 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-21T06:28:11.182Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_9a2fna3",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.",
+        "category": "Update",
+        "date": "2026-09-21",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-21T06:28:11.024Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T06:28:11.119Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "Noida sector 61"
+        },
+        "role": "employee",
+        "preferredLocation": "Noida sector 61",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T06:26:47.920Z",
+      "action": "PUSH_attendanceLogs",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "id": "log_usr_68s5s48_2026-09-21_sch_q8jji9v",
+        "userId": "usr_68s5s48",
+        "date": "2026-09-21",
+        "shiftId": "sch_q8jji9v",
+        "checkIn": "11:56",
+        "checkOut": null,
+        "status": "Late",
+        "biometricUsed": "none",
+        "location": "Noida sector 61",
+        "deviationFlag": false,
+        "justification": "",
+        "coords": "28.697800° N, 77.140800° E",
+        "distance": 0,
+        "facePhoto": null,
+        "latitude": 28.6978,
+        "longitude": 77.1408
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T06:25:29.311Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_qwhgmu2",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Work Shift Locations: new shift: Noida sector 61; Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: Noida sector 61 ➔ Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: Noida sector 61\n• Primary Work Shift: new shift ➔ Morning Shift 900",
+        "category": "Update",
+        "date": "2026-09-21",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-21T06:25:29.153Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-21T06:25:29.248Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "Noida sector 61"
+        },
+        "role": "employee",
+        "preferredLocation": "Noida sector 61",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_manager",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-21T06:05:40.599Z",
       "action": "PUSH_announcements",
@@ -4528,8 +4733,8 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-21T06:20:14.371Z",
-    "lastLogCount": 0
+    "lastSyncAt": "2026-09-21T06:36:57.913Z",
+    "lastLogCount": 36
   },
   "activityLogs": [
     {
@@ -4977,7 +5182,9 @@
     "CJOU232660306_1_2026-09-18T09:35:13.000Z",
     "CJOU232660306_949_2026-09-18T10:48:25.000Z",
     "CJOU232660306_949_2026-09-18T10:57:28.000Z",
-    "CJOU232660306_1_2026-09-21T04:21:39.000Z"
+    "CJOU232660306_1_2026-09-21T04:21:39.000Z",
+    "CJOU232660306_1_2026-09-21T06:23:49.000Z",
+    "CJOU232660306_1_2026-09-21T06:27:56.000Z"
   ],
   "biometricDevices": [
     {
@@ -4991,7 +5198,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-09-21T06:19:24.780Z",
+      "lastSyncAt": "2026-09-21T06:36:26.346Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 32
     },
@@ -5006,7 +5213,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-21T06:19:26.798Z",
+      "lastSyncAt": "2026-09-21T06:36:28.133Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 0
     },
@@ -5021,7 +5228,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-21T06:19:27.403Z",
+      "lastSyncAt": "2026-09-21T06:36:28.740Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 0
     }
@@ -5039,9 +5246,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.348Z"
     },
     {
       "biometricUserId": "1",
@@ -5055,9 +5263,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.348Z"
     },
     {
       "biometricUserId": "HR100",
@@ -5071,9 +5280,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.348Z"
     },
     {
       "biometricUserId": "HR101",
@@ -5087,9 +5297,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.348Z"
     },
     {
       "biometricUserId": "MGR102",
@@ -5103,9 +5314,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "5174",
@@ -5119,9 +5331,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "309",
@@ -5135,9 +5348,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "1094",
@@ -5151,9 +5365,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "1200",
@@ -5167,9 +5382,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "1253",
@@ -5183,9 +5399,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "293",
@@ -5199,9 +5416,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "3980",
@@ -5215,9 +5433,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.397Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "1269",
@@ -5231,9 +5450,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "1275",
@@ -5247,9 +5467,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "845",
@@ -5263,9 +5484,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "EMP106",
@@ -5279,9 +5501,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "949",
@@ -5295,9 +5518,10 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     },
     {
       "biometricUserId": "30191",
@@ -5311,12 +5535,29 @@
       "syncedDevices": [
         "dev_k40_noida",
         "dev_k40_delhi",
-        "dev_k40_omaxe"
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
       ],
-      "lastReplicatedAt": "2026-09-21T06:18:14.398Z"
+      "lastReplicatedAt": "2026-09-21T06:36:29.349Z"
     }
   ],
   "biometricSyncLogs": [
+    {
+      "id": "synclog_1789972589379",
+      "timestamp": "2026-09-21T06:36:29.379Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_muavgmym"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
     {
       "id": "synclog_1789971567424",
       "timestamp": "2026-09-21T06:19:27.424Z",

@@ -347,11 +347,40 @@ async function getAttendanceLogs() {
  */
 async function getDeviceSnapshot() {
   return withDevice(async (zk) => {
-    const usersResult = await zk.getUsers().catch(() => ({ data: [] }));
-    const users = usersResult?.data || [];
+    let users = [];
+    try {
+      const usersResult = await zk.getUsers();
+      users = usersResult?.data || [];
+    } catch (uErr) {
+      console.warn('⚠️ [K40] getUsers notice:', uErr.message);
+    }
 
-    const attendanceResult = await zk.getAttendances().catch(() => ({ data: [] }));
-    const logs = attendanceResult?.data || [];
+    await sleep(250);
+
+    let logs = [];
+    try {
+      const attendanceResult = await zk.getAttendances();
+      logs = attendanceResult?.data || [];
+    } catch (aErr) {
+      console.warn('⚠️ [K40] getAttendances attempt 1 notice:', aErr.message);
+      await sleep(350);
+      try {
+        const retryResult = await zk.getAttendances();
+        logs = retryResult?.data || [];
+      } catch (retryErr) {
+        console.warn('⚠️ [K40] getAttendances retry notice:', retryErr.message);
+      }
+    }
+
+    if (logs.length === 0) {
+      await sleep(300);
+      try {
+        const retryResult = await zk.getAttendances();
+        if (retryResult?.data?.length > 0) {
+          logs = retryResult.data;
+        }
+      } catch (_) {}
+    }
 
     return { users, logs };
   });
