@@ -48,6 +48,7 @@ export function renderAdminSchedules(tab) {
               </select>
               <select id="loc-assign-loc-filter" class="form-input" style="width:auto; padding:8px 12px; font-size:12.5px; border-radius:8px">
                 <option value="">All Worksite Locations</option>
+                <option value="__NONE__">-- No Worksite Location --</option>
                 ${allLocationNames.map(l => `<option value="${Utils.escape(l)}">${Utils.escape(l)}</option>`).join('')}
               </select>
             </div>
@@ -67,6 +68,7 @@ export function renderAdminSchedules(tab) {
             </select>
             <select id="bulk-assign-location" class="form-input" style="width:auto; min-width:200px; padding:6px 10px; font-size:12px; border-radius:6px">
               <option value="">-- Set Worksite Location (Optional) --</option>
+              <option value="__NONE__">-- No Worksite Location --</option>
               ${allLocationNames.map(loc => `<option value="${Utils.escape(loc)}">${Utils.escape(loc)}</option>`).join('')}
             </select>
             <button id="btn-apply-bulk-location" class="btn btn-primary" style="padding:7px 16px; font-size:12px; font-weight:700; width:auto; border-radius:6px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; border:none; cursor:pointer">
@@ -100,10 +102,18 @@ export function renderAdminSchedules(tab) {
 
                   const activeShiftId = (u.scheduleIds && u.scheduleIds.length > 0) ? u.scheduleIds[0] : (u.scheduleId || '');
 
-                  const currentLoc = (u.shiftLocations && activeShiftId && u.shiftLocations[activeShiftId])
-                    || u.preferredLocation 
-                    || (assignedSchedules[0] && assignedSchedules[0].location)
-                    || 'Kohat Enclave, Pitampura, Delhi';
+                  let currentLoc = '';
+                  if (u.shiftLocations && activeShiftId && typeof u.shiftLocations[activeShiftId] === 'string') {
+                    currentLoc = u.shiftLocations[activeShiftId];
+                  } else if (typeof u.preferredLocation === 'string') {
+                    currentLoc = u.preferredLocation;
+                  } else if (assignedSchedules[0] && assignedSchedules[0].location) {
+                    currentLoc = assignedSchedules[0].location;
+                  } else {
+                    currentLoc = '';
+                  }
+
+                  const isNoLoc = !currentLoc || currentLoc === 'No Worksite Location' || currentLoc === 'None';
 
                   return `
                     <tr class="emp-loc-row" data-id="${u.id}" data-name="${Utils.escape(u.name).toLowerCase()}" data-empid="${(u.employeeId || u.username || '').toLowerCase()}" data-dept="${Utils.escape(u.department || '').toLowerCase()}" data-loc="${Utils.escape(currentLoc).toLowerCase()}">
@@ -136,8 +146,9 @@ export function renderAdminSchedules(tab) {
                       </td>
                       <td>
                         <select class="form-input emp-inline-loc-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:260px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
+                          <option value="" ${isNoLoc ? 'selected' : ''}>-- No Worksite Location --</option>
                           ${allLocationNames.map(loc => `
-                            <option value="${Utils.escape(loc)}" ${currentLoc === loc ? 'selected' : ''}>${Utils.escape(loc)}</option>
+                            <option value="${Utils.escape(loc)}" ${(!isNoLoc && currentLoc === loc) ? 'selected' : ''}>${Utils.escape(loc)}</option>
                           `).join('')}
                         </select>
                       </td>
@@ -237,7 +248,8 @@ export function renderAdminSchedules(tab) {
           statusBadge.style.color = 'var(--success)';
         }
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`✅ Worksite set to "${newLoc}" for ${user.name}`, 'success');
+          const locTitle = newLoc ? `"${newLoc}"` : 'No Worksite Location';
+          showToastNotification(`✅ Worksite set to ${locTitle} for ${user.name}`, 'success');
         }
       });
     });
@@ -272,9 +284,11 @@ export function renderAdminSchedules(tab) {
     if (btnApplyBulk) {
       btnApplyBulk.addEventListener('click', () => {
         const targetShift = document.getElementById('bulk-assign-shift').value;
-        const targetLoc = document.getElementById('bulk-assign-location').value;
+        const rawTargetLoc = document.getElementById('bulk-assign-location').value;
+        const isClearingLoc = (rawTargetLoc === '__NONE__');
+        const targetLoc = isClearingLoc ? '' : rawTargetLoc;
 
-        if (!targetShift && !targetLoc) {
+        if (!targetShift && !rawTargetLoc) {
           alert('Please select a target shift and/or worksite location from the dropdowns.');
           return;
         }
@@ -301,7 +315,7 @@ export function renderAdminSchedules(tab) {
 
           const activeShiftId = targetShift || user.scheduleId || (Array.isArray(user.scheduleIds) ? user.scheduleIds[0] : null);
 
-          if (targetLoc) {
+          if (rawTargetLoc) {
             updates.preferredLocation = targetLoc;
             if (activeShiftId) {
               currentShiftLocs[activeShiftId] = targetLoc;
@@ -332,8 +346,8 @@ export function renderAdminSchedules(tab) {
           const schedObj = DB.getSchedule(targetShift);
           msgParts.push(`Shift: ${schedObj ? schedObj.name : targetShift}`);
         }
-        if (targetLoc) {
-          msgParts.push(`Location: ${targetLoc}`);
+        if (rawTargetLoc) {
+          msgParts.push(`Location: ${isClearingLoc ? 'No Worksite Location' : targetLoc}`);
         }
         if (typeof showToastNotification === 'function') {
           showToastNotification(`✅ Updated ${msgParts.join(' & ')} for ${checkedBoxes.length} employee(s).`, 'success');
@@ -361,7 +375,7 @@ export function renderAdminSchedules(tab) {
 
         const matchQ = !q || name.includes(q) || empId.includes(q) || dept.includes(q);
         const matchD = !d || dept === d;
-        const matchL = !l || loc === l;
+        const matchL = !l || (l === '__none__' ? (!loc || loc === 'no worksite location' || loc === 'none') : loc === l);
 
         if (matchQ && matchD && matchL) {
           row.style.display = '';
