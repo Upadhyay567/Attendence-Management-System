@@ -10592,15 +10592,6 @@ function renderAdminSchedules() {
                 `).join('')}
               </select>
             </div>
-            <div class="shift-meta-row" style="margin-top:6px; align-items:center;">
-              <span>Location Swap:</span>
-              <select class="form-input inline-sched-swap" data-id="${s.id}" style="padding:4px 8px;font-size:12px;width:auto;margin-left:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
-                <option value="">-- Swap with --</option>
-                ${schedules.filter(other => other.id !== s.id).map(other => `
-                  <option value="${other.id}">${Utils.escape(other.name)}</option>
-                `).join('')}
-              </select>
-            </div>
             <div class="shift-days-row" style="margin-top:12px">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => `<div class="day-bubble ${s.workDays.includes(i) ? 'active' : ''}">${day}</div>`).join('')}</div>
           </div>
         `).join('')}
@@ -10648,25 +10639,6 @@ function renderAdminSchedules() {
     btn.addEventListener('click', (e) => {
       const schedId = e.target.dataset.id;
       openAddLocationDialog(schedId);
-    });
-  });
-  document.querySelectorAll('.inline-sched-swap').forEach(sel => {
-    sel.addEventListener('change', (e) => {
-      const schedId = e.target.dataset.id;
-      const otherId = e.target.value;
-      if (!otherId) return;
-      const s1 = DB.getSchedule(schedId);
-      const s2 = DB.getSchedule(otherId);
-      if (s1 && s2) {
-        const loc1 = s1.location || 'Kohat Enclave, Pitampura, Delhi';
-        const loc2 = s2.location || 'Kohat Enclave, Pitampura, Delhi';
-        
-        DB.updateSchedule(schedId, { location: loc2 });
-        DB.updateSchedule(otherId, { location: loc1 });
-        
-        alert(`Swapped locations between "${s1.name}" and "${s2.name}"!`);
-        renderAdminSchedules();
-      }
     });
   });
 }// Helper to load SheetJS dynamically from CDN
