@@ -3,6 +3,13 @@
 
 const ZKLib = require('node-zklib');
 
+// Filter low-level node-zklib "ok tcp" stdout noise
+const _origConsoleLog = console.log;
+console.log = function(...args) {
+  if (args.length === 1 && args[0] === 'ok tcp') return;
+  return _origConsoleLog.apply(console, args);
+};
+
 // =====================================================
 // DEVICE CONFIGURATION
 // Reads from .env — do NOT hard-code these values.

@@ -111,6 +111,10 @@ app.use('/api', (req, res) => {
 // SPA shell fallback
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+    const ext = path.extname(req.path).toLowerCase();
+    if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot'].includes(ext)) {
+      return res.status(404).end();
+    }
     return res.sendFile(path.join(ROOT_DIR, 'index.html'));
   }
   next();

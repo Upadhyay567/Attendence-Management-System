@@ -909,20 +909,16 @@ async function syncLocalDatabase(
    */
   state.biometricSync = {
     deviceIp: DEVICE.ip,
-
-    deviceSerial:
-      DEVICE.serial,
-
-    lastSyncAt:
-      new Date().toISOString(),
-
-    lastLogCount:
-      sortedPunches.length
+    deviceSerial: DEVICE.serial,
+    lastSyncAt: new Date().toISOString(),
+    lastLogCount: sortedPunches.length
   };
 
-  writeLocalDatabase(
-    state
-  );
+  const hasChanges = (result.created > 0 || result.updated > 0 || state.__changed || !state.biometricSync);
+  delete state.__changed;
+  if (hasChanges) {
+    writeLocalDatabase(state);
+  }
 
   return result;
 }
@@ -1323,7 +1319,7 @@ async function syncBiometricAttendance(options = {}) {
     });
     const combinedUsers = Array.from(uniqueUserMap.values());
 
-    if (normalizedPunches.length > 0 || isManual) {
+    if (isManual) {
       console.log(
         `📡 Aggregated ${combinedUsers.length} biometric users and ${normalizedPunches.length} punch records from ${deviceStatuses.filter(d => d.online).length} online devices.`
       );

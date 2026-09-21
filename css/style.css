@@ -1578,7 +1578,7 @@ body.light-theme .guideline-item {
   flex-direction: column;
   justify-content: space-between;
   padding: 60px 80px;
-  background: url('../surya-workspace.png') no-repeat center center;
+  background: linear-gradient(135deg, #1f080a 0%, #360e12 50%, #170508 100%);
   background-size: cover;
   border-right: 1px solid var(--border);
   overflow: hidden;

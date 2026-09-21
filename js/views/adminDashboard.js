@@ -1462,7 +1462,7 @@ export async function renderAdminDashboard() {
       clearInterval(window.adminDashboardInterval);
       window.adminDashboardInterval = null;
     }
-  }, 10000);
+  }, 30000);
 }
 
 function renderAdminUsers() {

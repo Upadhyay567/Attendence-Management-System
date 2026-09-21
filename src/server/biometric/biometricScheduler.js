@@ -29,7 +29,7 @@ function startBiometricScheduler() {
   const interval =
     Number(
       process.env.BIOMETRIC_SYNC_INTERVAL ||
-      15000
+      60000
     );
 
   console.log(

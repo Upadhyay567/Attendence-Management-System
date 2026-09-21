@@ -500,6 +500,18 @@ export const DB = {
   },
 
   async init() {
+    if (this._inFlightInit) {
+      return this._inFlightInit;
+    }
+    this._inFlightInit = this._doInit();
+    try {
+      return await this._inFlightInit;
+    } finally {
+      this._inFlightInit = null;
+    }
+  },
+
+  async _doInit() {
     await this.resolveApiBase();
     
     let token = '';
