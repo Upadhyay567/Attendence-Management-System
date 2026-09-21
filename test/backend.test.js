@@ -249,5 +249,102 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.body).toHaveProperty('success');
     });
   });
+
+  describe('Password Recovery / Forgot Password Flow & API 404 Tests', () => {
+    let testUserId = null;
+
+    it('should return JSON 404 error (not HTML) for nonexistent API endpoints', async () => {
+      const response = await request(app)
+        .post('/api/nonexistent-auth-endpoint')
+        .send({});
+
+      expect(response.status).toBe(404);
+      expect(response.headers['content-type']).toMatch(/json/);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('not found');
+    });
+
+    it('should reject identify request when identifier is missing', async () => {
+      const response = await request(app)
+        .post('/api/auth/identify')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+    });
+
+    it('should return 404 when user is not found by identifier', async () => {
+      const response = await request(app)
+        .post('/api/auth/identify')
+        .send({ identifier: 'nonexistent_user_99999' });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('error');
+    });
+
+    it('should successfully identify user hr0789 and not expose password', async () => {
+      const response = await request(app)
+        .post('/api/auth/identify')
+        .send({ identifier: 'hr0789' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.user).toBeDefined();
+      expect(response.body.user.employeeId.toUpperCase()).toBe('HR0789');
+      expect(response.body.user.password).toBeUndefined();
+      testUserId = response.body.user.id;
+    });
+
+    it('should send verification OTP code', async () => {
+      const response = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ userId: testUserId, method: 'email' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.otpFallback).toBe('123456');
+    });
+
+    it('should reject invalid verification OTP code', async () => {
+      const response = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ userId: testUserId, otp: '999999' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.verified).toBe(false);
+    });
+
+    it('should accept valid verification OTP code', async () => {
+      const response = await request(app)
+        .post('/api/auth/verify-otp')
+        .send({ userId: testUserId, otp: '123456' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.verified).toBe(true);
+    });
+
+    it('should successfully reset user password and allow login with new password', async () => {
+      const resetRes = await request(app)
+        .post('/api/auth/reset-password')
+        .send({ userId: testUserId, newPassword: 'ResetPassword@123' });
+
+      expect(resetRes.status).toBe(200);
+      expect(resetRes.body.success).toBe(true);
+
+      // Verify login works with the new password
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'hr0789', password: 'ResetPassword@123', role: 'hr' });
+
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body).toHaveProperty('token');
+
+      // Revert password back to Admin@123
+      await request(app)
+        .post('/api/auth/reset-password')
+        .send({ userId: testUserId, newPassword: 'Admin@123' });
+    });
+  });
 });
+
 

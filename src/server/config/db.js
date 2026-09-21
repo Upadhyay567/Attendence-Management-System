@@ -49,7 +49,8 @@ const UserSchema = new mongoose.Schema({
   assignedById: String,
   profileVerificationStatus: String,
   profileVerificationComment: String,
-  pendingProfileEdits: mongoose.Schema.Types.Mixed
+  pendingProfileEdits: mongoose.Schema.Types.Mixed,
+  passwordResetCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const AttendanceLogSchema = new mongoose.Schema({

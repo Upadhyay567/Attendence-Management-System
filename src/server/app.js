@@ -103,6 +103,11 @@ app.get('/api/db-status', async (req, res) => {
   }
 });
 
+// API 404 handler - ensure all unhandled /api/* calls return JSON
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `API endpoint ${req.method} ${req.originalUrl || req.path} not found.` });
+});
+
 // SPA shell fallback
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api/')) {

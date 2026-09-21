@@ -3519,12 +3519,17 @@ function showForgotPasswordModal(initialId = '') {
         body: JSON.stringify({ identifier: rawInput })
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Account record not found.');
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = {};
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Account record not found.');
+      }
+
       verifiedUser = data.user;
       const resetsCount = verifiedUser.passwordResetCount || 0;
 
@@ -3600,12 +3605,17 @@ function showForgotPasswordModal(initialId = '') {
         body: JSON.stringify({ userId: verifiedUser.id, method })
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to send verification code.');
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = {};
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send verification code.');
+      }
+
       console.log('OTP details:', data.details);
 
       // Display custom instruction to use fallback if not configured
@@ -3651,9 +3661,15 @@ function showForgotPasswordModal(initialId = '') {
         body: JSON.stringify({ userId: verifiedUser.id, otp: enteredOtp })
       });
 
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = {};
+      }
+
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Invalid verification code.');
+        throw new Error(data.error || 'Invalid verification code.');
       }
 
       modal.querySelector('#forgot-step-verification-select').style.display = 'none';
@@ -3768,9 +3784,15 @@ function showForgotPasswordModal(initialId = '') {
         body: JSON.stringify({ userId: verifiedUser.id, newPassword: newPwd })
       });
       
+      let resetData = {};
+      try {
+        resetData = await resetRes.json();
+      } catch (_) {
+        resetData = {};
+      }
+
       if (!resetRes.ok) {
-        const err = await resetRes.json();
-        throw new Error(err.error || 'Failed to reset password.');
+        throw new Error(resetData.error || 'Failed to reset password.');
       }
       
       closeModal();
