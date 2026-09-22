@@ -5683,7 +5683,7 @@ function renderEmployeePayslip(userId, month, year) {
         <div class="payslip-meta-block">
           <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
           <div><strong>Total Working Days:</strong> ${payroll.workingDays} days</div>
-          <div><strong>Present Days:</strong> ${payroll.presentDays} days</div>
+          <div><strong>Actual Working Days:</strong> ${payroll.actualWorkingDays || payroll.presentDays} days</div>
           <div><strong>Leave Days:</strong> ${payroll.approvedLeaveDays} days</div>
         </div>
       </div>
@@ -5722,6 +5722,13 @@ function renderEmployeePayslip(userId, month, year) {
             <td style="text-align:right">-</td>
             <td style="text-align:right;color:#ef4444">₹${payroll.absentDeduction.toLocaleString()}</td>
           </tr>
+          ${payroll.unpaidSundayDays > 0 ? `
+          <tr>
+            <td>Sunday Leave Penalties (${payroll.unpaidSundayDays} Sunday${payroll.unpaidSundayDays > 1 ? 's' : ''} deducted for ≥2 weekly leaves)</td>
+            <td style="text-align:right">-</td>
+            <td style="text-align:right;color:#ef4444">₹${payroll.sundayDeduction.toLocaleString()}</td>
+          </tr>
+          ` : ''}
           <tr>
             <td>Half-day Salary Deductions (${payroll.halfDays} occurrences)</td>
             <td style="text-align:right">-</td>
@@ -12854,8 +12861,8 @@ function openProfileDownloadModal(preSelectedUserId) {
 
             <div class="sec-title">Attendance & Days Summary</div>
             <div class="emp-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 12px;">
-              <div class="info-item" style="flex-direction:column"><span class="info-lbl">Working Days</span><span class="info-val" style="font-size:13px">${payroll.workingDays ?? 0} Days</span></div>
-              <div class="info-item" style="flex-direction:column"><span class="info-lbl">Present Days</span><span class="info-val" style="font-size:13px;color:#16a34a">${payroll.presentDays ?? 0} Days</span></div>
+              <div class="info-item" style="flex-direction:column"><span class="info-lbl">Total Working Days</span><span class="info-val" style="font-size:13px">${payroll.workingDays ?? 0} Days</span></div>
+              <div class="info-item" style="flex-direction:column"><span class="info-lbl">Actual Working Days</span><span class="info-val" style="font-size:13px;color:#16a34a">${payroll.actualWorkingDays ?? payroll.presentDays ?? 0} Days</span></div>
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Absent Days</span><span class="info-val" style="font-size:13px;color:${(payroll.absentDays || 0) > 0 ? '#dc2626' : '#0f172a'}">${payroll.absentDays ?? 0} Days</span></div>
               <div class="info-item" style="flex-direction:column"><span class="info-lbl">Leave Days</span><span class="info-val" style="font-size:13px;color:#2563eb">${payroll.approvedLeaveDays ?? 0} Days</span></div>
             </div>
@@ -12918,6 +12925,13 @@ function openProfileDownloadModal(preSelectedUserId) {
                   <td style="text-align:right">-</td>
                   <td style="text-align:right" class="deduction">₹${(payroll.absentDeduction ?? 0).toLocaleString()}</td>
                 </tr>
+                ${(payroll.unpaidSundayDays || 0) > 0 ? `
+                <tr>
+                  <td>Sunday Leave Penalties (${payroll.unpaidSundayDays} Sunday${payroll.unpaidSundayDays > 1 ? 's' : ''} deducted for ≥2 weekly leaves)</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right" class="deduction">₹${(payroll.sundayDeduction ?? 0).toLocaleString()}</td>
+                </tr>
+                ` : ''}
                 <tr>
                   <td>Half-day Salary Deductions (${payroll.halfDays ?? 0} occurrences)</td>
                   <td style="text-align:right">-</td>
@@ -14705,7 +14719,7 @@ function compileReports(month, year) {
               <div class="payslip-meta-block">
                 <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
                 <div><strong>Total Working Days:</strong> ${p.workingDays} days</div>
-                <div><strong>Present Days:</strong> ${p.presentDays} days</div>
+                <div><strong>Actual Working Days:</strong> ${p.actualWorkingDays || p.presentDays} days</div>
                 <div><strong>Leave Days:</strong> ${p.approvedLeaveDays} days</div>
               </div>
             </div>
@@ -14744,6 +14758,13 @@ function compileReports(month, year) {
                   <td style="text-align:right">-</td>
                   <td style="text-align:right;color:#ef4444">₹${p.absentDeduction.toLocaleString()}</td>
                 </tr>
+                ${(p.unpaidSundayDays || 0) > 0 ? `
+                <tr>
+                  <td>Sunday Leave Penalties (${p.unpaidSundayDays} Sunday${p.unpaidSundayDays > 1 ? 's' : ''} deducted for ≥2 weekly leaves)</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right;color:#ef4444">₹${p.sundayDeduction.toLocaleString()}</td>
+                </tr>
+                ` : ''}
                 <tr>
                   <td>Half-day Salary Deductions (${p.halfDays} occurrences)</td>
                   <td style="text-align:right">-</td>
@@ -20611,6 +20632,13 @@ function printSinglePayslipPDF(userId, month, year) {
           <td style="text-align:right">-</td>
           <td style="text-align:right" class="deduction">₹${(payroll.absentDeduction ?? 0).toLocaleString()}</td>
         </tr>
+        ${(payroll.unpaidSundayDays || 0) > 0 ? `
+        <tr>
+          <td>Sunday Leave Penalties (${payroll.unpaidSundayDays} Sunday${payroll.unpaidSundayDays > 1 ? 's' : ''} deducted for ≥2 weekly leaves)</td>
+          <td style="text-align:right">-</td>
+          <td style="text-align:right" class="deduction">₹${(payroll.sundayDeduction ?? 0).toLocaleString()}</td>
+        </tr>
+        ` : ''}
         <tr>
           <td>Half-day Salary Deductions (${payroll.halfDays ?? 0} occurrences)</td>
           <td style="text-align:right">-</td>
@@ -20712,6 +20740,7 @@ function downloadSinglePayslipExcel(userId, month, year) {
     { "Category": "Employee Details", "Parameter": "Role / Designation", "Value": user.designation || 'N/A' },
     { "Category": "Statement Period", "Parameter": "Statement Period", "Value": period },
     { "Category": "Attendance Summary", "Parameter": "Total Working Days", "Value": payroll.workingDays ?? 0 },
+    { "Category": "Attendance Summary", "Parameter": "Actual Working Days", "Value": payroll.actualWorkingDays ?? payroll.presentDays ?? 0 },
     { "Category": "Attendance Summary", "Parameter": "Present Days", "Value": payroll.presentDays ?? 0 },
     { "Category": "Attendance Summary", "Parameter": "Leave Days", "Value": payroll.approvedLeaveDays ?? 0 },
     { "Category": "Earnings", "Parameter": "Basic Salary (INR)", "Value": payroll.baseSalary ?? 0 },
@@ -20721,6 +20750,7 @@ function downloadSinglePayslipExcel(userId, month, year) {
     { "Category": "Earnings", "Parameter": "Overtime Duration", "Value": payroll.overtimeText || '0h 0m' },
     { "Category": "Earnings", "Parameter": "Bonus / Rewards (INR)", "Value": payroll.bonus ?? 0 },
     { "Category": "Deductions", "Parameter": "Absent Penalties (INR)", "Value": payroll.absentDeduction ?? 0 },
+    { "Category": "Deductions", "Parameter": "Sunday Leave Penalties (INR)", "Value": payroll.sundayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Half-day Deductions (INR)", "Value": payroll.halfDayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Provident Fund (PF) (INR)", "Value": payroll.deductionPF ?? 0 },
     { "Category": "Deductions", "Parameter": "Employees State Insurance (ESI) (INR)", "Value": payroll.deductionESI ?? 0 },

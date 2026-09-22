@@ -1849,69 +1849,17 @@ export const DB = {
     // ESI contribution fallback to 0.75% of basic salary if not defined
     const deductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : Math.round(baseSalary * 0.0075);
 
+    // 1. Actual Number of Days in Selected Month (28, 29, 30, or 31)
     const totalDays = new Date(year, month + 1, 0).getDate();
-    let workingDays = 0;
-    const workingDates = [];
 
-    for (let day = 1; day <= totalDays; day++) {
-      const dateObj = new Date(year, month, day);
-      const dayOfWeek = dateObj.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        workingDays++;
-        workingDates.push(dateObj.toISOString().split('T')[0]);
-      }
-    }
+    // 2. Saturday and Sunday are included as working days for salary-related calculations
+    const workingDays = totalDays; // Monthly salary divisor basis
 
-    const allLogs = this.getLogs(user.id); // Safe lookup using resolved user id
-    const monthlyLogs = allLogs.filter(l => {
-      const [lY, lM] = l.date.split('-').map(Number);
-      return lY === year && (lM - 1) === month;
-    });
+    // Daily rate based on actual days in the selected month
+    const exactDailyRate = baseSalary / totalDays;
+    const dailyRate = Math.round(exactDailyRate);
 
-    const allLeaves = this.getLeaveRequests(user.id); // Safe lookup
-    const approvedLeaves = allLeaves.filter(lv => {
-      if (lv.status !== 'Approved') return false;
-      const start = new Date(lv.startDate);
-      const end = new Date(lv.endDate);
-      const startMonth = start.getMonth();
-      const startYear = start.getFullYear();
-      const endMonth = end.getMonth();
-      const endYear = end.getFullYear();
-      return (startYear <= year && endYear >= year) && (startMonth <= month && endMonth >= month);
-    });
-
-    let approvedLeaveDays = 0;
-    workingDates.forEach(dateStr => {
-      const dateVal = new Date(dateStr);
-      const isOnLeave = approvedLeaves.some(lv => {
-        const start = new Date(lv.startDate);
-        const end = new Date(lv.endDate);
-        start.setHours(0,0,0,0);
-        end.setHours(23,59,59,999);
-        return dateVal >= start && dateVal <= end;
-      });
-      if (isOnLeave) approvedLeaveDays++;
-    });
-
-    const presentDays = monthlyLogs.filter(l => l.checkIn).length;
-    const lateDays = monthlyLogs.filter(l => l.status === 'Late').length;
-    const halfDays = monthlyLogs.filter(l => l.status === 'Half Day').length;
-
-    let absentDays = workingDays - presentDays - approvedLeaveDays;
-    if (absentDays < 0) absentDays = 0;
-
-    // Load custom payroll adjustments
-    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === user.id && a.month === month && a.year === year);
-    const bonus = adj ? (adj.bonus || 0) : 0;
-    const adhocDeduction = adj ? (adj.deduction || 0) : 0;
-    const remarks = adj ? (adj.remarks || '') : '';
-
-    const dailyRate = Math.round(baseSalary / (workingDays || 22));
-    const absentDeduction = absentDays * dailyRate;
-    const halfDayDeduction = Math.round(halfDays * 0.5 * dailyRate);
-    
-    // Dynamic Overtime calculation
-    let totalOvertimeMins = 0;
+    // Resolve user's shift schedule to determine scheduled workdays vs weekend
     const sched = this.getSchedule(user.scheduleId) || {
       name: 'Standard Day Shift',
       startTime: '09:00',
@@ -1920,7 +1868,110 @@ export const DB = {
       workDays: [1, 2, 3, 4, 5],
       location: 'Kohat Enclave, Pitampura, Delhi'
     };
+    const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays)) ? sched.workDays : [1, 2, 3, 4, 5];
 
+    // Collect scheduled work dates and Sundays in the month
+    const scheduledDates = [];
+    const sundaysInMonth = [];
+
+    for (let day = 1; day <= totalDays; day++) {
+      const dateObj = new Date(year, month, day);
+      const dayOfWeek = dateObj.getDay();
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (scheduledWorkDaysList.includes(dayOfWeek)) {
+        scheduledDates.push(dateStr);
+      }
+      if (dayOfWeek === 0) {
+        sundaysInMonth.push(dateStr);
+      }
+    }
+
+    const allLogs = this.getLogs(user.id);
+    const monthlyLogs = allLogs.filter(l => {
+      const [lY, lM] = l.date.split('-').map(Number);
+      return lY === year && (lM - 1) === month;
+    });
+
+    const allLeaves = this.getLeaveRequests(user.id);
+    const isDateOnApprovedLeave = (dateStr) => {
+      const dateVal = new Date(dateStr);
+      return allLeaves.some(lv => {
+        if (lv.status !== 'Approved') return false;
+        const start = new Date(lv.startDate);
+        const end = new Date(lv.endDate);
+        start.setHours(0,0,0,0);
+        end.setHours(23,59,59,999);
+        return dateVal >= start && dateVal <= end;
+      });
+    };
+
+    let approvedLeaveDays = 0;
+    scheduledDates.forEach(dateStr => {
+      if (isDateOnApprovedLeave(dateStr)) approvedLeaveDays++;
+    });
+
+    const presentDays = monthlyLogs.filter(l => l.checkIn).length;
+    const actualWorkingDays = presentDays; // Employee's actual working days
+    const lateDays = monthlyLogs.filter(l => l.status === 'Late').length;
+    const halfDays = monthlyLogs.filter(l => l.status === 'Half Day').length;
+
+    // Absent days calculation on scheduled work days
+    const scheduledWorkDays = scheduledDates.length;
+    let absentDays = scheduledWorkDays - presentDays - approvedLeaveDays;
+    if (absentDays < 0) absentDays = 0;
+
+    // SUNDAY LEAVE CRITERION:
+    // If an employee takes 2 or more leaves in a week, Sunday should not be treated as a holiday
+    // for salary calculation and should be considered for salary deduction as per applicable leave rules.
+    let unpaidSundayDays = 0;
+    const penalizedSundays = [];
+
+    sundaysInMonth.forEach(sundayDateStr => {
+      const sundayDate = new Date(sundayDateStr);
+      let leavesInWeek = 0;
+
+      // Inspect Monday to Saturday (6 days preceding the Sunday)
+      for (let offset = 6; offset >= 1; offset--) {
+        const checkDate = new Date(sundayDate);
+        checkDate.setDate(sundayDate.getDate() - offset);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+        const checkDayOfWeek = checkDate.getDay();
+
+        if (scheduledWorkDaysList.includes(checkDayOfWeek)) {
+          const onLeave = isDateOnApprovedLeave(checkDateStr);
+          const log = allLogs.find(l => l.userId === user.id && l.date === checkDateStr);
+
+          if (onLeave) {
+            leavesInWeek += 1;
+          } else if (log && (log.status === 'Absent' || log.status === 'Leave' || log.status === 'On Leave')) {
+            leavesInWeek += 1;
+          } else if (log && log.status === 'Half Day') {
+            leavesInWeek += 0.5;
+          }
+        }
+      }
+
+      if (leavesInWeek >= 2) {
+        unpaidSundayDays++;
+        penalizedSundays.push({
+          date: sundayDateStr,
+          leavesInWeek
+        });
+      }
+    });
+
+    // Load custom payroll adjustments
+    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === user.id && a.month === month && a.year === year);
+    const bonus = adj ? (adj.bonus || 0) : 0;
+    const adhocDeduction = adj ? (adj.deduction || 0) : 0;
+    const remarks = adj ? (adj.remarks || '') : '';
+
+    const absentDeduction = Math.round(absentDays * exactDailyRate);
+    const sundayDeduction = Math.round(unpaidSundayDays * exactDailyRate);
+    const halfDayDeduction = Math.round(halfDays * 0.5 * exactDailyRate);
+
+    // Dynamic Overtime calculation
+    let totalOvertimeMins = 0;
     monthlyLogs.forEach(log => {
       if (log.checkIn && log.checkOut) {
         const [sH, sM] = sched.startTime.split(':').map(Number);
@@ -1938,18 +1989,19 @@ export const DB = {
     const overtimeHours = Math.floor(totalOvertimeMins / 60);
     const overtimeMins = totalOvertimeMins % 60;
     const overtimeText = `${overtimeHours}h ${overtimeMins}m`;
-    const hourlyRate = (baseSalary / (workingDays || 22) / 8);
+    const hourlyRate = (baseSalary / totalDays / 8);
     const overtimePay = Math.round(overtimeHours * hourlyRate * 1.5);
 
-    const attendanceDeductions = absentDeduction + halfDayDeduction;
+    const attendanceDeductions = absentDeduction + sundayDeduction + halfDayDeduction;
     const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + bonus + overtimePay;
     const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel) - attendanceDeductions;
     const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
     const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
     const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal + deductionESI;
-    
+
     const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
     const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;
+    const paidDays = Math.max(0, totalDays - absentDays - unpaidSundayDays - (halfDays * 0.5));
 
     return {
       userId: user.id,
@@ -1962,14 +2014,22 @@ export const DB = {
       deductionESI,
       deductionTDS,
       deductionTDSVal,
+      totalDays,
+      totalMonthDays: totalDays,
       workingDays,
+      actualWorkingDays,
       presentDays,
       lateDays,
       halfDays,
       approvedLeaveDays,
       absentDays,
+      unpaidSundayDays,
+      penalizedSundays,
+      paidDays,
       dailyRate,
+      exactDailyRate,
       absentDeduction,
+      sundayDeduction,
       halfDayDeduction,
       attendanceDeductions,
       statutoryDeductions,

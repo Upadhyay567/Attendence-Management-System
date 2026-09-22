@@ -878,10 +878,10 @@ function downloadReportPDF(reports, monthStr, year) {
           </thead>
           <tbody>
             <tr>
-              <td>₹${(p.baseSalary || 0).toLocaleString()}</td>
+              <td>₹${((p.baseSalary || 0).toLocaleString())}</td>
               <td>₹${((p.allowanceHRA || 0) + (p.allowanceTravel || 0)).toLocaleString()}</td>
               <td>₹${((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0)).toLocaleString()}</td>
-              <td>₹${((p.absentDeduction || 0) + (p.halfDayDeduction || 0)).toLocaleString()}</td>
+              <td>₹${((p.absentDeduction || 0) + (p.sundayDeduction || 0) + (p.halfDayDeduction || 0)).toLocaleString()}</td>
               <td class="stat-highlight" style="font-size:13px; color:#89201B">₹${(p.netSalary || 0).toLocaleString()}</td>
             </tr>
           </tbody>
@@ -947,8 +947,10 @@ function downloadReportExcel(reports, filename) {
       'Department': u.department || 'N/A',
       'Designation': u.designation || 'N/A',
       'Total Work Days': p.workingDays || 0,
+      'Actual Working Days': p.actualWorkingDays || p.presentDays || 0,
       'Present Days': p.presentDays || 0,
       'Absent Days': p.absentDays || 0,
+      'Sunday Penalties': p.unpaidSundayDays || 0,
       'Late Days': p.lateDays || 0,
       'Half Days': p.halfDays || 0,
       'Total Hours': r.totalHours,
@@ -957,7 +959,7 @@ function downloadReportExcel(reports, filename) {
       'Allowances (INR)': (p.allowanceHRA || 0) + (p.allowanceTravel || 0),
       'PF + PT Deductions (INR)': (p.deductionPF || 0) + (p.deductionPT || 0),
       'TDS Tax Deduction (INR)': p.deductionTDSVal || 0,
-      'Attendance Deductions (INR)': (p.absentDeduction || 0) + (p.halfDayDeduction || 0),
+      'Attendance Deductions (INR)': (p.absentDeduction || 0) + (p.sundayDeduction || 0) + (p.halfDayDeduction || 0),
       'Net Payout (INR)': p.netSalary || 0
     });
   });
@@ -966,7 +968,7 @@ function downloadReportExcel(reports, filename) {
     try {
       const headers = [
         'Employee ID', 'Employee Name', 'Department', 'Designation',
-        'Total Work Days', 'Present Days', 'Absent Days', 'Late Days', 'Half Days',
+        'Total Work Days', 'Actual Working Days', 'Present Days', 'Absent Days', 'Sunday Penalties', 'Late Days', 'Half Days',
         'Total Hours', 'Overtime Hours',
         'Base Salary (INR)', 'Allowances (INR)',
         'PF + PT Deductions (INR)', 'TDS Tax Deduction (INR)',

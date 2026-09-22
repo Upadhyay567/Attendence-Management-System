@@ -57,4 +57,128 @@ describe('Attendance System Core & Security API Tests', () => {
     expect(routesCode).toContain('/biometric/sync-templates');
     expect(routesCode).toContain('/biometric/template-sync-status');
   });
+
+  describe('Payroll Calculation Engine (Actual Month Days & Sunday Loss-of-Holiday)', () => {
+    let DB;
+
+    beforeAll(() => {
+      const dbFilePath = path.join(__dirname, '..', 'js', 'db.js');
+      const code = fs.readFileSync(dbFilePath, 'utf8');
+      const transformed = code.replace(/export\s+const\s+DB\s*=/, 'const DB =') + '\n; return DB;';
+      DB = new Function(transformed)();
+    });
+
+    beforeEach(() => {
+      DB.data = {
+        users: [
+          {
+            id: 'usr_test_1',
+            employeeId: 'EMP_TEST1',
+            name: 'Test Employee',
+            baseSalary: 31000,
+            allowanceHRA: 0,
+            allowanceTravel: 0,
+            deductionPF: 0,
+            deductionPT: 0,
+            deductionESI: 0,
+            deductionTDS: 0,
+            scheduleId: 'sch_default'
+          }
+        ],
+        schedules: [
+          {
+            id: 'sch_default',
+            name: 'Standard 5-day Shift',
+            startTime: '09:00',
+            endTime: '17:00',
+            workDays: [1, 2, 3, 4, 5]
+          }
+        ],
+        attendanceLogs: [],
+        leaveRequests: [],
+        payrollAdjustments: []
+      };
+    });
+
+    it('should calculate daily rate based on actual days in month (28, 29, 30, or 31)', () => {
+      // 28 days: Feb 2025
+      const feb28 = DB.calculateMonthlyPayroll('usr_test_1', 1, 2025);
+      expect(feb28.totalDays).toBe(28);
+      expect(feb28.workingDays).toBe(28);
+      expect(feb28.dailyRate).toBe(Math.round(31000 / 28));
+
+      // 29 days: Feb 2024 (Leap year)
+      const feb29 = DB.calculateMonthlyPayroll('usr_test_1', 1, 2024);
+      expect(feb29.totalDays).toBe(29);
+      expect(feb29.workingDays).toBe(29);
+      expect(feb29.dailyRate).toBe(Math.round(31000 / 29));
+
+      // 30 days: September 2026
+      const sep30 = DB.calculateMonthlyPayroll('usr_test_1', 8, 2026);
+      expect(sep30.totalDays).toBe(30);
+      expect(sep30.workingDays).toBe(30);
+      expect(sep30.dailyRate).toBe(Math.round(31000 / 30));
+
+      // 31 days: January 2026
+      const jan31 = DB.calculateMonthlyPayroll('usr_test_1', 0, 2026);
+      expect(jan31.totalDays).toBe(31);
+      expect(jan31.workingDays).toBe(31);
+      expect(jan31.dailyRate).toBe(Math.round(31000 / 31));
+    });
+
+    it('should include actual working days in calculation result', () => {
+      for (let day = 1; day <= 12; day++) {
+        const dateStr = `2026-09-${String(day).padStart(2, '0')}`;
+        DB.data.attendanceLogs.push({
+          id: `log_${day}`,
+          userId: 'usr_test_1',
+          date: dateStr,
+          checkIn: '09:00:00',
+          checkOut: '17:00:00',
+          status: 'On Time'
+        });
+      }
+
+      const payroll = DB.calculateMonthlyPayroll('usr_test_1', 8, 2026);
+      expect(payroll.actualWorkingDays).toBe(12);
+      expect(payroll.presentDays).toBe(12);
+    });
+
+    it('should not penalize Sunday if employee takes fewer than 2 leaves in that week', () => {
+      DB.data.leaveRequests.push({
+        id: 'lv_single',
+        userId: 'usr_test_1',
+        type: 'Sick',
+        startDate: '2026-09-02',
+        endDate: '2026-09-02',
+        status: 'Approved'
+      });
+
+      const payroll = DB.calculateMonthlyPayroll('usr_test_1', 8, 2026);
+      expect(payroll.unpaidSundayDays).toBe(0);
+      expect(payroll.sundayDeduction).toBe(0);
+      expect(payroll.penalizedSundays).toHaveLength(0);
+    });
+
+    it('should penalize Sunday when employee takes 2 or more leaves in that week', () => {
+      // 2 leaves in Mon-Sat window (Sep 1 and Sep 2, preceding Sunday Sep 6)
+      DB.data.leaveRequests.push({
+        id: 'lv_double',
+        userId: 'usr_test_1',
+        type: 'Casual',
+        startDate: '2026-09-01',
+        endDate: '2026-09-02',
+        status: 'Approved'
+      });
+
+      const payroll = DB.calculateMonthlyPayroll('usr_test_1', 8, 2026);
+      expect(payroll.unpaidSundayDays).toBe(1);
+      expect(payroll.penalizedSundays).toHaveLength(1);
+      expect(payroll.penalizedSundays[0].date).toBe('2026-09-06');
+      expect(payroll.penalizedSundays[0].leavesInWeek).toBe(2);
+
+      const expectedDailyRate = 31000 / 30;
+      expect(payroll.sundayDeduction).toBe(Math.round(1 * expectedDailyRate));
+    });
+  });
 });
