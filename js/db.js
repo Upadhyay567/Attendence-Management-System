@@ -1845,9 +1845,7 @@ export const DB = {
     const deductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0;
     const deductionPT = user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0;
     const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
-    
-    // ESI contribution fallback to 0.75% of basic salary if not defined
-    const deductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : Math.round(baseSalary * 0.0075);
+    const deductionESI = 0; // ESI criterion removed
 
     // 1. Actual Number of Days in Selected Month (28, 29, 30, or 31)
     const totalDays = new Date(year, month + 1, 0).getDate();
@@ -1997,7 +1995,7 @@ export const DB = {
     const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel) - attendanceDeductions;
     const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
     const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
-    const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal + deductionESI;
+    const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal;
 
     const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
     const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;

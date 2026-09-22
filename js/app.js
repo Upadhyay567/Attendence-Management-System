@@ -5745,11 +5745,6 @@ function renderEmployeePayslip(userId, month, year) {
             <td style="text-align:right;color:#ef4444">₹${payroll.deductionPT.toLocaleString()}</td>
           </tr>
           <tr>
-            <td>Employees' State Insurance (ESI)</td>
-            <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionESI.toLocaleString()}</td>
-          </tr>
-          <tr>
             <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS}%)</td>
             <td style="text-align:right">-</td>
             <td style="text-align:right;color:#ef4444">₹${payroll.deductionTDSVal.toLocaleString()}</td>
@@ -12943,11 +12938,6 @@ function openProfileDownloadModal(preSelectedUserId) {
                   <td style="text-align:right" class="deduction">₹${(payroll.deductionPF ?? 0).toLocaleString()}</td>
                 </tr>
                 <tr>
-                  <td>Employees' State Insurance (ESI) Contribution</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right" class="deduction">₹${(payroll.deductionESI ?? 0).toLocaleString()}</td>
-                </tr>
-                <tr>
                   <td>Professional Tax (PT)</td>
                   <td style="text-align:right">-</td>
                   <td style="text-align:right" class="deduction">₹${(payroll.deductionPT ?? 0).toLocaleString()}</td>
@@ -14779,11 +14769,6 @@ function compileReports(month, year) {
                   <td>Professional Tax (PT)</td>
                   <td style="text-align:right">-</td>
                   <td style="text-align:right;color:#ef4444">₹${p.deductionPT.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td>Employees' State Insurance (ESI)</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionESI.toLocaleString()}</td>
                 </tr>
                 <tr>
                   <td>Tax Deducted at Source (TDS) (${p.deductionTDS}%)</td>
@@ -20650,11 +20635,6 @@ function printSinglePayslipPDF(userId, month, year) {
           <td style="text-align:right" class="deduction">₹${(payroll.deductionPF ?? 0).toLocaleString()}</td>
         </tr>
         <tr>
-          <td>Employees' State Insurance (ESI) Contribution</td>
-          <td style="text-align:right">-</td>
-          <td style="text-align:right" class="deduction">₹${(payroll.deductionESI ?? 0).toLocaleString()}</td>
-        </tr>
-        <tr>
           <td>Professional Tax (PT)</td>
           <td style="text-align:right">-</td>
           <td style="text-align:right" class="deduction">₹${(payroll.deductionPT ?? 0).toLocaleString()}</td>
@@ -20753,7 +20733,6 @@ function downloadSinglePayslipExcel(userId, month, year) {
     { "Category": "Deductions", "Parameter": "Sunday Leave Penalties (INR)", "Value": payroll.sundayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Half-day Deductions (INR)", "Value": payroll.halfDayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Provident Fund (PF) (INR)", "Value": payroll.deductionPF ?? 0 },
-    { "Category": "Deductions", "Parameter": "Employees State Insurance (ESI) (INR)", "Value": payroll.deductionESI ?? 0 },
     { "Category": "Deductions", "Parameter": "Professional Tax (PT) (INR)", "Value": payroll.deductionPT ?? 0 },
     { "Category": "Deductions", "Parameter": "TDS Rate (%)", "Value": payroll.deductionTDS ?? 0 },
     { "Category": "Deductions", "Parameter": "TDS Amount (INR)", "Value": payroll.deductionTDSVal ?? 0 },
