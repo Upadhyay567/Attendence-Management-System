@@ -1,5 +1,5 @@
 // app.js - SPA Router & Controller
-import { DB } from './db.js?v=33';
+import { DB } from './db.js?v=42';
 import { Auth } from './auth.js?v=33';
 import { Utils } from './utils.js?v=33';
 import { triggerBirthdayCelebration } from './celebration.js?v=33';
@@ -9787,9 +9787,14 @@ function renderAdminUsers() {
                   ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
                   : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-                const workLocation = assignedSchedules.length > 0
-                  ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
-                  : (u.preferredLocation || 'Not Assigned');
+                const workLocationsList = (Array.isArray(u.preferredLocations) && u.preferredLocations.length > 0)
+                  ? u.preferredLocations
+                  : (assignedSchedules.length > 0
+                    ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))]
+                    : (u.preferredLocation ? [u.preferredLocation] : []));
+                const workLocation = workLocationsList.length > 0
+                  ? workLocationsList.join(', ')
+                  : 'Not Assigned';
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
@@ -9962,9 +9967,14 @@ function renderAdminUsers() {
             ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
             : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-          const workLocation = assignedSchedules.length > 0
-            ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
-            : (u.preferredLocation || 'Not Assigned');
+          const workLocationsList = (Array.isArray(u.preferredLocations) && u.preferredLocations.length > 0)
+            ? u.preferredLocations
+            : (assignedSchedules.length > 0
+              ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))]
+              : (u.preferredLocation ? [u.preferredLocation] : []));
+          const workLocation = workLocationsList.length > 0
+            ? workLocationsList.join(', ')
+            : 'Not Assigned';
 
           const profileStatus = u.profileVerificationStatus || 'Approved';
           let profileBadgeHTML = '';
@@ -10653,23 +10663,83 @@ function renderAdminSchedules(tab) {
           </div>
 
           <!-- Bulk Assignment Strip -->
-          <div style="display:flex; align-items:center; gap:10px; margin-top:14px; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; flex-wrap:wrap">
+          <div style="display:flex; align-items:center; gap:10px; margin-top:14px; padding:12px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; flex-wrap:wrap">
             <span style="font-size:12.5px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
               ⚡ Bulk Assignment:
             </span>
-            <select id="bulk-assign-shift" class="form-input" style="width:auto; min-width:180px; padding:6px 10px; font-size:12px; border-radius:6px">
-              <option value="">-- Set Shift (Optional) --</option>
-              ${schedules.map(s => `<option value="${s.id}">⏰ ${Utils.escape(s.name)}</option>`).join('')}
-            </select>
-            <select id="bulk-assign-location" class="form-input" style="width:auto; min-width:200px; padding:6px 10px; font-size:12px; border-radius:6px">
-              <option value="">-- Set Worksite Location (Optional) --</option>
-              <option value="__NONE__">-- No Worksite Location --</option>
-              ${allLocationNames.map(loc => `<option value="${Utils.escape(loc)}">${Utils.escape(loc)}</option>`).join('')}
-            </select>
+            <!-- Bulk Shift Multi-Select Trigger -->
+            <div class="emp-multi-select-wrap" style="width:auto; min-width:200px; max-width:260px;">
+              <button type="button" class="emp-multi-select-btn" id="bulk-shift-trigger" style="min-height:36px; padding:4px 10px; font-size:12px;">
+                <span class="emp-multi-select-placeholder" id="bulk-shift-label">-- Select Shift(s) --</span>
+                <span class="emp-multi-select-arrow">▼</span>
+              </button>
+              <div class="emp-multi-select-popover" id="bulk-shift-popover">
+                <div class="emp-multi-select-header">
+                  <span class="emp-multi-select-title">Bulk Shifts</span>
+                  <div class="emp-multi-select-actions">
+                    <button type="button" class="emp-multi-select-action-btn" id="btn-bulk-select-all-shifts">All</button>
+                    <span style="color:var(--border)">|</span>
+                    <button type="button" class="emp-multi-select-action-btn btn-clear" id="btn-bulk-clear-shifts">Clear</button>
+                  </div>
+                </div>
+                <div class="emp-multi-select-list">
+                  <label class="emp-multi-select-option emp-multi-select-none-option" data-txt="-- no shift assigned --">
+                    <input type="checkbox" class="emp-multi-select-chk bulk-shift-none-chk" value="__NONE__">
+                    <div class="emp-multi-select-label">
+                      <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Shift Assigned --</span>
+                    </div>
+                  </label>
+                  ${schedules.map(s => `
+                    <label class="emp-multi-select-option" data-txt="${Utils.escape(s.name).toLowerCase()}">
+                      <input type="checkbox" class="emp-multi-select-chk bulk-shift-chk" value="${s.id}">
+                      <div class="emp-multi-select-label">
+                        <span class="emp-multi-select-main-txt">⏰ ${Utils.escape(s.name)}</span>
+                        <span class="emp-multi-select-sub-txt">${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)}</span>
+                      </div>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <!-- Bulk Location Multi-Select Trigger -->
+            <div class="emp-multi-select-wrap" style="width:auto; min-width:220px; max-width:280px;">
+              <button type="button" class="emp-multi-select-btn" id="bulk-loc-trigger" style="min-height:36px; padding:4px 10px; font-size:12px;">
+                <span class="emp-multi-select-placeholder" id="bulk-loc-label">-- Select Location(s) --</span>
+                <span class="emp-multi-select-arrow">▼</span>
+              </button>
+              <div class="emp-multi-select-popover" id="bulk-loc-popover">
+                <div class="emp-multi-select-header">
+                  <span class="emp-multi-select-title">Bulk Locations</span>
+                  <div class="emp-multi-select-actions">
+                    <button type="button" class="emp-multi-select-action-btn" id="btn-bulk-select-all-locs">All</button>
+                    <span style="color:var(--border)">|</span>
+                    <button type="button" class="emp-multi-select-action-btn btn-clear" id="btn-bulk-clear-locs">Clear</button>
+                  </div>
+                </div>
+                <div class="emp-multi-select-list">
+                  <label class="emp-multi-select-option emp-multi-select-none-option" data-txt="-- no worksite location --">
+                    <input type="checkbox" class="emp-multi-select-chk bulk-loc-none-chk" value="__NONE__">
+                    <div class="emp-multi-select-label">
+                      <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Worksite Location --</span>
+                    </div>
+                  </label>
+                  ${allLocationNames.map(loc => `
+                    <label class="emp-multi-select-option" data-txt="${Utils.escape(loc).toLowerCase()}">
+                      <input type="checkbox" class="emp-multi-select-chk bulk-loc-chk" value="${Utils.escape(loc)}">
+                      <div class="emp-multi-select-label">
+                        <span class="emp-multi-select-main-txt">📍 ${Utils.escape(loc)}</span>
+                      </div>
+                    </label>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
             <button id="btn-apply-bulk-location" class="btn btn-primary" style="padding:7px 16px; font-size:12px; font-weight:700; width:auto; border-radius:6px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:#fff; border:none; cursor:pointer">
               Apply to Selected (<span id="bulk-selected-count">0</span>)
             </button>
-            <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto">Select checkboxes below to update shift/location for multiple staff</span>
+            <span style="font-size:11.5px; color:var(--text-muted); margin-left:auto">Select checkboxes below to assign multi-shift/locations to staff</span>
           </div>
         </div>
 
@@ -10684,34 +10754,51 @@ function renderAdminSchedules(tab) {
                   </th>
                   <th>Employee</th>
                   <th>Department & Role</th>
-                  <th>Assigned Shift ✏️</th>
-                  <th>Assigned Worksite Location ✏️</th>
+                  <th>Assigned Shift(s) ✏️</th>
+                  <th>Assigned Worksite Location(s) ✏️</th>
                   <th style="text-align:center; width:120px">Status</th>
                 </tr>
               </thead>
               <tbody id="emp-locations-tbody">
                 ${allUsers.map(u => {
-                  const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
-                    ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
-                    : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+                  const assignedShiftIds = (u.scheduleIds && Array.isArray(u.scheduleIds))
+                    ? u.scheduleIds.filter(Boolean)
+                    : (u.scheduleId ? [u.scheduleId] : []);
+                  const assignedSchedules = assignedShiftIds.map(id => DB.getSchedule(id)).filter(Boolean);
 
-                  const activeShiftId = (u.scheduleIds && u.scheduleIds.length > 0) ? u.scheduleIds[0] : (u.scheduleId || '');
-
-                  let currentLoc = '';
-                  if (u.shiftLocations && activeShiftId && typeof u.shiftLocations[activeShiftId] === 'string') {
-                    currentLoc = u.shiftLocations[activeShiftId];
-                  } else if (typeof u.preferredLocation === 'string') {
-                    currentLoc = u.preferredLocation;
+                  let assignedLocations = [];
+                  if (Array.isArray(u.preferredLocations)) {
+                    assignedLocations = [...new Set(u.preferredLocations.filter(Boolean))];
+                  } else if (u.preferredLocation && u.preferredLocation !== 'No Worksite Location' && u.preferredLocation !== 'None' && u.preferredLocation.trim() !== '') {
+                    assignedLocations = [u.preferredLocation.trim()];
+                  } else if (u.shiftLocations && typeof u.shiftLocations === 'object') {
+                    assignedLocations = [...new Set(Object.values(u.shiftLocations))].filter(l => l && l !== 'No Worksite Location' && l !== 'None' && String(l).trim() !== '');
                   } else if (assignedSchedules[0] && assignedSchedules[0].location) {
-                    currentLoc = assignedSchedules[0].location;
-                  } else {
-                    currentLoc = '';
+                    assignedLocations = [assignedSchedules[0].location];
                   }
 
-                  const isNoLoc = !currentLoc || currentLoc === 'No Worksite Location' || currentLoc === 'None';
+                  const shiftChipsHtml = assignedSchedules.length > 0
+                    ? `<div class="emp-multi-select-chips">
+                         ${assignedSchedules.map(s => `
+                           <span class="emp-multi-chip shift-chip" title="${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})">
+                             ⏰ ${Utils.escape(s.name)}
+                           </span>
+                         `).join('')}
+                       </div>`
+                    : `<span class="emp-multi-select-placeholder">-- No Shift Assigned --</span>`;
+
+                  const locChipsHtml = assignedLocations.length > 0
+                    ? `<div class="emp-multi-select-chips">
+                         ${assignedLocations.map(loc => `
+                           <span class="emp-multi-chip loc-chip" title="${Utils.escape(loc)}">
+                             📍 ${Utils.escape(loc)}
+                           </span>
+                         `).join('')}
+                       </div>`
+                    : `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
 
                   return `
-                    <tr class="emp-loc-row" data-id="${u.id}" data-name="${Utils.escape(u.name).toLowerCase()}" data-empid="${(u.employeeId || u.username || '').toLowerCase()}" data-dept="${Utils.escape(u.department || '').toLowerCase()}" data-loc="${Utils.escape(currentLoc).toLowerCase()}">
+                    <tr class="emp-loc-row" data-id="${u.id}" data-name="${Utils.escape(u.name).toLowerCase()}" data-empid="${(u.employeeId || u.username || '').toLowerCase()}" data-dept="${Utils.escape(u.department || '').toLowerCase()}" data-loc="${Utils.escape(assignedLocations.join(' , ')).toLowerCase()}">
                       <td style="text-align:center">
                         <input type="checkbox" class="chk-emp-loc" data-id="${u.id}" style="cursor:pointer; width:15px; height:15px; accent-color:var(--primary)">
                       </td>
@@ -10730,22 +10817,88 @@ function renderAdminSchedules(tab) {
                         <div style="font-weight:600; font-size:12.5px; color:var(--text-primary)">${Utils.escape(u.department || 'General')}</div>
                         <div style="font-size:11px; color:var(--text-muted); text-transform:capitalize; margin-top:2px">${Utils.escape(u.role || 'employee')}</div>
                       </td>
+                      <!-- Shift Multi-Select Cell -->
                       <td>
-                        <select class="form-input emp-inline-shift-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:260px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
-                          <option value="" ${(!activeShiftId) ? 'selected' : ''}>-- No Shift Assigned --</option>
-                          ${schedules.map(s => {
-                            const isSelected = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.includes(s.id)) || u.scheduleId === s.id;
-                            return `<option value="${s.id}" ${isSelected ? 'selected' : ''}>⏰ ${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})</option>`;
-                          }).join('')}
-                        </select>
+                        <div class="emp-multi-select-wrap">
+                          <button type="button" class="emp-multi-select-btn emp-trigger-shift" data-empid="${u.id}" id="shift-trigger-${u.id}">
+                            ${shiftChipsHtml}
+                            <span class="emp-multi-select-arrow">▼</span>
+                          </button>
+                          <div class="emp-multi-select-popover" id="shift-popover-${u.id}">
+                            <div class="emp-multi-select-header">
+                              <span class="emp-multi-select-title">Select Shift(s)</span>
+                              <div class="emp-multi-select-actions">
+                                <button type="button" class="emp-multi-select-action-btn emp-btn-select-all-shifts" data-empid="${u.id}">Select All</button>
+                                <span style="color:var(--border)">|</span>
+                                <button type="button" class="emp-multi-select-action-btn btn-clear emp-btn-clear-shifts" data-empid="${u.id}">Clear All</button>
+                              </div>
+                            </div>
+                            <div class="emp-multi-select-search">
+                              <input type="text" class="emp-search-shifts" placeholder="Filter shifts..." data-empid="${u.id}">
+                            </div>
+                            <div class="emp-multi-select-list">
+                              <label class="emp-multi-select-option emp-multi-select-none-option ${assignedShiftIds.length === 0 ? 'selected' : ''}" data-txt="-- no shift assigned --">
+                                <input type="checkbox" class="emp-multi-select-chk emp-shift-none-chk" data-empid="${u.id}" value="__NONE__" ${assignedShiftIds.length === 0 ? 'checked' : ''}>
+                                <div class="emp-multi-select-label">
+                                  <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Shift Assigned --</span>
+                                </div>
+                              </label>
+                              ${schedules.map(s => {
+                                const isChecked = assignedShiftIds.includes(s.id);
+                                return `
+                                  <label class="emp-multi-select-option ${isChecked ? 'selected' : ''}" data-txt="${Utils.escape(s.name).toLowerCase()}">
+                                    <input type="checkbox" class="emp-multi-select-chk emp-shift-chk" data-empid="${u.id}" value="${s.id}" ${isChecked ? 'checked' : ''}>
+                                    <div class="emp-multi-select-label">
+                                      <span class="emp-multi-select-main-txt">⏰ ${Utils.escape(s.name)}</span>
+                                      <span class="emp-multi-select-sub-txt">${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)}</span>
+                                    </div>
+                                  </label>
+                                `;
+                              }).join('')}
+                            </div>
+                          </div>
+                        </div>
                       </td>
+                      <!-- Worksite Location Multi-Select Cell -->
                       <td>
-                        <select class="form-input emp-inline-loc-select" data-id="${u.id}" style="padding:6px 10px; font-size:12px; font-weight:600; width:100%; max-width:260px; border-radius:6px; background:rgba(255,255,255,0.02); border:1px solid var(--border); color:var(--text-primary)">
-                          <option value="" ${isNoLoc ? 'selected' : ''}>-- No Worksite Location --</option>
-                          ${allLocationNames.map(loc => `
-                            <option value="${Utils.escape(loc)}" ${(!isNoLoc && currentLoc === loc) ? 'selected' : ''}>${Utils.escape(loc)}</option>
-                          `).join('')}
-                        </select>
+                        <div class="emp-multi-select-wrap">
+                          <button type="button" class="emp-multi-select-btn emp-trigger-loc" data-empid="${u.id}" id="loc-trigger-${u.id}">
+                            ${locChipsHtml}
+                            <span class="emp-multi-select-arrow">▼</span>
+                          </button>
+                          <div class="emp-multi-select-popover" id="loc-popover-${u.id}">
+                            <div class="emp-multi-select-header">
+                              <span class="emp-multi-select-title">Select Location(s)</span>
+                              <div class="emp-multi-select-actions">
+                                <button type="button" class="emp-multi-select-action-btn emp-btn-select-all-locs" data-empid="${u.id}">Select All</button>
+                                <span style="color:var(--border)">|</span>
+                                <button type="button" class="emp-multi-select-action-btn btn-clear emp-btn-clear-locs" data-empid="${u.id}">Clear All</button>
+                              </div>
+                            </div>
+                            <div class="emp-multi-select-search">
+                              <input type="text" class="emp-search-locs" placeholder="Filter locations..." data-empid="${u.id}">
+                            </div>
+                            <div class="emp-multi-select-list">
+                              <label class="emp-multi-select-option emp-multi-select-none-option ${assignedLocations.length === 0 ? 'selected' : ''}" data-txt="-- no worksite location --">
+                                <input type="checkbox" class="emp-multi-select-chk emp-loc-none-chk" data-empid="${u.id}" value="__NONE__" ${assignedLocations.length === 0 ? 'checked' : ''}>
+                                <div class="emp-multi-select-label">
+                                  <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Worksite Location --</span>
+                                </div>
+                              </label>
+                              ${allLocationNames.map(loc => {
+                                const isChecked = assignedLocations.includes(loc);
+                                return `
+                                  <label class="emp-multi-select-option ${isChecked ? 'selected' : ''}" data-txt="${Utils.escape(loc).toLowerCase()}">
+                                    <input type="checkbox" class="emp-multi-select-chk emp-loc-chk" data-empid="${u.id}" value="${Utils.escape(loc)}" ${isChecked ? 'checked' : ''}>
+                                    <div class="emp-multi-select-label">
+                                      <span class="emp-multi-select-main-txt">📍 ${Utils.escape(loc)}</span>
+                                    </div>
+                                  </label>
+                                `;
+                              }).join('')}
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td style="text-align:center">
                         <span class="badge badge-approved" id="loc-status-${u.id}" style="font-size:11px; padding:3px 8px; background:rgba(16,185,129,0.1); color:var(--success); border-radius:6px">
@@ -10776,80 +10929,514 @@ function renderAdminSchedules(tab) {
       addSchedBtn.addEventListener('click', () => openScheduleModal());
     }
 
-    // Inline Individual Shift Select Change Handler
-    document.querySelectorAll('.emp-inline-shift-select').forEach(sel => {
-      sel.addEventListener('change', (e) => {
-        const empId = e.target.dataset.id;
-        const newShiftId = e.target.value;
-        const user = DB.getUser(empId);
-        if (!user) return;
+    // Helper functions to update trigger button displays
+    const updateShiftTriggerUI = (empId, shiftIds) => {
+      const trigger = document.getElementById(`shift-trigger-${empId}`);
+      if (!trigger) return;
+      const schedList = (shiftIds || []).map(id => DB.getSchedule(id)).filter(Boolean);
 
-        const targetSchedule = DB.getSchedule(newShiftId);
-        const updates = {};
-        if (newShiftId) {
-          updates.scheduleId = newShiftId;
-          updates.scheduleIds = [newShiftId];
-          const currentLoc = user.preferredLocation || (targetSchedule ? targetSchedule.location : 'Kohat Enclave, Pitampura, Delhi');
-          const currentShiftLocs = { ...(user.shiftLocations || {}) };
-          currentShiftLocs[newShiftId] = currentLoc;
-          updates.shiftLocations = currentShiftLocs;
-          updates.preferredLocation = currentLoc;
-        } else {
-          updates.scheduleId = '';
-          updates.scheduleIds = [];
-        }
+      let contentHtml = '';
+      if (schedList.length === 0) {
+        contentHtml = `<span class="emp-multi-select-placeholder">-- No Shift Assigned --</span>`;
+      } else {
+        contentHtml = `
+          <div class="emp-multi-select-chips">
+            ${schedList.map(s => `
+              <span class="emp-multi-chip shift-chip" title="${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})">
+                ⏰ ${Utils.escape(s.name)}
+              </span>
+            `).join('')}
+          </div>
+        `;
+      }
+      trigger.innerHTML = contentHtml + `<span class="emp-multi-select-arrow">▼</span>`;
+    };
 
-        DB.updateUser(empId, updates);
+    const updateLocTriggerUI = (empId, locations) => {
+      const trigger = document.getElementById(`loc-trigger-${empId}`);
+      if (!trigger) return;
+      const locList = (locations || []).filter(Boolean);
 
-        const statusBadge = document.getElementById(`loc-status-${empId}`);
-        if (statusBadge) {
-          statusBadge.innerHTML = 'Saved ✓';
-          statusBadge.style.color = 'var(--success)';
-        }
+      let contentHtml = '';
+      if (locList.length === 0) {
+        contentHtml = `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
+      } else {
+        contentHtml = `
+          <div class="emp-multi-select-chips">
+            ${locList.map(loc => `
+              <span class="emp-multi-chip loc-chip" title="${Utils.escape(loc)}">
+                📍 ${Utils.escape(loc)}
+              </span>
+            `).join('')}
+          </div>
+        `;
+      }
+      trigger.innerHTML = contentHtml + `<span class="emp-multi-select-arrow">▼</span>`;
+    };
 
-        const shiftTitle = targetSchedule ? targetSchedule.name : 'Unassigned';
-        if (typeof showToastNotification === 'function') {
-          showToastNotification(`✅ Shift updated to "${shiftTitle}" for ${user.name}`, 'success');
-        }
-      });
-    });
+    // Helper function to apply shifts to an employee immediately
+    const applyUserShifts = (empId, shiftIds) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+      const finalShiftIds = [...new Set((shiftIds || []).filter(Boolean))];
 
-    // Inline Individual Location Select Change Handler
-    document.querySelectorAll('.emp-inline-loc-select').forEach(sel => {
-      sel.addEventListener('change', (e) => {
-        const empId = e.target.dataset.id;
-        const newLoc = e.target.value;
-        const user = DB.getUser(empId);
-        if (!user) return;
+      const updates = {
+        scheduleIds: finalShiftIds,
+        scheduleId: finalShiftIds[0] || ''
+      };
 
-        const currentShiftLocs = { ...(user.shiftLocations || {}) };
-        if (Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
-          user.scheduleIds.forEach(sid => { currentShiftLocs[sid] = newLoc; });
-        } else if (user.scheduleId) {
-          currentShiftLocs[user.scheduleId] = newLoc;
-        }
-
-        DB.updateUser(empId, {
-          preferredLocation: newLoc,
-          shiftLocations: currentShiftLocs
+      // Keep shiftLocations in sync
+      const currentShiftLocs = {};
+      const userLocs = (Array.isArray(user.preferredLocations))
+        ? user.preferredLocations
+        : (user.preferredLocation ? [user.preferredLocation] : []);
+      if (userLocs.length > 0) {
+        finalShiftIds.forEach(sid => {
+          currentShiftLocs[sid] = userLocs[0];
         });
+      }
+      updates.shiftLocations = currentShiftLocs;
 
-        const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
-        if (row) row.dataset.loc = newLoc.toLowerCase();
+      DB.updateUser(empId, updates);
 
-        const statusBadge = document.getElementById(`loc-status-${empId}`);
-        if (statusBadge) {
-          statusBadge.innerHTML = 'Saved ✓';
-          statusBadge.style.color = 'var(--success)';
+      // Update checkboxes in shift popover
+      const popover = document.getElementById(`shift-popover-${empId}`);
+      if (popover) {
+        const noneChk = popover.querySelector('.emp-shift-none-chk');
+        const isNone = (finalShiftIds.length === 0);
+        if (noneChk) {
+          noneChk.checked = isNone;
+          const opt = noneChk.closest('.emp-multi-select-option');
+          if (opt) {
+            if (isNone) opt.classList.add('selected');
+            else opt.classList.remove('selected');
+          }
         }
+        popover.querySelectorAll('.emp-shift-chk').forEach(cb => {
+          cb.checked = finalShiftIds.includes(cb.value);
+          const opt = cb.closest('.emp-multi-select-option');
+          if (opt) {
+            if (cb.checked) opt.classList.add('selected');
+            else opt.classList.remove('selected');
+          }
+        });
+      }
+
+      // Update trigger UI immediately
+      updateShiftTriggerUI(empId, finalShiftIds);
+
+      const statusBadge = document.getElementById(`loc-status-${empId}`);
+      if (statusBadge) {
+        statusBadge.innerHTML = 'Saved ✓';
+        statusBadge.style.color = 'var(--success)';
+      }
+    };
+
+    // Helper function to apply locations to an employee immediately
+    const applyUserLocations = (empId, locations) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+      const finalLocs = [...new Set((locations || []).filter(Boolean))];
+
+      const updates = {
+        preferredLocations: finalLocs,
+        preferredLocation: finalLocs[0] || ''
+      };
+
+      // Clear or set shiftLocations in sync
+      const currentShiftLocs = {};
+      const shiftList = (Array.isArray(user.scheduleIds)) ? user.scheduleIds : (user.scheduleId ? [user.scheduleId] : []);
+      if (finalLocs.length > 0) {
+        shiftList.forEach(sid => {
+          currentShiftLocs[sid] = finalLocs[0];
+        });
+      }
+      updates.shiftLocations = currentShiftLocs;
+
+      DB.updateUser(empId, updates);
+
+      // Update checkboxes in location popover
+      const popover = document.getElementById(`loc-popover-${empId}`);
+      if (popover) {
+        const noneChk = popover.querySelector('.emp-loc-none-chk');
+        const isNone = (finalLocs.length === 0);
+        if (noneChk) {
+          noneChk.checked = isNone;
+          const opt = noneChk.closest('.emp-multi-select-option');
+          if (opt) {
+            if (isNone) opt.classList.add('selected');
+            else opt.classList.remove('selected');
+          }
+        }
+        popover.querySelectorAll('.emp-loc-chk').forEach(cb => {
+          cb.checked = finalLocs.includes(cb.value);
+          const opt = cb.closest('.emp-multi-select-option');
+          if (opt) {
+            if (cb.checked) opt.classList.add('selected');
+            else opt.classList.remove('selected');
+          }
+        });
+      }
+
+      // Update trigger UI immediately
+      updateLocTriggerUI(empId, finalLocs);
+
+      // Update row data-loc for table filtering
+      const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
+      if (row) {
+        row.dataset.loc = finalLocs.join(' , ').toLowerCase();
+      }
+
+      const statusBadge = document.getElementById(`loc-status-${empId}`);
+      if (statusBadge) {
+        statusBadge.innerHTML = 'Saved ✓';
+        statusBadge.style.color = 'var(--success)';
+      }
+    };
+
+    // Popover Floating Positioning & Visibility Management
+    let currentOpenPopover = null;
+    let currentOpenTrigger = null;
+
+    const closeAllPopovers = () => {
+      document.querySelectorAll('.emp-multi-select-popover').forEach(p => {
+        p.style.display = 'none';
+      });
+      document.querySelectorAll('.emp-multi-select-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      currentOpenPopover = null;
+      currentOpenTrigger = null;
+    };
+
+    const positionAndOpenPopover = (popover, trigger) => {
+      if (currentOpenPopover === popover) {
+        closeAllPopovers();
+        return;
+      }
+      closeAllPopovers();
+
+      popover.style.display = 'flex';
+      trigger.classList.add('active');
+      currentOpenPopover = popover;
+      currentOpenTrigger = trigger;
+
+      const rect = trigger.getBoundingClientRect();
+      const popoverHeight = 280;
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      if (spaceBelow < popoverHeight && rect.top > popoverHeight) {
+        popover.style.top = Math.max(10, rect.top - popoverHeight - 4) + 'px';
+      } else {
+        popover.style.top = (rect.bottom + 4) + 'px';
+      }
+
+      const calculatedLeft = Math.max(10, Math.min(rect.left, window.innerWidth - 370));
+      popover.style.left = calculatedLeft + 'px';
+      popover.style.width = Math.max(rect.width, 290) + 'px';
+
+      // Focus search input if present
+      const searchInput = popover.querySelector('input[type="text"]');
+      if (searchInput) {
+        setTimeout(() => searchInput.focus(), 50);
+      }
+    };
+
+    // Trigger button click listeners
+    document.querySelectorAll('.emp-trigger-shift').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        const popover = document.getElementById(`shift-popover-${empId}`);
+        if (popover) positionAndOpenPopover(popover, btn);
+      });
+    });
+
+    document.querySelectorAll('.emp-trigger-loc').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        const popover = document.getElementById(`loc-popover-${empId}`);
+        if (popover) positionAndOpenPopover(popover, btn);
+      });
+    });
+
+    // Bulk Trigger Listeners
+    const bulkShiftTrigger = document.getElementById('bulk-shift-trigger');
+    const bulkShiftPopover = document.getElementById('bulk-shift-popover');
+    if (bulkShiftTrigger && bulkShiftPopover) {
+      bulkShiftTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        positionAndOpenPopover(bulkShiftPopover, bulkShiftTrigger);
+      });
+    }
+
+    const bulkLocTrigger = document.getElementById('bulk-loc-trigger');
+    const bulkLocPopover = document.getElementById('bulk-loc-popover');
+    if (bulkLocTrigger && bulkLocPopover) {
+      bulkLocTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        positionAndOpenPopover(bulkLocPopover, bulkLocTrigger);
+      });
+    }
+
+    // Close on click outside or on window scroll
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.emp-multi-select-wrap') && !e.target.closest('.emp-multi-select-popover')) {
+        closeAllPopovers();
+      }
+    });
+
+    window.addEventListener('resize', closeAllPopovers);
+
+    // Filter search inside popovers
+    document.querySelectorAll('.emp-search-shifts, .emp-search-locs').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const query = (e.target.value || '').toLowerCase().trim();
+        const popover = e.target.closest('.emp-multi-select-popover');
+        if (!popover) return;
+        popover.querySelectorAll('.emp-multi-select-option').forEach(opt => {
+          const txt = (opt.dataset.txt || opt.textContent || '').toLowerCase();
+          opt.style.display = (!query || txt.includes(query)) ? 'flex' : 'none';
+        });
+      });
+      input.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    // SHIFT CHECKBOX TOGGLE HANDLER
+    document.querySelectorAll('.emp-shift-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const empId = e.target.dataset.empid;
+        const checkedBoxes = document.querySelectorAll(`.emp-shift-chk[data-empid="${empId}"]:checked`);
+        const checkedShiftIds = Array.from(checkedBoxes).map(c => c.value);
+        applyUserShifts(empId, checkedShiftIds);
         if (typeof showToastNotification === 'function') {
-          const locTitle = newLoc ? `"${newLoc}"` : 'No Worksite Location';
-          showToastNotification(`✅ Worksite set to ${locTitle} for ${user.name}`, 'success');
+          const user = DB.getUser(empId);
+          const msg = checkedShiftIds.length > 0
+            ? `✅ Assigned ${checkedShiftIds.length} shift(s) to ${user ? user.name : 'employee'}`
+            : `ℹ️ All shifts removed for ${user ? user.name : 'employee'}`;
+          showToastNotification(msg, 'success');
         }
       });
     });
 
-    // Select All Checkbox Handler
+    // NO SHIFT ASSIGNED HANDLER
+    document.querySelectorAll('.emp-shift-none-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const empId = e.target.dataset.empid;
+        if (e.target.checked) {
+          applyUserShifts(empId, []);
+          if (typeof showToastNotification === 'function') {
+            const user = DB.getUser(empId);
+            showToastNotification(`ℹ️ All shifts removed for ${user ? user.name : 'employee'}`, 'info');
+          }
+        } else {
+          const checkedBoxes = document.querySelectorAll(`.emp-shift-chk[data-empid="${empId}"]:checked`);
+          if (checkedBoxes.length === 0) e.target.checked = true;
+        }
+      });
+    });
+
+    // LOCATION CHECKBOX TOGGLE HANDLER
+    document.querySelectorAll('.emp-loc-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const empId = e.target.dataset.empid;
+        const checkedBoxes = document.querySelectorAll(`.emp-loc-chk[data-empid="${empId}"]:checked`);
+        const checkedLocs = Array.from(checkedBoxes).map(c => c.value);
+        applyUserLocations(empId, checkedLocs);
+        if (typeof showToastNotification === 'function') {
+          const user = DB.getUser(empId);
+          const msg = checkedLocs.length > 0
+            ? `✅ Assigned ${checkedLocs.length} location(s) to ${user ? user.name : 'employee'}`
+            : `ℹ️ All worksite locations removed for ${user ? user.name : 'employee'}`;
+          showToastNotification(msg, 'success');
+        }
+      });
+    });
+
+    // NO LOCATION ASSIGNED HANDLER
+    document.querySelectorAll('.emp-loc-none-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        const empId = e.target.dataset.empid;
+        if (e.target.checked) {
+          applyUserLocations(empId, []);
+          if (typeof showToastNotification === 'function') {
+            const user = DB.getUser(empId);
+            showToastNotification(`ℹ️ All worksite locations removed for ${user ? user.name : 'employee'}`, 'info');
+          }
+        } else {
+          const checkedBoxes = document.querySelectorAll(`.emp-loc-chk[data-empid="${empId}"]:checked`);
+          if (checkedBoxes.length === 0) e.target.checked = true;
+        }
+      });
+    });
+
+    // Select All / Clear All Shift buttons in individual popovers
+    document.querySelectorAll('.emp-btn-select-all-shifts').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        applyUserShifts(empId, schedules.map(s => s.id));
+        if (typeof showToastNotification === 'function') {
+          const user = DB.getUser(empId);
+          showToastNotification(`✅ All ${schedules.length} shifts assigned to ${user ? user.name : 'employee'}`, 'success');
+        }
+      });
+    });
+
+    document.querySelectorAll('.emp-btn-clear-shifts').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        applyUserShifts(empId, []);
+        if (typeof showToastNotification === 'function') {
+          const user = DB.getUser(empId);
+          showToastNotification(`ℹ️ All shifts cleared for ${user ? user.name : 'employee'}`, 'info');
+        }
+      });
+    });
+
+    // Select All / Clear All Location buttons in individual popovers
+    document.querySelectorAll('.emp-btn-select-all-locs').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        applyUserLocations(empId, allLocationNames);
+        if (typeof showToastNotification === 'function') {
+          const user = DB.getUser(empId);
+          showToastNotification(`✅ All ${allLocationNames.length} locations assigned to ${user ? user.name : 'employee'}`, 'success');
+        }
+      });
+    });
+
+    document.querySelectorAll('.emp-btn-clear-locs').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.dataset.empid;
+        applyUserLocations(empId, []);
+        if (typeof showToastNotification === 'function') {
+          const user = DB.getUser(empId);
+          showToastNotification(`ℹ️ All worksite locations cleared for ${user ? user.name : 'employee'}`, 'info');
+        }
+      });
+    });
+
+    // Bulk Multi-Select Shifts: None vs Specific & Select All / Clear
+    const bulkShiftNoneChk = document.querySelector('.bulk-shift-none-chk');
+    const updateBulkShiftTriggerLabel = () => {
+      const isNone = document.querySelector('.bulk-shift-none-chk')?.checked;
+      const label = document.getElementById('bulk-shift-label');
+      if (label) {
+        if (isNone) {
+          label.textContent = '-- No Shift Assigned --';
+          return;
+        }
+        const checked = document.querySelectorAll('.bulk-shift-chk:checked');
+        if (checked.length === 0) label.textContent = '-- Select Shift(s) --';
+        else if (checked.length === 1) {
+          const s = DB.getSchedule(checked[0].value);
+          label.textContent = `⏰ ${s ? s.name : '1 Shift Selected'}`;
+        } else {
+          label.textContent = `⏰ ${checked.length} Shifts Selected`;
+        }
+      }
+    };
+
+    if (bulkShiftNoneChk) {
+      bulkShiftNoneChk.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = false; });
+        }
+        updateBulkShiftTriggerLabel();
+      });
+    }
+
+    document.querySelectorAll('.bulk-shift-chk').forEach(c => {
+      c.addEventListener('change', () => {
+        if (c.checked && bulkShiftNoneChk) {
+          bulkShiftNoneChk.checked = false;
+        }
+        updateBulkShiftTriggerLabel();
+      });
+    });
+
+    const btnBulkSelectAllShifts = document.getElementById('btn-bulk-select-all-shifts');
+    if (btnBulkSelectAllShifts) {
+      btnBulkSelectAllShifts.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (bulkShiftNoneChk) bulkShiftNoneChk.checked = false;
+        document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = true; });
+        updateBulkShiftTriggerLabel();
+      });
+    }
+    const btnBulkClearShifts = document.getElementById('btn-bulk-clear-shifts');
+    if (btnBulkClearShifts) {
+      btnBulkClearShifts.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (bulkShiftNoneChk) bulkShiftNoneChk.checked = false;
+        document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = false; });
+        updateBulkShiftTriggerLabel();
+      });
+    }
+
+    // Bulk Multi-Select Locations: None vs Specific & Select All / Clear
+    const bulkLocNoneChk = document.querySelector('.bulk-loc-none-chk');
+    const updateBulkLocTriggerLabel = () => {
+      const isNone = document.querySelector('.bulk-loc-none-chk')?.checked;
+      const label = document.getElementById('bulk-loc-label');
+      if (label) {
+        if (isNone) {
+          label.textContent = '-- No Worksite Location --';
+          return;
+        }
+        const checked = document.querySelectorAll('.bulk-loc-chk:checked');
+        if (checked.length === 0) label.textContent = '-- Select Location(s) --';
+        else if (checked.length === 1) {
+          label.textContent = `📍 ${checked[0].value}`;
+        } else {
+          label.textContent = `📍 ${checked.length} Locations Selected`;
+        }
+      }
+    };
+
+    if (bulkLocNoneChk) {
+      bulkLocNoneChk.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = false; });
+        }
+        updateBulkLocTriggerLabel();
+      });
+    }
+
+    document.querySelectorAll('.bulk-loc-chk').forEach(c => {
+      c.addEventListener('change', () => {
+        if (c.checked && bulkLocNoneChk) {
+          bulkLocNoneChk.checked = false;
+        }
+        updateBulkLocTriggerLabel();
+      });
+    });
+
+    const btnBulkSelectAllLocs = document.getElementById('btn-bulk-select-all-locs');
+    if (btnBulkSelectAllLocs) {
+      btnBulkSelectAllLocs.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (bulkLocNoneChk) bulkLocNoneChk.checked = false;
+        document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = true; });
+        updateBulkLocTriggerLabel();
+      });
+    }
+    const btnBulkClearLocs = document.getElementById('btn-bulk-clear-locs');
+    if (btnBulkClearLocs) {
+      btnBulkClearLocs.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (bulkLocNoneChk) bulkLocNoneChk.checked = false;
+        document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = false; });
+        updateBulkLocTriggerLabel();
+      });
+    }
+
+    // Select All Checkbox Handler for Employees
     const chkAll = document.getElementById('chk-select-all-emps');
     const updateSelectedCount = () => {
       const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
@@ -10878,79 +11465,51 @@ function renderAdminSchedules(tab) {
     const btnApplyBulk = document.getElementById('btn-apply-bulk-location');
     if (btnApplyBulk) {
       btnApplyBulk.addEventListener('click', () => {
-        const targetShift = document.getElementById('bulk-assign-shift').value;
-        const rawTargetLoc = document.getElementById('bulk-assign-location').value;
-        const isClearingLoc = (rawTargetLoc === '__NONE__');
-        const targetLoc = isClearingLoc ? '' : rawTargetLoc;
+        const bulkShiftNone = document.querySelector('.bulk-shift-none-chk')?.checked ?? false;
+        const bulkLocNone = document.querySelector('.bulk-loc-none-chk')?.checked ?? false;
+        const selectedBulkShifts = Array.from(document.querySelectorAll('.bulk-shift-chk:checked')).map(c => c.value);
+        const selectedBulkLocs = Array.from(document.querySelectorAll('.bulk-loc-chk:checked')).map(c => c.value);
 
-        if (!targetShift && !rawTargetLoc) {
-          alert('Please select a target shift and/or worksite location from the dropdowns.');
+        const hasShiftAction = bulkShiftNone || selectedBulkShifts.length > 0;
+        const hasLocAction = bulkLocNone || selectedBulkLocs.length > 0;
+
+        if (!hasShiftAction && !hasLocAction) {
+          alert('Please select at least one shift and/or worksite location from the bulk dropdowns.');
           return;
         }
+
         const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
         if (!checkedBoxes.length) {
-          alert('Please select at least one employee using the checkboxes.');
+          alert('Please select at least one employee using the row checkboxes.');
           return;
         }
 
         checkedBoxes.forEach(chk => {
           const empId = chk.dataset.id;
-          const user = DB.getUser(empId);
-          if (!user) return;
-
-          const updates = {};
-          const currentShiftLocs = { ...(user.shiftLocations || {}) };
-
-          if (targetShift) {
-            updates.scheduleId = targetShift;
-            updates.scheduleIds = [targetShift];
-            const selShift = document.querySelector(`.emp-inline-shift-select[data-id="${empId}"]`);
-            if (selShift) selShift.value = targetShift;
+          if (hasShiftAction) {
+            const shiftTargets = bulkShiftNone ? [] : selectedBulkShifts;
+            applyUserShifts(empId, shiftTargets);
           }
-
-          const activeShiftId = targetShift || user.scheduleId || (Array.isArray(user.scheduleIds) ? user.scheduleIds[0] : null);
-
-          if (rawTargetLoc) {
-            updates.preferredLocation = targetLoc;
-            if (activeShiftId) {
-              currentShiftLocs[activeShiftId] = targetLoc;
-            }
-            if (Array.isArray(updates.scheduleIds || user.scheduleIds)) {
-              (updates.scheduleIds || user.scheduleIds).forEach(sid => { currentShiftLocs[sid] = targetLoc; });
-            }
-            updates.shiftLocations = currentShiftLocs;
-
-            const selLoc = document.querySelector(`.emp-inline-loc-select[data-id="${empId}"]`);
-            if (selLoc) selLoc.value = targetLoc;
-
-            const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
-            if (row) row.dataset.loc = targetLoc.toLowerCase();
-          }
-
-          DB.updateUser(empId, updates);
-
-          const statusBadge = document.getElementById(`loc-status-${empId}`);
-          if (statusBadge) {
-            statusBadge.innerHTML = 'Saved ✓';
-            statusBadge.style.color = 'var(--success)';
+          if (hasLocAction) {
+            const locTargets = bulkLocNone ? [] : selectedBulkLocs;
+            applyUserLocations(empId, locTargets);
           }
         });
 
         const msgParts = [];
-        if (targetShift) {
-          const schedObj = DB.getSchedule(targetShift);
-          msgParts.push(`Shift: ${schedObj ? schedObj.name : targetShift}`);
-        }
-        if (rawTargetLoc) {
-          msgParts.push(`Location: ${isClearingLoc ? 'No Worksite Location' : targetLoc}`);
-        }
+        if (bulkShiftNone) msgParts.push(`Removed Shift(s)`);
+        else if (selectedBulkShifts.length > 0) msgParts.push(`${selectedBulkShifts.length} Shift(s)`);
+
+        if (bulkLocNone) msgParts.push(`Removed Location(s)`);
+        else if (selectedBulkLocs.length > 0) msgParts.push(`${selectedBulkLocs.length} Location(s)`);
+
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`✅ Updated ${msgParts.join(' & ')} for ${checkedBoxes.length} employee(s).`, 'success');
+          showToastNotification(`✅ Successfully assigned ${msgParts.join(' & ')} to ${checkedBoxes.length} employee(s).`, 'success');
         }
       });
     }
 
-    // Search and Filter Filtering Logic
+    // Search and Filter Filtering Logic (Supports multiple assigned locations)
     const searchInput = document.getElementById('loc-assign-search');
     const deptFilter = document.getElementById('loc-assign-dept-filter');
     const locFilter = document.getElementById('loc-assign-loc-filter');
@@ -10970,7 +11529,7 @@ function renderAdminSchedules(tab) {
 
         const matchQ = !q || name.includes(q) || empId.includes(q) || dept.includes(q);
         const matchD = !d || dept === d;
-        const matchL = !l || (l === '__none__' ? (!loc || loc === 'no worksite location' || loc === 'none') : loc === l);
+        const matchL = !l || (l === '__none__' ? (!loc || loc === 'no worksite location' || loc === 'none' || loc === '') : loc.includes(l));
 
         if (matchQ && matchD && matchL) {
           row.style.display = '';

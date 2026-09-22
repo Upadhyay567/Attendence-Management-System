@@ -10,7 +10,7 @@
       "name": "Abhishek Sharma",
       "role": "hr",
       "status": "Active",
-      "password": "$2b$10$DJZChUJArt9M2ntVNwzIGeq9FfUL.bTTPnCz9TOo2eM9FJYMj02d2",
+      "password": "$2b$10$4EpFCmYHTzBFuTjqRMA5z.BZ87Wh4DaHqIy5N.ovZRaFFtldi7mcq",
       "email": "abhishek879@gmail.com",
       "phone": "8967459032",
       "dob": "1995-08-07",
@@ -34,21 +34,24 @@
         "sch_mfl8wvv"
       ],
       "shiftLocations": {
-        "sch_mfl8wvv": "Noida sector 61"
+        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "preferredLocation": "Noida sector 61",
+      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
       "managerId": "",
       "assignedById": "usr_admin",
       "state": "delhi",
-      "passwordResetCount": 18
+      "passwordResetCount": 28,
+      "preferredLocations": [
+        "HS Group Worksite (28.6952, 77.1860)"
+      ]
     },
     {
       "id": "usr_68s5s48",
       "employeeId": "EMP1",
       "biometricUserId": "1",
       "biometricId": "1",
-      "scheduleId": "sch_mfl8wvv",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "scheduleId": "sch_3ebecon",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 40000,
       "allowanceHRA": null,
       "allowanceTravel": null,
@@ -74,11 +77,10 @@
       "password": "$hash$dea51775",
       "role": "employee",
       "scheduleIds": [
-        "sch_q8jji9v",
         "sch_3ebecon"
       ],
       "shiftLocations": {
-        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_3ebecon": "Noida sector 61"
       },
       "managerId": "usr_manager",
       "assignedById": "usr_6af1y3c",
@@ -87,14 +89,17 @@
       "status": "Active",
       "profileVerificationStatus": "Approved",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "preferredLocations": [
+        "Noida sector 61"
+      ]
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9701",
       "id": "usr_admin",
       "employeeId": "HR100",
       "scheduleId": "sch_mfl8wvv",
-      "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+      "preferredLocation": "chandani chowk",
       "baseSalary": 95000,
       "allowanceHRA": 14250,
       "allowanceTravel": 3000,
@@ -125,7 +130,7 @@
         "sch_mfl8wvv"
       ],
       "shiftLocations": {
-        "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
+        "sch_mfl8wvv": "chandani chowk"
       },
       "__v": 0,
       "documents": [],
@@ -134,14 +139,17 @@
       "managerId": "",
       "assignedById": "usr_hr",
       "state": "delhi",
-      "password": "$2b$10$.8GtsHjKx0RgNdgJCXm2heyt9FVW2dOgfqZk956Su3b3pusZUIXZS"
+      "password": "$2b$10$.8GtsHjKx0RgNdgJCXm2heyt9FVW2dOgfqZk956Su3b3pusZUIXZS",
+      "preferredLocations": [
+        "chandani chowk"
+      ]
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9702",
       "id": "usr_hr",
       "employeeId": "HR101",
-      "scheduleId": "sch_mfl8wvv",
-      "preferredLocation": "Noida sector 61",
+      "scheduleId": "",
+      "preferredLocation": "",
       "baseSalary": 75000,
       "allowanceHRA": 11250,
       "allowanceTravel": 3000,
@@ -168,12 +176,8 @@
       "pendingProfileEdits": null,
       "profileEditCount": 0,
       "passwordResetCount": 0,
-      "scheduleIds": [
-        "sch_mfl8wvv"
-      ],
-      "shiftLocations": {
-        "sch_mfl8wvv": "Noida sector 61"
-      },
+      "scheduleIds": [],
+      "shiftLocations": {},
       "__v": 0,
       "documents": [],
       "resume": null,
@@ -181,14 +185,15 @@
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "state": "delhi",
-      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity",
+      "preferredLocations": []
     },
     {
       "_id": "6a8d3b8e94e235d28a4e9703",
       "id": "usr_manager",
       "employeeId": "MGR102",
       "scheduleId": "sch_q8jji9v",
-      "preferredLocation": "omaxe Office",
+      "preferredLocation": "Noida sector 61",
       "baseSalary": 80000,
       "allowanceHRA": 12000,
       "allowanceTravel": 3000,
@@ -219,7 +224,7 @@
         "sch_q8jji9v"
       ],
       "shiftLocations": {
-        "sch_q8jji9v": "omaxe Office"
+        "sch_q8jji9v": "Noida sector 61"
       },
       "__v": 0,
       "documents": [],
@@ -228,7 +233,10 @@
       "managerId": "usr_manager",
       "assignedById": "usr_manager",
       "state": "delhi",
-      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity"
+      "password": "$2b$10$S85Ti0jRPwuK/28k/ypR.u7I7cU2EmvC1Ojr.bxNPqUXjcbCPCity",
+      "preferredLocations": [
+        "Noida sector 61"
+      ]
     },
     {
       "_id": "usr_bio_5174",
@@ -256,7 +264,9 @@
       "shiftLocations": {
         "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
       },
-      "biometricId": "5174"
+      "biometricId": "5174",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "_id": "usr_bio_309",
@@ -281,9 +291,7 @@
       "assignedById": "usr_manager",
       "scheduleId": "",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      },
+      "shiftLocations": {},
       "biometricId": "309",
       "email": "ishu20969@gmail.com",
       "phone": "7856907641",
@@ -296,7 +304,8 @@
       "city": "Mathura",
       "state": "Uttar Pradesh",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "preferredLocations": []
     },
     {
       "_id": "usr_bio_1094",
@@ -324,7 +333,9 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "_id": "usr_bio_1200",
@@ -356,19 +367,20 @@
       "email": "hemantupadhyay070@gmail.com",
       "phone": "7856907641",
       "dob": "1994-10-11",
-      "preferredLocation": "omaxe Office",
+      "preferredLocation": "",
       "managerId": "usr_manager",
       "profileVerificationStatus": "Approved",
       "photo": null,
       "city": "Mathura",
       "state": "Uttar Pradesh",
       "profileVerificationComment": "",
-      "pendingProfileEdits": null
+      "pendingProfileEdits": null,
+      "preferredLocations": []
     },
     {
       "_id": "usr_bio_1253",
       "id": "usr_bio_1253",
-      "employeeId": "1253",
+      "employeeId": "EMP1253",
       "biometricUserId": "1253",
       "biometricId": "1253",
       "name": "Mansi Tomar",
@@ -377,11 +389,9 @@
       "status": "Active",
       "department": "Operations",
       "designation": "Staff",
-      "scheduleId": "",
+      "scheduleId": "sch_4ef4kis",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "Noida sector 61"
-      },
+      "shiftLocations": {},
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
       "dateOfJoining": "2024-05-10",
@@ -391,8 +401,19 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr",
-      "preferredLocation": ""
+      "assignedById": "usr_6af1y3c",
+      "preferredLocation": "",
+      "email": "vijay678@gmail.com",
+      "phone": "7856907641",
+      "dob": "1985-01-09",
+      "managerId": "",
+      "profileVerificationStatus": "Approved",
+      "photo": null,
+      "city": "Mathura",
+      "state": "Uttar Pradesh",
+      "profileVerificationComment": "",
+      "pendingProfileEdits": null,
+      "preferredLocations": []
     },
     {
       "_id": "usr_bio_293",
@@ -408,9 +429,7 @@
       "designation": "Staff",
       "scheduleId": "",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "Noida sector 61"
-      },
+      "shiftLocations": {},
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
       "dateOfJoining": "2024-05-10",
@@ -421,7 +440,8 @@
       "deductionPT": 200,
       "deductionTDS": 5,
       "assignedById": "usr_7kek2wc",
-      "preferredLocation": ""
+      "preferredLocation": "",
+      "preferredLocations": []
     },
     {
       "_id": "usr_bio_3980",
@@ -437,9 +457,7 @@
       "designation": "Staff",
       "scheduleId": "",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      },
+      "shiftLocations": {},
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
       "dateOfJoining": "2024-05-10",
@@ -449,7 +467,9 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "_id": "usr_bio_1269",
@@ -477,7 +497,9 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_hr"
+      "assignedById": "usr_hr",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "_id": "usr_bio_1275",
@@ -493,9 +515,7 @@
       "designation": "Staff",
       "scheduleId": "",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      },
+      "shiftLocations": {},
       "createdAt": "2026-09-17T11:45:22.143Z",
       "gender": "Male",
       "dateOfJoining": "2024-05-10",
@@ -505,7 +525,9 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_7kek2wc"
+      "assignedById": "usr_7kek2wc",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "_id": "usr_bio_845",
@@ -519,9 +541,7 @@
       "status": "Active",
       "scheduleId": "",
       "scheduleIds": [],
-      "shiftLocations": {
-        "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
-      },
+      "shiftLocations": {},
       "gender": "Male",
       "department": "Engineering",
       "designation": "Junior Developer",
@@ -532,7 +552,9 @@
       "deductionPF": 4000,
       "deductionPT": 200,
       "deductionTDS": 5,
-      "assignedById": "usr_6af1y3c"
+      "assignedById": "usr_6af1y3c",
+      "preferredLocations": [],
+      "preferredLocation": ""
     },
     {
       "id": "usr_finance",
@@ -541,7 +563,7 @@
       "name": "Finance Manager",
       "password": "FinancePassword123!",
       "role": "finance_manager",
-      "scheduleId": "sch_1",
+      "scheduleId": "",
       "baseSalary": 78000,
       "allowanceHRA": 11700,
       "allowanceTravel": 3000,
@@ -563,9 +585,9 @@
       "aadhar": null,
       "status": "Active",
       "preferredLocation": "",
-      "shiftLocations": {
-        "sch_1": ""
-      }
+      "shiftLocations": {},
+      "preferredLocations": [],
+      "scheduleIds": []
     },
     {
       "_id": "usr_bio_949",
@@ -612,6 +634,34 @@
     }
   ],
   "attendanceLogs": [
+    {
+      "id": "BIO_usr_68s5s48_2026-09-22_sch_3ebecon",
+      "userId": "usr_68s5s48",
+      "date": "2026-09-22",
+      "shiftId": "sch_3ebecon",
+      "checkIn": "11:23:22",
+      "checkOut": "",
+      "checkInPunchId": "CJOU232660306_1_2026-09-22T05:53:22.000Z",
+      "biometricPunchId": "CJOU232660306_1_2026-09-22T05:53:22.000Z",
+      "allPunchIds": [
+        "CJOU232660306_1_2026-09-22T05:53:22.000Z"
+      ],
+      "status": "Half Day",
+      "biometricUsed": "Noida Office - K40 Pro (Gate 1)",
+      "biometricDeviceId": "CJOU232660306",
+      "biometricUserId": "1",
+      "lastBiometricPunchAt": "2026-09-22T05:53:22.000Z",
+      "location": "Noida sector 61",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-09-22T05:52:52.816Z",
+      "updatedAt": "2026-09-22T05:52:52.816Z"
+    },
     {
       "id": "log_usr_manager_2026-09-21_sch_q8jji9v",
       "userId": "usr_manager",
@@ -1461,6 +1511,19 @@
   ],
   "leaveRequests": [
     {
+      "id": "lv_umpn9lg",
+      "userId": "usr_68s5s48",
+      "type": "Casual",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-25",
+      "reason": ",NM",
+      "approverHead": "usr_6af1y3c",
+      "status": "Pending",
+      "requestDate": "2026-09-22",
+      "managerComment": "",
+      "supportingDoc": null
+    },
+    {
       "_id": "6a9e58f44d9ba1c23cc11b4b",
       "id": "lv_chu04l6",
       "userId": "usr_t42n6xh",
@@ -1751,6 +1814,39 @@
     }
   ],
   "announcements": [
+    {
+      "id": "ann_ldtk26z",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: Noida sector 61 ➔ chandani chowk\n• Work Shift Locations: Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: chandani chowk ➔ MAIN OFFICE  Shift: chandani chowk\n• Primary Work Shift: Morning Shift 900 ➔ MAIN OFFICE  Shift\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-22",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-22T08:00:14.847Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_3ob0az9",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Email Address: Not Set ➔ vijay678@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 1985-01-09\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ Kohat Enclave, Pitampura, Delhi\n• Work Shift Locations: Morning Shift 900: Noida sector 61 ➔ Not Set\n• Primary Work Shift: Not Assigned ➔ new shift",
+      "category": "Update",
+      "date": "2026-09-22",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_bio_1253",
+      "createdAt": "2026-09-22T07:12:38.679Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_wx4tgrf",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Afternoon shift: HS Group Worksite (28.6952, 77.1860) ➔ MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: Afternoon shift ➔ MAIN OFFICE  Shift\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ MAIN OFFICE  Shift",
+      "category": "Update",
+      "date": "2026-09-22",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-22T04:27:38.337Z",
+      "link": "#user-management"
+    },
     {
       "id": "ann_gs6b2bx",
       "title": "📢 Profile Updated by HR/Manager",
@@ -2603,6 +2699,1081 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-22T08:24:37.987Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "chandani chowk"
+        ],
+        "preferredLocation": "chandani chowk",
+        "shiftLocations": {
+          "sch_mfl8wvv": "chandani chowk"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:24:28.860Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:24:19.782Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_3ebecon": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:24:14.639Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_3ebecon",
+        "shiftLocations": {
+          "sch_3ebecon": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:24:07.438Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:24:03.727Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [],
+        "scheduleId": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:57.254Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "scheduleId": "sch_q8jji9v",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:48.069Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [],
+        "scheduleId": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:41.777Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:37.625Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:33.478Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:29.998Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:25.241Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:19.171Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:15.599Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "omaxe Office"
+        ],
+        "preferredLocation": "omaxe Office",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:08.925Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": "",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:23:03.077Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {}
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:20:07.255Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_q8jji9v",
+        "preferredLocations": [
+          "Noida sector 61",
+          "chandani chowk"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "chandani chowk"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:20:07.137Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:20:06.917Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:20:06.256Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:01:12.735Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:00:51.583Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:00:41.308Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_3ebecon": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:00:14.994Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_ldtk26z",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Preferred Work Location: Noida sector 61 ➔ chandani chowk\n• Work Shift Locations: Morning Shift 900: Noida sector 61; MAIN OFFICE  Shift: chandani chowk ➔ MAIN OFFICE  Shift: chandani chowk\n• Primary Work Shift: Morning Shift 900 ➔ MAIN OFFICE  Shift\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ MAIN OFFICE  Shift",
+        "category": "Update",
+        "date": "2026-09-22",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-22T08:00:14.847Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T08:00:14.921Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_3ebecon",
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_3ebecon": "chandani chowk"
+        },
+        "role": "employee",
+        "preferredLocation": "chandani chowk",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:59:22.376Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:59:16.807Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:57:00.111Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:56:54.785Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61",
+          "omaxe Office",
+          "chandani chowk",
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_4ef4kis": "omaxe Office"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:56:46.232Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:48.986Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:43.517Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "shiftLocations": {
+          "sch_1": "HS Group Worksite (28.6952, 77.1860)"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:31.886Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:21.483Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:15.643Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61",
+          "omaxe Office",
+          "chandani chowk",
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "HS Group Worksite (28.6952, 77.1860)"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:53:01.769Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:52:54.199Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:52:45.040Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:52:40.767Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:52:35.416Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:51:36.430Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_q8jji9v",
+        "preferredLocations": [
+          "Noida sector 61",
+          "chandani chowk"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "chandani chowk"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:51:36.362Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:51:36.271Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:51:35.794Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:38:59.650Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:38:45.321Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61",
+          "omaxe Office",
+          "chandani chowk",
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:33:20.045Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:33:14.148Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [],
+        "scheduleId": "",
+        "shiftLocations": {
+          "sch_q8jji9v": "omaxe Office"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:33:02.583Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [],
+        "preferredLocation": ""
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:32:43.422Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:32:39.214Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61",
+          "HS Group Worksite (28.6952, 77.1860)"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:32:31.807Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "preferredLocations": [
+          "Noida sector 61"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "Noida sector 61"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:32:03.836Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_3ebecon",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "chandani chowk"
+        }
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:30:11.292Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_q8jji9v",
+        "preferredLocations": [
+          "Noida sector 61",
+          "chandani chowk"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "chandani chowk"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:30:11.206Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:30:11.118Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:30:10.630Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:14:24.028Z",
+      "action": "PUSH_leaveRequests",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "id": "lv_umpn9lg",
+        "userId": "usr_68s5s48",
+        "type": "Casual",
+        "startDate": "2026-09-24",
+        "endDate": "2026-09-25",
+        "reason": ",NM",
+        "approverHead": "usr_6af1y3c",
+        "status": "Pending",
+        "requestDate": "2026-09-22",
+        "managerComment": "",
+        "supportingDoc": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:12:38.833Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_3ob0az9",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Email Address: Not Set ➔ vijay678@gmail.com\n• Mobile Number: Not Set ➔ 7856907641\n• Date of Birth: Not Set ➔ 1985-01-09\n• City: Not Set ➔ Mathura\n• State: Not Set ➔ Uttar Pradesh\n• Preferred Work Location: Not Set ➔ Kohat Enclave, Pitampura, Delhi\n• Work Shift Locations: Morning Shift 900: Noida sector 61 ➔ Not Set\n• Primary Work Shift: Not Assigned ➔ new shift",
+        "category": "Update",
+        "date": "2026-09-22",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_bio_1253",
+        "createdAt": "2026-09-22T07:12:38.679Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T07:12:38.783Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Mansi Tomar",
+        "employeeId": "EMP1253",
+        "biometricUserId": "1253",
+        "biometricId": "1253",
+        "email": "vijay678@gmail.com",
+        "phone": "7856907641",
+        "dob": "1985-01-09",
+        "scheduleId": "sch_4ef4kis",
+        "scheduleIds": [],
+        "shiftLocations": {},
+        "role": "employee",
+        "preferredLocation": "Kohat Enclave, Pitampura, Delhi",
+        "gender": "Male",
+        "department": "Operations",
+        "designation": "Staff",
+        "dateOfJoining": "2024-05-10",
+        "emergencyContact": "+91 98765 432010",
+        "allowanceHRA": 7500,
+        "allowanceTravel": 3000,
+        "deductionPF": 4000,
+        "deductionPT": 200,
+        "deductionTDS": 5,
+        "managerId": "",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:28:09.116Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:28:09.020Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:28:08.487Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:24:16.445Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:24:16.330Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T06:24:15.768Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T04:27:38.477Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_wx4tgrf",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Work Shift Locations: Afternoon shift: HS Group Worksite (28.6952, 77.1860) ➔ MAIN OFFICE  Shift: HS Group Worksite (28.6952, 77.1860)\n• Primary Work Shift: Afternoon shift ➔ MAIN OFFICE  Shift\n• Assigned Work Shifts: Morning Shift 900, MAIN OFFICE  Shift ➔ MAIN OFFICE  Shift",
+        "category": "Update",
+        "date": "2026-09-22",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-22T04:27:38.337Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-22T04:27:38.427Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_3ebecon",
+        "scheduleIds": [
+          "sch_3ebecon"
+        ],
+        "shiftLocations": {
+          "sch_3ebecon": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": null,
+        "allowanceTravel": null,
+        "deductionPF": 1,
+        "deductionPT": null,
+        "deductionTDS": null,
+        "managerId": "usr_manager",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-21T13:26:06.304Z",
       "action": "PUSH_attendanceLogs",
@@ -6028,10 +7199,25 @@
   "biometricSync": {
     "deviceIp": "192.168.1.51",
     "deviceSerial": "CJOU232660306",
-    "lastSyncAt": "2026-09-21T12:59:26.550Z",
-    "lastLogCount": 40
+    "lastSyncAt": "2026-09-22T05:52:52.825Z",
+    "lastLogCount": 41
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-09-22T05:52:52.816Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_68s5s48",
+      "userName": "Hemant",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_68s5s48_2026-09-22_sch_3ebecon",
+        "shiftId": "sch_3ebecon",
+        "checkIn": "11:23:22",
+        "status": "Half Day",
+        "device": "Noida Office - K40 Pro (Gate 1)"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-21T12:59:26.549Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -6546,7 +7732,8 @@
     "CJOU232660306_1_2026-09-21T06:40:47.000Z",
     "CJOU232660306_1_2026-09-21T06:42:13.000Z",
     "CJOU232660306_1_2026-09-21T06:44:59.000Z",
-    "CJOU232660306_1_2026-09-21T12:59:40.000Z"
+    "CJOU232660306_1_2026-09-21T12:59:40.000Z",
+    "CJOU232660306_1_2026-09-22T05:53:22.000Z"
   ],
   "biometricDevices": [
     {
@@ -6560,7 +7747,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-09-21T13:17:33.418Z",
+      "lastSyncAt": "2026-09-22T08:19:58.440Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 32
     },
@@ -6575,7 +7762,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-21T13:17:35.548Z",
+      "lastSyncAt": "2026-09-22T08:20:00.577Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 0
     },
@@ -6590,7 +7777,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-21T13:17:36.160Z",
+      "lastSyncAt": "2026-09-22T08:20:01.182Z",
       "enrolledUsersCount": 18,
       "totalPunchesCount": 0
     }
@@ -6618,9 +7805,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.792Z"
     },
     {
       "biometricUserId": "1",
@@ -6644,9 +7836,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.792Z"
     },
     {
       "biometricUserId": "HR100",
@@ -6670,9 +7867,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.792Z"
     },
     {
       "biometricUserId": "HR101",
@@ -6696,9 +7898,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.792Z"
     },
     {
       "biometricUserId": "MGR102",
@@ -6722,9 +7929,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.800Z"
     },
     {
       "biometricUserId": "5174",
@@ -6748,9 +7960,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.800Z"
     },
     {
       "biometricUserId": "309",
@@ -6774,9 +7991,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.800Z"
     },
     {
       "biometricUserId": "1094",
@@ -6800,9 +8022,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "1200",
@@ -6826,9 +8053,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "1253",
@@ -6852,9 +8084,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "293",
@@ -6878,9 +8115,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "3980",
@@ -6904,9 +8146,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "1269",
@@ -6930,9 +8177,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "1275",
@@ -6956,9 +8208,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "845",
@@ -6982,9 +8239,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "EMP106",
@@ -7008,9 +8270,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "949",
@@ -7034,9 +8301,14 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     },
     {
       "biometricUserId": "30191",
@@ -7060,12 +8332,97 @@
         "dev_k40_mub8a4hs",
         "dev_k40_mub8xum2",
         "dev_k40_mub9ktr7",
-        "dev_k40_mub9sh7x"
+        "dev_k40_mub9sh7x",
+        "dev_k40_mucagnx0",
+        "dev_k40_mucalnfs",
+        "dev_k40_mucctg27",
+        "dev_k40_mucdkzpz",
+        "dev_k40_mucelmul"
       ],
-      "lastReplicatedAt": "2026-09-21T13:17:36.777Z"
+      "lastReplicatedAt": "2026-09-22T08:20:01.801Z"
     }
   ],
   "biometricSyncLogs": [
+    {
+      "id": "synclog_1790065201860",
+      "timestamp": "2026-09-22T08:20:01.860Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_mucelmul"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
+    {
+      "id": "synclog_1790063491880",
+      "timestamp": "2026-09-22T07:51:31.880Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_mucdkzpz"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
+    {
+      "id": "synclog_1790062206780",
+      "timestamp": "2026-09-22T07:30:06.780Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_mucctg27"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
+    {
+      "id": "synclog_1790058484198",
+      "timestamp": "2026-09-22T06:28:04.198Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_mucalnfs"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
+    {
+      "id": "synclog_1790058251261",
+      "timestamp": "2026-09-22T06:24:11.261Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_mucagnx0"
+      ],
+      "usersReplicated": 18,
+      "totalVaultUsers": 18,
+      "status": "SUCCESS",
+      "details": "Replicated 18 user templates across 4 branch devices."
+    },
     {
       "id": "synclog_1789996656895",
       "timestamp": "2026-09-21T13:17:36.895Z",
@@ -7303,84 +8660,6 @@
       "totalVaultUsers": 18,
       "status": "SUCCESS",
       "details": "Replicated 0 user templates across 4 branch devices."
-    },
-    {
-      "id": "synclog_1789971518638",
-      "timestamp": "2026-09-21T06:18:38.638Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe",
-        "dev_k40_muaut5y9"
-      ],
-      "usersReplicated": 0,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 0 user templates across 4 branch devices."
-    },
-    {
-      "id": "synclog_1789971497882",
-      "timestamp": "2026-09-21T06:18:17.882Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe",
-        "dev_k40_muaut5y9"
-      ],
-      "usersReplicated": 0,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 0 user templates across 4 branch devices."
-    },
-    {
-      "id": "synclog_1789971494438",
-      "timestamp": "2026-09-21T06:18:14.438Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe",
-        "dev_k40_muaut5y9"
-      ],
-      "usersReplicated": 18,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 18 user templates across 4 branch devices."
-    },
-    {
-      "id": "synclog_1789971487635",
-      "timestamp": "2026-09-21T06:18:07.635Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe"
-      ],
-      "usersReplicated": 0,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 0 user templates across 3 branch devices."
-    },
-    {
-      "id": "synclog_1789971476905",
-      "timestamp": "2026-09-21T06:17:56.905Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe"
-      ],
-      "usersReplicated": 0,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 0 user templates across 3 branch devices."
     }
   ]
 }

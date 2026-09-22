@@ -24,6 +24,7 @@ const UserSchema = new mongoose.Schema({
   scheduleId: String,
   scheduleIds: [String],
   preferredLocation: String,
+  preferredLocations: [String],
   shiftLocations: { type: mongoose.Schema.Types.Mixed, default: {} },
   baseSalary: Number,
   allowanceHRA: Number,

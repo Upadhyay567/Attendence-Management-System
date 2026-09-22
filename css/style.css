@@ -4117,6 +4117,271 @@ body.light-theme .checkout-banner-badge {
   color: #047857 !important;
 }
 
+/* =========================================================
+   MULTI-SELECT SHIFT & LOCATION COMPONENT STYLES
+========================================================= */
+
+.emp-multi-select-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.emp-multi-select-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  width: 100%;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.emp-multi-select-btn:hover {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.emp-multi-select-btn.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+}
+
+.emp-multi-select-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+
+.emp-multi-select-placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.emp-multi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.3;
+  animation: chipFadeIn 0.15s ease;
+}
+
+@keyframes chipFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.emp-multi-chip.shift-chip {
+  background: rgba(225, 29, 72, 0.14);
+  color: #fda4af;
+  border: 1px solid rgba(225, 29, 72, 0.35);
+}
+
+.emp-multi-chip.loc-chip {
+  background: rgba(14, 165, 233, 0.14);
+  color: #7dd3fc;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+}
+
+body.light-theme .emp-multi-chip.shift-chip {
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+body.light-theme .emp-multi-chip.loc-chip {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.emp-multi-select-arrow {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.emp-multi-select-btn.active .emp-multi-select-arrow {
+  transform: rotate(180deg);
+}
+
+/* Floating Popover */
+.emp-multi-select-popover {
+  position: fixed;
+  z-index: 10500;
+  min-width: 280px;
+  max-width: 360px;
+  background: var(--bg-surface, #1e1e24);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  animation: popoverDrop 0.15s ease-out;
+}
+
+@keyframes popoverDrop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.emp-multi-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+}
+
+.emp-multi-select-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.emp-multi-select-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.emp-multi-select-action-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.emp-multi-select-action-btn:hover {
+  text-decoration: underline;
+}
+
+.emp-multi-select-action-btn.btn-clear {
+  color: var(--text-muted);
+}
+
+.emp-multi-select-search {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.emp-multi-select-search input {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.emp-multi-select-search input:focus {
+  border-color: var(--primary);
+}
+
+.emp-multi-select-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.emp-multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+  margin: 0;
+}
+
+.emp-multi-select-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.emp-multi-select-option.selected {
+  background: rgba(251, 191, 36, 0.08);
+}
+
+body.light-theme .emp-multi-select-option:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme .emp-multi-select-option.selected {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.emp-multi-select-none-option {
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 4px;
+  padding-bottom: 7px;
+}
+
+.emp-multi-select-chk {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.emp-multi-select-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.emp-multi-select-main-txt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emp-multi-select-sub-txt {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
 
 
 

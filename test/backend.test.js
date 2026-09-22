@@ -369,6 +369,44 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(mutateRes.status).toBe(200);
       expect(mutateRes.body.success).toBe(true);
     });
+
+    it('should support saving and retaining multiple shifts and multiple locations without overwriting', async () => {
+      const authRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'Surya@123', role: 'hr' });
+      const token = authRes.body.token;
+
+      // Assign multiple shifts and multiple locations to user
+      const mutateRes = await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'update',
+          key: 'users',
+          query: { id: 'usr_68s5s48' },
+          updates: {
+            scheduleIds: ['sch_q8jji9v', 'sch_3ebecon'],
+            scheduleId: 'sch_q8jji9v',
+            preferredLocations: ['Noida sector 61', 'chandani chowk'],
+            preferredLocation: 'Noida sector 61',
+            shiftLocations: {
+              'sch_q8jji9v': 'Noida sector 61',
+              'sch_3ebecon': 'chandani chowk'
+            }
+          }
+        });
+
+      expect(mutateRes.status).toBe(200);
+      expect(mutateRes.body.success).toBe(true);
+
+      // Verify db state reflects multiple shifts and multiple locations
+      const stateRes = await request(app).get('/api/db-state');
+      expect(stateRes.status).toBe(200);
+      const updatedUser = stateRes.body.users.find(u => u.id === 'usr_68s5s48');
+      expect(updatedUser).toBeDefined();
+      expect(updatedUser.scheduleIds).toEqual(expect.arrayContaining(['sch_q8jji9v', 'sch_3ebecon']));
+      expect(updatedUser.preferredLocations).toEqual(expect.arrayContaining(['Noida sector 61', 'chandani chowk']));
+    });
   });
 });
 

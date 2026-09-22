@@ -1453,9 +1453,20 @@ export const DB = {
       selectedSchedule = candidateList[0] || allSchedules[0];
     }
 
-    const resolvedLocation = (user && user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) ||
-                             (selectedSchedule ? selectedSchedule.location : null) ||
-                             (user && user.preferredLocation);
+    let resolvedLocation = null;
+    if (user && Array.isArray(user.preferredLocations)) {
+      if (user.preferredLocations.length > 0) {
+        resolvedLocation = (user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) || user.preferredLocations[0];
+      } else {
+        resolvedLocation = null;
+      }
+    } else if (user && user.preferredLocation && user.preferredLocation !== 'No Worksite Location' && user.preferredLocation !== 'None' && user.preferredLocation.trim() !== '') {
+      resolvedLocation = user.preferredLocation.trim();
+    } else if (user && user.shiftLocations && selectedSchedule && user.shiftLocations[selectedSchedule.id]) {
+      resolvedLocation = user.shiftLocations[selectedSchedule.id];
+    } else if (selectedSchedule && selectedSchedule.location) {
+      resolvedLocation = selectedSchedule.location;
+    }
 
     return {
       scheduleId: selectedSchedule ? selectedSchedule.id : null,
@@ -1468,15 +1479,37 @@ export const DB = {
 
   getUserShiftLocation(user, shiftId) {
     if (!user) return null;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const res = this.resolveUserShiftForDate(user, todayStr, shiftId);
-    if (res && res.preferredLocation) {
-      return res.preferredLocation;
+    if (Array.isArray(user.preferredLocations)) {
+      if (user.preferredLocations.length === 0) return null;
+      if (shiftId && user.shiftLocations && user.shiftLocations[shiftId]) {
+        return user.shiftLocations[shiftId];
+      }
+      return user.preferredLocations[0] || null;
+    }
+    if (user.preferredLocation && user.preferredLocation !== 'No Worksite Location' && user.preferredLocation !== 'None' && user.preferredLocation.trim() !== '') {
+      return user.preferredLocation.trim();
     }
     if (user.shiftLocations && shiftId && user.shiftLocations[shiftId]) {
       return user.shiftLocations[shiftId];
     }
-    return (res && res.schedule ? res.schedule.location : null) || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const res = this.resolveUserShiftForDate(user, todayStr, shiftId);
+    return (res && res.preferredLocation) || null;
+  },
+
+  getUserShiftLocations(user) {
+    if (!user) return [];
+    if (Array.isArray(user.preferredLocations)) {
+      return [...user.preferredLocations.filter(Boolean)];
+    }
+    if (user.preferredLocation && user.preferredLocation !== 'No Worksite Location' && user.preferredLocation !== 'None' && user.preferredLocation.trim() !== '') {
+      return [user.preferredLocation.trim()];
+    }
+    if (user.shiftLocations && typeof user.shiftLocations === 'object') {
+      const locs = Object.values(user.shiftLocations).filter(l => l && l !== 'No Worksite Location' && l !== 'None' && String(l).trim() !== '');
+      if (locs.length > 0) return [...new Set(locs)];
+    }
+    return [];
   },
 
   getSchedules() {
