@@ -1035,6 +1035,26 @@ body.light-theme .table-container::-webkit-scrollbar-thumb:hover {
   color: var(--text-primary);
 }
 
+body.light-theme .modal-overlay {
+  background: rgba(31, 5, 4, 0.45);
+}
+
+body.light-theme .modal-content {
+  background: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid rgba(137, 32, 27, 0.18);
+  box-shadow: 0 20px 50px rgba(137, 32, 27, 0.12);
+}
+
+body.light-theme .close-modal-btn {
+  color: var(--text-primary);
+}
+
+body.light-theme .close-modal-btn:hover {
+  background: rgba(137, 32, 27, 0.08);
+  color: var(--primary);
+}
+
 /* Biometric scanners */
 .biometric-scanner-box {
   display: flex;

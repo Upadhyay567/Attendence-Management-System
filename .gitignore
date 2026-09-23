@@ -25,3 +25,7 @@ check_syntax.py
 update_db.js
 scratch/
 
+# User uploaded files
+uploads/*
+!uploads/.gitkeep
+

@@ -7356,10 +7356,10 @@ function showDocumentPreview(userId, docType) {
   const pdfUrl = getOrGenerateDocumentPdfUrl(user, doc, docType);
 
   overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 840px; width: 92vw; padding: 22px; max-height: 94vh; display: flex; flex-direction: column; background: var(--bg-card, #1e1e1e); border: 1.5px solid rgba(251,191,36,0.3); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.65);">
+    <div class="modal-content" style="max-width: 860px; width: 92vw; padding: 22px; max-height: 94vh; display: flex; flex-direction: column; background: var(--bg-surface); border: 1.5px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg);">
       <div class="modal-header" style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(137,32,27,0.15); border: 1px solid rgba(137,32,27,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(137,32,27,0.08); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 22px;">
             ${docType === 'resume' ? '📄' : (docType === 'aadhar' ? '🪪' : '🏦')}
           </div>
           <div>
@@ -7369,11 +7369,11 @@ function showDocumentPreview(userId, docType) {
             </div>
           </div>
         </div>
-        <button class="close-modal-btn" id="close-preview-modal-btn" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center;" title="Close">&times;</button>
+        <button class="close-modal-btn" id="close-preview-modal-btn" style="background: rgba(137,32,27,0.06); border: 1px solid var(--border); font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;" title="Close">&times;</button>
       </div>
 
       <div class="modal-body" style="flex: 1; min-height: 480px; max-height: 68vh; display: flex; flex-direction: column; gap: 8px; padding: 0;">
-        <div style="width: 100%; height: 100%; min-height: 480px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); background: #262626;">
+        <div style="width: 100%; height: 100%; min-height: 480px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); background: var(--bg-app);">
           <iframe src="${pdfUrl}#toolbar=1" type="application/pdf" style="width: 100%; height: 100%; min-height: 480px; border: none; display: block;" title="${Utils.escape(doc.name)}"></iframe>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); padding: 4px 6px;">
@@ -7383,12 +7383,12 @@ function showDocumentPreview(userId, docType) {
       </div>
 
       <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
-        <button class="btn btn-secondary" id="close-preview-modal-btn2" style="padding: 9px 18px; font-size: 13px;">Close</button>
-        <button class="btn btn-secondary" id="btn-preview-open-tab" style="padding: 9px 18px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+        <button class="btn btn-secondary" id="close-preview-modal-btn2" style="width: auto; padding: 9px 20px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); color: var(--text-primary); background: rgba(137,32,27,0.05); cursor: pointer; border-radius: 8px; transition: all 0.2s ease;">Close</button>
+        <button class="btn btn-secondary" id="btn-preview-open-tab" style="width: auto; padding: 9px 20px; font-size: 13px; font-weight: 600; border: 1px solid var(--border); color: var(--text-primary); background: rgba(137,32,27,0.05); cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           Open in New Tab
         </button>
-        <button class="btn btn-primary" id="btn-preview-download" style="padding: 9px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #fff; border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        <button class="btn btn-primary" id="btn-preview-download" style="width: auto; padding: 9px 22px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #ffffff; border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(137,32,27,0.25); transition: all 0.2s ease;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           Download PDF
         </button>
