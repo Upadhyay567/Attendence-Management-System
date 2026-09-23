@@ -1512,7 +1512,12 @@ function renderLoginView() {
 function renderAppShell() {
   const root = document.getElementById('app-root');
   const user = Auth.getCurrentUser();
-  const avatarText = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  if (!user) {
+    window.location.hash = '#login';
+    return;
+  }
+  const userName = user.name || user.username || 'User';
+  const avatarText = userName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'US';
   const labels = Translations[currentLang] || Translations.en;
   const isMobile = window.innerWidth <= 768;
   const defaultActive = !isMobile;
@@ -5782,12 +5787,57 @@ function renderEmployeePayslip(userId, month, year) {
   `;
 }
 
+function resizeImageToDataUrl(file, maxWidth = 512, maxHeight = 512, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    if (!file) return reject(new Error('No file selected.'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Invalid image file format.'));
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(width, 1);
+        canvas.height = Math.max(height, 1);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(readerEvent.target.result);
+          return;
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        try {
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } catch (e) {
+          resolve(readerEvent.target.result);
+        }
+      };
+      img.src = readerEvent.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderEmployeeProfile() {
   const currentSession = sessionStorage.getItem('attendance_current_session');
   let userId = null;
   if (currentSession) {
     try {
-      userId = JSON.parse(currentSession).id;
+      const parsedSess = JSON.parse(currentSession);
+      userId = parsedSess.id || parsedSess.userId;
     } catch (e) {}
   }
   if (!userId) {
@@ -5799,12 +5849,17 @@ function renderEmployeeProfile() {
     return;
   }
   const user = DB.getUser(userId);
+  if (!user) {
+    window.location.hash = '#login';
+    return;
+  }
   const main = document.getElementById('main-view');
+  if (!main) return;
 
   const userSchedule = (user.scheduleIds && user.scheduleIds.length > 0)
     ? DB.getSchedule(user.scheduleIds[0])
     : (user.scheduleId ? DB.getSchedule(user.scheduleId) : null);
-  const shiftText = userSchedule ? `${userSchedule.name} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'Not Assigned';
+  const shiftText = userSchedule ? `${userSchedule.name || 'Shift'} (${formatTimeRange12h(userSchedule.startTime, userSchedule.endTime)})` : 'Not Assigned';
   const locationText = user.preferredLocation || 'Not Assigned';
 
   const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
@@ -5862,11 +5917,11 @@ function renderEmployeeProfile() {
   main.innerHTML = `
     <style>
       .prof-page-wrap {
-        max-width: 820px;
+        max-width: 860px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 22px;
       }
       .prof-field-row {
         display: grid;
@@ -5889,42 +5944,53 @@ function renderEmployeeProfile() {
         width: 100%;
         box-sizing: border-box;
         outline: none;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.25s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        transition: all 0.2s ease;
       }
       .prof-input:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        box-shadow: 0 0 0 3px rgba(137, 32, 27, 0.16);
         background: var(--bg-surface);
       }
       .prof-input[readonly], .prof-input:disabled {
         background: rgba(120, 120, 120, 0.05);
-        color: var(--text-muted);
+        color: var(--text-primary);
+        opacity: 0.88;
         cursor: not-allowed;
         border-color: var(--border);
         box-shadow: none;
       }
       .prof-label {
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 11.5px;
+        font-weight: 700;
         color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         margin-bottom: 6px;
         display: block;
       }
       .prof-section-card {
-        background: var(--bg-surface);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--bg-surface);
         border: 1px solid var(--border);
         border-radius: 16px;
         padding: 24px 28px;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 4px 18px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .prof-section-card:hover {
+        border-color: rgba(137, 32, 27, 0.25);
       }
       .prof-section-title {
-        font-size: 14px;
+        font-size: 14.5px;
         font-weight: 800;
         color: var(--text-primary);
-        margin: 0 0 16px 0;
-        padding-bottom: 10px;
+        margin: 0 0 18px 0;
+        padding-bottom: 12px;
         border-bottom: 1.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 0.2px;
       }
       @media (max-width: 700px) {
         .prof-field-row { grid-template-columns: 1fr 1fr; }
@@ -5941,18 +6007,18 @@ function renderEmployeeProfile() {
         width: 100%;
       }
       .staff-banner-avatar {
-        width: 52px;
-        height: 52px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         background: linear-gradient(135deg, var(--primary) 0%, #5c0f0a 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 800;
         color: #fff;
         flex-shrink: 0;
-        box-shadow: 0 4px 10px rgba(137,32,27,0.15);
+        box-shadow: 0 4px 12px rgba(137,32,27,0.22);
       }
       .staff-banner-main {
         flex: 1;
@@ -5998,80 +6064,95 @@ function renderEmployeeProfile() {
 
           <!-- Profile Status Bar -->
           ${!isSelfAdmin ? `
-          <div class="prof-section-card" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div style="font-size:13px; color:#475569;">
-              Profile Status:&nbsp;
-              <strong style="color:${status === 'Approved' ? '#16a34a' : status === 'Pending Approval' ? '#d97706' : '#dc2626'};">
+          <div class="prof-section-card" style="padding:14px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(135deg, rgba(137,32,27,0.04) 0%, rgba(255,255,255,0.01) 100%), var(--bg-surface); border-left: 4px solid var(--primary);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Profile Status:</span>
+              <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; ${
+                status === 'Approved' 
+                  ? 'background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);'
+                  : status === 'Pending Approval'
+                  ? 'background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25);'
+                  : 'background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25);'
+              }">
+                <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
                 ${status === 'Approved' ? 'Verified / Approved' : status === 'Pending Approval' ? 'Pending Review' : 'Issue Flagged'}
-              </strong>
+              </span>
             </div>
-            <div style="font-size:12.5px; color:#94a3b8; font-weight:600;">Direct Edits Used: ${editCount}/3</div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:rgba(137,32,27,0.06); border:1px solid rgba(137,32,27,0.18); border-radius:20px; font-size:12px; font-weight:700; color:var(--primary);">
+              Direct Edits: ${editCount} / 3 used
+            </div>
           </div>
           ` : `
-          <div class="prof-section-card" style="padding:12px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div style="font-size:13px; color:#475569;">
-              Profile Status:&nbsp;<strong style="color:#16a34a;">Verified Admin</strong>
+          <div class="prof-section-card" style="padding:14px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(135deg, rgba(137,32,27,0.04) 0%, rgba(255,255,255,0.01) 100%), var(--bg-surface); border-left: 4px solid var(--primary);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Profile Status:</span>
+              <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);">
+                <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
+                Verified Admin
+              </span>
             </div>
-            <div style="font-size:12.5px; color:#94a3b8; font-weight:600;">Edit Access: Unlimited</div>
+            <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:rgba(137,32,27,0.06); border:1px solid rgba(137,32,27,0.18); border-radius:20px; font-size:12px; font-weight:700; color:var(--primary);">
+              Edit Access: Unlimited
+            </div>
           </div>
           `}
 
           <!-- ID Card & Upload Section Row -->
-          <div class="profile-badge-row" style="display:flex; gap:20px; align-items:stretch; flex-wrap:wrap; justify-content:center; margin-bottom:12px;">
+          <div class="profile-badge-row" style="display:flex; gap:24px; align-items:center; flex-wrap:wrap; justify-content:center; margin-bottom:8px;">
             <!-- ID Card Column -->
-            <div class="id-card" id="employee-id-badge" style="width:100%; max-width:360px; height:215px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer; flex-shrink:0;">
+            <div class="id-card" id="employee-id-badge" style="width:100%; max-width:370px; height:220px; position:relative; transform-style:preserve-3d; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); cursor:pointer; flex-shrink:0;">
               <!-- FRONT -->
-              <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#fff6f6,#fcebeb); border:1px solid rgba(137, 32, 27, 0.15); box-shadow:0 8px 24px rgba(137,32,27,0.08); display:flex; flex-direction:column; justify-content:space-between;">
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(180,130,60,0.2); padding-bottom:8px;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="surya-logo.png?v=7" alt="Surya Logo" style="height:22px; object-fit:contain;">
+              <div class="id-card-front" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:16px; padding:18px 22px; overflow:hidden; background:linear-gradient(145deg, #ffffff 0%, #fff8f8 50%, #fee2e2 100%); border:1.5px solid rgba(180,130,60,0.3); box-shadow:0 12px 28px rgba(137,32,27,0.12), 0 4px 10px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid rgba(180,130,60,0.25); padding-bottom:8px;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="surya-logo.png?v=7" alt="Surya Logo" style="height:24px; object-fit:contain;">
                     <div>
-                      <div style="font-size:10px; font-weight:800; color:#b45309; letter-spacing:1px; text-transform:uppercase; line-height:1.2;">HS GROUP DELHI</div>
-                      <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px;">HOUSE OF SURYA</div>
+                      <div style="font-size:10.5px; font-weight:800; color:#89201B; letter-spacing:1px; text-transform:uppercase; line-height:1.2;">HS GROUP DELHI</div>
+                      <div style="font-size:8px; color:#b45309; text-transform:uppercase; letter-spacing:0.8px; font-weight:600;">HOUSE OF SURYA</div>
                     </div>
                   </div>
-                  <div style="font-size:7.5px; font-weight:700; color:#92400e; border:1px solid #d97706; padding:2px 7px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.1);">${badgeTitle}</div>
+                  <div style="font-size:8px; font-weight:800; color:#92400e; border:1px solid #d97706; padding:3px 8px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.15); letter-spacing:0.5px;">${badgeTitle}</div>
                 </div>
-                <div style="display:flex; gap:14px; align-items:center; margin:10px 0;">
-                  <div id="profile-badge-photo-click" style="width:64px; height:64px; border-radius:${user.photo ? '10px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fbbf24; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.25); flex-shrink:0; overflow:hidden; ${user.photo ? 'cursor:pointer;' : ''}" title="${user.photo ? 'Click to view full screen' : ''}">
-                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+                <div style="display:flex; gap:16px; align-items:center; margin:8px 0;">
+                  <div id="profile-badge-photo-click" style="width:68px; height:68px; border-radius:${user.photo ? '12px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fbbf24; border:2.5px solid #fbbf24; box-shadow:0 4px 14px rgba(0,0,0,0.22); flex-shrink:0; overflow:hidden; ${user.photo ? 'cursor:pointer;' : ''}" title="${user.photo ? 'Click to view full screen' : ''}">
+                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:38px; height:38px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
-                  <div style="overflow:hidden;">
-                    <div style="font-size:16px; font-weight:700; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name)}</div>
-                    <div style="font-size:10px; color:#b45309; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
-                    <div style="font-size:9.5px; color:#78716c; margin-top:1px;">${Utils.escape(user.department || 'General')}</div>
+                  <div style="overflow:hidden; flex:1;">
+                    <div style="font-size:16px; font-weight:800; color:#1e1e1e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name || user.username || 'Employee')}</div>
+                    <div style="font-size:10.5px; color:#89201B; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
+                    <div style="font-size:10px; color:#64748b; font-weight:500; margin-top:2px;">${Utils.escape(user.department || 'General')}</div>
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                   <div>
-                    <div style="font-size:7px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; opacity:0.8;">EMPLOYEE ID</div>
-                    <div style="font-size:11px; font-weight:800; color:#b45309;">${Utils.escape(user.employeeId)}</div>
+                    <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px; font-weight:700;">EMPLOYEE ID</div>
+                    <div style="font-size:12px; font-weight:800; color:#89201B; letter-spacing:0.5px;">${Utils.escape(user.employeeId || 'N/A')}</div>
                   </div>
                   <div style="text-align:right;">
-                    <div style="font-size:7px; color:#92400e; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; opacity:0.8;">JOINED DATE</div>
-                    <div style="font-size:11px; font-weight:600; color:#44403c;">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
+                    <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px; font-weight:700;">JOINED DATE</div>
+                    <div style="font-size:11px; font-weight:700; color:#334155;">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
                   </div>
                 </div>
               </div>
               <!-- BACK -->
-              <div class="id-card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:18px 20px; overflow:hidden; background:linear-gradient(145deg,#2a0807,#130303); border:1px solid rgba(137, 32, 27, 0.3); box-shadow:0 8px 24px rgba(0,0,0,0.35); display:flex; flex-direction:column; justify-content:space-between; transform:rotateY(180deg);">
-                <div style="border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px; font-size:9px; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Emergency &amp; Office Info</div>
+              <div class="id-card-back" style="position:absolute; width:100%; height:100%; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:16px; padding:18px 22px; overflow:hidden; background:linear-gradient(145deg,#240504,#100202); border:1.5px solid rgba(137, 32, 27, 0.4); box-shadow:0 12px 28px rgba(0,0,0,0.45); display:flex; flex-direction:column; justify-content:space-between; transform:rotateY(180deg);">
+                <div style="border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:6px; font-size:9.5px; color:#fbbf24; text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">Emergency &amp; Office Info</div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                   <div>
-                    <span style="color:rgba(255,255,255,0.5); font-size:8px; text-transform:uppercase; display:block; margin-bottom:1px;">Emergency Contact</span>
-                    <strong style="color:#fff; font-size:11px;">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
+                    <span style="color:rgba(255,255,255,0.55); font-size:8px; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:1px;">Emergency Contact</span>
+                    <strong style="color:#ffffff; font-size:11.5px; letter-spacing:0.3px;">${Utils.escape(user.emergencyContact || 'N/A')}</strong>
                   </div>
                   <div>
-                    <span style="color:rgba(255,255,255,0.5); font-size:8px; text-transform:uppercase; display:block; margin-bottom:1px;">Office Location</span>
-                    <span style="font-size:10px; color:rgba(255,255,255,0.8); line-height:1.3; display:block;">${Utils.escape(locationText)}</span>
+                    <span style="color:rgba(255,255,255,0.55); font-size:8px; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:1px;">Office Location</span>
+                    <span style="font-size:10.5px; color:rgba(255,255,255,0.85); line-height:1.3; display:block;">${Utils.escape(locationText)}</span>
                   </div>
                 </div>
-                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); padding:8px 12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); padding:8px 12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                   <div>
-                    <span style="font-size:7px; color:rgba(255,255,255,0.5); text-transform:uppercase; display:block;">Attendance Badge</span>
-                    <span style="font-size:9px; font-family:monospace; color:#fbbf24; font-weight:700; margin-top:2px; display:block;">SURYA-EMP-${Utils.escape(user.employeeId)}</span>
+                    <span style="font-size:7px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; display:block;">Attendance Badge</span>
+                    <span style="font-size:9.5px; font-family:monospace; color:#fbbf24; font-weight:700; margin-top:2px; display:block;">SURYA-EMP-${Utils.escape(user.employeeId || '000')}</span>
                   </div>
-                  <div style="display:flex; gap:2px; height:24px; background:rgba(255,255,255,0.9); padding:3px 6px; border-radius:2px; align-items:stretch;">
+                  <div style="display:flex; gap:2px; height:24px; background:#ffffff; padding:3px 6px; border-radius:3px; align-items:stretch;">
                     <div style="width:2px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:3px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:2px;background:#000;"></div><div style="width:4px;background:#000;"></div><div style="width:1px;background:#000;"></div><div style="width:2px;background:#000;"></div>
                   </div>
                 </div>
@@ -6079,18 +6160,21 @@ function renderEmployeeProfile() {
             </div>
 
             <!-- Upload Control Column -->
-            <div style="display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:10px; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; padding:12px; gap:12px; max-width:280px;">
               <input type="file" id="my-profile-photo-file-input" accept="image/*" style="display:none">
-              <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:auto; min-width:200px; padding:12px 24px; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:none; color:#fff; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(137,32,27,0.2); transition:all 0.2s;">
+              <button id="btn-upload-profile-photo-real" class="btn" type="button" style="width:100%; min-width:210px; padding:12px 22px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); border:1px solid rgba(251,191,36,0.3); color:#fff; border-radius:10px; cursor:pointer; box-shadow:0 4px 14px rgba(137,32,27,0.25); transition:all 0.2s;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 ${user.photo ? 'Change Profile Photo' : 'Upload Profile Photo'}
               </button>
               ${user.photo ? `
-              <button id="btn-delete-profile-photo" class="btn" type="button" style="width:auto; padding:12px 24px; font-size:13.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:#fdf2f2; border:1.5px solid #fecaca; color:#dc2626; border-radius:10px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.2s;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <button id="btn-delete-profile-photo" class="btn" type="button" style="width:100%; min-width:210px; padding:10px 20px; font-size:12.5px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; background:rgba(239,68,68,0.08); border:1.5px solid rgba(239,68,68,0.25); color:#dc2626; border-radius:10px; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.2s;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px; height:15px"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 Delete Photo
               </button>
               ` : ''}
+              <div style="font-size:11px; color:var(--text-muted); text-align:center; line-height:1.4;">
+                Click badge photo for full view.<br>Click ID badge to flip card.
+              </div>
             </div>
           </div>
 
@@ -6159,7 +6243,9 @@ function renderEmployeeProfile() {
             if (hrInfo && mgrInfo) {
               const hrId = hrUser ? hrUser.id : null;
               const mgrId = mgrUser ? mgrUser.id : null;
-              if ((hrId && mgrId && hrId === mgrId) || (hrInfo.name.trim().toLowerCase() === mgrInfo.name.trim().toLowerCase())) {
+              const hrNameClean = (hrInfo.name || '').trim().toLowerCase();
+              const mgrNameClean = (mgrInfo.name || '').trim().toLowerCase();
+              if ((hrId && mgrId && hrId === mgrId) || (hrNameClean && mgrNameClean && hrNameClean === mgrNameClean)) {
                 mgrInfo = null;
               }
             }
@@ -6168,7 +6254,7 @@ function renderEmployeeProfile() {
             const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
 
             return `
-              <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm);">
+              <div class="prof-section-card" style="padding: 20px 24px; border-left: 4px solid var(--primary); background: linear-gradient(135deg, rgba(137, 32, 27, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%), var(--bg-surface);">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
                   
                   <!-- Left Group: Assigned HR / Manager -->
@@ -6177,7 +6263,7 @@ function renderEmployeeProfile() {
                     <!-- HR / Primary Assigner Section -->
                     ${hrInfo ? `
                     <div style="display: flex; align-items: center; gap: 12px;">
-                      <div class="staff-banner-avatar">${hrInfo.initials}</div>
+                      <div class="staff-banner-avatar" style="background: linear-gradient(135deg, #89201B 0%, #b91c1c 100%); box-shadow: 0 4px 12px rgba(137, 32, 27, 0.25);">${hrInfo.initials}</div>
                       <div>
                         <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">
                           ${(hrUser && hrUser.role === 'manager') ? 'Assigned Manager' : 'Registered / Assigned HR'}
@@ -6193,7 +6279,7 @@ function renderEmployeeProfile() {
                     <!-- Manager Section -->
                     ${mgrInfo ? `
                     <div style="display: flex; align-items: center; gap: 12px;">
-                      <div class="staff-banner-avatar" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #60a5fa;">${mgrInfo.initials}</div>
+                      <div class="staff-banner-avatar" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">${mgrInfo.initials}</div>
                       <div>
                         <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Assigned Manager</div>
                         <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px;">${Utils.escape(mgrInfo.name)}</div>
@@ -6211,7 +6297,7 @@ function renderEmployeeProfile() {
                       <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${joinedDate}</div>
                     </div>
                     <div style="display: flex; align-items: center;">
-                      <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: rgba(137, 32, 27, 0.08); color: var(--primary); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
+                      <span class="verified-staff-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(16, 185, 129, 0.1); color: #059669; border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 20px; font-size: 11.5px; font-weight: 700;">
                         <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                         Verified Staff
                       </span>
@@ -6225,13 +6311,18 @@ function renderEmployeeProfile() {
 
           <!-- Personal Details -->
           <div class="prof-section-card" style="position:relative;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1.5px solid var(--border); padding-bottom:10px;">
-              <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary);">Personal Details</h3>
-              <button class="btn" type="button" id="btn-profile-edit-focus" style="padding: 0 14px; height: 30px; font-size: 11.5px; font-weight: 700; border-radius: 6px; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: auto;">Edit Profile</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1.5px solid var(--border); padding-bottom:12px;">
+              <h3 style="margin:0; font-size:14.5px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+                <span>👤</span> Personal Details
+              </h3>
+              <button class="btn" type="button" id="btn-profile-edit-focus" style="padding: 0 16px; height: 32px; font-size: 12px; font-weight: 700; border-radius: 8px; border: 1.5px solid var(--primary); background: rgba(137,32,27,0.06); color: var(--primary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; width: auto;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px; height:13px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Edit Profile
+              </button>
             </div>
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
-                <label class="prof-label" for="prof-name">Full Name <span style="font-weight:400;color:#b0bec5;font-size:11px;">(Letters only)</span></label>
+                <label class="prof-label" for="prof-name">Full Name <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(Letters only)</span></label>
                 <input class="prof-input" type="text" id="prof-name" value="${Utils.escape(user.name)}" required placeholder="e.g. John Doe" disabled>
               </div>
               <div>
@@ -6261,7 +6352,7 @@ function renderEmployeeProfile() {
 
           <!-- Additional Information -->
           <div class="prof-section-card">
-            <h3 class="prof-section-title">Additional Information</h3>
+            <h3 class="prof-section-title"><span>📋</span> Additional Information</h3>
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dob">Date of Birth</label>
@@ -6294,7 +6385,7 @@ function renderEmployeeProfile() {
 
           <!-- Work Information -->
           <div class="prof-section-card">
-            <h3 class="prof-section-title">Work Information</h3>
+            <h3 class="prof-section-title"><span>🏢</span> Work Information</h3>
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dept">Department</label>
@@ -6328,7 +6419,7 @@ function renderEmployeeProfile() {
           <!-- Payroll Information -->
           ${isSelfAdmin ? `
           <div class="prof-section-card">
-            <h3 class="prof-section-title">Payroll Information</h3>
+            <h3 class="prof-section-title"><span>💳</span> Payroll Information</h3>
             <div class="prof-field-row">
               <div>
                 <label class="prof-label" for="prof-salary">Base Salary (INR/Month)</label>
@@ -6360,7 +6451,7 @@ function renderEmployeeProfile() {
 
           <!-- Action Buttons -->
           <div style="display:flex; gap:12px; justify-content:flex-end; padding-bottom:24px;">
-            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding: 0 20px; height: 36px; font-size: 12px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #fff; border: none; cursor: pointer; opacity: 0.5; box-shadow: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: auto;">Save Changes</button>
+            <button class="btn" type="submit" id="btn-profile-save" disabled style="padding: 0 24px; height: 38px; font-size: 12.5px; font-weight: 700; border-radius: 8px; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #fff; border: 1px solid rgba(251,191,36,0.3); cursor: pointer; opacity: 0.5; box-shadow: none; transition: all 0.2s; display: flex; align-items: center; justify-content: center; width: auto;">Save Changes</button>
           </div>
 
         </div>
@@ -6404,39 +6495,48 @@ function renderEmployeeProfile() {
       });
     }
 
-    photoFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        // Show uploading state on button
-        const targetBtn = uploadPhotoBtnReal || uploadPhotoBtn;
-        const originalHTML = targetBtn.innerHTML;
+    photoFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const targetBtn = uploadPhotoBtnReal || uploadPhotoBtn;
+      const originalHTML = targetBtn ? targetBtn.innerHTML : 'Upload Profile Photo';
+      if (targetBtn) {
         targetBtn.disabled = true;
         targetBtn.innerHTML = '<span style="display:flex;align-items:center;gap:8px">⏳ Uploading...</span>';
+      }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const dataUrl = event.target.result;
-            DB.updateUser(user.id, { photo: dataUrl });
-            Auth.init();
-            renderAppShell();
-            if (typeof showToastNotification === 'function') {
-              showToastNotification('✅ Profile photo uploaded successfully!', 'success');
-            }
-            renderEmployeeProfile();
-          } catch (err) {
-            console.error(err);
-            alert('Failed to save profile photo: ' + err.message);
-            uploadPhotoBtn.disabled = false;
-            uploadPhotoBtn.innerHTML = originalHTML;
+      try {
+        const dataUrl = await resizeImageToDataUrl(file, 512, 512, 0.85);
+        DB.updateUser(user.id, { photo: dataUrl });
+        user.photo = dataUrl;
+        if (Auth.currentUser) {
+          Auth.currentUser.photo = dataUrl;
+        }
+        try {
+          const rawSess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+          if (rawSess) {
+            const parsed = JSON.parse(rawSess);
+            parsed.photo = dataUrl;
+            sessionStorage.setItem('attendance_current_session', JSON.stringify(parsed));
+            localStorage.setItem('attendance_current_session', JSON.stringify(parsed));
           }
-        };
-        reader.onerror = () => {
-          alert('Failed to read the file. Please try again.');
-          uploadPhotoBtn.disabled = false;
-          uploadPhotoBtn.innerHTML = originalHTML;
-        };
-        reader.readAsDataURL(file);
+        } catch (se) {}
+
+        renderAppShell();
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Profile photo uploaded successfully!', 'success');
+        }
+        renderEmployeeProfile();
+      } catch (err) {
+        console.error('Failed to save profile photo:', err);
+        alert('Failed to save profile photo: ' + (err && err.message ? err.message : 'Unknown error'));
+        if (targetBtn) {
+          targetBtn.disabled = false;
+          targetBtn.innerHTML = originalHTML;
+        }
+      } finally {
+        photoFileInput.value = '';
       }
     });
   }
@@ -6447,7 +6547,19 @@ function renderEmployeeProfile() {
     deletePhotoBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to delete your profile photo?')) {
         DB.updateUser(user.id, { photo: null });
-        Auth.init();
+        user.photo = null;
+        if (Auth.currentUser) {
+          Auth.currentUser.photo = null;
+        }
+        try {
+          const rawSess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+          if (rawSess) {
+            const parsed = JSON.parse(rawSess);
+            delete parsed.photo;
+            sessionStorage.setItem('attendance_current_session', JSON.stringify(parsed));
+            localStorage.setItem('attendance_current_session', JSON.stringify(parsed));
+          }
+        } catch (se) {}
         renderAppShell();
         if (typeof showToastNotification === 'function') {
           showToastNotification('✅ Profile photo deleted.', 'success');

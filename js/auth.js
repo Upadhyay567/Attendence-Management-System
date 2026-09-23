@@ -12,11 +12,16 @@ export const Auth = {
     if (raw) {
       try {
         const session = JSON.parse(raw);
-        if (session && session.id) {
-          const user = DB.getUser(session.id);
+        const sId = session ? (session.id || session.userId || (session.user && session.user.id)) : null;
+        if (sId) {
+          const user = DB.getUser(sId);
           if (user && user.status !== 'Inactive') {
             this.currentUser = user;
-          } else {
+          } else if (!user) {
+            if (session.user && (!this.currentUser || this.currentUser.id === sId)) {
+              this.currentUser = session.user;
+            }
+          } else if (user && user.status === 'Inactive') {
             this.logout();
           }
         }
@@ -27,23 +32,19 @@ export const Auth = {
   },
 
   getCurrentUser() {
-    if (this.currentUser && this.currentUser.id) {
-      const freshUser = DB.getUser(this.currentUser.id);
-      if (freshUser) {
+    const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+    let session = null;
+    if (raw) {
+      try { session = JSON.parse(raw); } catch (e) {}
+    }
+    const sId = (this.currentUser && this.currentUser.id) || (session ? (session.id || session.userId || (session.user && session.user.id)) : null);
+
+    if (sId) {
+      const freshUser = DB.getUser(sId);
+      if (freshUser && freshUser.status !== 'Inactive') {
         this.currentUser = freshUser;
-      }
-    } else {
-      const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
-      if (raw) {
-        try {
-          const session = JSON.parse(raw);
-          if (session && session.id) {
-            const user = DB.getUser(session.id);
-            if (user && user.status !== 'Inactive') {
-              this.currentUser = user;
-            }
-          }
-        } catch (e) {}
+      } else if (!this.currentUser && session && session.user) {
+        this.currentUser = session.user;
       }
     }
     return this.currentUser;

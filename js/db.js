@@ -1135,8 +1135,19 @@ export const DB = {
   },
 
   updateUser(id, updates) {
-    const userIndex = this.data.users.findIndex(u => u.id === id);
+    if (!id) return null;
+    const cleanId = id.toString().trim();
+    let userIndex = this.data.users.findIndex(u => u.id === cleanId);
+    if (userIndex === -1) {
+      const lower = cleanId.toLowerCase();
+      userIndex = this.data.users.findIndex(u => 
+        (u.employeeId && u.employeeId.toLowerCase() === lower) ||
+        (u.username && u.username.toLowerCase() === lower) ||
+        (u.email && u.email.toLowerCase() === lower)
+      );
+    }
     if (userIndex !== -1) {
+      const realId = this.data.users[userIndex].id;
       if (updates.biometricUserId !== undefined && updates.biometricId === undefined) {
         updates.biometricId = updates.biometricUserId;
       }
@@ -1144,7 +1155,7 @@ export const DB = {
         updates.biometricUserId = updates.biometricId;
       }
       this.data.users[userIndex] = { ...this.data.users[userIndex], ...updates };
-      this.save({ type: 'update', key: 'users', query: { id: id }, updates });
+      this.save({ type: 'update', key: 'users', query: { id: realId }, updates });
       return this.data.users[userIndex];
     }
     return null;
