@@ -7183,20 +7183,21 @@ function handleMockUpload(userId, file, type) {
         setTimeout(() => {
           if (progressBar) progressBar.style.display = 'none';
           const sizeStr = (file.size / 1024).toFixed(0) + ' KB';
+          const finalUrl = uploadedUrl || base64Data;
           if (type === 'resume') {
-            DB.uploadResume(userId, file.name, sizeStr, uploadedUrl);
+            DB.uploadResume(userId, file.name, sizeStr, finalUrl);
             const titleEl = document.getElementById('cv-zone-title');
             if (titleEl) titleEl.textContent = 'Replace CV Resume File';
           } else if (type === 'aadhar') {
-            DB.uploadAadhar(userId, file.name, sizeStr, uploadedUrl);
+            DB.uploadAadhar(userId, file.name, sizeStr, finalUrl);
             const titleEl = document.getElementById('aadhar-zone-title');
             if (titleEl) titleEl.textContent = 'Replace Aadhar Card File';
           } else if (type === 'bank') {
-            DB.uploadBankDetails(userId, file.name, sizeStr, uploadedUrl);
+            DB.uploadBankDetails(userId, file.name, sizeStr, finalUrl);
             const titleEl = document.getElementById('bank-zone-title');
             if (titleEl) titleEl.textContent = 'Replace Bank Details File';
           } else {
-            DB.uploadDocument(userId, file.name, sizeStr, uploadedUrl);
+            DB.uploadDocument(userId, file.name, sizeStr, finalUrl);
           }
 
           const currentHash = window.location.hash || '#login';
@@ -7215,99 +7216,122 @@ function handleMockUpload(userId, file, type) {
   reader.readAsDataURL(file);
 }
 
-function showDocumentPreview(userId, docType) {
-  const user = DB.getUser(userId);
-  let doc = null;
-  if (docType === 'resume') {
-    doc = user.resume;
-  } else if (docType === 'aadhar') {
-    doc = user.aadhar;
-  } else if (docType === 'bank') {
-    doc = user.bankDetails;
+function createCorporatePdfBlob(title, user, doc) {
+  const sanitize = (str) => String(str || '').replace(/[()\\\r\n]/g, ' ');
+
+  const textOps = [
+    'BT',
+    '/F1 18 Tf',
+    '1 1 1 rg',
+    '60 765 Td',
+    '(' + sanitize('HOUSE OF SURYA - HS GROUP DELHI') + ') Tj',
+    '/F1 10 Tf',
+    '0 -18 Td',
+    '(' + sanitize('Official Employee Verification Document Portal') + ') Tj',
+    'ET',
+
+    'BT',
+    '/F1 15 Tf',
+    '0.537 0.125 0.106 rg',
+    '60 700 Td',
+    '(' + sanitize(title.toUpperCase()) + ') Tj',
+    'ET',
+
+    'BT',
+    '/F1 11 Tf',
+    '0.1 0.1 0.1 rg',
+    '60 660 Td',
+    '(' + sanitize('Document File Name:    ' + (doc.name || 'Document.pdf')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Employee Full Name:    ' + (user.name || 'Employee')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Employee ID:           ' + (user.employeeId || 'N/A')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Designation / Role:    ' + (user.designation || 'Staff')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Department:            ' + (user.department || 'Operations')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Official Email:        ' + (user.email || 'N/A')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Contact Number:        ' + (user.phone || 'N/A')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('Upload Date:           ' + (doc.date || '2026-09-23')) + ') Tj',
+    '0 -24 Td',
+    '(' + sanitize('File Size:             ' + (doc.size || 'Verified Record')) + ') Tj',
+    'ET',
+
+    'BT',
+    '/F1 12 Tf',
+    '0.05 0.5 0.25 rg',
+    '60 380 Td',
+    '(' + sanitize('STATUS: VERIFIED & APPROVED DOCUMENT') + ') Tj',
+    '/F1 10 Tf',
+    '0.3 0.3 0.3 rg',
+    '0 -20 Td',
+    '(' + sanitize('Digitally authenticated and archived in HS Group secure records.') + ') Tj',
+    '0 -18 Td',
+    '(' + sanitize('Verified for HR Administration and Operations Management review.') + ') Tj',
+    'ET'
+  ].join('\n');
+
+  const graphicsOps = [
+    'q',
+    '0.85 0.85 0.85 RG',
+    '1 w',
+    '45 45 505 750 re S',
+    '0.537 0.125 0.106 rg',
+    '45 740 505 55 re f',
+    '0.9 0.9 0.9 RG',
+    '0.5 w',
+    '50 420 495 0 re S',
+    'Q'
+  ].join('\n');
+
+  const streamContent = graphicsOps + '\n' + textOps;
+  const streamBytes = new TextEncoder().encode(streamContent);
+  const streamLen = streamBytes.length;
+
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n',
+    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n',
+    '5 0 obj\n<< /Length ' + streamLen + ' >>\nstream\n' + streamContent + '\nendstream\nendobj\n'
+  ];
+
+  const header = '%PDF-1.4\n';
+  const offsets = [];
+  let currentOffset = new TextEncoder().encode(header).length;
+
+  for (let i = 0; i < objects.length; i++) {
+    offsets.push(currentOffset);
+    currentOffset += new TextEncoder().encode(objects[i]).length;
   }
-  if (!doc) return;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  
-  let modalTitle = '';
-  if (docType === 'resume') modalTitle = 'Resume / CV';
-  else if (docType === 'aadhar') modalTitle = 'Aadhar Card';
-  else if (docType === 'bank') modalTitle = 'Bank Details (Passbook / Cancelled Cheque)';
+  const xrefOffset = currentOffset;
+  let xref = 'xref\n0 ' + (objects.length + 1) + '\n0000000000 65535 f \n';
+  for (let i = 0; i < offsets.length; i++) {
+    xref += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+  }
 
-  overlay.innerHTML = `
-    <div class="modal-content" style="max-width: 600px">
-      <div class="modal-header">
-        <h3 class="modal-title">${modalTitle} - Preview</h3>
-        <button class="close-modal-btn" id="close-preview-modal-btn">✕</button>
-      </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;padding:20px;border:1px dashed var(--border);border-radius:var(--radius-md);background:rgba(255,255,255,0.02)">
-        <div style="font-size:48px">${docType === 'resume' ? '📄' : (docType === 'aadhar' ? '🪪' : '🏦')}</div>
-        <div style="font-weight:600;font-size:16px">${Utils.escape(doc.name)}</div>
-        <div style="color:var(--text-muted);font-size:12px">${doc.size} | Uploaded on ${doc.date}</div>
-        <hr style="width:100%;border:0;border-top:1px solid var(--border);margin:12px 0">
-        <div style="width:100%;text-align:left;font-size:13px;line-height:1.6;color:var(--text-secondary)">
-          <p><strong>Simulated File Contents:</strong></p>
-          ${docType === 'resume' ? `
-            <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:4px;font-family:monospace">
-              <strong>RESUME / CV</strong><br>
-              Candidate Name: ${Utils.escape(user.name)}<br>
-              Role: ${Utils.escape(user.designation || 'Software Engineer')}<br>
-              Department: ${Utils.escape(user.department || 'Engineering')}<br>
-              Email: ${Utils.escape(user.email || 'N/A')}<br>
-              Phone: ${Utils.escape(user.phone || 'N/A')}<br><br>
-              [MOCK RESUME DOCUMENT CONTENTS VERIFIED]
-            </div>
-          ` : docType === 'aadhar' ? `
-            <div style="background:linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(245, 158, 11, 0.05) 100%);padding:16px;border-radius:8px;border:1px solid rgba(245,158,11,0.2);position:relative;font-family:'Inter',sans-serif;color:var(--text-secondary)">
-              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(245,158,11,0.2);padding-bottom:8px;margin-bottom:12px">
-                <strong style="color:var(--primary)">GOVERNMENT OF INDIA</strong>
-                <span style="font-size:10px;color:var(--text-muted)">Aadhaar Card Simulator</span>
-              </div>
-              <div style="display:flex;gap:16px;align-items:center">
-                <div style="width:60px;height:75px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:32px">👤</div>
-                <div>
-                  <div style="font-size:14px;font-weight:700;margin-bottom:4px">${Utils.escape(user.name)}</div>
-                  <div style="font-size:11px">DOB: ${user.dob || 'N/A'}</div>
-                  <div style="font-size:11px">Gender: ${user.gender || 'N/A'}</div>
-                  <div style="font-size:11px">Address: ${Utils.escape(user.address || 'N/A')}, ${Utils.escape(user.city || '')}</div>
-                </div>
-              </div>
-              <div style="text-align:center;margin-top:16px;font-size:15px;font-weight:700;letter-spacing:2px;color:var(--primary)">
-                XXXX - XXXX - 1234
-              </div>
-            </div>
-          ` : `
-            <div style="background:rgba(0,0,0,0.2);padding:12px;border-radius:4px;font-family:monospace">
-              <strong>BANK ACCOUNT DETAILS</strong><br>
-              Account Holder: ${Utils.escape(user.name)}<br>
-              Bank Name: State Bank of India<br>
-              Account Number: XXXXXX9876<br>
-              IFSC Code: SBIN0001234<br>
-              Branch: New Delhi Main Branch<br><br>
-              [MOCK BANK DOCUMENT CONTENTS VERIFIED]
-            </div>
-          `}
-        </div>
-      </div>
-      <div class="modal-actions" style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px">
-        <button class="btn btn-secondary" id="close-preview-modal-btn2">Close</button>
-        <button class="btn btn-cyan" id="btn-preview-download">Download File</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+  const trailer = 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF\n';
 
-  const close = () => closeModal(overlay);
-  document.getElementById('close-preview-modal-btn').addEventListener('click', close);
-  document.getElementById('close-preview-modal-btn2').addEventListener('click', close);
-  document.getElementById('btn-preview-download').addEventListener('click', () => {
-    downloadDocumentSimulated(userId, docType);
-  });
+  const fullPdfStr = header + objects.join('') + xref + trailer;
+  return new Blob([new TextEncoder().encode(fullPdfStr)], { type: 'application/pdf' });
 }
 
-function downloadDocumentSimulated(userId, docType) {
+function getOrGenerateDocumentPdfUrl(user, doc, docType) {
+  if (doc && doc.url && (doc.url.startsWith('data:') || doc.url.startsWith('/uploads/') || doc.url.startsWith('http'))) {
+    return doc.url;
+  }
+  const modalTitle = docType === 'resume' ? 'Resume / Curriculum Vitae' : (docType === 'aadhar' ? 'Aadhaar Card' : (docType === 'bank' ? 'Bank Account Details' : 'Official Document'));
+  const blob = createCorporatePdfBlob(modalTitle, user, doc);
+  return URL.createObjectURL(blob);
+}
+
+function showDocumentPreview(userId, docType) {
   const user = DB.getUser(userId);
+  if (!user) return;
   let doc = null;
   if (docType === 'resume') {
     doc = user.resume;
@@ -7320,16 +7344,109 @@ function downloadDocumentSimulated(userId, docType) {
   }
   if (!doc) return;
 
-  const content = `Official Document Download: ${doc.name}\nUploaded by user: ${user.name} (${user.employeeId})\nUpload Date: ${doc.date}\nFile Size: ${doc.size}\nStatus: VERIFIED\n\n[MOCK FILE SYSTEM CONTENT CONTENT FOR SECURITY COMPLIANCE]`;
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  
+  let modalTitle = '';
+  if (docType === 'resume') modalTitle = 'Resume / CV';
+  else if (docType === 'aadhar') modalTitle = 'Aadhar Card';
+  else if (docType === 'bank') modalTitle = 'Bank Details (Passbook / Cancelled Cheque)';
+  else modalTitle = 'Verification Document';
+
+  const pdfUrl = getOrGenerateDocumentPdfUrl(user, doc, docType);
+
+  overlay.innerHTML = `
+    <div class="modal-content" style="max-width: 840px; width: 92vw; padding: 22px; max-height: 94vh; display: flex; flex-direction: column; background: var(--bg-card, #1e1e1e); border: 1.5px solid rgba(251,191,36,0.3); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.65);">
+      <div class="modal-header" style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(137,32,27,0.15); border: 1px solid rgba(137,32,27,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            ${docType === 'resume' ? '📄' : (docType === 'aadhar' ? '🪪' : '🏦')}
+          </div>
+          <div>
+            <h3 class="modal-title" style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0;">${modalTitle} - Official Document Viewer</h3>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+              ${Utils.escape(doc.name)} &bull; ${doc.size || '1700 KB'} &bull; Uploaded on ${doc.date || '2026-09-23'}
+            </div>
+          </div>
+        </div>
+        <button class="close-modal-btn" id="close-preview-modal-btn" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center;" title="Close">&times;</button>
+      </div>
+
+      <div class="modal-body" style="flex: 1; min-height: 480px; max-height: 68vh; display: flex; flex-direction: column; gap: 8px; padding: 0;">
+        <div style="width: 100%; height: 100%; min-height: 480px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); background: #262626;">
+          <iframe src="${pdfUrl}#toolbar=1" type="application/pdf" style="width: 100%; height: 100%; min-height: 480px; border: none; display: block;" title="${Utils.escape(doc.name)}"></iframe>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); padding: 4px 6px;">
+          <span>Official document displayed in high-resolution PDF viewer.</span>
+          <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary, #89201B); font-weight: 600; text-decoration: underline;">Open PDF in New Browser Tab &nearr;</a>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+        <button class="btn btn-secondary" id="close-preview-modal-btn2" style="padding: 9px 18px; font-size: 13px;">Close</button>
+        <button class="btn btn-secondary" id="btn-preview-open-tab" style="padding: 9px 18px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          Open in New Tab
+        </button>
+        <button class="btn btn-primary" id="btn-preview-download" style="padding: 9px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #fff; border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download PDF
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => closeModal(overlay);
+  document.getElementById('close-preview-modal-btn').addEventListener('click', close);
+  document.getElementById('close-preview-modal-btn2').addEventListener('click', close);
+  document.getElementById('btn-preview-open-tab').addEventListener('click', () => {
+    window.open(pdfUrl, '_blank');
+  });
+  document.getElementById('btn-preview-download').addEventListener('click', () => {
+    downloadDocumentSimulated(userId, docType);
+  });
+}
+
+function downloadDocumentSimulated(userId, docType) {
+  const user = DB.getUser(userId);
+  if (!user) return;
+  let doc = null;
+  if (docType === 'resume') {
+    doc = user.resume;
+  } else if (docType === 'aadhar') {
+    doc = user.aadhar;
+  } else if (docType === 'bank') {
+    doc = user.bankDetails;
+  } else {
+    doc = (user.documents || []).find(d => d.id === docType) || (user.documents && user.documents.length > 0 ? user.documents[0] : null);
+  }
+  if (!doc) return;
+
+  const fileName = doc.name.toLowerCase().endsWith('.pdf') ? doc.name : (doc.name.replace(/\.[^/.]+$/, '') + '.pdf');
+
+  // If doc has a real uploaded file URL or base64 data URL
+  if (doc.url && (doc.url.startsWith('data:') || doc.url.startsWith('/uploads/') || doc.url.startsWith('http'))) {
+    const a = document.createElement('a');
+    a.href = doc.url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return;
+  }
+
+  // Generate the genuine PDF binary
+  const modalTitle = docType === 'resume' ? 'Resume / Curriculum Vitae' : (docType === 'aadhar' ? 'Aadhaar Card' : (docType === 'bank' ? 'Bank Account Details' : 'Official Verification Document'));
+  const blob = createCorporatePdfBlob(modalTitle, user, doc);
+  const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = doc.name.endsWith('.txt') ? doc.name : (doc.name.substring(0, doc.name.lastIndexOf('.')) + '_mock.txt');
+  a.href = blobUrl;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
 }
 
 function renderPersonalLeaves(userId) {

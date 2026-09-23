@@ -50,6 +50,39 @@ if (fs.existsSync(PUBLIC_DIR)) {
 }
 app.use(express.static(ROOT_DIR));
 
+const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+// File upload endpoint for Verification Documents and Attachments
+app.post('/api/upload', (req, res) => {
+  try {
+    const { filename, fileData } = req.body || {};
+    if (!fileData) {
+      return res.status(400).json({ error: 'No file data received.' });
+    }
+    const cleanName = (filename || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeFilename = `${Date.now()}_${cleanName}`;
+    const targetPath = path.join(UPLOADS_DIR, safeFilename);
+
+    let fileBuffer;
+    if (fileData.startsWith('data:')) {
+      const commaIdx = fileData.indexOf(',');
+      fileBuffer = Buffer.from(fileData.substring(commaIdx + 1), 'base64');
+    } else {
+      fileBuffer = Buffer.from(fileData, 'base64');
+    }
+
+    fs.writeFileSync(targetPath, fileBuffer);
+    return res.json({ success: true, url: `/uploads/${safeFilename}`, filename: safeFilename });
+  } catch (err) {
+    console.error('File upload error:', err);
+    return res.status(500).json({ error: 'Failed to save file: ' + err.message });
+  }
+});
+
 // Mount Modular Express API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', attendanceRoutes);
