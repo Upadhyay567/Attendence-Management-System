@@ -101,17 +101,6 @@ describe('HS Group Attendance System API Integration Tests', () => {
   describe('Biometric Shift-Wise Attendance Resolution', () => {
     it('should assign biometric punches to correct active shift without overwriting previous shifts', async () => {
       const { syncBiometricAttendance } = require('../src/server/biometric/biometricSync.service');
-      const fs = require('fs');
-      const { LOCAL_DB_FILE } = require('../src/server/config/db');
-
-      const db = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf8'));
-      // Ensure test user has multiple assigned schedules
-      const user = db.users.find(u => u.id === 'usr_68s5s48');
-      if (user) {
-        user.scheduleIds = ['sch_q8jji9v', 'sch_3ebecon'];
-        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-      }
-
       const res = await syncBiometricAttendance();
       expect(res).toHaveProperty('success');
     });
@@ -376,15 +365,20 @@ describe('HS Group Attendance System API Integration Tests', () => {
         .send({ username: 'admin', password: 'Surya@123', role: 'hr' });
       const token = authRes.body.token;
 
-      // Assign multiple shifts and multiple locations to user
-      const mutateRes = await request(app)
+      const testUserId = 'usr_test_multishift_' + Date.now();
+
+      // Create test user with multiple shifts and locations
+      const createRes = await request(app)
         .post('/api/mutate-granular')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          type: 'update',
+          type: 'push',
           key: 'users',
-          query: { id: 'usr_68s5s48' },
-          updates: {
+          payload: {
+            id: testUserId,
+            employeeId: 'EMP_TEST_MS',
+            name: 'MultiShift Test User',
+            role: 'employee',
             scheduleIds: ['sch_q8jji9v', 'sch_3ebecon'],
             scheduleId: 'sch_q8jji9v',
             preferredLocations: ['Noida sector 61', 'chandani chowk'],
@@ -395,17 +389,85 @@ describe('HS Group Attendance System API Integration Tests', () => {
             }
           }
         });
-
-      expect(mutateRes.status).toBe(200);
-      expect(mutateRes.body.success).toBe(true);
+      expect(createRes.status).toBe(200);
 
       // Verify db state reflects multiple shifts and multiple locations
       const stateRes = await request(app).get('/api/db-state');
       expect(stateRes.status).toBe(200);
-      const updatedUser = stateRes.body.users.find(u => u.id === 'usr_68s5s48');
-      expect(updatedUser).toBeDefined();
-      expect(updatedUser.scheduleIds).toEqual(expect.arrayContaining(['sch_q8jji9v', 'sch_3ebecon']));
-      expect(updatedUser.preferredLocations).toEqual(expect.arrayContaining(['Noida sector 61', 'chandani chowk']));
+      const testUser = stateRes.body.users.find(u => u.id === testUserId);
+      expect(testUser).toBeDefined();
+      expect(testUser.scheduleIds).toEqual(expect.arrayContaining(['sch_q8jji9v', 'sch_3ebecon']));
+      expect(testUser.preferredLocations).toEqual(expect.arrayContaining(['Noida sector 61', 'chandani chowk']));
+
+      // Clean up test user so database remains clean
+      await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'delete',
+          key: 'users',
+          query: { id: testUserId }
+        });
+    });
+
+    it('should support unassigning all shifts without auto-assigning default shifts', async () => {
+      const authRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'Surya@123', role: 'hr' });
+      const token = authRes.body.token;
+
+      const testUserId = 'usr_test_unassigned_' + Date.now();
+
+      // Create test user with 1 shift
+      const createRes = await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'push',
+          key: 'users',
+          payload: {
+            id: testUserId,
+            employeeId: 'EMP_TEST_UN',
+            name: 'Unassign Test User',
+            role: 'employee',
+            scheduleIds: ['sch_q8jji9v'],
+            scheduleId: 'sch_q8jji9v'
+          }
+        });
+      expect(createRes.status).toBe(200);
+
+      // Unassign all shifts: scheduleIds empty array, scheduleId null
+      const unassignRes = await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'update',
+          key: 'users',
+          query: { id: testUserId },
+          updates: {
+            scheduleIds: [],
+            scheduleId: null
+          }
+        });
+      expect(unassignRes.status).toBe(200);
+
+      // Verify DB state reflects empty shifts
+      const stateRes = await request(app).get('/api/db-state');
+      expect(stateRes.status).toBe(200);
+      const testUser = stateRes.body.users.find(u => u.id === testUserId);
+      expect(testUser).toBeDefined();
+      expect(testUser.scheduleIds).toEqual([]);
+      expect(testUser.scheduleId).toBeNull();
+
+      // Clean up test user
+      await request(app)
+        .post('/api/mutate-granular')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: 'delete',
+          key: 'users',
+          query: { id: testUserId }
+        });
     });
   });
 });

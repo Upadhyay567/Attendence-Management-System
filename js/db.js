@@ -1375,8 +1375,8 @@ export const DB = {
     
     // Collect all assigned schedule IDs
     let assignedIds = [];
-    if (user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0) {
-      assignedIds = [...user.scheduleIds];
+    if (Array.isArray(user.scheduleIds)) {
+      assignedIds = user.scheduleIds.filter(Boolean);
     } else if (user.scheduleId) {
       assignedIds = [user.scheduleId];
     }

@@ -530,7 +530,7 @@ async function replicateTemplatesAcrossDevices(options = {}) {
     if (!dev.enabled) continue;
 
     const reachable = await isPortReachable(dev.ip, dev.port, 600);
-    dev.status = reachable ? 'Online' : (dev.status === 'Online' && reachable ? 'Online' : dev.status || 'Offline');
+    dev.status = reachable ? 'Online' : 'Offline';
     dev.lastSyncAt = new Date().toISOString();
 
     if (reachable) {

@@ -73,11 +73,16 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
 let cachedDbState = null;
 let cachedMTime = 0;
 
+function invalidateLocalDbCache() {
+  cachedDbState = null;
+  cachedMTime = 0;
+}
+
 function readLocalDbStateCached() {
   if (!fs.existsSync(LOCAL_DB_FILE)) return null;
   try {
     const stat = fs.statSync(LOCAL_DB_FILE);
-    if (!cachedDbState || stat.mtimeMs > cachedMTime) {
+    if (!cachedDbState || stat.mtimeMs !== cachedMTime) {
       const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
       cachedDbState = JSON.parse(raw);
       cachedMTime = stat.mtimeMs;
@@ -171,6 +176,7 @@ async function handleGranularMutation(req, res) {
       const stateObj = JSON.parse(rawState);
       applyLocalUpdate(stateObj, type, key, payload, updates, query);
       fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(stateObj, null, 2), 'utf-8');
+      invalidateLocalDbCache();
     }
 
     broadcastSSEEvent('db_updated', { type, key, timestamp: Date.now() });
@@ -192,5 +198,6 @@ async function handleGranularMutation(req, res) {
 
 module.exports = {
   getDbState,
-  handleGranularMutation
+  handleGranularMutation,
+  invalidateLocalDbCache
 };

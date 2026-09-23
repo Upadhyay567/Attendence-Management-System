@@ -2007,7 +2007,9 @@ function openUserModal(userId = null) {
           <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) & Separate Work Locations <span style="font-size:11px;font-weight:normal;color:var(--text-muted);">(Select shifts and assign each shift its own location)</span></label>
           <div id="editor-schedule-checkboxes" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;max-height:280px;overflow-y:auto;">
             ${schedules.map(s => {
-              const isChecked = (isEdit && user.scheduleIds && Array.isArray(user.scheduleIds) && user.scheduleIds.includes(s.id)) || (isEdit && user.scheduleId === s.id) || (!isEdit && s.id === schedules[0].id);
+              const isChecked = isEdit
+                ? (Array.isArray(user.scheduleIds) ? user.scheduleIds.includes(s.id) : (user.scheduleId === s.id))
+                : (s.id === schedules[0].id);
               const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || 'Kohat Enclave, Pitampura, Delhi';
               return `
                 <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;">
@@ -2189,7 +2191,7 @@ function openUserModal(userId = null) {
     // Multiple shift schedules & their separate locations
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
     const scheduleIds = selectedShiftCheckboxes.map(cb => cb.value);
-    const scheduleId = scheduleIds.length > 0 ? scheduleIds[0] : (schedules[0] ? schedules[0].id : null);
+    const scheduleId = scheduleIds.length > 0 ? scheduleIds[0] : null;
     
     const shiftLocations = {};
     selectedShiftCheckboxes.forEach(cb => {
@@ -2202,7 +2204,7 @@ function openUserModal(userId = null) {
       }
     });
 
-    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations)[0] || 'Kohat Enclave, Pitampura, Delhi');
+    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations)[0] || (isEdit && user ? user.preferredLocation : null) || 'Kohat Enclave, Pitampura, Delhi');
 
     const roleEl = document.getElementById('editor-role');
     const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');

@@ -14,6 +14,7 @@ const createReportsRouter = require('./routes/reports.routes');
 const createAuditRouter = require('./routes/audit.routes');
 const { eventsRouter, broadcastSSEEvent } = require('./routes/events.routes');
 const biometricRoutes = require('./routes/biometric.routes');
+const { invalidateLocalDbCache } = require('./controllers/attendance.controller');
 
 
 const app = express();
@@ -64,6 +65,7 @@ app.post('/api/mutate', async (req, res) => {
     if (action === 'sync' && data) {
       if (fs.existsSync(LOCAL_DB_FILE)) {
         fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        invalidateLocalDbCache();
       }
       broadcastSSEEvent('db_updated', { action: 'sync', timestamp: Date.now() });
       return res.json({ success: true });
