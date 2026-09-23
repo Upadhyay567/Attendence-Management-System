@@ -3,7 +3,7 @@ import { DB } from './db.js?v=42';
 import { Auth } from './auth.js?v=33';
 import { Utils } from './utils.js?v=33';
 import { triggerBirthdayCelebration } from './celebration.js?v=33';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=33';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=47';
 
 // Custom dialog modal manager
 const CustomDialog = {
@@ -6114,7 +6114,7 @@ function renderEmployeeProfile() {
                   <div style="font-size:8px; font-weight:800; color:#92400e; border:1px solid #d97706; padding:3px 8px; border-radius:20px; text-transform:uppercase; background:rgba(251,191,36,0.15); letter-spacing:0.5px;">${badgeTitle}</div>
                 </div>
                 <div style="display:flex; gap:16px; align-items:center; margin:8px 0;">
-                  <div id="profile-badge-photo-click" style="width:68px; height:68px; border-radius:${user.photo ? '12px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fbbf24; border:2.5px solid #fbbf24; box-shadow:0 4px 14px rgba(0,0,0,0.22); flex-shrink:0; overflow:hidden; ${user.photo ? 'cursor:pointer;' : ''}" title="${user.photo ? 'Click to view full screen' : ''}">
+                  <div id="profile-badge-photo-click" style="width:68px; height:68px; border-radius:${user.photo ? '12px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fbbf24; border:2.5px solid #fbbf24; box-shadow:0 4px 14px rgba(0,0,0,0.22); flex-shrink:0; overflow:hidden; cursor:pointer; transition:transform 0.15s ease;" title="${user.photo ? 'Click badge photo for full view' : 'Click to upload photo'}">
                     ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:38px; height:38px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden; flex:1;">
@@ -6172,8 +6172,9 @@ function renderEmployeeProfile() {
                 Delete Photo
               </button>
               ` : ''}
-              <div style="font-size:11px; color:var(--text-muted); text-align:center; line-height:1.4;">
-                Click badge photo for full view.<br>Click ID badge to flip card.
+              <div style="font-size:11px; color:var(--text-muted); text-align:center; line-height:1.5;">
+                <span id="btn-view-badge-photo-text" style="color:${user.photo ? 'var(--primary, #89201B)' : 'inherit'}; font-weight:${user.photo ? '600' : 'normal'}; cursor:pointer; ${user.photo ? 'text-decoration:underline;' : ''}">Click badge photo for full view</span><br>
+                <span style="font-size:10.5px; opacity:0.85;">Click ID badge to flip card.</span>
               </div>
             </div>
           </div>
@@ -6470,14 +6471,29 @@ function renderEmployeeProfile() {
     });
   }
 
+  const handleBadgePhotoClick = (e) => {
+    e.stopPropagation(); // prevent flipping the ID card!
+    if (user.photo) {
+      if (typeof openFullScreenImageModal === 'function') {
+        openFullScreenImageModal(user.photo);
+      } else if (typeof window.openFullScreenImageModal === 'function') {
+        window.openFullScreenImageModal(user.photo);
+      }
+    } else {
+      if (photoFileInput) {
+        photoFileInput.click();
+      }
+    }
+  };
+
   const badgePhotoClick = document.getElementById('profile-badge-photo-click');
   if (badgePhotoClick) {
-    badgePhotoClick.addEventListener('click', (e) => {
-      e.stopPropagation(); // prevent flipping the ID card!
-      if (user.photo) {
-        openFullScreenImageModal(user.photo);
-      }
-    });
+    badgePhotoClick.addEventListener('click', handleBadgePhotoClick);
+  }
+
+  const btnViewBadgePhotoText = document.getElementById('btn-view-badge-photo-text');
+  if (btnViewBadgePhotoText) {
+    btnViewBadgePhotoText.addEventListener('click', handleBadgePhotoClick);
   }
 
   // Photo upload bindings — Upload Photo button & Avatar click

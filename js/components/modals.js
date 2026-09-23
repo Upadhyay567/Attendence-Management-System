@@ -10,24 +10,50 @@ window.closeModal = closeModal;
 
 export function openFullScreenImageModal(imageSrc) {
   if (!imageSrc) return;
+  // Remove existing fullscreen overlays if any
+  document.querySelectorAll('.modal-overlay.fullscreen-image-overlay').forEach(el => el.remove());
+
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay fullscreen-image-overlay';
   overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(10, 15, 29, 0.95); backdrop-filter: blur(15px);
-    display: flex; justify-content: center; align-items: center; z-index: 11000;
-    cursor: zoom-out; animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+    background: rgba(8, 10, 18, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: flex; justify-content: center; align-items: center; z-index: 999999;
+    cursor: zoom-out; animation: fadeIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    padding: 24px; box-sizing: border-box;
   `;
-  overlay.innerHTML = html`
-    <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; justify-content: center; align-items: center;" onclick="event.stopPropagation();">
-      <img src="${imageSrc}" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 2px solid rgba(251, 191, 36, 0.4); max-height: 85vh;">
-      <button id="btn-close-fullscreen-view" style="position: absolute; top: -45px; right: 0; background: none; border: none; color: #fff; font-size: 36px; cursor: pointer; font-weight: 700;">&times;</button>
+
+  overlay.innerHTML = `
+    <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center;" onclick="event.stopPropagation();">
+      <div style="position: absolute; top: -48px; right: 0; display: flex; align-items: center; gap: 10px;">
+        <button id="btn-close-fullscreen-view" type="button" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #ffffff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" title="Close (Esc)">&times;</button>
+      </div>
+      <img src="${imageSrc}" alt="Profile Photo" style="max-width: min(85vw, 680px); max-height: 80vh; object-fit: contain; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.65); border: 2.5px solid rgba(251, 191, 36, 0.5); background: #111; cursor: default;">
+      <div style="margin-top: 14px; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+        Press <kbd style="background:rgba(255,255,255,0.18); padding:2px 6px; border-radius:4px; font-family:monospace; border:1px solid rgba(255,255,255,0.3);">Esc</kbd> or click anywhere outside to close
+      </div>
     </div>
   `;
-  const closeView = () => closeModal(overlay);
+
+  const closeView = () => {
+    window.removeEventListener('keydown', handleKeyDown);
+    closeModal(overlay);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      closeView();
+    }
+  };
+
   overlay.addEventListener('click', closeView);
+  window.addEventListener('keydown', handleKeyDown);
+
   const btnClose = overlay.querySelector('#btn-close-fullscreen-view');
-  if (btnClose) btnClose.addEventListener('click', closeView);
+  if (btnClose) {
+    btnClose.addEventListener('click', closeView);
+  }
+
   document.body.appendChild(overlay);
 }
 window.openFullScreenImageModal = openFullScreenImageModal;
