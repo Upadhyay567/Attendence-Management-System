@@ -13,16 +13,31 @@ const CustomDialog = {
       overlay.className = 'custom-dialog-overlay';
       
       const modal = document.createElement('div');
-      modal.className = 'custom-dialog-card';
+      modal.className = 'custom-dialog-card custom-alert-card';
       
+      const msgStr = String(message || '');
+      const isSuccess = /(?:success|सफल|सफलतापूर्वक|updated|created|saved|deleted|verified|sent|complete)/i.test(msgStr) && !/(?:fail|error|denied|block|cannot|not|invalid|require)/i.test(msgStr);
+      const isError = /(?:fail|error|denied|block|invalid|reject|cannot|too early)/i.test(msgStr) || (title && /(?:error|blocked|failed)/i.test(String(title)));
+      
+      let badgeClass = 'custom-dialog-icon-alert';
+      let iconSvg = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+
+      if (isSuccess) {
+        badgeClass = 'custom-dialog-icon-success';
+        iconSvg = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+      } else if (isError) {
+        badgeClass = 'custom-dialog-icon-error';
+        iconSvg = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+      }
+
       modal.innerHTML = `
         <div class="custom-dialog-icon-wrapper">
-          <div class="custom-dialog-icon-badge custom-dialog-icon-alert" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div class="custom-dialog-icon-badge ${badgeClass}">
+            ${iconSvg}
           </div>
         </div>
-        ${title ? `<h3 style="margin: 10px 0 6px 0; font-size: 16px; font-weight: 700; color: var(--text-primary); text-align: center;">${Utils.escape(title)}</h3>` : ''}
-        <div class="custom-dialog-message">${message.replace(/\n/g, '<br>')}</div>
+        ${title ? `<h3 class="custom-dialog-title" style="margin: 10px 0 6px 0; font-size: 16px; font-weight: 700; text-align: center;">${Utils.escape(title)}</h3>` : ''}
+        <div class="custom-dialog-message">${msgStr.replace(/\n/g, '<br>')}</div>
         <div class="custom-dialog-actions" style="justify-content: center;">
           <button class="custom-dialog-btn-primary" style="min-width: 120px;" id="btn-custom-alert-ok">OK</button>
         </div>

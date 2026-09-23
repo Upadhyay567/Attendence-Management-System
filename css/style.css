@@ -3335,7 +3335,7 @@ body.light-theme .equify-filter-select option {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 14, 26, 0.78) !important;
+  background: rgba(15, 4, 4, 0.82) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
   display: flex;
@@ -3345,18 +3345,40 @@ body.light-theme .equify-filter-select option {
   animation: customDialogFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+body.light-theme .custom-dialog-overlay {
+  background: rgba(31, 5, 4, 0.45) !important;
+  backdrop-filter: blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+}
+
 .custom-dialog-card {
   max-width: 480px;
   width: 92%;
   padding: 36px 30px;
-  background: linear-gradient(160deg, #192033 0%, #0d121f 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: #3D0D0A !important;
+  border: 1px solid #89201B !important;
   border-radius: 24px !important;
-  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), 0 0 45px rgba(16, 185, 129, 0.15) !important;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(137, 32, 27, 0.25) !important;
   animation: customDialogScaleUp 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  color: #f8fafc !important;
+  color: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   box-sizing: border-box;
+}
+
+body.light-theme .custom-dialog-card {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(137, 32, 27, 0.22) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 50px -12px rgba(137, 32, 27, 0.18), 0 0 35px rgba(137, 32, 27, 0.08) !important;
+  color: #1f0504 !important;
+}
+
+.custom-dialog-title {
+  color: #ffffff !important;
+}
+
+body.light-theme .custom-dialog-title {
+  color: #1f0504 !important;
 }
 
 .custom-dialog-icon-wrapper {
@@ -3376,31 +3398,76 @@ body.light-theme .equify-filter-select option {
   transition: transform 0.25s ease;
 }
 
-.custom-dialog-icon-prompt {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+/* Success Badge (Green) */
+.custom-dialog-icon-success {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border: 1px solid rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 8px 24px -4px rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
 }
 
+body.light-theme .custom-dialog-icon-success {
+  background: #dcfce7 !important;
+  border: 1px solid #86efac !important;
+  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.2) !important;
+  color: #059669 !important;
+}
+
+/* Error Badge (Red) */
+.custom-dialog-icon-error {
+  background: rgba(239, 68, 68, 0.18) !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 8px 24px -4px rgba(239, 68, 68, 0.35) !important;
+  color: #f87171 !important;
+}
+
+body.light-theme .custom-dialog-icon-error {
+  background: #fee2e2 !important;
+  border: 1px solid #fca5a5 !important;
+  box-shadow: 0 8px 20px -4px rgba(239, 68, 68, 0.2) !important;
+  color: #dc2626 !important;
+}
+
+/* Alert / Info Badge (House of Surya Crimson) */
 .custom-dialog-icon-alert {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.04) !important;
-  color: #f8fafc !important;
+  background: rgba(137, 32, 27, 0.25) !important;
+  border: 1px solid rgba(137, 32, 27, 0.45) !important;
+  box-shadow: 0 8px 24px -4px rgba(137, 32, 27, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+body.light-theme .custom-dialog-icon-alert {
+  background: rgba(137, 32, 27, 0.08) !important;
+  border: 1px solid rgba(137, 32, 27, 0.22) !important;
+  box-shadow: 0 8px 20px -4px rgba(137, 32, 27, 0.12) !important;
+  color: #89201B !important;
+}
+
+.custom-dialog-icon-prompt {
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5) !important;
+  color: #ffffff !important;
 }
 
 .custom-dialog-icon-confirm {
-  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.5) !important;
+  color: #ffffff !important;
 }
 
 .custom-dialog-message {
   font-size: 15px;
-  color: #e2e8f0 !important;
+  color: #f1f5f9 !important;
   line-height: 1.6;
   margin-bottom: 24px;
   font-weight: 500;
   text-align: center;
   letter-spacing: -0.2px;
+}
+
+body.light-theme .custom-dialog-message {
+  color: #1f0504 !important;
+  font-weight: 500 !important;
 }
 
 .custom-dialog-input-group {
@@ -3411,10 +3478,10 @@ body.light-theme .equify-filter-select option {
 .custom-dialog-input {
   width: 100% !important;
   padding: 13px 18px !important;
-  background: rgba(15, 23, 42, 0.75) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(137, 32, 27, 0.35) !important;
   border-radius: 12px !important;
-  color: #f8fafc !important;
+  color: #ffffff !important;
   font-size: 14.5px !important;
   font-weight: 500 !important;
   outline: none !important;
@@ -3424,9 +3491,22 @@ body.light-theme .equify-filter-select option {
 }
 
 .custom-dialog-input:focus {
-  border-color: #8b5cf6 !important;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), inset 0 2px 4px rgba(0,0,0,0.2) !important;
-  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: #89201B !important;
+  box-shadow: 0 0 0 4px rgba(137, 32, 27, 0.25), inset 0 2px 4px rgba(0,0,0,0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.light-theme .custom-dialog-input {
+  background: #f8fafc !important;
+  border: 1.5px solid rgba(137, 32, 27, 0.25) !important;
+  color: #1f0504 !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+body.light-theme .custom-dialog-input:focus {
+  border-color: #89201B !important;
+  box-shadow: 0 0 0 4px rgba(137, 32, 27, 0.18), inset 0 1px 3px rgba(0,0,0,0.05) !important;
+  background: #ffffff !important;
 }
 
 .custom-dialog-actions {
@@ -3453,6 +3533,18 @@ body.light-theme .equify-filter-select option {
   transform: translateY(-1px);
 }
 
+body.light-theme .custom-dialog-btn-secondary {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.light-theme .custom-dialog-btn-secondary:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+  transform: translateY(-1px);
+}
+
 .custom-dialog-btn-primary {
   padding: 11px 24px !important;
   border-radius: 12px !important;
@@ -3470,6 +3562,10 @@ body.light-theme .equify-filter-select option {
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
   box-shadow: 0 10px 24px -4px rgba(16, 185, 129, 0.6) !important;
   transform: translateY(-1.5px);
+}
+
+body.light-theme .custom-dialog-btn-primary {
+  box-shadow: 0 6px 18px -2px rgba(16, 185, 129, 0.35) !important;
 }
 
 .custom-dialog-btn-prompt {
@@ -3559,7 +3655,7 @@ body.light-theme .custom-confirm-card {
   background: #FFFFFF !important;
   border: 1px solid rgba(137, 32, 27, 0.2) !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 35px rgba(137, 32, 27, 0.08) !important;
-  color: #1e293b !important;
+  color: #1f0504 !important;
 }
 
 .custom-confirm-card .custom-dialog-icon-badge {
@@ -3658,7 +3754,7 @@ body.light-theme .custom-prompt-card {
   background: #FFFFFF !important;
   border: 1px solid rgba(137, 32, 27, 0.2) !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 35px rgba(137, 32, 27, 0.08) !important;
-  color: #1e293b !important;
+  color: #1f0504 !important;
 }
 
 .custom-prompt-card .custom-dialog-icon-badge {
@@ -3701,7 +3797,7 @@ body.light-theme .custom-prompt-card {
 body.light-theme .custom-prompt-card .custom-dialog-input {
   background: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
-  color: #1e293b !important;
+  color: #1f0504 !important;
 }
 
 body.light-theme .custom-prompt-card .custom-dialog-input:focus {
@@ -3754,7 +3850,7 @@ body.light-theme .custom-prompt-card .custom-dialog-btn-secondary {
 
 body.light-theme .custom-prompt-card .custom-dialog-btn-secondary:hover {
   background: #cbd5e1 !important;
-  color: #1e293b !important;
+  color: #1f0504 !important;
 }
 
 .custom-prompt-card .custom-dialog-btn-primary {
@@ -3791,7 +3887,7 @@ body.light-theme .custom-thankyou-card {
   background: #FFFFFF !important;
   border: 1px solid rgba(137, 32, 27, 0.2) !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 35px rgba(137, 32, 27, 0.08) !important;
-  color: #1e293b !important;
+  color: #1f0504 !important;
 }
 
 .custom-thankyou-icon {
