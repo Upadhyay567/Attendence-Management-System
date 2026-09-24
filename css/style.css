@@ -4344,7 +4344,7 @@ body.light-theme .emp-multi-chip.loc-chip {
 /* Floating Popover */
 .emp-multi-select-popover {
   position: fixed;
-  z-index: 10500;
+  z-index: 999999;
   min-width: 280px;
   max-width: 360px;
   background: var(--bg-surface, #1e1e24);
@@ -4356,6 +4356,50 @@ body.light-theme .emp-multi-chip.loc-chip {
   overflow: hidden;
   backdrop-filter: blur(12px);
   animation: popoverDrop 0.15s ease-out;
+}
+
+.card-panel:has(.emp-multi-select-wrap),
+.card-panel.toolbar-card {
+  overflow: visible !important;
+}
+
+body.light-theme .emp-multi-select-popover {
+  background: #ffffff !important;
+  border: 1px solid rgba(137, 32, 27, 0.25) !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(137, 32, 27, 0.1) !important;
+  color: #1f0504 !important;
+}
+
+body.light-theme .emp-multi-select-title {
+  color: #89201B !important;
+}
+
+body.light-theme .emp-multi-select-header {
+  background: #fbf7f4 !important;
+  border-bottom: 1px solid rgba(137, 32, 27, 0.15) !important;
+}
+
+body.light-theme .emp-multi-select-main-txt {
+  color: #1f0504 !important;
+}
+
+body.light-theme .emp-multi-select-sub-txt {
+  color: #64748b !important;
+}
+
+body.light-theme .emp-multi-select-action-btn {
+  background: rgba(137, 32, 27, 0.08) !important;
+  color: #89201B !important;
+}
+
+body.light-theme .emp-multi-select-action-btn:hover {
+  background: rgba(137, 32, 27, 0.16) !important;
+}
+
+body.light-theme .emp-multi-select-search input {
+  background: #f8f4f0 !important;
+  border-color: rgba(137, 32, 27, 0.2) !important;
+  color: #1f0504 !important;
 }
 
 @keyframes popoverDrop {

@@ -114,3 +114,27 @@ export const Utils = {
     return String(inputPassword) === storedStr;
   }
 };
+
+// Tagged template literal helper for syntax highlighting and safe template strings
+export const html = (strings, ...values) => {
+  return strings.reduce((result, str, i) => result + str + (values[i] !== undefined ? values[i] : ''), '');
+};
+
+// Convert 24-hour time string (e.g. "08:00", "16:30") to 12-hour AM/PM format (e.g. "08:00 AM", "04:30 PM")
+export function formatTime12h(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return timeStr || '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let h = parseInt(parts[0], 10);
+  const m = parts[1];
+  if (isNaN(h)) return timeStr;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+}
+
+// Format a time range "startTime - endTime" with AM/PM
+export function formatTimeRange12h(start, end) {
+  return `${formatTime12h(start)} - ${formatTime12h(end)}`;
+}
+

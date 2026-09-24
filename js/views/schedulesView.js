@@ -1,7 +1,7 @@
 // js/views/schedulesView.js - Shift Allocation & Planning
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html } from '../utils/helpers.js';
+import { Utils, html, formatTime12h, formatTimeRange12h } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -12,10 +12,17 @@ export function renderAdminSchedules(tab) {
   const main = document.getElementById('main-view');
   if (!main) return;
 
-  const schedules = DB.getSchedules();
+  // Clean up any previously body-appended popovers from prior render
+  document.querySelectorAll('body > .emp-multi-select-popover').forEach(p => p.remove());
+
+  const schedules = (typeof DB.getSchedules === 'function' ? DB.getSchedules() : (DB.data ? DB.data.schedules : [])) || [];
   const allUsers = (typeof DB.getUsers === 'function' ? DB.getUsers() : (DB.data ? DB.data.users : [])) || [];
   const officeCoords = (typeof DB.getOfficeCoordinates === 'function' ? DB.getOfficeCoordinates() : window.OFFICE_COORDINATES) || {};
-  const allLocationNames = Object.keys(officeCoords);
+  const allLocationNames = [...new Set([
+    ...Object.keys(officeCoords),
+    ...schedules.map(s => s.location),
+    ...allUsers.flatMap(u => Array.isArray(u.preferredLocations) ? u.preferredLocations : [u.preferredLocation])
+  ].filter(Boolean))].sort();
 
   const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
@@ -38,7 +45,7 @@ export function renderAdminSchedules(tab) {
 
       <div class="content-body" style="display:flex; flex-direction:column; gap:16px">
         <!-- Search, Filters, and Bulk Action Toolbar -->
-        <div class="card-panel" style="padding:16px 20px">
+        <div class="card-panel toolbar-card" style="padding:16px 20px; overflow:visible !important; backdrop-filter:none !important;">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px">
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; flex:1">
               <input type="text" id="loc-assign-search" class="form-input" placeholder="🔍 Search employee name, ID or department..." style="min-width:260px; max-width:360px; padding:8px 12px; font-size:12.5px; border-radius:8px">
@@ -509,7 +516,13 @@ export function renderAdminSchedules(tab) {
       }
       closeAllPopovers();
 
+      if (popover.parentNode !== document.body) {
+        document.body.appendChild(popover);
+      }
+
       popover.style.display = 'flex';
+      popover.style.position = 'fixed';
+      popover.style.zIndex = '999999';
       trigger.classList.add('active');
       currentOpenPopover = popover;
       currentOpenTrigger = trigger;
@@ -527,6 +540,12 @@ export function renderAdminSchedules(tab) {
       const calculatedLeft = Math.max(10, Math.min(rect.left, window.innerWidth - 370));
       popover.style.left = calculatedLeft + 'px';
       popover.style.width = Math.max(rect.width, 290) + 'px';
+
+      // Prevent clicks inside popover from closing it
+      if (!popover.dataset.clickBound) {
+        popover.addEventListener('click', (e) => e.stopPropagation());
+        popover.dataset.clickBound = 'true';
+      }
 
       // Focus search input if present
       const searchInput = popover.querySelector('input[type="text"]');
@@ -573,12 +592,16 @@ export function renderAdminSchedules(tab) {
       });
     }
 
-    // Close on click outside or on window scroll
+    // Close on click outside or on window/container scroll
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.emp-multi-select-wrap') && !e.target.closest('.emp-multi-select-popover')) {
         closeAllPopovers();
       }
     });
+
+    const mainContainer = document.getElementById('main-view');
+    if (mainContainer) mainContainer.addEventListener('scroll', closeAllPopovers, { passive: true });
+    window.addEventListener('scroll', closeAllPopovers, { passive: true });
 
     window.addEventListener('resize', closeAllPopovers);
 
@@ -737,8 +760,12 @@ export function renderAdminSchedules(tab) {
 
     if (bulkShiftNoneChk) {
       bulkShiftNoneChk.addEventListener('change', (e) => {
+        bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
         if (e.target.checked) {
-          document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = false; });
+          document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
+            c.checked = false; 
+            c.closest('.emp-multi-select-option')?.classList.remove('selected');
+          });
         }
         updateBulkShiftTriggerLabel();
       });
@@ -746,8 +773,10 @@ export function renderAdminSchedules(tab) {
 
     document.querySelectorAll('.bulk-shift-chk').forEach(c => {
       c.addEventListener('change', () => {
+        c.closest('.emp-multi-select-option')?.classList.toggle('selected', c.checked);
         if (c.checked && bulkShiftNoneChk) {
           bulkShiftNoneChk.checked = false;
+          bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
         }
         updateBulkShiftTriggerLabel();
       });
@@ -757,8 +786,14 @@ export function renderAdminSchedules(tab) {
     if (btnBulkSelectAllShifts) {
       btnBulkSelectAllShifts.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (bulkShiftNoneChk) bulkShiftNoneChk.checked = false;
-        document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = true; });
+        if (bulkShiftNoneChk) {
+          bulkShiftNoneChk.checked = false;
+          bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
+          c.checked = true; 
+          c.closest('.emp-multi-select-option')?.classList.add('selected');
+        });
         updateBulkShiftTriggerLabel();
       });
     }
@@ -766,8 +801,14 @@ export function renderAdminSchedules(tab) {
     if (btnBulkClearShifts) {
       btnBulkClearShifts.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (bulkShiftNoneChk) bulkShiftNoneChk.checked = false;
-        document.querySelectorAll('.bulk-shift-chk').forEach(c => { c.checked = false; });
+        if (bulkShiftNoneChk) {
+          bulkShiftNoneChk.checked = false;
+          bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
+          c.checked = false; 
+          c.closest('.emp-multi-select-option')?.classList.remove('selected');
+        });
         updateBulkShiftTriggerLabel();
       });
     }
@@ -794,8 +835,12 @@ export function renderAdminSchedules(tab) {
 
     if (bulkLocNoneChk) {
       bulkLocNoneChk.addEventListener('change', (e) => {
+        bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
         if (e.target.checked) {
-          document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = false; });
+          document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
+            c.checked = false; 
+            c.closest('.emp-multi-select-option')?.classList.remove('selected');
+          });
         }
         updateBulkLocTriggerLabel();
       });
@@ -803,8 +848,10 @@ export function renderAdminSchedules(tab) {
 
     document.querySelectorAll('.bulk-loc-chk').forEach(c => {
       c.addEventListener('change', () => {
+        c.closest('.emp-multi-select-option')?.classList.toggle('selected', c.checked);
         if (c.checked && bulkLocNoneChk) {
           bulkLocNoneChk.checked = false;
+          bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
         }
         updateBulkLocTriggerLabel();
       });
@@ -814,8 +861,14 @@ export function renderAdminSchedules(tab) {
     if (btnBulkSelectAllLocs) {
       btnBulkSelectAllLocs.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (bulkLocNoneChk) bulkLocNoneChk.checked = false;
-        document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = true; });
+        if (bulkLocNoneChk) {
+          bulkLocNoneChk.checked = false;
+          bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
+          c.checked = true; 
+          c.closest('.emp-multi-select-option')?.classList.add('selected');
+        });
         updateBulkLocTriggerLabel();
       });
     }
@@ -823,8 +876,14 @@ export function renderAdminSchedules(tab) {
     if (btnBulkClearLocs) {
       btnBulkClearLocs.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (bulkLocNoneChk) bulkLocNoneChk.checked = false;
-        document.querySelectorAll('.bulk-loc-chk').forEach(c => { c.checked = false; });
+        if (bulkLocNoneChk) {
+          bulkLocNoneChk.checked = false;
+          bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
+          c.checked = false; 
+          c.closest('.emp-multi-select-option')?.classList.remove('selected');
+        });
         updateBulkLocTriggerLabel();
       });
     }
@@ -889,6 +948,8 @@ export function renderAdminSchedules(tab) {
           }
         });
 
+        closeAllPopovers();
+
         const msgParts = [];
         if (bulkShiftNone) msgParts.push(`Removed Shift(s)`);
         else if (selectedBulkShifts.length > 0) msgParts.push(`${selectedBulkShifts.length} Shift(s)`);
@@ -896,8 +957,13 @@ export function renderAdminSchedules(tab) {
         if (bulkLocNone) msgParts.push(`Removed Location(s)`);
         else if (selectedBulkLocs.length > 0) msgParts.push(`${selectedBulkLocs.length} Location(s)`);
 
+        const successMsg = `Successfully assigned ${msgParts.join(' & ')} to ${checkedBoxes.length} employee(s).`;
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`✅ Successfully assigned ${msgParts.join(' & ')} to ${checkedBoxes.length} employee(s).`, 'success');
+          showToastNotification(`✅ ${successMsg}`, 'success');
+        } else if (typeof CustomDialog !== 'undefined' && CustomDialog.alert) {
+          CustomDialog.alert(successMsg, 'Bulk Assignment Complete');
+        } else {
+          alert(`✅ ${successMsg}`);
         }
       });
     }
