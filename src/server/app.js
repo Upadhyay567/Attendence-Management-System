@@ -48,7 +48,6 @@ const SENSITIVE_FILE_PATTERNS = [
   /^\/seed\.json$/i,
   /^\/package(?:-lock)?\.json$/i,
   /^\/server\.js$/i,
-  /^\/server-config\.json$/i,
   /^\/\.env/i,
   /^\/\.git/i,
   /\.(?:bat|vbs|cmd|ps1|sh|bak|tmp|log|md|ejs)$/i,
@@ -83,7 +82,7 @@ app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
 app.use('/js', express.static(path.join(ROOT_DIR, 'js')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-// Serve root public assets (index.html, logos, favicons) safely
+// Serve root public assets (index.html, logos, favicons, server-config) safely
 app.use(express.static(ROOT_DIR, {
   dotfiles: 'ignore',
   index: ['index.html'],
@@ -94,7 +93,6 @@ app.use(express.static(ROOT_DIR, {
       filename === 'package.json' ||
       filename === 'package-lock.json' ||
       filename === 'server.js' ||
-      filename === 'server-config.json' ||
       filename.endsWith('.bat') ||
       filename.endsWith('.vbs') ||
       filename.endsWith('.md')

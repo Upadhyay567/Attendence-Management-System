@@ -7,7 +7,10 @@ import { closeModal } from '../components/modals.js';
 let AUTH_REQUIRE_ID_MANDATORY = true;
 
 export function renderLoginView() {
-  if (activeTimer) clearInterval(activeTimer);
+  if (typeof window !== 'undefined' && window.activeTimer) {
+    clearInterval(window.activeTimer);
+    window.activeTimer = null;
+  }
 
   // Clear any geofencing state so next login starts clean
   sessionStorage.removeItem('hs_pending_auto_checkin_time');

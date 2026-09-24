@@ -1,13 +1,13 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=54';
-import { renderAdminSchedules } from './views/schedulesView.js?v=54';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=54';
-import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=54';
-import { renderAdminAttendances } from './views/attendancesView.js?v=54';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=54';
-import { renderAdminFinance } from './views/financeView.js?v=54';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=54';
-import { renderAdminUsers } from './views/userManagementView.js?v=54';
+import { renderLoginView } from './views/loginView.js?v=55';
+import { renderAdminSchedules } from './views/schedulesView.js?v=55';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=55';
+import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=55';
+import { renderAdminAttendances } from './views/attendancesView.js?v=55';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=55';
+import { renderAdminFinance } from './views/financeView.js?v=55';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=55';
+import { renderAdminUsers } from './views/userManagementView.js?v=55';
 
 // app.js - SPA Router & Controller
 import { DB } from './db.js?v=42';
@@ -402,6 +402,7 @@ window.prompt = function(msg, defaultVal) {
   return CustomDialog.prompt(String(msg || ''), defaultVal != null ? String(defaultVal) : '');
 };
 
+window.activeTimer = null;
 let activeTimer = null;
 const AUTH_REQUIRE_ID_MANDATORY = false; // Change to true to make ID verification mandatory
 const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
@@ -4088,8 +4089,9 @@ function startLiveClock() {
     }
   };
   tick();
-  if (activeTimer) clearInterval(activeTimer);
-  activeTimer = setInterval(tick, 1000);
+  if (window.activeTimer) clearInterval(window.activeTimer);
+  window.activeTimer = setInterval(tick, 1000);
+  activeTimer = window.activeTimer;
 }
 
 function startActiveWorkTimer(todayLog) {
@@ -4976,7 +4978,7 @@ function openAllBirthdaysModal() {
   });
 }
 
-async // [Delegated to js/views/renderAdminDashboard]
+// [Delegated to js/views/renderAdminDashboard]
 
 // [Delegated to js/views/renderAdminUsers]
 
