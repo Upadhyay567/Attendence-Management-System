@@ -7181,9 +7181,16 @@ function handleMockUpload(userId, file, type) {
     const base64Data = e.target.result;
     let uploadedUrl = '';
     try {
+      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+      let token = '';
+      try { if (sess) token = JSON.parse(sess).token || ''; } catch(e){}
+
       const uploadRes = await fetch((window.apiBaseUrl || '') + '/api/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ filename: file.name, fileData: base64Data })
       });
       if (uploadRes.ok) {

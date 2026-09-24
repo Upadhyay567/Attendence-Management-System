@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const request = require('supertest');
 const { app, connectMongoose, mongoose, syncLocalToMongoOnBoot } = require('../server');
 
@@ -468,6 +470,78 @@ describe('HS Group Attendance System API Integration Tests', () => {
           key: 'users',
           query: { id: testUserId }
         });
+    });
+  });
+
+  describe('POST /api/upload Security Restrictions', () => {
+    let token = '';
+
+    beforeAll(async () => {
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({ username: 'admin', password: 'Surya@123', role: 'hr' });
+      token = loginRes.body.token;
+    });
+
+    it('should reject unauthenticated upload requests with 401', async () => {
+      const response = await request(app)
+        .post('/api/upload')
+        .send({ filename: 'test.pdf', fileData: Buffer.from('%PDF-1.4 test').toString('base64') });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('Authentication required');
+    });
+
+    it('should reject files with disallowed extensions (.exe, .sh) with 400', async () => {
+      const response = await request(app)
+        .post('/api/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ filename: 'malicious.exe', fileData: Buffer.from('MZ...').toString('base64') });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('Invalid file type');
+    });
+
+    it('should reject files with mismatched magic bytes with 400', async () => {
+      const response = await request(app)
+        .post('/api/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ filename: 'fake.pdf', fileData: Buffer.from('plain text header not a pdf').toString('base64') });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('File content does not match');
+    });
+
+    it('should reject files exceeding 5MB with 400', async () => {
+      const bigBuf = Buffer.alloc(5.2 * 1024 * 1024);
+      bigBuf[0] = 0x25; bigBuf[1] = 0x50; bigBuf[2] = 0x44; bigBuf[3] = 0x46; // %PDF
+      const response = await request(app)
+        .post('/api/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ filename: 'big.pdf', fileData: bigBuf.toString('base64') });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toContain('exceeds maximum permitted limit of 5 MB');
+    });
+
+    it('should successfully upload authenticated valid PDF file with 200', async () => {
+      const pdfBuf = Buffer.from('%PDF-1.4 sample valid content');
+      const response = await request(app)
+        .post('/api/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ filename: 'test_doc.pdf', fileData: pdfBuf.toString('base64') });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body).toHaveProperty('url');
+      expect(response.body.url).toContain('/uploads/');
+
+      // Cleanup uploaded file from disk
+      const uploadedFile = path.join(__dirname, '..', 'uploads', response.body.filename);
+      if (fs.existsSync(uploadedFile)) {
+        fs.unlinkSync(uploadedFile);
+      }
     });
   });
 });

@@ -15,6 +15,8 @@ const createAuditRouter = require('./routes/audit.routes');
 const { eventsRouter, broadcastSSEEvent } = require('./routes/events.routes');
 const biometricRoutes = require('./routes/biometric.routes');
 const { invalidateLocalDbCache } = require('./controllers/attendance.controller');
+const { authenticateToken } = require('./middleware/auth.middleware');
+const multer = require('multer');
 
 
 const app = express();
@@ -103,32 +105,120 @@ app.use(express.static(ROOT_DIR, {
   }
 }));
 
-// File upload endpoint for Verification Documents and Attachments
-app.post('/api/upload', (req, res) => {
+// Helper to validate file signatures (magic bytes) against declared file extension
+function validateFileSignature(buffer, fileExt) {
+  if (!buffer || buffer.length < 4) return false;
+  const ext = fileExt.toLowerCase();
+  if (ext === '.pdf') {
+    // %PDF header
+    return buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+  }
+  if (ext === '.png') {
+    // \x89 P N G header
+    return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  }
+  if (ext === '.jpg' || ext === '.jpeg') {
+    // JPEG SOI marker (\xFF\xD8\xFF)
+    return buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  }
+  return false;
+}
+
+const uploadMultipart = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+});
+
+const uploadMiddleware = uploadMultipart.single('file');
+
+function handleSecureUpload(req, res) {
   try {
-    const { filename, fileData } = req.body || {};
-    if (!fileData) {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required. Please log in to upload files.' });
+    }
+
+    let fileBuffer = null;
+    let originalName = '';
+
+    if (req.file) {
+      fileBuffer = req.file.buffer;
+      originalName = req.file.originalname || 'document.pdf';
+    } else if (req.body && req.body.fileData) {
+      originalName = req.body.filename || 'document.pdf';
+      const fileData = req.body.fileData;
+      if (typeof fileData !== 'string') {
+        return res.status(400).json({ error: 'Invalid file data format.' });
+      }
+      if (fileData.startsWith('data:')) {
+        const commaIdx = fileData.indexOf(',');
+        fileBuffer = Buffer.from(fileData.substring(commaIdx + 1), 'base64');
+      } else {
+        fileBuffer = Buffer.from(fileData, 'base64');
+      }
+    } else {
       return res.status(400).json({ error: 'No file data received.' });
     }
-    const cleanName = (filename || 'document.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
-    const safeFilename = `${Date.now()}_${cleanName}`;
-    const targetPath = path.join(UPLOADS_DIR, safeFilename);
 
-    let fileBuffer;
-    if (fileData.startsWith('data:')) {
-      const commaIdx = fileData.indexOf(',');
-      fileBuffer = Buffer.from(fileData.substring(commaIdx + 1), 'base64');
-    } else {
-      fileBuffer = Buffer.from(fileData, 'base64');
+    const rawExt = path.extname(originalName).toLowerCase();
+    const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'];
+    if (!ALLOWED_EXTENSIONS.includes(rawExt)) {
+      return res.status(400).json({ 
+        error: `Invalid file type '${rawExt || 'unknown'}'. Allowed file types are: .pdf, .png, .jpg, .jpeg` 
+      });
+    }
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return res.status(400).json({ error: 'Uploaded file is empty.' });
+    }
+    if (fileBuffer.length > MAX_FILE_SIZE) {
+      return res.status(400).json({ 
+        error: `File size exceeds maximum permitted limit of 5 MB.` 
+      });
+    }
+
+    if (!validateFileSignature(fileBuffer, rawExt)) {
+      return res.status(400).json({ 
+        error: `File content does not match the declared extension '${rawExt}'. Corrupted or invalid file header.` 
+      });
+    }
+
+    const cleanBase = path.basename(originalName, rawExt).replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+    const safeFilename = `${Date.now()}_${cleanBase}${rawExt}`;
+    const targetPath = path.resolve(UPLOADS_DIR, safeFilename);
+
+    if (!targetPath.startsWith(path.resolve(UPLOADS_DIR))) {
+      return res.status(400).json({ error: 'Invalid file destination path.' });
     }
 
     fs.writeFileSync(targetPath, fileBuffer);
-    return res.json({ success: true, url: `/uploads/${safeFilename}`, filename: safeFilename });
+    return res.json({ 
+      success: true, 
+      url: `/uploads/${safeFilename}`, 
+      filename: safeFilename,
+      size: fileBuffer.length
+    });
   } catch (err) {
     console.error('File upload error:', err);
-    return res.status(500).json({ error: 'Failed to save file: ' + err.message });
+    return res.status(500).json({ error: 'Failed to process file upload: ' + err.message });
   }
-});
+}
+
+// Secure upload endpoints (supporting both multipart FormData and base64 JSON)
+const processUploadRequest = (req, res) => {
+  uploadMiddleware(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File size exceeds maximum permitted limit of 5 MB.' });
+      }
+      return res.status(400).json({ error: err.message || 'File upload parsing error.' });
+    }
+    handleSecureUpload(req, res);
+  });
+};
+
+app.post('/api/upload', authenticateToken, processUploadRequest);
+app.post('/api/upload-leave-doc', authenticateToken, processUploadRequest);
 
 // Mount Modular Express API Routes
 app.use('/api/auth', authRoutes);
