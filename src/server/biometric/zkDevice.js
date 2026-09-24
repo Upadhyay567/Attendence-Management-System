@@ -16,7 +16,8 @@ console.log = function(...args) {
 // =====================================================
 
 const net = require('net');
-const { execSync } = require('child_process');
+const path = require('path');
+const { execSync, execFile } = require('child_process');
 
 const DEVICE = {
   name: process.env.BIOMETRIC_DEVICE_NAME || 'ZKTeco K40 Pro',
@@ -273,6 +274,40 @@ async function createDeviceConnection() {
 
 
 // =====================================================
+// PYTHON BIOMETRIC BRIDGE (High Reliability Protocol)
+//
+// Modern ZKTeco firmware requires CMD_AUTH challenge-response
+// and exact TCP framing that pyzk handles with 100% reliability.
+// =====================================================
+
+function runPythonBridge(cmd = 'snapshot', ip = DEVICE.ip, port = DEVICE.port, commCode = DEVICE.commCode, timeoutSec = 5) {
+  return new Promise((resolve, reject) => {
+    const scriptPath = path.join(__dirname, 'zk_bridge.py');
+    const args = [cmd, String(ip), String(port), String(commCode), String(timeoutSec)];
+    execFile('python', [scriptPath, ...args], { timeout: (timeoutSec + 5) * 1000 }, (error, stdout, stderr) => {
+      if (error) {
+        const err = new Error(stderr || error.message || 'Python bridge execution error');
+        err.isOffline = true;
+        return reject(err);
+      }
+      try {
+        const parsed = JSON.parse(stdout.trim());
+        if (!parsed.success) {
+          const err = new Error(parsed.error || 'Failed to communicate with biometric hardware');
+          err.isOffline = true;
+          return reject(err);
+        }
+        resolve(parsed);
+      } catch (parseErr) {
+        const err = new Error(`Failed to parse bridge output: ${stdout}`);
+        err.isOffline = true;
+        reject(err);
+      }
+    });
+  });
+}
+
+// =====================================================
 // WITH DEVICE — single-connection wrapper with queue
 //
 // Chains onto _deviceQueue to guarantee that only ONE
@@ -282,26 +317,77 @@ async function createDeviceConnection() {
 
 async function withDevice(callback) {
   const execute = async () => {
-    let zk = null;
-
+    // 1. Try Python bridge first for modern K40 firmware support
     try {
-      zk = await createDeviceConnection();
-      return await callback(zk);
-
-    } catch (error) {
-      if (error && error.isOffline) {
-        if (!lastLoggedOffline) {
-          console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — operating in local database mode.`);
-          lastLoggedOffline = true;
-        }
-      } else {
-        console.warn(`⚠️ K40 device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
+      const bridgeData = await runPythonBridge('snapshot', DEVICE.ip, DEVICE.port, DEVICE.commCode, 5);
+      if (lastLoggedOffline) {
+        console.log(`✅ Biometric hardware connected: ${bridgeData.deviceName || DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (${bridgeData.firmware || 'TCP'})`);
+        lastLoggedOffline = false;
       }
-      throw error;
 
-    } finally {
-      if (zk) {
-        await forceDisconnect(zk);
+      const zkBridge = {
+        connectionType: 'tcp',
+        async getInfo() {
+          return {
+            name: bridgeData.deviceName || DEVICE.name,
+            serialNumber: bridgeData.serialNumber || DEVICE.serial,
+            firmware: bridgeData.firmware,
+            ip: bridgeData.ip,
+            port: bridgeData.port
+          };
+        },
+        async getUsers() {
+          return {
+            data: (bridgeData.users || []).map(u => ({
+              uid: u.uid,
+              userId: u.userId,
+              name: u.name,
+              role: u.privilege,
+              cardno: u.card
+            }))
+          };
+        },
+        async getAttendances() {
+          return {
+            data: (bridgeData.logs || []).map(l => ({
+              userSn: l.userSn,
+              deviceUserId: l.deviceUserId,
+              userId: l.userId,
+              recordTime: new Date(l.recordTime),
+              status: l.status,
+              punch: l.punch
+            }))
+          };
+        },
+        async disconnect() {
+          return true;
+        }
+      };
+
+      return await callback(zkBridge);
+    } catch (bridgeErr) {
+      // 2. Fallback to node-zklib if python bridge is unavailable
+      let zk = null;
+
+      try {
+        zk = await createDeviceConnection();
+        return await callback(zk);
+
+      } catch (error) {
+        if (error && error.isOffline) {
+          if (!lastLoggedOffline) {
+            console.log(`ℹ️ Biometric hardware (${DEVICE.ip}:${DEVICE.port}) is offline — operating in local database mode.`);
+            lastLoggedOffline = true;
+          }
+        } else {
+          console.warn(`⚠️ K40 device status (${DEVICE.ip}:${DEVICE.port}): ${error.message || String(error)}`);
+        }
+        throw error;
+
+      } finally {
+        if (zk) {
+          await forceDisconnect(zk);
+        }
       }
     }
   };
@@ -402,6 +488,7 @@ module.exports = {
   DEVICE,
   describeError,
   createDeviceConnection,
+  runPythonBridge,
   withDevice,
   getDeviceInfo,
   getDeviceUsers,

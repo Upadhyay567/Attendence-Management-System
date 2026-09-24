@@ -66,8 +66,10 @@ function readHrmsUsers() {
  *   2. hrmsUser.id             === biometricId
  *   3. hrmsUser.employeeId     === biometricId
  */
-function findHrmsUser(hrmsUsers, biometricId) {
+function findHrmsUser(hrmsUsers, biometricId, biometricName = '') {
   const target = String(biometricId).trim();
+  const targetDigits = target.replace(/\D/g, '');
+  const targetName = String(biometricName || '').trim().toLowerCase();
 
   return hrmsUsers.find(user => {
     if (!user) return false;
@@ -86,6 +88,20 @@ function findHrmsUser(hrmsUsers, biometricId) {
       user.employeeId != null &&
       String(user.employeeId).trim() === target
     ) return true;
+
+    if (targetDigits) {
+      const empDigits = String(user.employeeId || '').replace(/\D/g, '');
+      const bioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
+      if ((empDigits && empDigits === targetDigits) || (bioDigits && bioDigits === targetDigits)) return true;
+    }
+
+    if (targetName && user.name) {
+      const uName = String(user.name).trim().toLowerCase();
+      if (uName === targetName) return true;
+      const firstUName = uName.split(' ')[0];
+      const firstTargetName = targetName.split(' ')[0];
+      if (firstUName && firstTargetName && firstUName === firstTargetName) return true;
+    }
 
     return false;
   }) || null;

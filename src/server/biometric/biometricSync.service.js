@@ -697,10 +697,28 @@ function processLocalPunch(
 
   const existingForShift = userLogsToday.find(l => String(l.shiftId) === String(targetShiftId));
   if (existingForShift) {
+    const [inH, inM] = (existingForShift.checkIn || '23:59').split(':').map(Number);
+    const inMins = (inH || 0) * 60 + (inM || 0);
     const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
     const outMins = (outH || 0) * 60 + (outM || 0);
 
-    if (punchMins > outMins) {
+    if (punchMins < inMins) {
+      const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
+      existingForShift.checkIn = time;
+      existingForShift.checkInPunchId = punchId;
+      existingForShift.status = computeAttendanceStatus(time, existingForShift.checkOut || '', shiftObj);
+      existingForShift.updatedAt = new Date().toISOString();
+      if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+      if (!existingForShift.allPunchIds.includes(punchId)) {
+        existingForShift.allPunchIds.push(punchId);
+      }
+      state.processedPunchIds.push(punchId);
+      result.updated++;
+      console.log(
+        `🟢 BIOMETRIC CHECK-IN (EARLIER) | ${employee.name} | Shift: ${targetShiftId} | In adjusted to ${time} | Status: ${existingForShift.status}`
+      );
+      return;
+    } else if (punchMins > outMins) {
       const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
       const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
       existingForShift.checkOut = time;
@@ -1138,10 +1156,32 @@ async function syncMongoDatabase(
       const existingForShift = existingLogs.find(l => String(l.shiftId) === String(targetShiftId) || l.id === attId);
 
       if (existingForShift) {
+        const [inH, inM] = (existingForShift.checkIn || '23:59').split(':').map(Number);
+        const inMins = (inH || 0) * 60 + (inM || 0);
         const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
         const outMins = (outH || 0) * 60 + (outM || 0);
 
-        if (punchMins > outMins) {
+        if (punchMins < inMins) {
+          const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
+          const evaluatedStatus = computeAttendanceStatus(time, existingForShift.checkOut || '', shiftObj);
+
+          existingForShift.checkIn = time;
+          existingForShift.checkInPunchId = punchId;
+          existingForShift.status = evaluatedStatus;
+          existingForShift.biometricUsed = punch.deviceName || DEVICE_NAME;
+          existingForShift.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
+          existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
+          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+          if (!existingForShift.allPunchIds.includes(punchId)) {
+            existingForShift.allPunchIds.push(punchId);
+          }
+          await existingForShift.save();
+          result.updated++;
+          console.log(
+            `🟢 BIOMETRIC CHECK-IN (EARLIER) | ${employee.name} | Shift: ${targetShiftId} | In adjusted to ${time} | Status: ${evaluatedStatus}`
+          );
+          continue;
+        } else if (punchMins > outMins) {
           const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
           const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
 
@@ -1355,6 +1395,11 @@ async function syncBiometricAttendance(options = {}) {
         combinedUsers,
         normalizedPunches
       );
+      try {
+        await syncLocalDatabase(combinedUsers, normalizedPunches);
+      } catch (localMirrorErr) {
+        console.warn('⚠️ seed.json local mirror notice:', localMirrorErr.message);
+      }
     } else {
       result = await syncLocalDatabase(
         combinedUsers,

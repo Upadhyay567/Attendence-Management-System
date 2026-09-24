@@ -18,6 +18,10 @@ const {
   broadcastSSEEvent
 } = require('../routes/events.routes');
 
+const {
+  runPythonBridge
+} = require('./zkDevice');
+
 // =====================================================
 // PER-DEVICE CONNECTION QUEUES & CONFIG
 //
@@ -186,31 +190,69 @@ async function withDeviceConfig(deviceConfig, callback) {
   const currentQueue = getDeviceQueue(queueKey);
 
   const execute = async () => {
-    const reachable = await isPortReachable(deviceConfig.ip, deviceConfig.port, 600);
-    if (!reachable) {
-      const err = new Error(`Biometric device '${deviceConfig.name || deviceConfig.ip}' is unreachable (${deviceConfig.ip}:${deviceConfig.port})`);
-      err.isOffline = true;
-      throw err;
-    }
-
-    let zk = null;
+    // 1. Try Python bridge first for modern firmware support
     try {
-      zk = await tryConnectDevice(deviceConfig, 'tcp');
-    } catch (err) {
-      // Fallback to UDP if TCP fails
+      const bridgeData = await runPythonBridge('snapshot', deviceConfig.ip, deviceConfig.port, deviceConfig.commKey || deviceConfig.commCode || 0, 5);
+      const zkBridge = {
+        connectionType: 'tcp',
+        async getInfo() {
+          return {
+            name: bridgeData.deviceName || deviceConfig.name,
+            serialNumber: bridgeData.serialNumber || deviceConfig.serial,
+            firmware: bridgeData.firmware,
+            ip: bridgeData.ip,
+            port: bridgeData.port
+          };
+        },
+        async getUsers() {
+          return {
+            data: (bridgeData.users || []).map(u => ({
+              uid: u.uid,
+              userId: u.userId,
+              name: u.name,
+              role: u.privilege,
+              cardno: u.card
+            }))
+          };
+        },
+        async getAttendances() {
+          return {
+            data: (bridgeData.logs || []).map(l => ({
+              userSn: l.userSn,
+              deviceUserId: l.deviceUserId,
+              userId: l.userId,
+              recordTime: new Date(l.recordTime),
+              status: l.status,
+              punch: l.punch
+            }))
+          };
+        },
+        async disconnect() {
+          return true;
+        }
+      };
+
+      return await callback(zkBridge);
+    } catch (bridgeErr) {
+      // 2. Fallback to node-zklib
+      let zk = null;
       try {
-        zk = await tryConnectDevice(deviceConfig, 'udp');
-      } catch (udpErr) {
-        udpErr.isOffline = true;
-        throw udpErr;
+        zk = await tryConnectDevice(deviceConfig, 'tcp');
+      } catch (err) {
+        try {
+          zk = await tryConnectDevice(deviceConfig, 'udp');
+        } catch (udpErr) {
+          udpErr.isOffline = true;
+          throw udpErr;
+        }
       }
-    }
 
-    try {
-      return await callback(zk);
-    } finally {
-      if (zk) {
-        await forceDisconnect(zk);
+      try {
+        return await callback(zk);
+      } finally {
+        if (zk) {
+          await forceDisconnect(zk);
+        }
       }
     }
   };
