@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0"
+cd /d "%~dp0.."
 title HS Group Delhi Live Server
 echo ====================================================
 echo   Starting HS Group Delhi Live Server
@@ -36,7 +36,7 @@ if not "%PYTHON_CMD%"=="" (
 )
 
 echo Opening index.html directly...
-start "" "%~dp0index.html"
+start "" "%~dp0..\index.html"
 
 :end
 pause
