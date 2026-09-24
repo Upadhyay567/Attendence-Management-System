@@ -41,20 +41,67 @@ app.use((req, res, next) => {
   next();
 });
 
+// Security Hardening: Block direct access to sensitive data files, scripts, and server internals
+const SENSITIVE_FILE_PATTERNS = [
+  /^\/seed\.json$/i,
+  /^\/package(?:-lock)?\.json$/i,
+  /^\/server\.js$/i,
+  /^\/server-config\.json$/i,
+  /^\/\.env/i,
+  /^\/\.git/i,
+  /\.(?:bat|vbs|cmd|ps1|sh|bak|tmp|log|md|ejs)$/i,
+  /^\/(?:src|test|node_modules|scratch|brain|\.system_generated)\//i
+];
+
+app.use((req, res, next) => {
+  const reqPath = decodeURI(req.path || '').toLowerCase();
+  for (const pattern of SENSITIVE_FILE_PATTERNS) {
+    if (pattern.test(reqPath)) {
+      return res.status(403).json({ error: 'Access denied: sensitive resource.' });
+    }
+  }
+  next();
+});
+
 // Serve Static Frontend Assets & Public directory
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 const ROOT_DIR = path.join(__dirname, '..', '..');
+const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 if (fs.existsSync(PUBLIC_DIR)) {
   app.use(express.static(PUBLIC_DIR));
 }
-app.use(express.static(ROOT_DIR));
 
-const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+// Serve explicit client directories
+app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
+app.use('/js', express.static(path.join(ROOT_DIR, 'js')));
 app.use('/uploads', express.static(UPLOADS_DIR));
+
+// Serve root public assets (index.html, logos, favicons) safely
+app.use(express.static(ROOT_DIR, {
+  dotfiles: 'ignore',
+  index: ['index.html'],
+  setHeaders: (res, filePath) => {
+    const filename = path.basename(filePath).toLowerCase();
+    if (
+      filename === 'seed.json' ||
+      filename === 'package.json' ||
+      filename === 'package-lock.json' ||
+      filename === 'server.js' ||
+      filename === 'server-config.json' ||
+      filename.endsWith('.bat') ||
+      filename.endsWith('.vbs') ||
+      filename.endsWith('.md')
+    ) {
+      res.status(403);
+      throw new Error('Access denied');
+    }
+  }
+}));
 
 // File upload endpoint for Verification Documents and Attachments
 app.post('/api/upload', (req, res) => {

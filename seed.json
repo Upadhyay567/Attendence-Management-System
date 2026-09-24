@@ -48,7 +48,7 @@
       "name": "Abhishek Sharma",
       "role": "hr",
       "status": "Active",
-      "password": "$2b$10$2wAdVFJEBEKn/hA.tsst9eKzdFIwxhQwyycfpXnL/72/QgR1CqzMC",
+      "password": "$2b$10$x.1gAdOaERZ7xHPdVL3BXupWgSCll2kWOb.AsAS4yJ8Hm.XClrj.6",
       "email": "abhishek879@gmail.com",
       "phone": "8967459032",
       "dob": "1995-08-07",
@@ -78,7 +78,7 @@
       "managerId": "",
       "assignedById": "usr_admin",
       "state": "delhi",
-      "passwordResetCount": 50,
+      "passwordResetCount": 52,
       "preferredLocations": [
         "HS Group Worksite (28.6952, 77.1860)"
       ],
@@ -1912,6 +1912,39 @@
   ],
   "announcements": [
     {
+      "id": "ann_yqsva9k",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Reporting Manager: Amit Sharma ➔ Manjit  kour Operations Manager",
+      "category": "Update",
+      "date": "2026-09-24",
+      "author": "Manjit  kour Operations Manager",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-24T05:59:44.556Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_0lfm3x9",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Amit Sharma.",
+      "category": "Update",
+      "date": "2026-09-24",
+      "author": "Amit Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-24T05:59:05.777Z",
+      "link": "#user-management"
+    },
+    {
+      "id": "ann_ofxxigf",
+      "title": "📢 Profile Updated by HR/Manager",
+      "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Reporting Manager: Manjit  kour Operations Manager ➔ Amit Sharma",
+      "category": "Update",
+      "date": "2026-09-24",
+      "author": "Abhishek Sharma",
+      "targetUserId": "usr_68s5s48",
+      "createdAt": "2026-09-24T05:13:00.082Z",
+      "link": "#user-management"
+    },
+    {
       "id": "ann_5h6xy4d",
       "title": "📢 Profile Updated by HR/Manager",
       "content": "Your profile details have been updated by Manjit  kour Operations Manager.",
@@ -2938,6 +2971,316 @@
   ],
   "customRoles": [],
   "auditLogs": [
+    {
+      "timestamp": "2026-09-24T06:49:04.660Z",
+      "action": "DELETE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "id": "usr_test_unassigned_1790232544488"
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.571Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "scheduleIds": [],
+        "scheduleId": null
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.520Z",
+      "action": "PUSH_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "id": "usr_test_unassigned_1790232544488",
+        "employeeId": "EMP_TEST_UN",
+        "name": "Unassign Test User",
+        "role": "employee",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "scheduleId": "sch_q8jji9v"
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.419Z",
+      "action": "DELETE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "id": "usr_test_multishift_1790232544262"
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.303Z",
+      "action": "PUSH_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "id": "usr_test_multishift_1790232544262",
+        "employeeId": "EMP_TEST_MS",
+        "name": "MultiShift Test User",
+        "role": "employee",
+        "scheduleIds": [
+          "sch_q8jji9v",
+          "sch_3ebecon"
+        ],
+        "scheduleId": "sch_q8jji9v",
+        "preferredLocations": [
+          "Noida sector 61",
+          "chandani chowk"
+        ],
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_q8jji9v": "Noida sector 61",
+          "sch_3ebecon": "chandani chowk"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.200Z",
+      "action": "UPDATE_users",
+      "userId": "usr_admin",
+      "userName": "HR Admin Manager",
+      "userRole": "hr",
+      "details": {
+        "preferredLocation": "Noida sector 61",
+        "shiftLocations": {
+          "sch_mfl8wvv": "Noida sector 61"
+        }
+      },
+      "ipAddress": "::ffff:127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:04.111Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T06:49:03.619Z",
+      "action": "GENERAL_ACTION",
+      "userId": "SYSTEM",
+      "userName": "",
+      "userRole": "",
+      "details": {},
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:59:44.758Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_yqsva9k",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Manjit  kour Operations Manager.\n\nExact Changes Made:\n• Reporting Manager: Amit Sharma ➔ Manjit  kour Operations Manager",
+        "category": "Update",
+        "date": "2026-09-24",
+        "author": "Manjit  kour Operations Manager",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-24T05:59:44.556Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:59:44.673Z",
+      "action": "UPDATE_users",
+      "userId": "usr_manager",
+      "userName": "Manjit  kour Operations Manager",
+      "userRole": "manager",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": 0,
+        "allowanceTravel": 0,
+        "deductionPF": 0,
+        "deductionPT": 0,
+        "deductionTDS": 0,
+        "managerId": "usr_manager",
+        "assignedById": "usr_manager",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:59:06.115Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_w4thpma",
+      "userName": "Amit Sharma",
+      "userRole": "manager",
+      "details": {
+        "id": "ann_0lfm3x9",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Amit Sharma.",
+        "category": "Update",
+        "date": "2026-09-24",
+        "author": "Amit Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-24T05:59:05.777Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:59:05.977Z",
+      "action": "UPDATE_users",
+      "userId": "usr_w4thpma",
+      "userName": "Amit Sharma",
+      "userRole": "manager",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": 0,
+        "allowanceTravel": 0,
+        "deductionPF": 0,
+        "deductionPT": 0,
+        "deductionTDS": 0,
+        "managerId": "usr_w4thpma",
+        "assignedById": "usr_w4thpma",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:13:00.301Z",
+      "action": "PUSH_announcements",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "id": "ann_ofxxigf",
+        "title": "📢 Profile Updated by HR/Manager",
+        "content": "Your profile details have been updated by Abhishek Sharma.\n\nExact Changes Made:\n• Reporting Manager: Manjit  kour Operations Manager ➔ Amit Sharma",
+        "category": "Update",
+        "date": "2026-09-24",
+        "author": "Abhishek Sharma",
+        "targetUserId": "usr_68s5s48",
+        "createdAt": "2026-09-24T05:13:00.082Z",
+        "link": "#user-management"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-09-24T05:13:00.216Z",
+      "action": "UPDATE_users",
+      "userId": "usr_6af1y3c",
+      "userName": "Abhishek Sharma",
+      "userRole": "hr",
+      "details": {
+        "name": "Hemant",
+        "employeeId": "EMP1",
+        "biometricUserId": "1",
+        "biometricId": "1",
+        "email": "hemantupadhyay070@gmail.com",
+        "phone": "7856907641",
+        "dob": "1994-10-11",
+        "baseSalary": 40000,
+        "scheduleId": "sch_q8jji9v",
+        "scheduleIds": [
+          "sch_q8jji9v"
+        ],
+        "shiftLocations": {
+          "sch_q8jji9v": "HS Group Worksite (28.6952, 77.1860)"
+        },
+        "role": "employee",
+        "preferredLocation": "HS Group Worksite (28.6952, 77.1860)",
+        "gender": "Male",
+        "department": "Engineering",
+        "designation": "AI Software Engineer",
+        "dateOfJoining": "2026-09-15",
+        "emergencyContact": "9089765431",
+        "resume": null,
+        "aadhar": null,
+        "allowanceHRA": 0,
+        "allowanceTravel": 0,
+        "deductionPF": 0,
+        "deductionPT": 0,
+        "deductionTDS": 0,
+        "managerId": "usr_w4thpma",
+        "assignedById": "usr_6af1y3c",
+        "profileVerificationStatus": "Approved",
+        "photo": null,
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-09-24T05:10:46.621Z",
       "action": "DELETE_users",
@@ -10153,7 +10496,7 @@
       "status": "Offline",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-09-24T05:10:41.759Z",
+      "lastSyncAt": "2026-09-24T06:48:59.861Z",
       "enrolledUsersCount": 19,
       "totalPunchesCount": 32
     },
@@ -10168,7 +10511,7 @@
       "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-24T05:10:42.362Z",
+      "lastSyncAt": "2026-09-24T06:49:00.471Z",
       "enrolledUsersCount": 19,
       "totalPunchesCount": 0
     },
@@ -10183,7 +10526,7 @@
       "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-09-24T05:10:42.970Z",
+      "lastSyncAt": "2026-09-24T06:49:01.084Z",
       "enrolledUsersCount": 19,
       "totalPunchesCount": 0
     }
@@ -10225,9 +10568,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1",
@@ -10265,9 +10609,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "HR100",
@@ -10305,9 +10650,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "HR101",
@@ -10345,9 +10691,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "MGR102",
@@ -10385,9 +10732,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "5174",
@@ -10425,9 +10773,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "309",
@@ -10465,9 +10814,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1094",
@@ -10505,9 +10855,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1200",
@@ -10545,9 +10896,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1253",
@@ -10585,9 +10937,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "293",
@@ -10625,9 +10978,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "3980",
@@ -10665,9 +11019,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1269",
@@ -10705,9 +11060,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "1275",
@@ -10745,9 +11101,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "845",
@@ -10785,9 +11142,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "EMP106",
@@ -10825,9 +11183,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "949",
@@ -10865,9 +11224,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "30191",
@@ -10905,9 +11265,10 @@
         "dev_k40_mudns97g",
         "dev_k40_mudnvdoe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     },
     {
       "biometricUserId": "MGR765",
@@ -10923,12 +11284,29 @@
         "dev_k40_delhi",
         "dev_k40_omaxe",
         "dev_k40_muf2enl3",
-        "dev_k40_muf2pwwl"
+        "dev_k40_muf2pwwl",
+        "dev_k40_muf68bw3"
       ],
-      "lastReplicatedAt": "2026-09-24T05:10:43.576Z"
+      "lastReplicatedAt": "2026-09-24T06:49:01.695Z"
     }
   ],
   "biometricSyncLogs": [
+    {
+      "id": "synclog_1790232541738",
+      "timestamp": "2026-09-24T06:49:01.738Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_k40_noida",
+        "dev_k40_delhi",
+        "dev_k40_omaxe",
+        "dev_k40_muf68bw3"
+      ],
+      "usersReplicated": 19,
+      "totalVaultUsers": 19,
+      "status": "SUCCESS",
+      "details": "Replicated 19 user templates across 4 branch devices."
+    },
     {
       "id": "synclog_1790226643617",
       "timestamp": "2026-09-24T05:10:43.617Z",
@@ -11226,22 +11604,6 @@
         "dev_k40_delhi",
         "dev_k40_omaxe",
         "dev_k40_mub8a4hs"
-      ],
-      "usersReplicated": 18,
-      "totalVaultUsers": 18,
-      "status": "SUCCESS",
-      "details": "Replicated 18 user templates across 4 branch devices."
-    },
-    {
-      "id": "synclog_1789992200080",
-      "timestamp": "2026-09-21T12:03:20.080Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_k40_noida",
-        "dev_k40_delhi",
-        "dev_k40_omaxe",
-        "dev_k40_mub74yg9"
       ],
       "usersReplicated": 18,
       "totalVaultUsers": 18,

@@ -779,15 +779,27 @@ export const DB = {
   async reset() {
     try {
       await this.resolveApiBase();
-      const seedRes = await fetch((window.apiBaseUrl || '') + '/seed.json?v=' + Date.now());
-      if (seedRes.ok) {
-        this.data = await seedRes.json();
-        this.save();
-        console.log('Database state reset from seed.json successfully.');
-        return;
+      let token = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) token = JSON.parse(sess).token || '';
+      } catch (e) {}
+
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch((window.apiBaseUrl || '') + '/api/db-state?v=' + Date.now(), { headers });
+      if (res.ok) {
+        const fetchedData = await res.json();
+        if (fetchedData && typeof fetchedData === 'object' && Object.keys(fetchedData).length > 0) {
+          this.data = fetchedData;
+          this.save();
+          console.log('Database state reset from API successfully.');
+          return;
+        }
       }
     } catch (err) {
-      console.warn('Failed to reset DB from seed.json, falling back to hardcoded defaults:', err);
+      console.warn('Failed to reset DB from API, falling back to hardcoded defaults:', err);
     }
     this.resetToHardcodedDefaults();
   },
