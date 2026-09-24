@@ -1584,23 +1584,33 @@ export const DB = {
   getLogs(userId = null) {
     if (userId) {
       const user = this.getUser(userId);
-      return (this.data.attendanceLogs || []).filter(l => 
-        l.userId === userId ||
-        (user && user.employeeId && l.employeeId === user.employeeId) ||
-        (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
-      ).sort((a, b) => b.date.localeCompare(a.date));
+      const userDigits = user ? String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '') : '';
+      return (this.data.attendanceLogs || []).filter(l => {
+        if (l.userId === userId) return true;
+        if (user && user.employeeId && l.employeeId === user.employeeId) return true;
+        if (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId)) return true;
+        if (user && user.biometricId && String(l.biometricId || l.biometricUserId) === String(user.biometricId)) return true;
+        const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
+        if (userDigits && logDigits && userDigits === logDigits) return true;
+        return false;
+      }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     }
-    return (this.data.attendanceLogs || []).sort((a, b) => b.date.localeCompare(a.date));
+    return (this.data.attendanceLogs || []).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   },
 
   getTodayLog(userId, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
     const user = this.getUser(userId);
-    const matchesUser = (l) => (
-      l.userId === userId ||
-      (user && user.employeeId && l.employeeId === user.employeeId) ||
-      (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
-    );
+    const userDigits = user ? String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '') : '';
+    const matchesUser = (l) => {
+      if (l.userId === userId) return true;
+      if (user && user.employeeId && l.employeeId === user.employeeId) return true;
+      if (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId)) return true;
+      if (user && user.biometricId && String(l.biometricId || l.biometricUserId) === String(user.biometricId)) return true;
+      const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
+      if (userDigits && logDigits && userDigits === logDigits) return true;
+      return false;
+    };
 
     if (shiftId) {
       const exactMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(shiftId));

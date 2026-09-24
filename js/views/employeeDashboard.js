@@ -1960,22 +1960,25 @@ export function renderEmployeeNotices(userId) {
   // Filter for this specific user's targeted notices OR global notices
   notices = notices.filter(a => !a.targetUserId || a.targetUserId === userId);
 
-  // Instant Push Alert check for newly arrived notices
-  if (!window._seenNoticeIds) window._seenNoticeIds = new Set();
-  notices.forEach(n => {
-    if (!window._seenNoticeIds.has(n.id)) {
-      if (window._seenNoticeIds.size > 0) {
+  // Instant Push Alert check for newly arrived notices (do not alert historical notices on page load)
+  if (!window._seenNoticeIds) {
+    window._seenNoticeIds = new Set(notices.map(n => n.id));
+    window._noticesInitialLoaded = true;
+  } else {
+    notices.forEach(n => {
+      if (!window._seenNoticeIds.has(n.id)) {
+        window._seenNoticeIds.add(n.id);
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`📢 HR Notification Alert: ${n.title}\n${n.content}`, 'info');
+          const shortDesc = n.content && n.content.length > 90 ? n.content.substring(0, 90) + '...' : (n.content || '');
+          showToastNotification(`📢 ${n.title}\n${shortDesc}`, 'info');
         }
         const bellBtn = document.getElementById('btn-notifications-toggle');
         if (bellBtn) {
           bellBtn.style.animation = 'pulse 0.6s ease 3';
         }
       }
-      window._seenNoticeIds.add(n.id);
-    }
-  });
+    });
+  }
 
   const readKey = `hs_read_notices_${userId}`;
   const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');

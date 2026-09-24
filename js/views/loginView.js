@@ -343,18 +343,6 @@ export function renderLoginView() {
       });
     }
 
-    if (createAccBtn) {
-      createAccBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (typeof openUserModal === 'function') {
-          openUserModal();
-        } else if (typeof window.openUserModal === 'function') {
-          window.openUserModal();
-        } else if (typeof window.showAccountModal === 'function') {
-          window.showAccountModal();
-        }
-      });
-    }
 
     const getDefaultUserForRole = () => {
       const allUsers = DB.getUsers();

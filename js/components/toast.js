@@ -33,25 +33,35 @@ export function showToastNotification(message, type = 'info') {
   toast.style.opacity = '0';
   toast.style.transform = 'translateY(20px)';
 
+  const isLight = typeof document !== 'undefined' && document.body && document.body.classList.contains('light-theme');
+
   if (type === 'success') {
-    toast.style.background = 'var(--success-bg, rgba(16, 185, 129, 0.95))';
-    toast.style.color = '#ffffff';
-    toast.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    toast.style.background = isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.95)';
+    toast.style.color = isLight ? '#065f46' : '#ffffff';
+    toast.style.border = isLight ? '1px solid #a7f3d0' : '1px solid rgba(16, 185, 129, 0.3)';
+    toast.style.boxShadow = isLight ? '0 8px 24px rgba(5, 150, 105, 0.15)' : '0 10px 25px rgba(0,0,0,0.3)';
   } else if (type === 'error') {
-    toast.style.background = 'var(--error-bg, rgba(239, 68, 68, 0.95))';
-    toast.style.color = '#ffffff';
-    toast.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    toast.style.background = isLight ? '#fef2f2' : 'rgba(239, 68, 68, 0.95)';
+    toast.style.color = isLight ? '#991b1b' : '#ffffff';
+    toast.style.border = isLight ? '1px solid #fecaca' : '1px solid rgba(239, 68, 68, 0.3)';
+    toast.style.boxShadow = isLight ? '0 8px 24px rgba(220, 38, 38, 0.15)' : '0 10px 25px rgba(0,0,0,0.3)';
   } else if (type === 'warning') {
-    toast.style.background = 'var(--warning-bg, rgba(245, 158, 11, 0.95))';
-    toast.style.color = '#ffffff';
-    toast.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+    toast.style.background = isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.95)';
+    toast.style.color = isLight ? '#92400e' : '#ffffff';
+    toast.style.border = isLight ? '1px solid #fde68a' : '1px solid rgba(245, 158, 11, 0.3)';
+    toast.style.boxShadow = isLight ? '0 8px 24px rgba(217, 119, 6, 0.15)' : '0 10px 25px rgba(0,0,0,0.3)';
   } else {
-    toast.style.background = 'var(--card-bg, rgba(30, 41, 59, 0.95))';
-    toast.style.color = 'var(--text-primary, #ffffff)';
-    toast.style.border = '1px solid var(--border, rgba(255,255,255,0.1))';
+    toast.style.background = isLight ? '#ffffff' : 'rgba(30, 41, 59, 0.95)';
+    toast.style.color = isLight ? '#1f0504' : '#ffffff';
+    toast.style.border = isLight ? '1px solid rgba(137, 32, 27, 0.25)' : '1px solid rgba(255,255,255,0.12)';
+    toast.style.boxShadow = isLight ? '0 8px 24px rgba(137, 32, 27, 0.15)' : '0 10px 25px rgba(0,0,0,0.3)';
   }
 
-  toast.innerHTML = (typeof html === 'function' ? html`<span>${message}</span>` : `<span>${message}</span>`);
+  const span = document.createElement('span');
+  span.style.whiteSpace = 'pre-line';
+  span.style.lineHeight = '1.4';
+  span.textContent = message;
+  toast.appendChild(span);
   container.appendChild(toast);
 
   requestAnimationFrame(() => {

@@ -1,23 +1,27 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=59';
-import { renderAdminSchedules } from './views/schedulesView.js?v=59';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=59';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=59';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=59';
-import { renderAdminAttendances } from './views/attendancesView.js?v=59';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=59';
-import { renderAdminFinance } from './views/financeView.js?v=59';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=59';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=59';
-import { drawRadarMap } from './components/geofenceMap.js?v=59';
-import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=59';
+import { renderLoginView } from './views/loginView.js?v=60';
+import { renderAdminSchedules } from './views/schedulesView.js?v=60';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=60';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=60';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=60';
+import { renderAdminAttendances } from './views/attendancesView.js?v=60';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=60';
+import { renderAdminFinance } from './views/financeView.js?v=60';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=60';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=60';
+import { drawRadarMap } from './components/geofenceMap.js?v=60';
+import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=60';
 
 // app.js - SPA Router & Controller
-import { DB } from './db.js?v=42';
-import { Auth } from './auth.js?v=33';
-import { Utils, html } from './utils.js?v=59';
-import { triggerBirthdayCelebration } from './celebration.js?v=33';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=47';
+import { DB } from './db.js?v=43';
+import { Auth } from './auth.js?v=34';
+import { Utils, html } from './utils.js?v=60';
+import { triggerBirthdayCelebration } from './celebration.js?v=34';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=48';
+
+if (typeof window !== 'undefined') {
+  window.html = html;
+}
 
 // Register all global functions and services on window to bridge modular views
 export function registerWindowGlobals() {
@@ -44,7 +48,9 @@ export function registerWindowGlobals() {
   window.renderLoginView = renderLoginView;
   if (typeof openUserModal === 'function') {
     window.openUserModal = openUserModal;
-    window.showAccountModal = openUserModal;
+  }
+  if (typeof showAccountModal === 'function') {
+    window.showAccountModal = showAccountModal;
   }
 
   try {
@@ -1677,14 +1683,17 @@ function getAttendanceStatusForDate(userId, dateStr) {
     return { status: 'Leave', color: 'var(--primary)', log: null, schedule };
   }
 
-  const isWorkDay = schedule.workDays.includes(dayOfWeek);
-  const log = (DB.data.attendanceLogs || []).find(l => 
-    l && l.date === dateStr && (
-      l.userId === userId ||
-      (user && user.employeeId && l.employeeId === user.employeeId) ||
-      (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
-    )
-  );
+  const userDigits = user ? String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '') : '';
+  const log = (DB.data.attendanceLogs || []).find(l => {
+    if (!l || l.date !== dateStr) return false;
+    if (l.userId === userId) return true;
+    if (user && user.employeeId && l.employeeId === user.employeeId) return true;
+    if (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId)) return true;
+    if (user && user.biometricId && String(l.biometricId || l.biometricUserId) === String(user.biometricId)) return true;
+    const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
+    if (userDigits && logDigits && userDigits === logDigits) return true;
+    return false;
+  });
 
   if (log) {
     let status = log.status;
@@ -6428,10 +6437,16 @@ function getInitialsColor(nameOrId) {
 
 // [Delegated to js/views/renderDailyWorkStatus]
 
+let myAttendancesCurrentPage = 1;
+let myAttendancesRowsPerPage = 10;
+let myAttendancesSearchQuery = '';
+let myAttendancesSortField = 'date';
+let myAttendancesSortOrder = 'desc';
+
 function renderAdminMyAttendances() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
-  if (!user) return;
+  if (!user || !main) return;
 
   const selectedShiftId = sessionStorage.getItem('hs_selected_shift_id');
   const todayStr = new Date().toISOString().split('T')[0];
@@ -6440,14 +6455,21 @@ function renderAdminMyAttendances() {
   const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi') : (user.preferredLocation || null);
   const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
 
-  const checkInStatus = getCheckInTimeStatus(user, schedule ? schedule.id : null);
+  const getCheckInStatusFn = typeof getCheckInTimeStatus === 'function' ? getCheckInTimeStatus : (window.getCheckInTimeStatus || (() => ({ allowed: true, type: 'Normal' })));
+  const checkInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
   const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
   const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
 
   // Dynamic GPS Mock Selector options
   let optionsHTML = '';
   optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
-  Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
+  const officeCoordsMap = window.OFFICE_COORDINATES || {
+    'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
+    'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
+    'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
+    'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+  };
+  Object.entries(officeCoordsMap).forEach(([locName, coords]) => {
     const isPreferred = locName === officeName;
     optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
   });
@@ -7027,7 +7049,13 @@ function renderAdminMyAttendances() {
         return;
       }
 
-      const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
+      const officeMap = window.OFFICE_COORDINATES || {
+        'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
+        'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
+        'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
+        'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+      };
+      const targetCoords = officeMap[officeName] || officeMap['Kohat Enclave, Pitampura, Delhi'] || officeMap[Object.keys(officeMap)[0]] || { lat: 28.6978, lng: 77.1408 };
       const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
       const inRange = distance <= 100;
       const resolvedDistance = (distance / 1000).toFixed(2);
@@ -7257,9 +7285,14 @@ function renderAdminMyAttendances() {
     const geoCheckIn = document.getElementById('btn-geofence-checkin');
     const geoCheckOut = document.getElementById('btn-geofence-checkout');
 
-    const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
+    const officeCoordsFallback = window.OFFICE_COORDINATES || {
+      'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
+      'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
+      'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
+      'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+    };
     const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
-    const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
+    const targetCoords = officeCoordsFallback[officeName] || officeCoordsFallback['Kohat Enclave, Pitampura, Delhi'] || officeCoordsFallback[Object.keys(officeCoordsFallback)[0]] || { lat: 28.6978, lng: 77.1408 };
 
     const todayLog = DB.getTodayLog(user.id, schedule.id);
     const isOffline = !!(todayLog && todayLog.checkOut);
@@ -8446,22 +8479,25 @@ function renderEmployeeNotices(userId) {
   // Filter for this specific user's targeted notices OR global notices
   notices = notices.filter(a => !a.targetUserId || a.targetUserId === userId);
 
-  // Instant Push Alert check for newly arrived notices
-  if (!window._seenNoticeIds) window._seenNoticeIds = new Set();
-  notices.forEach(n => {
-    if (!window._seenNoticeIds.has(n.id)) {
-      if (window._seenNoticeIds.size > 0) {
+  // Instant Push Alert check for newly arrived notices (do not alert historical notices on page load)
+  if (!window._seenNoticeIds) {
+    window._seenNoticeIds = new Set(notices.map(n => n.id));
+    window._noticesInitialLoaded = true;
+  } else {
+    notices.forEach(n => {
+      if (!window._seenNoticeIds.has(n.id)) {
+        window._seenNoticeIds.add(n.id);
         if (typeof showToastNotification === 'function') {
-          showToastNotification(`📢 HR Alert: ${n.title}\n${n.content}`, 'info');
+          const shortDesc = n.content && n.content.length > 90 ? n.content.substring(0, 90) + '...' : (n.content || '');
+          showToastNotification(`📢 ${n.title}\n${shortDesc}`, 'info');
         }
         const bellBtn = document.getElementById('btn-notifications-toggle');
         if (bellBtn) {
           bellBtn.style.animation = 'pulse 0.6s ease 3';
         }
       }
-      window._seenNoticeIds.add(n.id);
-    }
-  });
+    });
+  }
 
   const readKey = `hs_read_notices_${userId}`;
   const readIds = JSON.parse(localStorage.getItem(readKey) || '[]');

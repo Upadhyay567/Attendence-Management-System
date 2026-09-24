@@ -4542,6 +4542,44 @@ body.light-theme .emp-multi-select-option.selected {
   color: var(--text-muted);
 }
 
+/* Notice items and Notification cards styling in Light/Dark themes */
+.notice-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
 
+body.light-theme .notice-item {
+  background: #ffffff !important;
+  border: 1px solid rgba(137, 32, 27, 0.15) !important;
+  box-shadow: 0 2px 8px rgba(137, 32, 27, 0.05) !important;
+}
 
+body.light-theme .notice-item strong {
+  color: #1a0504 !important;
+}
 
+body.light-theme .notice-item p {
+  color: #475569 !important;
+}
+
+body.light-theme .notification-item-row {
+  border-bottom: 1px solid rgba(137, 32, 27, 0.08) !important;
+}
+
+body.light-theme .notification-item-row:hover {
+  background: rgba(137, 32, 27, 0.04) !important;
+}
+
+body.light-theme .notification-item-row strong {
+  color: #1a0504 !important;
+}
+
+body.light-theme .notification-item-row p {
+  color: #475569 !important;
+}

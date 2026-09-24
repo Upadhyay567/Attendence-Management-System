@@ -190,15 +190,23 @@ function writeLocalDatabase(state) {
 
 function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
   const target = String(biometricUserId || '').trim().toLowerCase();
+  const targetDigits = target.replace(/\D/g, '');
   const targetName = String(deviceUserName || '').trim().toLowerCase();
 
   let employee = users.find(user => {
     if (!user) return false;
 
-    // 1. Preferred mapping: biometricUserId
+    // 1. Preferred mapping: biometricUserId / biometricId
     if (
       user.biometricUserId &&
       String(user.biometricUserId).trim().toLowerCase() === target
+    ) {
+      return true;
+    }
+
+    if (
+      user.biometricId &&
+      String(user.biometricId).trim().toLowerCase() === target
     ) {
       return true;
     }
@@ -225,7 +233,16 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       return true;
     }
 
-    // 3. Name matching fallback (e.g. K40 "Hemant" <-> HRMS "Hemant" or "Hemant upadhyay")
+    // 3. Numeric ID matching (e.g. device "1" <-> HRMS "EMP1", "789" <-> "HR0789", "765" <-> "MGR765")
+    if (targetDigits) {
+      const userEmpDigits = String(user.employeeId || '').replace(/\D/g, '');
+      const userBioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
+      if ((userEmpDigits && userEmpDigits === targetDigits) || (userBioDigits && userBioDigits === targetDigits)) {
+        return true;
+      }
+    }
+
+    // 4. Name matching fallback (e.g. K40 "Hemant" <-> HRMS "Hemant" or "Hemant upadhyay")
     if (targetName && user.name) {
       const uName = String(user.name).trim().toLowerCase();
       if (uName === targetName) return true;

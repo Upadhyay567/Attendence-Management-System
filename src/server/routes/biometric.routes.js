@@ -365,12 +365,17 @@ router.get('/biometric/dashboard', async (req, res) => {
         const biometricId = String(user.biometricUserId || user.biometricId || user.employeeId || userId);
         const name = user.name || 'Employee';
 
-        const userLogs = attendanceLogs.filter(l => 
-          String(l.userId) === userId ||
-          (l.biometricUserId && String(l.biometricUserId) === biometricId) ||
-          (user.employeeId && String(l.employeeId) === String(user.employeeId)) ||
-          (user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
-        );
+        const userDigits = String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '');
+        const userLogs = attendanceLogs.filter(l => {
+          if (String(l.userId) === userId) return true;
+          if (l.biometricUserId && String(l.biometricUserId) === biometricId) return true;
+          if (user.employeeId && String(l.employeeId) === String(user.employeeId)) return true;
+          if (user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId)) return true;
+          if (user.biometricId && String(l.biometricId || l.biometricUserId) === String(user.biometricId)) return true;
+          const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
+          if (userDigits && logDigits && userDigits === logDigits) return true;
+          return false;
+        });
 
         const todayLog = userLogs.find(l => l.date === today);
         const latestPunchTime = userLogs.length > 0 
