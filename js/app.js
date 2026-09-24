@@ -1447,7 +1447,11 @@ function renderLoginView() {
     }
 
     const handleSkip = async () => {
-      const enteredId = inputEl.value.trim();
+      let enteredId = inputEl.value.trim();
+      if (!enteredId) {
+        const def = getDefaultUserForRole();
+        if (def) enteredId = def.employeeId || def.username || def.id;
+      }
       try {
         if (skipBtn) skipBtn.setAttribute('disabled', 'true');
         if (skipDevBtn) skipDevBtn.setAttribute('disabled', 'true');

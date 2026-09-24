@@ -14,7 +14,7 @@ function getBaseRole(userRole) {
   return norm;
 }
 
-function findUserByLoginKey(users, loginKey) {
+function findUserByLoginKey(users, loginKey, targetRole = null) {
   if (!loginKey || typeof loginKey !== 'string') return null;
   const rawKey = loginKey.trim();
   if (!rawKey) return null;
@@ -22,32 +22,107 @@ function findUserByLoginKey(users, loginKey) {
   const lowerKey = rawKey.toLowerCase();
   const upperKey = rawKey.toUpperCase();
   const cleanAlphaNumKey = upperKey.replace(/[^A-Z0-9]/g, '');
+  const digitsOnlyKey = rawKey.replace(/\D/g, '');
+  const hasLetters = /[a-zA-Z]/.test(rawKey);
 
-  const cleanPhoneKey = rawKey.replace(/[^0-9]/g, '');
+  const roleMatches = (u) => {
+    if (!targetRole) return true;
+    const reqBase = getBaseRole(targetRole);
+    const userBase = getBaseRole(u.role);
+    return reqBase && userBase && reqBase === userBase;
+  };
 
-  return users.find(u => {
+  const pickBest = (candidates) => {
+    if (!candidates || candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+    if (targetRole) {
+      const match = candidates.find(roleMatches);
+      if (match) return match;
+    }
+    return candidates[0];
+  };
+
+  // Pass 1: Exact matches on unique primary identifiers (employeeId, username, id, biometric ID)
+  const pass1 = users.filter(u => {
     if (!u) return false;
-    const uName = (u.username || '').trim().toLowerCase();
-    const uFullName = (u.name || '').trim().toLowerCase();
-    const uFirstName = uFullName.split(' ')[0];
     const uEmp = (u.employeeId || '').trim().toUpperCase();
     const uBio = (u.biometricUserId || u.biometricId || '').trim().toUpperCase();
-    const uEmail = (u.email || '').trim().toLowerCase();
-    const uPhone = (u.phone || u.mobile || '').replace(/[^0-9]/g, '');
-    const cleanEmp = uEmp.replace(/[^A-Z0-9]/g, '');
-    const cleanBio = uBio.replace(/[^A-Z0-9]/g, '');
+    const uName = (u.username || '').trim().toLowerCase();
+    const uId = (u.id || '').trim();
 
-    if (uName && uName === lowerKey) return true;
-    if (uFullName && (uFullName === lowerKey || uFirstName === lowerKey)) return true;
     if (uEmp && uEmp === upperKey) return true;
-    if (cleanEmp && cleanEmp === cleanAlphaNumKey) return true;
+    if (uName && uName === lowerKey) return true;
+    if (uId && (uId === rawKey || uId.toLowerCase() === lowerKey)) return true;
     if (uBio && uBio === upperKey) return true;
-    if (cleanBio && cleanBio === cleanAlphaNumKey) return true;
-    if (uEmail && uEmail === lowerKey) return true;
-    if (uPhone && cleanPhoneKey && (uPhone === cleanPhoneKey || uPhone.endsWith(cleanPhoneKey) || cleanPhoneKey.endsWith(uPhone))) return true;
-    if (u.id && u.id === rawKey) return true;
     return false;
-  }) || null;
+  });
+  if (pass1.length > 0) return pickBest(pass1);
+
+  // Pass 2: Cleaned alphanumeric match (e.g. EMP-1 vs EMP1, or EMP01)
+  if (cleanAlphaNumKey) {
+    const pass2 = users.filter(u => {
+      if (!u) return false;
+      const uEmp = (u.employeeId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const uBio = (u.biometricUserId || u.biometricId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const uName = (u.username || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+      if (uEmp && uEmp === cleanAlphaNumKey) return true;
+      if (uName && uName === cleanAlphaNumKey) return true;
+      if (uBio && uBio === cleanAlphaNumKey) return true;
+      return false;
+    });
+    if (pass2.length > 0) return pickBest(pass2);
+  }
+
+  // Pass 3: Email match (exact or username prefix before @)
+  const pass3 = users.filter(u => {
+    if (!u || !u.email) return false;
+    const uEmail = u.email.trim().toLowerCase();
+    if (uEmail === lowerKey) return true;
+    const prefix = uEmail.split('@')[0];
+    if (prefix && prefix === lowerKey) return true;
+    return false;
+  });
+  if (pass3.length > 0) return pickBest(pass3);
+
+  // Pass 4: Full Name exact match
+  const pass4 = users.filter(u => {
+    if (!u || !u.name) return false;
+    return u.name.trim().toLowerCase() === lowerKey;
+  });
+  if (pass4.length > 0) return pickBest(pass4);
+
+  // Pass 5: Phone match ONLY if no letters in query and digits length >= 7
+  if (!hasLetters && digitsOnlyKey && digitsOnlyKey.length >= 7) {
+    const pass5 = users.filter(u => {
+      if (!u) return false;
+      const uPhone = (u.phone || '').replace(/\D/g, '');
+      const uMobile = (u.mobile || '').replace(/\D/g, '');
+      if (uPhone) {
+        if (uPhone === digitsOnlyKey) return true;
+        if (uPhone.length >= 10 && digitsOnlyKey.length >= 10 && uPhone.slice(-10) === digitsOnlyKey.slice(-10)) return true;
+      }
+      if (uMobile) {
+        if (uMobile === digitsOnlyKey) return true;
+        if (uMobile.length >= 10 && digitsOnlyKey.length >= 10 && uMobile.slice(-10) === digitsOnlyKey.slice(-10)) return true;
+      }
+      return false;
+    });
+    if (pass5.length > 0) return pickBest(pass5);
+  }
+
+  // Pass 6: First name or name token match (only for queries >= 3 chars)
+  if (lowerKey.length >= 3) {
+    const pass6 = users.filter(u => {
+      if (!u || !u.name) return false;
+      const uFullName = u.name.trim().toLowerCase();
+      const uFirstName = uFullName.split(' ')[0];
+      return uFirstName === lowerKey || uFullName === lowerKey;
+    });
+    if (pass6.length > 0) return pickBest(pass6);
+  }
+
+  return null;
 }
 
 async function loginUser(req, res) {
@@ -65,12 +140,12 @@ async function loginUser(req, res) {
 
     if (online && !useLocal) {
       const allUsers = await User.find({}).lean();
-      foundUser = findUserByLoginKey(allUsers, key);
+      foundUser = findUserByLoginKey(allUsers, key, role);
     } else {
       if (fs.existsSync(LOCAL_DB_FILE)) {
         const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
-        foundUser = findUserByLoginKey(parsed.users || [], key);
+        foundUser = findUserByLoginKey(parsed.users || [], key, role);
       }
     }
 
