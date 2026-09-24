@@ -44,13 +44,6 @@ export async function handleRoute() {
     }
 
     if (hash === '#login') {
-      if (user) {
-        const baseRole = DB.getUserBaseRole(user.role);
-        window.location.hash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager')
-          ? '#admin-dashboard'
-          : '#dashboard';
-        return;
-      }
       renderLoginView();
       return;
     }
@@ -129,7 +122,25 @@ export async function handleRoute() {
     }
   } catch (routeErr) {
     console.error('Router error caught:', routeErr);
-    renderLoginView();
+    const user = Auth.getCurrentUser();
+    if (!user) {
+      renderLoginView();
+    } else {
+      const mainView = document.getElementById('main-view');
+      if (mainView) {
+        mainView.innerHTML = `
+          <div class="card-panel" style="margin: 30px auto; max-width: 600px; padding: 24px; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); border-radius: 16px;">
+            <div style="font-size: 36px; margin-bottom: 12px;">⚠️</div>
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Dashboard View Encountered an Issue</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">${routeErr.message || 'An unexpected rendering error occurred.'}</p>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+              <button class="btn btn-primary" onclick="window.location.reload()" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Reload Application</button>
+              <button class="btn btn-secondary" onclick="Auth.logout(); window.location.hash='#login';" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Sign Out</button>
+            </div>
+          </div>
+        `;
+      }
+    }
   }
 }
 

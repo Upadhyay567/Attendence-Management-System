@@ -1,13 +1,15 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=55';
-import { renderAdminSchedules } from './views/schedulesView.js?v=55';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=55';
-import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=55';
-import { renderAdminAttendances } from './views/attendancesView.js?v=55';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=55';
-import { renderAdminFinance } from './views/financeView.js?v=55';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=55';
-import { renderAdminUsers } from './views/userManagementView.js?v=55';
+import { renderLoginView } from './views/loginView.js?v=56';
+import { renderAdminSchedules } from './views/schedulesView.js?v=56';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=56';
+import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=56';
+import { renderAdminAttendances } from './views/attendancesView.js?v=56';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=56';
+import { renderAdminFinance } from './views/financeView.js?v=56';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=56';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=56';
+import { drawRadarMap } from './components/geofenceMap.js?v=56';
+import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=56';
 
 // app.js - SPA Router & Controller
 import { DB } from './db.js?v=42';
@@ -15,6 +17,75 @@ import { Auth } from './auth.js?v=33';
 import { Utils } from './utils.js?v=33';
 import { triggerBirthdayCelebration } from './celebration.js?v=33';
 import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=47';
+
+// Register all global functions and services on window to bridge modular views
+export function registerWindowGlobals() {
+  if (typeof window === 'undefined') return;
+  window.DB = DB;
+  window.Auth = Auth;
+  window.Utils = Utils;
+  window.closeModal = closeModal;
+  window.showNotificationDetailModal = showNotificationDetailModal;
+  window.openFullScreenImageModal = openFullScreenImageModal;
+  window.triggerBirthdayCelebration = triggerBirthdayCelebration;
+  window.drawRadarMap = drawRadarMap;
+  window.openProfileDownloadModal = openProfileDownloadModal;
+  window.loadSheetJS = loadSheetJS;
+  window.renderEmployeeDashboard = renderEmployeeDashboard;
+  window.renderAdminDashboard = renderAdminDashboard;
+  window.renderAdminAttendances = renderAdminAttendances;
+  window.renderAdminSchedules = renderAdminSchedules;
+  window.renderAdminUsers = renderAdminUsers;
+  window.renderAdminFinance = renderAdminFinance;
+  window.renderDailyWorkStatus = renderDailyWorkStatus;
+  window.renderEmployeeLeaves = renderEmployeeLeaves;
+  window.renderLoginView = renderLoginView;
+  if (typeof openUserModal === 'function') {
+    window.openUserModal = openUserModal;
+    window.showAccountModal = openUserModal;
+  }
+
+  try {
+    if (typeof CustomDialog !== 'undefined') window.CustomDialog = CustomDialog;
+    if (typeof ValidationUtils !== 'undefined') window.ValidationUtils = ValidationUtils;
+    if (typeof getCheckInTimeStatus === 'function') window.getCheckInTimeStatus = getCheckInTimeStatus;
+    if (typeof formatTimeRange12h === 'function') window.formatTimeRange12h = formatTimeRange12h;
+    if (typeof formatTime12h === 'function') window.formatTime12h = formatTime12h;
+    if (typeof startLiveClock === 'function') window.startLiveClock = startLiveClock;
+    if (typeof startActiveWorkTimer === 'function') window.startActiveWorkTimer = startActiveWorkTimer;
+    if (typeof renderCalendarScheduleTab === 'function') window.renderCalendarScheduleTab = renderCalendarScheduleTab;
+    if (typeof renderCalendarGrid === 'function') window.renderCalendarGrid = renderCalendarGrid;
+    if (typeof renderEmployeeNotices === 'function') window.renderEmployeeNotices = renderEmployeeNotices;
+    if (typeof handlePinClockIn === 'function') window.handlePinClockIn = handlePinClockIn;
+    if (typeof handleClockOut === 'function') window.handleClockOut = handleClockOut;
+    if (typeof getOneTimeLocationPromise === 'function') window.getOneTimeLocationPromise = getOneTimeLocationPromise;
+    if (typeof calculateHaversineDistance === 'function') window.calculateHaversineDistance = calculateHaversineDistance;
+    if (typeof requestsPushDBState === 'function') window.requestsPushDBState = requestsPushDBState;
+    if (typeof showClockOutThankYou === 'function') window.showClockOutThankYou = showClockOutThankYou;
+    if (typeof getMockAddress === 'function') window.getMockAddress = getMockAddress;
+    if (typeof getOneTimeLocation === 'function') window.getOneTimeLocation = getOneTimeLocation;
+    if (typeof applyLocationState === 'function') window.applyLocationState = applyLocationState;
+    if (typeof updateAddressDisplay === 'function') window.updateAddressDisplay = updateAddressDisplay;
+    if (typeof startWatching === 'function') window.startWatching = startWatching;
+    if (typeof openStaffDetailModal === 'function') window.openStaffDetailModal = openStaffDetailModal;
+    if (typeof getBirthdayWidgetHTML === 'function') window.getBirthdayWidgetHTML = getBirthdayWidgetHTML;
+    if (typeof bindBirthdayWidgetEvents === 'function') window.bindBirthdayWidgetEvents = bindBirthdayWidgetEvents;
+    if (typeof renderAdminAnnouncementsList === 'function') window.renderAdminAnnouncementsList = renderAdminAnnouncementsList;
+    if (typeof getInitials === 'function') window.getInitials = getInitials;
+    if (typeof updateTable === 'function') window.updateTable = updateTable;
+    if (typeof getInitialsColor === 'function') window.getInitialsColor = getInitialsColor;
+    if (typeof updateNotificationsUI === 'function') window.updateNotificationsUI = updateNotificationsUI;
+    if (typeof renderPersonalLeaves === 'function') window.renderPersonalLeaves = renderPersonalLeaves;
+    if (typeof showLeaveAlert === 'function') window.showLeaveAlert = showLeaveAlert;
+    if (typeof showCompanyPolicyModal === 'function') window.showCompanyPolicyModal = showCompanyPolicyModal;
+    if (typeof openScheduleModal === 'function') window.openScheduleModal = openScheduleModal;
+    if (typeof renderUploadHistory === 'function') window.renderUploadHistory = renderUploadHistory;
+    if (typeof executeExpressReassignments === 'function') window.executeExpressReassignments = executeExpressReassignments;
+  } catch (e) {
+    console.warn("Globals registration note:", e.message);
+  }
+}
+registerWindowGlobals();
 
 // Custom dialog modal manager
 const CustomDialog = {
@@ -571,6 +642,7 @@ const startApp = async () => {
   }
 
   applyGlobalTheme();
+  registerWindowGlobals();
   setupRouter();
 
   // --- Global Modal Close Handlers ---
@@ -852,10 +924,6 @@ function setupRouter() {
       }
 
       if (hash === '#login') {
-        if (user) {
-          window.location.hash = (user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager') ? '#admin-dashboard' : '#dashboard';
-          return;
-        }
         renderLoginView();
         return;
       }
@@ -1033,7 +1101,25 @@ function setupRouter() {
       }
     } catch (routeErr) {
       console.error("Router error caught:", routeErr);
-      renderLoginView();
+      const user = Auth.getCurrentUser();
+      if (!user) {
+        renderLoginView();
+      } else {
+        const mainView = document.getElementById('main-view');
+        if (mainView) {
+          mainView.innerHTML = `
+            <div class="card-panel" style="margin: 30px auto; max-width: 600px; padding: 24px; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); border-radius: 16px;">
+              <div style="font-size: 36px; margin-bottom: 12px;">⚠️</div>
+              <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Dashboard View Encountered an Issue</h3>
+              <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;">${Utils.escape(routeErr.message || 'An unexpected rendering error occurred.')}</p>
+              <div style="display: flex; justify-content: center; gap: 12px;">
+                <button class="btn btn-primary" onclick="window.location.reload()" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Reload Application</button>
+                <button class="btn btn-secondary" onclick="Auth.logout(); window.location.hash='#login';" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; cursor: pointer;">Sign Out</button>
+              </div>
+            </div>
+          `;
+        }
+      }
     }
   };
 

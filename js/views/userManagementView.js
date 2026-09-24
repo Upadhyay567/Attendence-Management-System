@@ -374,8 +374,9 @@ export function renderAdminUsers() {
   setupFilterListeners();
 }
 
-function openUserModal(userId = null) {
+export function openUserModal(userId = null) {
   window.openUserModal = openUserModal;
+  window.showAccountModal = openUserModal;
   const currentUser = Auth.getCurrentUser();
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;

@@ -1,13 +1,14 @@
 // js/views/employeeDashboard.js - Employee Dashboard & Geofence Worksite Panel
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html } from '../utils/helpers.js';
+import { Utils, html, formatTime12h, formatTimeRange12h } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
 export function renderEmployeeDashboard() {
   const user = Auth.getCurrentUser();
   const main = document.getElementById('main-view');
+  if (!user || !main) return;
   const selectedShiftId = sessionStorage.getItem('hs_selected_shift_id');
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
@@ -15,7 +16,8 @@ export function renderEmployeeDashboard() {
   const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || schedule.location || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : (user.preferredLocation || null);
   const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
 
-  const checkInStatus = getCheckInTimeStatus(user, schedule ? schedule.id : null);
+  const getCheckInStatusFn = typeof getCheckInTimeStatus === 'function' ? getCheckInTimeStatus : (window.getCheckInTimeStatus || (() => ({ allowed: true, type: 'Normal' })));
+  const checkInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
   const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
   const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
   sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
@@ -387,8 +389,18 @@ export function renderEmployeeDashboard() {
   `;
 
   // Live updates tick
-  startLiveClock();
-  startActiveWorkTimer(todayLog);
+  if (typeof startLiveClock === 'function') {
+    startLiveClock();
+  } else if (typeof window.startLiveClock === 'function') {
+    window.startLiveClock();
+  }
+
+  if (typeof startActiveWorkTimer === 'function') {
+    startActiveWorkTimer(todayLog);
+  } else if (typeof window.startActiveWorkTimer === 'function') {
+    window.startActiveWorkTimer(todayLog);
+  }
+
   // Calendar Initialisation
   let currentCalDate = new Date();
   
@@ -398,15 +410,27 @@ export function renderEmployeeDashboard() {
       tabBtns.forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       const activeTab = e.target.getAttribute('data-tab');
-      renderCalendarScheduleTab(user.id, activeTab);
+      if (typeof renderCalendarScheduleTab === 'function') {
+        renderCalendarScheduleTab(user.id, activeTab);
+      } else if (typeof window.renderCalendarScheduleTab === 'function') {
+        window.renderCalendarScheduleTab(user.id, activeTab);
+      }
     });
   });
 
   // Render initial schedule today tab
-  renderCalendarScheduleTab(user.id, 'today');
+  if (typeof renderCalendarScheduleTab === 'function') {
+    renderCalendarScheduleTab(user.id, 'today');
+  } else if (typeof window.renderCalendarScheduleTab === 'function') {
+    window.renderCalendarScheduleTab(user.id, 'today');
+  }
 
   const refreshCalendarView = () => {
-    renderCalendarGrid(user.id, currentCalDate.getFullYear(), currentCalDate.getMonth());
+    if (typeof renderCalendarGrid === 'function') {
+      renderCalendarGrid(user.id, currentCalDate.getFullYear(), currentCalDate.getMonth());
+    } else if (typeof window.renderCalendarGrid === 'function') {
+      window.renderCalendarGrid(user.id, currentCalDate.getFullYear(), currentCalDate.getMonth());
+    }
   };
   refreshCalendarView();
 
@@ -1442,7 +1466,8 @@ async function enterCustomAndRegister(callback) {
 // =========================================================================
 // FORGOT PASSWORD MODAL (HR & MANAGER MOBILE NUMBER AUTHENTICATION)
 // =========================================================================
-function showForgotPasswordModal(initialId = '') {
+export function showForgotPasswordModal(initialId = '') {
+  window.showForgotPasswordModal = showForgotPasswordModal;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.cssText = `

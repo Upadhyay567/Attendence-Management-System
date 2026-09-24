@@ -188,7 +188,11 @@ export function renderLoginView() {
     if (policyBtn) {
       policyBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        showCompanyPolicyModal();
+        if (typeof showCompanyPolicyModal === 'function') {
+          showCompanyPolicyModal();
+        } else if (typeof window.showCompanyPolicyModal === 'function') {
+          window.showCompanyPolicyModal();
+        }
       });
     }
   };
@@ -200,17 +204,26 @@ export function renderLoginView() {
     authBox.classList.remove('auth-card-wide');
 
     let idLabelText = 'Employee ID';
-    let placeholderText = 'e.g. EMP100';
+    let placeholderText = 'e.g. 5174, 1200, EMP106';
 
     if (role === 'hr') {
-      idLabelText = 'HR ID';
-      placeholderText = 'e.g. HR100';
+      idLabelText = 'HR ID / Username';
+      placeholderText = 'e.g. HR0789, admin, HR100';
     } else if (role === 'manager') {
-      idLabelText = 'Manager ID';
-      placeholderText = 'e.g. MGR100';
+      idLabelText = 'Manager ID / Username';
+      placeholderText = 'e.g. MGR765, manager, EMP106';
     }
 
     const isHrOrManager = role === 'hr' || role === 'manager';
+
+    let roleUsers = [];
+    if (role === 'hr') {
+      roleUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'hr');
+    } else if (role === 'manager') {
+      roleUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'finance_manager');
+    } else {
+      roleUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
+    }
 
     const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
       ? `<button type="button" class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
@@ -253,6 +266,23 @@ export function renderLoginView() {
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
         </div>
 
+        <!-- Quick Select Account Dropdown -->
+        <div class="form-group" style="margin-bottom: 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+            <label class="form-label" for="auth-select-account" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0;">Quick Select Account</label>
+            <span style="font-size: 11px; color: var(--text-muted);">${roleUsers.length} available</span>
+          </div>
+          <select id="auth-select-account" class="form-input" style="background: rgba(255,255,255,0.02); font-size: 12.5px; cursor: pointer;">
+            <option value="">-- Choose Account or Enter Below --</option>
+            ${roleUsers.map(u => {
+              const displayId = u.employeeId || u.username;
+              const displayName = u.name || u.username;
+              const displayDesig = u.designation || u.role;
+              return `<option value="${Utils.escape(displayId)}">${Utils.escape(displayName)} (${Utils.escape(displayId)} - ${Utils.escape(displayDesig)})</option>`;
+            }).join('')}
+          </select>
+        </div>
+
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
           <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
@@ -260,8 +290,8 @@ export function renderLoginView() {
 
         ${passwordFieldHTML}
 
-        <!-- Warning Box -->
-        <div id="auth-verify-warning" style="display: none; padding: 10px 14px; border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); background: rgba(239,68,68,0.05); color: var(--error); font-size: 11.5px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
+        <!-- Warning / Error Box -->
+        <div id="auth-verify-warning" style="display: none; padding: 12px 14px; border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); background: rgba(239,68,68,0.06); color: var(--error); font-size: 12px; font-weight: 600; line-height: 1.45; margin-bottom: 18px;">
         </div>
 
         <!-- Actions -->
@@ -279,6 +309,7 @@ export function renderLoginView() {
       </div>
     `;
 
+    const selectAccountEl = authBox.querySelector('#auth-select-account');
     const inputEl = authBox.querySelector('#auth-id-input');
     const pwdEl = authBox.querySelector('#auth-pwd-input');
     const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
@@ -290,15 +321,32 @@ export function renderLoginView() {
     const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
     const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
 
+    if (selectAccountEl) {
+      selectAccountEl.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val) {
+          inputEl.value = val;
+          warningEl.style.display = 'none';
+          if (isHrOrManager && pwdEl) {
+            pwdEl.focus();
+          }
+        }
+      });
+    }
+
     if (forgotPwdBtn) {
       forgotPwdBtn.addEventListener('click', () => {
         const prefilledId = inputEl ? inputEl.value.trim() : '';
-        showForgotPasswordModal(prefilledId);
+        if (typeof showForgotPasswordModal === 'function') {
+          showForgotPasswordModal(prefilledId);
+        } else if (typeof window.showForgotPasswordModal === 'function') {
+          window.showForgotPasswordModal(prefilledId);
+        }
       });
     }
 
     if (toggleAuthPwdBtn && pwdEl) {
-      const svgEyeOpen = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const svgEyeOpen = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
       const svgEyeClosed = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
       toggleAuthPwdBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -313,8 +361,15 @@ export function renderLoginView() {
     }
 
     if (createAccBtn) {
-      createAccBtn.addEventListener('click', () => {
-        showAccountModal();
+      createAccBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (typeof openUserModal === 'function') {
+          openUserModal();
+        } else if (typeof window.openUserModal === 'function') {
+          window.openUserModal();
+        } else if (typeof window.showAccountModal === 'function') {
+          window.showAccountModal();
+        }
       });
     }
 
@@ -334,13 +389,40 @@ export function renderLoginView() {
       const enteredPwd = pwdEl ? pwdEl.value : '';
 
       if (!enteredId) {
-        warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
+        warningEl.textContent = `⚠️ Please select an account or enter your ${idLabelText}.`;
         warningEl.style.display = 'block';
         return;
       }
 
+      // Check role authorization on client first to provide helpful guided switching
+      const matchedUser = DB.getUserByUsernameOrId(enteredId);
+      if (matchedUser) {
+        const reqBaseRole = DB.getUserBaseRole(role);
+        const userBaseRole = DB.getUserBaseRole(matchedUser.role);
+        if (reqBaseRole && userBaseRole && reqBaseRole !== userBaseRole) {
+          const properRole = (userBaseRole === 'manager' || userBaseRole === 'finance_manager') ? 'manager' : userBaseRole;
+          const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' ? 'Manager Portal' : 'Employee Portal');
+          warningEl.innerHTML = `
+            <div style="margin-bottom:6px;">⚠️ Account <strong>${Utils.escape(matchedUser.name || enteredId)}</strong> is registered under the <strong>${properTitle}</strong>.</div>
+            <button type="button" class="btn btn-sm btn-primary" id="btn-switch-portal" style="font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; background:linear-gradient(135deg,#89201B,#5c0f0a); border:none; color:#fff;">➔ Switch to ${properTitle}</button>
+          `;
+          warningEl.style.display = 'block';
+          const switchBtn = warningEl.querySelector('#btn-switch-portal');
+          if (switchBtn) {
+            switchBtn.onclick = () => {
+              showVerificationScreen(properRole);
+              setTimeout(() => {
+                const newInput = document.getElementById('auth-id-input');
+                if (newInput) newInput.value = matchedUser.employeeId || matchedUser.username;
+              }, 50);
+            };
+          }
+          return;
+        }
+      }
+
       if (isHrOrManager && !enteredPwd) {
-        warningEl.textContent = `⚠️ Password is required to log in to this account.`;
+        warningEl.textContent = `⚠️ Password is required for ${role.toUpperCase()} account access.`;
         warningEl.style.display = 'block';
         return;
       }
@@ -363,7 +445,7 @@ export function renderLoginView() {
       .then(({ status, data }) => {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Verify';
+          submitBtn.textContent = 'Log In';
         }
         if (status !== 200 || !data.success) {
           const errMsg = data.error || 'Invalid credentials. Please try again.';
@@ -377,16 +459,15 @@ export function renderLoginView() {
       .catch(() => {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Verify';
+          submitBtn.textContent = 'Log In';
         }
         // Server unreachable: fall back to client-side login with strict role check
-        const matchedUser = DB.getUserByUsernameOrId(enteredId);
         warningEl.textContent = '⚠️ Server unreachable. Continuing in offline mode.';
         warningEl.style.display = 'block';
         setTimeout(() => {
           warningEl.style.display = 'none';
           if (matchedUser) proceedLogin(matchedUser, null);
-        }, 1500);
+        }, 1200);
       });
     };
 
@@ -406,14 +487,47 @@ export function renderLoginView() {
 
     const handleSkip = () => {
       const enteredId = inputEl.value.trim();
-      const defaultUser = getDefaultUserForRole();
-      let userToLogin = defaultUser;
+      let userToLogin = null;
 
       if (enteredId) {
         const candidate = DB.getUserByUsernameOrId(enteredId);
         if (candidate) {
+          const reqBaseRole = DB.getUserBaseRole(role);
+          const candBaseRole = DB.getUserBaseRole(candidate.role);
+          if (reqBaseRole !== candBaseRole) {
+            const properRole = (candBaseRole === 'manager' || candBaseRole === 'finance_manager') ? 'manager' : candBaseRole;
+            const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' ? 'Manager Portal' : 'Employee Portal');
+            warningEl.innerHTML = `
+              <div style="margin-bottom:6px;">⚠️ Account <strong>${Utils.escape(candidate.name || enteredId)}</strong> belongs to <strong>${properTitle}</strong>.</div>
+              <button type="button" class="btn btn-sm btn-primary" id="btn-switch-portal" style="font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; background:linear-gradient(135deg,#89201B,#5c0f0a); border:none; color:#fff;">➔ Switch to ${properTitle}</button>
+            `;
+            warningEl.style.display = 'block';
+            const switchBtn = warningEl.querySelector('#btn-switch-portal');
+            if (switchBtn) {
+              switchBtn.onclick = () => {
+                showVerificationScreen(properRole);
+                setTimeout(() => {
+                  const newInput = document.getElementById('auth-id-input');
+                  if (newInput) newInput.value = candidate.employeeId || candidate.username;
+                }, 50);
+              };
+            }
+            return;
+          }
           userToLogin = candidate;
+        } else {
+          warningEl.textContent = `⚠️ No account found with ID "${enteredId}". Please select from the dropdown.`;
+          warningEl.style.display = 'block';
+          return;
         }
+      } else {
+        userToLogin = getDefaultUserForRole();
+      }
+
+      if (!userToLogin) {
+        warningEl.textContent = `⚠️ No active account found for ${role.toUpperCase()} role.`;
+        warningEl.style.display = 'block';
+        return;
       }
 
       // Call backend with skipCheck so it creates a real server session token
@@ -455,7 +569,11 @@ export function renderLoginView() {
     if (policyLinkVerify) {
       policyLinkVerify.addEventListener('click', (e) => {
         e.preventDefault();
-        showCompanyPolicyModal();
+        if (typeof showCompanyPolicyModal === 'function') {
+          showCompanyPolicyModal();
+        } else if (typeof window.showCompanyPolicyModal === 'function') {
+          window.showCompanyPolicyModal();
+        }
       });
     }
   };
@@ -466,6 +584,7 @@ export function renderLoginView() {
     const token = serverToken || ('session_' + Math.random().toString(36).substring(2) + '_' + Date.now());
     const sessionData = JSON.stringify({
       id: user.id,
+      user: user,
       token: token,
       loginTime: new Date().toISOString()
     });
@@ -480,7 +599,11 @@ export function renderLoginView() {
         : '#dashboard';
 
       if (window.location.hash === targetHash) {
-        window.dispatchEvent(new Event('hashchange'));
+        if (typeof window.appHandleRoute === 'function') {
+          window.appHandleRoute();
+        } else {
+          window.dispatchEvent(new Event('hashchange'));
+        }
       } else {
         window.location.hash = targetHash;
       }
