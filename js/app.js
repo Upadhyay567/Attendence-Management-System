@@ -1,15 +1,16 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=57';
-import { renderAdminSchedules } from './views/schedulesView.js?v=57';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=57';
-import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=57';
-import { renderAdminAttendances } from './views/attendancesView.js?v=57';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=57';
-import { renderAdminFinance } from './views/financeView.js?v=57';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=57';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=57';
-import { drawRadarMap } from './components/geofenceMap.js?v=57';
-import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=57';
+import { renderLoginView } from './views/loginView.js?v=58';
+import { renderAdminSchedules } from './views/schedulesView.js?v=58';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=58';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=58';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=58';
+import { renderAdminAttendances } from './views/attendancesView.js?v=58';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=58';
+import { renderAdminFinance } from './views/financeView.js?v=58';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=58';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=58';
+import { drawRadarMap } from './components/geofenceMap.js?v=58';
+import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=58';
 
 // app.js - SPA Router & Controller
 import { DB } from './db.js?v=42';
@@ -55,6 +56,11 @@ export function registerWindowGlobals() {
     if (typeof startActiveWorkTimer === 'function') window.startActiveWorkTimer = startActiveWorkTimer;
     if (typeof renderCalendarScheduleTab === 'function') window.renderCalendarScheduleTab = renderCalendarScheduleTab;
     if (typeof renderCalendarGrid === 'function') window.renderCalendarGrid = renderCalendarGrid;
+    if (typeof getAttendanceStatusForDate === 'function') window.getAttendanceStatusForDate = getAttendanceStatusForDate;
+    if (typeof renderAdminMyAttendances === 'function') window.renderAdminMyAttendances = renderAdminMyAttendances;
+    if (typeof showAccountModal === 'function') window.showAccountModal = showAccountModal;
+    if (typeof showAccountCreationSuccessModal === 'function') window.showAccountCreationSuccessModal = showAccountCreationSuccessModal;
+    if (typeof showForgotPasswordModal === 'function') window.showForgotPasswordModal = showForgotPasswordModal;
     if (typeof renderEmployeeNotices === 'function') window.renderEmployeeNotices = renderEmployeeNotices;
     if (typeof handlePinClockIn === 'function') window.handlePinClockIn = handlePinClockIn;
     if (typeof handleClockOut === 'function') window.handleClockOut = handleClockOut;
@@ -1644,6 +1650,68 @@ function renderAppShell() {
 // EMPLOYEE DASHBOARD & LIVE TIMERS
 // -------------------------------------------------------------
 // [Delegated to js/views/renderEmployeeDashboard]
+
+function getAttendanceStatusForDate(userId, dateStr) {
+  const date = new Date(dateStr);
+  const dayOfWeek = date.getDay();
+  const user = DB.getUser(userId);
+  const resolved = DB.resolveUserShiftForDate(user, dateStr);
+  const schedule = DB.getSchedule(resolved.scheduleId) || {
+    name: 'Standard Day Shift',
+    startTime: '09:00',
+    endTime: '17:00',
+    gracePeriod: 15,
+    workDays: [1, 2, 3, 4, 5],
+    location: 'Kohat Enclave, Pitampura, Delhi'
+  };
+
+  const leaves = DB.data.leaveRequests || [];
+  const hasLeave = leaves.some(lv => 
+    lv.userId === userId && 
+    lv.status === 'Approved' && 
+    dateStr >= lv.startDate && 
+    dateStr <= lv.endDate
+  );
+  if (hasLeave) {
+    return { status: 'Leave', color: 'var(--primary)', log: null, schedule };
+  }
+
+  const isWorkDay = schedule.workDays.includes(dayOfWeek);
+  const log = (DB.data.attendanceLogs || []).find(l => l.userId === userId && l.date === dateStr);
+
+  if (log) {
+    let status = log.status;
+    if (!status || status === 'Present') {
+      status = 'On Time';
+      if (schedule && schedule.startTime && log.checkIn) {
+        const [sH, sM] = schedule.startTime.split(':').map(Number);
+        const [iH, iM] = log.checkIn.split(':').map(Number);
+        const sMins = sH * 60 + (sM || 0);
+        const iMins = iH * 60 + (iM || 0);
+        const grace = schedule.gracePeriod !== undefined ? Number(schedule.gracePeriod) : 15;
+        const halfDayLimit = schedule.halfDayLimit !== undefined ? Number(schedule.halfDayLimit) : 120;
+        if (iMins > sMins + grace) status = 'Late';
+        if (iMins >= sMins + halfDayLimit) status = 'Half Day';
+      }
+    }
+    let color = 'var(--success)';
+    if (status === 'Late') color = 'var(--warning)';
+    if (status === 'Half Day') color = '#3b82f6';
+    if (status === 'Absent') color = 'var(--error)';
+    return { status, color, log, schedule };
+  }
+
+  if (!isWorkDay) {
+    return { status: 'Holiday', color: 'var(--text-muted)', log: null, schedule };
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (dateStr < todayStr) {
+    return { status: 'Absent', color: 'var(--error)', log: null, schedule };
+  }
+
+  return { status: 'Scheduled', color: 'var(--cyan)', log: null, schedule };
+}
 
 function renderCalendarGrid(userId, year, month) {
   const container = document.getElementById('calendar-days-grid');

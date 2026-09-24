@@ -3,6 +3,8 @@ import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
 import { Utils, html } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
+import { showForgotPasswordModal } from './employeeDashboard.js';
+import { showAccountModal } from '../components/accountModal.js';
 
 let AUTH_REQUIRE_ID_MANDATORY = true;
 
@@ -266,22 +268,7 @@ export function renderLoginView() {
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
         </div>
 
-        <!-- Quick Select Account Dropdown -->
-        <div class="form-group" style="margin-bottom: 14px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-            <label class="form-label" for="auth-select-account" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin: 0;">Quick Select Account</label>
-            <span style="font-size: 11px; color: var(--text-muted);">${roleUsers.length} available</span>
-          </div>
-          <select id="auth-select-account" class="form-input" style="background: rgba(255,255,255,0.02); font-size: 12.5px; cursor: pointer;">
-            <option value="">-- Choose Account or Enter Below --</option>
-            ${roleUsers.map(u => {
-              const displayId = u.employeeId || u.username;
-              const displayName = u.name || u.username;
-              const displayDesig = u.designation || u.role;
-              return `<option value="${Utils.escape(displayId)}">${Utils.escape(displayName)} (${Utils.escape(displayId)} - ${Utils.escape(displayDesig)})</option>`;
-            }).join('')}
-          </select>
-        </div>
+        
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
@@ -308,8 +295,6 @@ export function renderLoginView() {
         </div>
       </div>
     `;
-
-    const selectAccountEl = authBox.querySelector('#auth-select-account');
     const inputEl = authBox.querySelector('#auth-id-input');
     const pwdEl = authBox.querySelector('#auth-pwd-input');
     const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
@@ -321,15 +306,13 @@ export function renderLoginView() {
     const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
     const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
 
-    if (selectAccountEl) {
-      selectAccountEl.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val) {
-          inputEl.value = val;
-          warningEl.style.display = 'none';
-          if (isHrOrManager && pwdEl) {
-            pwdEl.focus();
-          }
+    if (createAccBtn) {
+      createAccBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (typeof showAccountModal === 'function') {
+          showAccountModal();
+        } else if (typeof window.showAccountModal === 'function') {
+          window.showAccountModal();
         }
       });
     }

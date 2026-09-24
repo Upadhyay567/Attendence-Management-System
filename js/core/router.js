@@ -94,6 +94,15 @@ export async function handleRoute() {
       case '#employee-work-status':
         renderDailyWorkStatus();
         break;
+      case '#admin-my-attendances':
+        if (typeof window.renderAdminMyAttendances === 'function') {
+          window.renderAdminMyAttendances();
+        } else if (typeof renderAdminMyAttendances === 'function') {
+          renderAdminMyAttendances();
+        } else {
+          renderEmployeeDashboard();
+        }
+        break;
       case '#admin-attendances':
       case '#admin-checkin-log':
       case '#admin-deviations':
