@@ -52,7 +52,8 @@ DB.queryAttendanceReport = function(userIds, month, year) {
 };
 
 // Loader utility for SheetJS Excel export
-function loadSheetJS(callback, onError) {
+export function loadSheetJS(callback, onError) {
+  window.loadSheetJS = loadSheetJS;
   if (window.XLSX) {
     callback();
     return;

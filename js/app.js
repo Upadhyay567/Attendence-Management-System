@@ -1,15 +1,15 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=56';
-import { renderAdminSchedules } from './views/schedulesView.js?v=56';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=56';
-import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=56';
-import { renderAdminAttendances } from './views/attendancesView.js?v=56';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=56';
-import { renderAdminFinance } from './views/financeView.js?v=56';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=56';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=56';
-import { drawRadarMap } from './components/geofenceMap.js?v=56';
-import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=56';
+import { renderLoginView } from './views/loginView.js?v=57';
+import { renderAdminSchedules } from './views/schedulesView.js?v=57';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=57';
+import { renderEmployeeDashboard } from './views/employeeDashboard.js?v=57';
+import { renderAdminAttendances } from './views/attendancesView.js?v=57';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=57';
+import { renderAdminFinance } from './views/financeView.js?v=57';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=57';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=57';
+import { drawRadarMap } from './components/geofenceMap.js?v=57';
+import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=57';
 
 // app.js - SPA Router & Controller
 import { DB } from './db.js?v=42';
@@ -85,7 +85,6 @@ export function registerWindowGlobals() {
     console.warn("Globals registration note:", e.message);
   }
 }
-registerWindowGlobals();
 
 // Custom dialog modal manager
 const CustomDialog = {
