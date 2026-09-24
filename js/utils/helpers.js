@@ -119,6 +119,9 @@ export const Utils = {
 export const html = (strings, ...values) => {
   return strings.reduce((result, str, i) => result + str + (values[i] !== undefined ? values[i] : ''), '');
 };
+if (typeof window !== 'undefined') {
+  window.html = html;
+}
 
 // Convert 24-hour time string (e.g. "08:00", "16:30") to 12-hour AM/PM format (e.g. "08:00 AM", "04:30 PM")
 export function formatTime12h(timeStr) {

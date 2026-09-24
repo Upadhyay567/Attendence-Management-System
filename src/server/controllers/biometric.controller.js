@@ -59,6 +59,21 @@ async function getUsers(req, res) {
       data:    users
     });
   } catch (err) {
+    try {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+        const db = JSON.parse(raw);
+        const allUsers = Array.isArray(db.users) ? db.users : [];
+        const bioUsers = allUsers.filter(u => u && (u.biometricUserId || u.biometricId || u.employeeId));
+        return res.json({
+          success: true,
+          offline: true,
+          source: 'local_database',
+          count: bioUsers.length,
+          data: bioUsers
+        });
+      }
+    } catch (_) {}
     return res.status(500).json({
       success: false,
       step:    'getUsers',
@@ -80,6 +95,20 @@ async function getLogs(req, res) {
       data:    logs
     });
   } catch (err) {
+    try {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+        const db = JSON.parse(raw);
+        const localLogs = Array.isArray(db.attendanceLogs) ? db.attendanceLogs : [];
+        return res.json({
+          success: true,
+          offline: true,
+          source: 'local_database',
+          count: localLogs.length,
+          data: localLogs
+        });
+      }
+    } catch (_) {}
     return res.status(500).json({
       success: false,
       step:    'getAttendances',

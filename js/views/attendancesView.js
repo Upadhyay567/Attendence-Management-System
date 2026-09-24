@@ -403,13 +403,13 @@ export function renderAdminAttendances() {
 
   // Core Table Update Function
   function updateTable() {
-    // 1. Fetch employee records ONLY (Excludes HR and Manager)
+    // 1. Fetch user records across all roles (Employees, HR, and Managers)
     const allUsers = DB.getUsers();
-    const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
-    const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+    const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
+    const userMap = new Map(activeUsers.map(u => [u.id, u]));
 
     const rawLogs = DB.getLogs().filter(log => {
-      if (!employeeMap.has(log.userId)) return false;
+      if (!userMap.has(log.userId)) return false;
       if (log.date) {
         const [y, m] = log.date.split('-');
         const logYear = parseInt(y, 10);
@@ -421,8 +421,8 @@ export function renderAdminAttendances() {
 
     // Map logs with rich display values
     const mappedLogs = rawLogs.map(log => {
-      const emp = employeeMap.get(log.userId);
-      const empName = emp ? emp.name : 'Unknown Employee';
+      const emp = userMap.get(log.userId);
+      const empName = emp ? emp.name : 'Unknown User';
       const empId = emp ? (emp.employeeId || emp.id) : '';
       const shift = DB.getSchedule(log.shiftId);
       const shiftName = shift ? shift.name : 'Regular Shift';
@@ -688,9 +688,9 @@ export function renderAdminAttendances() {
   if (btnNext) {
     btnNext.addEventListener('click', () => {
       const allUsers = DB.getUsers();
-      const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
-      const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
-      const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+      const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
+      const userMap = new Map(activeUsers.map(u => [u.id, u]));
+      const rawLogs = DB.getLogs().filter(log => userMap.has(log.userId));
       const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
 
       if (adminAttendancesCurrentPage < totalPages) {
@@ -704,9 +704,9 @@ export function renderAdminAttendances() {
   if (btnLast) {
     btnLast.addEventListener('click', () => {
       const allUsers = DB.getUsers();
-      const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
-      const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
-      const rawLogs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+      const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
+      const userMap = new Map(activeUsers.map(u => [u.id, u]));
+      const rawLogs = DB.getLogs().filter(log => userMap.has(log.userId));
       const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
 
       if (adminAttendancesCurrentPage !== totalPages) {
@@ -732,7 +732,7 @@ export function renderAdminAttendances() {
 
 // Modal for Creating New Attendance Record
 function showCreateAttendanceModal() {
-  const employees = DB.getUsers().filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+  const users = DB.getUsers().filter(u => u && u.status !== 'Inactive');
   const schedules = DB.getSchedules();
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -748,10 +748,10 @@ function showCreateAttendanceModal() {
       </div>
       <form id="form-create-attendance">
         <div class="form-group" style="margin-bottom: 14px;">
-          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Select Employee *</label>
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Select User *</label>
           <select id="modal-create-att-user" class="form-input" required style="width: 100%; font-size: 13px;">
-            ${employees.map(e => `
-              <option value="${e.id}">${Utils.escape(e.name)} (${Utils.escape(e.employeeId || e.id)})</option>
+            ${users.map(e => `
+              <option value="${e.id}">${Utils.escape(e.name)} (${Utils.escape(e.employeeId || e.id)}) - ${Utils.escape(e.role || 'employee')}</option>
             `).join('')}
           </select>
         </div>
@@ -934,22 +934,22 @@ function showEditAttendanceModal(logId) {
   });
 }
 
-// Helper to export Employee Attendance records to CSV
+// Helper to export Attendance records to CSV/Excel
 function exportEmployeeAttendancesCSV(specificLogIds = null) {
   const allUsers = DB.getUsers();
-  const employeeUsers = allUsers.filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
-  const employeeMap = new Map(employeeUsers.map(u => [u.id, u]));
+  const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
+  const userMap = new Map(activeUsers.map(u => [u.id, u]));
 
-  let logs = DB.getLogs().filter(log => employeeMap.has(log.userId));
+  let logs = DB.getLogs().filter(log => userMap.has(log.userId));
   if (specificLogIds && specificLogIds.length > 0) {
     const idSet = new Set(specificLogIds);
     logs = logs.filter(l => idSet.has(l.id));
   }
 
-  const filename = `Employee_Attendances_${new Date().toISOString().split('T')[0]}.xls`;
+  const filename = `Attendances_${new Date().toISOString().split('T')[0]}.xls`;
   const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
   const rows = logs.map(l => {
-    const emp = employeeMap.get(l.userId);
+    const emp = userMap.get(l.userId);
     const shift = DB.getSchedule(l.shiftId);
     const atWork = Utils.calculateDuration(l.checkIn, l.checkOut);
     

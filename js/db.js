@@ -1583,39 +1583,49 @@ export const DB = {
   // Attendance Logs API
   getLogs(userId = null) {
     if (userId) {
-      return this.data.attendanceLogs.filter(l => l.userId === userId).sort((a, b) => b.date.localeCompare(a.date));
+      const user = this.getUser(userId);
+      return (this.data.attendanceLogs || []).filter(l => 
+        l.userId === userId ||
+        (user && user.employeeId && l.employeeId === user.employeeId) ||
+        (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
+      ).sort((a, b) => b.date.localeCompare(a.date));
     }
-    return this.data.attendanceLogs.sort((a, b) => b.date.localeCompare(a.date));
+    return (this.data.attendanceLogs || []).sort((a, b) => b.date.localeCompare(a.date));
   },
 
   getTodayLog(userId, shiftId = null) {
     const todayStr = new Date().toISOString().split('T')[0];
+    const user = this.getUser(userId);
+    const matchesUser = (l) => (
+      l.userId === userId ||
+      (user && user.employeeId && l.employeeId === user.employeeId) ||
+      (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
+    );
+
     if (shiftId) {
-      const exactMatch = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && String(l.shiftId) === String(shiftId));
+      const exactMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(shiftId));
       if (exactMatch) return exactMatch;
       
-      const user = this.getUser(userId);
       const isPrimarySchedule = user && String(user.scheduleId) === String(shiftId);
       if (isPrimarySchedule) {
-        const unassignedMatch = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
+        const unassignedMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
         if (unassignedMatch) return unassignedMatch;
       }
       // Fallback: check if there is an active open log for this user today
-      const openFallback = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);
+      const openFallback = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && l.checkIn && !l.checkOut);
       if (openFallback) return openFallback;
       return null;
     }
-    const openLog = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && l.checkIn && !l.checkOut);
+    const openLog = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && l.checkIn && !l.checkOut);
     if (openLog) return openLog;
     
-    const user = this.getUser(userId);
     const resolved = user ? this.resolveUserShiftForDate(user, todayStr) : null;
     if (resolved && resolved.scheduleId) {
-      const match = this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr && String(l.shiftId) === String(resolved.scheduleId));
+      const match = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(resolved.scheduleId));
       if (match) return match;
     }
 
-    return this.data.attendanceLogs.find(l => l.userId === userId && l.date === todayStr);
+    return (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr);
   },
 
   addPendingCheckIn(userId, location = 'Kohat Enclave, Pitampura, Delhi', coords = '', distance = 0) {

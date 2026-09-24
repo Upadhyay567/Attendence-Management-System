@@ -171,3 +171,11 @@ export const Utils = {
     return String(inputPassword) === storedStr;
   }
 };
+
+// Tagged template literal helper for syntax highlighting and safe template strings
+export const html = (strings, ...values) => {
+  return strings.reduce((result, str, i) => result + str + (values[i] !== undefined ? values[i] : ''), '');
+};
+if (typeof window !== 'undefined') {
+  window.html = html;
+}

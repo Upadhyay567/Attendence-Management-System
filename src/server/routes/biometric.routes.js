@@ -163,6 +163,26 @@ router.get('/biometric/users', async (req, res) => {
     });
 
   } catch (err) {
+    try {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+        const db = JSON.parse(raw);
+        const allUsers = Array.isArray(db.users) ? db.users : [];
+        const bioUsers = allUsers.filter(u => u && (u.biometricUserId || u.biometricId || u.employeeId));
+        return res.json({
+          success: true,
+          offline: true,
+          source: 'local_database',
+          device: {
+            name: DEVICE.name,
+            ip:   DEVICE.ip,
+            port: DEVICE.port
+          },
+          count: bioUsers.length,
+          data:  bioUsers
+        });
+      }
+    } catch (_) {}
     return buildErrorResponse(res, 500, 'getUsers', err);
   }
 });
@@ -192,6 +212,25 @@ router.get('/biometric/logs', async (req, res) => {
     });
 
   } catch (err) {
+    try {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+        const db = JSON.parse(raw);
+        const logs = Array.isArray(db.attendanceLogs) ? db.attendanceLogs : [];
+        return res.json({
+          success: true,
+          offline: true,
+          source: 'local_database',
+          device: {
+            name: DEVICE.name,
+            ip:   DEVICE.ip,
+            port: DEVICE.port
+          },
+          count: logs.length,
+          data:  logs
+        });
+      }
+    } catch (_) {}
     return buildErrorResponse(res, 500, 'getAttendances', err);
   }
 });
@@ -319,17 +358,18 @@ router.get('/biometric/dashboard', async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
 
     const dashboard = activeUsers
-      .filter(user => user && user.status !== 'Inactive' && user.role !== 'admin' && String(user.name || '').toLowerCase() !== 'admin')
+      .filter(user => user && user.status !== 'Inactive')
       .map((user, index) => {
         const userId = String(user.id || '');
         const employeeId = user.employeeId || userId;
-        const biometricId = String(user.biometricUserId || user.employeeId || userId);
+        const biometricId = String(user.biometricUserId || user.biometricId || user.employeeId || userId);
         const name = user.name || 'Employee';
 
         const userLogs = attendanceLogs.filter(l => 
           String(l.userId) === userId ||
           (l.biometricUserId && String(l.biometricUserId) === biometricId) ||
-          (user.employeeId && String(l.employeeId) === String(user.employeeId))
+          (user.employeeId && String(l.employeeId) === String(user.employeeId)) ||
+          (user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
         );
 
         const todayLog = userLogs.find(l => l.date === today);

@@ -25,7 +25,13 @@ export function renderEmployeeDashboard() {
   // Dynamic GPS Mock Selector options
   let optionsHTML = '';
   optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
-  Object.entries(window.OFFICE_COORDINATES).forEach(([locName, coords]) => {
+  const officeCoordsMap = window.OFFICE_COORDINATES || {
+    'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
+    'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
+    'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
+    'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+  };
+  Object.entries(officeCoordsMap).forEach(([locName, coords]) => {
     const isPreferred = locName === officeName;
     optionsHTML += `<option value="${locName}">📍 Mock: ${locName}${isPreferred ? ' (Your Assigned Office - In Range)' : ''}</option>`;
   });
@@ -1612,7 +1618,7 @@ export function showForgotPasswordModal(initialId = '') {
   };
 
   // Step 1 Click Handler: Verify Identity
-  modal.querySelector('#btn-verify-identifier').addEventListener('click', () => {
+  modal.querySelector('#btn-verify-identifier').addEventListener('click', async () => {
     const errorEl = modal.querySelector('#forgot-identifier-error');
     errorEl.style.display = 'none';
 
@@ -1623,18 +1629,64 @@ export function showForgotPasswordModal(initialId = '') {
       return;
     }
 
-    const allUsers = DB.getUsers();
-    const matchedUser = allUsers.find(u => {
-      const key = rawInput.toLowerCase();
-      const cleanKey = rawInput.replace(/\D/g, '');
-      const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
-      const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+    const verifyBtn = modal.querySelector('#btn-verify-identifier');
+    const originalBtnText = verifyBtn.textContent;
+    verifyBtn.setAttribute('disabled', 'true');
+    verifyBtn.textContent = 'Verifying...';
 
-      return (u.username && u.username.toLowerCase() === key) ||
-             (u.email && u.email.toLowerCase() === key) ||
-             (u.employeeId && u.employeeId.toLowerCase() === key) ||
-             isPhoneMatch;
-    });
+    let matchedUser = null;
+
+    // 1. Try querying backend server /api/auth/identify endpoint
+    try {
+      if (typeof DB.resolveApiBase === 'function') await DB.resolveApiBase();
+      const res = await fetch((window.apiBaseUrl || '') + '/api/auth/identify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: rawInput })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.user) {
+          matchedUser = data.user;
+          // Ensure cached in local DB if not already present
+          if (DB.getUser && !DB.getUser(matchedUser.id)) {
+            try {
+              if (typeof DB.addUser === 'function') DB.addUser(matchedUser);
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Backend identify failed, checking local database:', apiErr);
+    }
+
+    // 2. Fallback to local DB cache with comprehensive fuzzy matching across all fields
+    if (!matchedUser) {
+      const allUsers = typeof DB.getUsers === 'function' ? DB.getUsers() : [];
+      matchedUser = allUsers.find(u => {
+        if (!u) return false;
+        const key = rawInput.toLowerCase();
+        const cleanKey = rawInput.replace(/\D/g, '');
+        const userPhone = (u.phone || u.mobile || '').replace(/\D/g, '');
+        const isPhoneMatch = cleanKey && userPhone && (cleanKey === userPhone || cleanKey.endsWith(userPhone) || userPhone.endsWith(cleanKey));
+
+        const uEmpId = (u.employeeId || '').toLowerCase();
+        const uUsername = (u.username || '').toLowerCase();
+        const uId = (u.id || '').toLowerCase();
+        const uBioId = String(u.biometricUserId || u.biometricId || '').toLowerCase();
+        const uEmail = (u.email || '').toLowerCase();
+
+        return (uUsername && uUsername === key) ||
+               (uEmail && uEmail === key) ||
+               (uEmpId && uEmpId === key) ||
+               (uId && uId === key) ||
+               (uBioId && uBioId === key) ||
+               isPhoneMatch;
+      });
+    }
+
+    verifyBtn.removeAttribute('disabled');
+    verifyBtn.textContent = originalBtnText;
 
     if (!matchedUser) {
       errorEl.textContent = '⚠️ Account record not found for the entered credentials.';
@@ -1871,6 +1923,15 @@ export function showForgotPasswordModal(initialId = '') {
       password: hashed,
       passwordResetCount: currentCount + 1
     });
+
+    // Also persist password to backend server database (seed.json & MongoDB)
+    try {
+      fetch((window.apiBaseUrl || '') + '/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: verifiedUser.id, newPassword: newPwd })
+      }).catch(err => console.warn('Backend reset-password sync warning:', err));
+    } catch (_) {}
 
     closeModal();
     if (typeof showToastNotification === 'function') {

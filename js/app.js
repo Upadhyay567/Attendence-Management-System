@@ -1,21 +1,21 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=58';
-import { renderAdminSchedules } from './views/schedulesView.js?v=58';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=58';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=58';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=58';
-import { renderAdminAttendances } from './views/attendancesView.js?v=58';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=58';
-import { renderAdminFinance } from './views/financeView.js?v=58';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=58';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=58';
-import { drawRadarMap } from './components/geofenceMap.js?v=58';
-import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=58';
+import { renderLoginView } from './views/loginView.js?v=59';
+import { renderAdminSchedules } from './views/schedulesView.js?v=59';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=59';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=59';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=59';
+import { renderAdminAttendances } from './views/attendancesView.js?v=59';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=59';
+import { renderAdminFinance } from './views/financeView.js?v=59';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=59';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=59';
+import { drawRadarMap } from './components/geofenceMap.js?v=59';
+import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=59';
 
 // app.js - SPA Router & Controller
 import { DB } from './db.js?v=42';
 import { Auth } from './auth.js?v=33';
-import { Utils } from './utils.js?v=33';
+import { Utils, html } from './utils.js?v=59';
 import { triggerBirthdayCelebration } from './celebration.js?v=33';
 import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=47';
 
@@ -25,6 +25,7 @@ export function registerWindowGlobals() {
   window.DB = DB;
   window.Auth = Auth;
   window.Utils = Utils;
+  window.html = html;
   window.closeModal = closeModal;
   window.showNotificationDetailModal = showNotificationDetailModal;
   window.openFullScreenImageModal = openFullScreenImageModal;
@@ -1677,7 +1678,13 @@ function getAttendanceStatusForDate(userId, dateStr) {
   }
 
   const isWorkDay = schedule.workDays.includes(dayOfWeek);
-  const log = (DB.data.attendanceLogs || []).find(l => l.userId === userId && l.date === dateStr);
+  const log = (DB.data.attendanceLogs || []).find(l => 
+    l && l.date === dateStr && (
+      l.userId === userId ||
+      (user && user.employeeId && l.employeeId === user.employeeId) ||
+      (user && user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId))
+    )
+  );
 
   if (log) {
     let status = log.status;

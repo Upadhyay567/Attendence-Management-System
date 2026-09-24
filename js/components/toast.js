@@ -1,4 +1,5 @@
 // js/components/toast.js - Toast Notifications Engine
+import { html } from '../utils/helpers.js';
 
 export function showToastNotification(message, type = 'info') {
   let container = document.getElementById('toast-container');
@@ -40,13 +41,17 @@ export function showToastNotification(message, type = 'info') {
     toast.style.background = 'var(--error-bg, rgba(239, 68, 68, 0.95))';
     toast.style.color = '#ffffff';
     toast.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+  } else if (type === 'warning') {
+    toast.style.background = 'var(--warning-bg, rgba(245, 158, 11, 0.95))';
+    toast.style.color = '#ffffff';
+    toast.style.border = '1px solid rgba(245, 158, 11, 0.3)';
   } else {
     toast.style.background = 'var(--card-bg, rgba(30, 41, 59, 0.95))';
     toast.style.color = 'var(--text-primary, #ffffff)';
     toast.style.border = '1px solid var(--border, rgba(255,255,255,0.1))';
   }
 
-  toast.innerHTML = html`<span>${message}</span>`;
+  toast.innerHTML = (typeof html === 'function' ? html`<span>${message}</span>` : `<span>${message}</span>`);
   container.appendChild(toast);
 
   requestAnimationFrame(() => {
