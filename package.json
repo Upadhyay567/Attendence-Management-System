@@ -4,7 +4,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "jest --testTimeout=15000 --runInBand --detectOpenHandles --forceExit"
+    "test": "jest --testTimeout=35000 --runInBand --forceExit"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -4,6 +4,7 @@ import { Auth } from '../core/auth.js';
 import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
+import { openProfileDownloadModal } from '../downloads.js';
 
 export function renderAdminUsers() {
   const main = document.getElementById('main-view');
@@ -16,14 +17,12 @@ export function renderAdminUsers() {
     if (uid && seenUserIds.has(uid)) return false;
     if (uid) seenUserIds.add(uid);
 
-    if (user.role === 'manager') {
-      return u.managerId === user.id && u.role === 'employee';
-    } else if (user.role === 'hr') {
-      return u.assignedById === user.id && u.role === 'employee';
-    } else if (user.role === 'finance_manager') {
+    if (user && (user.role === 'manager' || user.role === 'hr' || user.role === 'admin')) {
+      return true; // show all employee, hr, and manager profiles, including their own!
+    } else if (user && user.role === 'finance_manager') {
       return false; // Not showing employee list to Finance Manager
     } else {
-      return false;
+      return user && u.id === user.id;
     }
   });
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
@@ -159,7 +158,10 @@ export function renderAdminUsers() {
   const addBtn = document.getElementById('btn-add-user-modal');
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
   const dlProfileBtn = document.getElementById('btn-download-profile-users');
-  if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => openProfileDownloadModal());
+  if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => {
+    if (typeof openProfileDownloadModal === 'function') openProfileDownloadModal();
+    else if (typeof window.openProfileDownloadModal === 'function') window.openProfileDownloadModal();
+  });
 
   const triggerPushSync = async () => {
     try {

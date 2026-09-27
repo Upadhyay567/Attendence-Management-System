@@ -68,6 +68,11 @@ export async function handleRoute() {
         window.location.hash = '#dashboard';
         return;
       }
+    } else {
+      if (hash === '#dashboard') {
+        window.location.hash = '#admin-dashboard';
+        return;
+      }
     }
 
     // Render Shell Frame if missing or user context changed

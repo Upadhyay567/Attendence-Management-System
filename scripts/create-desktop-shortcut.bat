@@ -1,21 +1,24 @@
 @echo off
-cd /d "%~dp0"
+cd /d "%~dp0.."
 echo Creating Desktop Shortcut for HS Group Live Server...
 
-set SCRIPT="%TEMP%\CreateShortcut.vbs"
-echo Set oWS = WScript.CreateObject("WScript.Shell") > %SCRIPT%
-echo sLinkFile = oWS.SpecialFolders("Desktop") ^& "\HS Group Live Server.lnk" >> %SCRIPT%
-echo Set oLink = oWS.CreateShortcut(sLinkFile) >> %SCRIPT%
-echo oLink.TargetPath = "%~dp0run-server.bat" >> %SCRIPT%
-echo oLink.WorkingDirectory = "%~dp0.." >> %SCRIPT%
-echo oLink.Description = "Launch HS Group Delhi Multi-Threaded Attendance Live Server" >> %SCRIPT%
-echo oLink.Save >> %SCRIPT%
-
-cscript /nologo %SCRIPT%
-del %SCRIPT%
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$WshShell = New-Object -ComObject WScript.Shell; " ^
+  "$dirs = @('E:\Desktop', [Environment]::GetFolderPath('Desktop'), \"$HOME\OneDrive\Desktop\", \"$HOME\Desktop\"); " ^
+  "foreach ($d in $dirs) { " ^
+  "  if ($d -and (Test-Path $d)) { " ^
+  "    $sc = $WshShell.CreateShortcut(\"$d\HS Group Live Server.lnk\"); " ^
+  "    $sc.TargetPath = \"$((Get-Location).Path)\run-server.bat\"; " ^
+  "    $sc.WorkingDirectory = \"$((Get-Location).Path)\"; " ^
+  "    $sc.Description = \"Launch HS Group Delhi Live Server\"; " ^
+  "    if (Test-Path \"$((Get-Location).Path)\favicon.ico\") { $sc.IconLocation = \"$((Get-Location).Path)\favicon.ico\"; } " ^
+  "    $sc.Save(); " ^
+  "    Write-Host \"Created shortcut in: $d\"; " ^
+  "  } " ^
+  "}"
 
 echo.
 echo =========================================================
-echo   SUCCESS! "HS Group Live Server" shortcut created on Desktop!
+echo   SUCCESS! "HS Group Live Server" shortcut created!
 echo =========================================================
 pause

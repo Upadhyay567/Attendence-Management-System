@@ -12,17 +12,15 @@ const {
   LOCAL_DB_FILE
 } = require('../config/db');
 
-const {
-  DEVICE,
-  getDeviceSnapshot
-} = require('./zkDevice');
+const zkDevice = require('./zkDevice');
+const biometricMultiDevice = require('./biometricMultiDevice.service');
 
-const {
-  getRegisteredDevices,
-  withDeviceConfig,
-  replicateTemplatesAcrossDevices,
-  getVaultUsers
-} = require('./biometricMultiDevice.service');
+const DEVICE = zkDevice.DEVICE;
+const getDeviceSnapshot = (...args) => zkDevice.getDeviceSnapshot(...args);
+const getRegisteredDevices = (...args) => biometricMultiDevice.getRegisteredDevices(...args);
+const withDeviceConfig = (...args) => biometricMultiDevice.withDeviceConfig(...args);
+const replicateTemplatesAcrossDevices = (...args) => biometricMultiDevice.replicateTemplatesAcrossDevices(...args);
+const getVaultUsers = (...args) => biometricMultiDevice.getVaultUsers(...args);
 
 const {
   broadcastSSEEvent

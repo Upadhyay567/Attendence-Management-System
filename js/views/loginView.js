@@ -14,15 +14,20 @@ export function renderLoginView() {
     window.activeTimer = null;
   }
 
-  // Clear any geofencing state so next login starts clean
-  sessionStorage.removeItem('hs_pending_auto_checkin_time');
-  sessionStorage.removeItem('hs_mock_location');
-  sessionStorage.removeItem('hs_current_resolved_coords');
-  sessionStorage.removeItem('hs_current_resolved_distance');
-  sessionStorage.removeItem('hs_current_resolved_in_range');
-  window.lastGpsInRangeState = undefined;
+  // Thoroughly clear any previous user, session, and role state
+  try {
+    Auth.logout();
+  } catch (e) {}
+
+  // Background synchronize DB cache for role lookups
+  try {
+    DB.init().catch(() => {});
+  } catch (e) {}
 
   const root = document.getElementById('app-root');
+  if (root) {
+    root.removeAttribute('data-shell-user-id');
+  }
 
   const rawUsers = DB.getUsers();
   const allUsers = (rawUsers && rawUsers.length > 0) ? rawUsers : (DB.getUserByUsernameOrId('admin') ? [DB.getUserByUsernameOrId('admin')] : []);
@@ -227,10 +232,6 @@ export function renderLoginView() {
       roleUsers = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
     }
 
-    const skipButtonHTML = (!AUTH_REQUIRE_ID_MANDATORY && !isHrOrManager)
-      ? `<button type="button" class="btn btn-secondary" id="btn-verify-id-skip" style="width: 100%; font-weight: 600; background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-primary)">Skip & Continue</button>`
-      : '';
-
     const passwordFieldHTML = html`
       <div class="form-group" style="margin-bottom: 16px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
@@ -250,8 +251,6 @@ export function renderLoginView() {
       ? '<button type="button" class="btn" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px; padding: 10px 0; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4); cursor: pointer;">Log In</button>'
       : '<button type="button" class="btn btn-cyan" id="btn-verify-id-submit" style="width: 100%; font-weight: 700; font-size: 13px;">Log In</button>';
 
-    const skipDevButtonHTML = (!isHrOrManager && skipButtonHTML) ? '' : '<button type="button" class="btn btn-secondary" id="btn-verify-id-skip-dev" style="width: 100%; font-weight: 700; font-size: 13px; background: rgba(255,255,255,0.03); border: 1.5px dashed var(--primary); color: var(--primary); border-radius: 12px; cursor: pointer; padding: 10px 0;">Skip & Continue</button>';
-
     const createAccountLinkHTML = isHrOrManager ? html`
       <div style="margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-secondary);">
         Don't have an account? <a href="#" id="btn-verify-id-create-acc" style="color: #89201B; font-weight: 700; text-decoration: underline; transition: color 0.2s;">Create Account</a>
@@ -268,8 +267,6 @@ export function renderLoginView() {
           <div class="auth-subtitle" style="color: var(--text-secondary); margin-bottom: 8px;">Verify identity to initialize dashboard</div>
         </div>
 
-        
-
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" for="auth-id-input" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; display: block;">${idLabelText} *</label>
           <input type="text" id="auth-id-input" class="form-input" placeholder="${placeholderText}" value="" style="background: rgba(255,255,255,0.02); text-transform: uppercase; font-size: 13px;" autofocus>
@@ -284,8 +281,6 @@ export function renderLoginView() {
         <!-- Actions -->
         <div style="display: flex; flex-direction: column; gap: 10px;">
           ${loginButtonHTML}
-          ${!isHrOrManager ? skipButtonHTML : ''}
-          ${skipDevButtonHTML}
           ${createAccountLinkHTML}
 
           <button type="button" class="btn btn-secondary" id="btn-verify-id-back" style="width: 100%; background: transparent; border-color: transparent; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 6px 0;">← Back to Select Role</button>
@@ -300,8 +295,6 @@ export function renderLoginView() {
     const toggleAuthPwdBtn = authBox.querySelector('#btn-toggle-auth-pwd');
     const warningEl = authBox.querySelector('#auth-verify-warning');
     const submitBtn = authBox.querySelector('#btn-verify-id-submit');
-    const skipBtn = authBox.querySelector('#btn-verify-id-skip');
-    const skipDevBtn = authBox.querySelector('#btn-verify-id-skip-dev');
     const backBtn = authBox.querySelector('#btn-verify-id-back');
     const createAccBtn = authBox.querySelector('#btn-verify-id-create-acc');
     const forgotPwdBtn = authBox.querySelector('#btn-forgot-password-trigger');
@@ -343,53 +336,14 @@ export function renderLoginView() {
       });
     }
 
-
-    const getDefaultUserForRole = () => {
-      const allUsers = DB.getUsers();
-      if (role === 'hr') {
-        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'hr') || allUsers[0];
-      } else if (role === 'manager') {
-        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'finance_manager') || allUsers[0];
-      } else {
-        return allUsers.find(u => DB.getUserBaseRole(u.role) === 'employee') || allUsers[0];
-      }
-    };
-
     const handleVerification = () => {
       const enteredId = inputEl.value.trim();
       const enteredPwd = pwdEl ? pwdEl.value : '';
 
       if (!enteredId) {
-        warningEl.textContent = `⚠️ Please select an account or enter your ${idLabelText}.`;
+        warningEl.textContent = `⚠️ Please enter your ${idLabelText}.`;
         warningEl.style.display = 'block';
         return;
-      }
-
-      // Check role authorization on client first to provide helpful guided switching
-      const matchedUser = DB.getUserByUsernameOrId(enteredId);
-      if (matchedUser) {
-        const reqBaseRole = DB.getUserBaseRole(role);
-        const userBaseRole = DB.getUserBaseRole(matchedUser.role);
-        if (reqBaseRole && userBaseRole && reqBaseRole !== userBaseRole) {
-          const properRole = (userBaseRole === 'manager' || userBaseRole === 'finance_manager') ? 'manager' : userBaseRole;
-          const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' ? 'Manager Portal' : 'Employee Portal');
-          warningEl.innerHTML = `
-            <div style="margin-bottom:6px;">⚠️ Account <strong>${Utils.escape(matchedUser.name || enteredId)}</strong> is registered under the <strong>${properTitle}</strong>.</div>
-            <button type="button" class="btn btn-sm btn-primary" id="btn-switch-portal" style="font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; background:linear-gradient(135deg,#89201B,#5c0f0a); border:none; color:#fff;">➔ Switch to ${properTitle}</button>
-          `;
-          warningEl.style.display = 'block';
-          const switchBtn = warningEl.querySelector('#btn-switch-portal');
-          if (switchBtn) {
-            switchBtn.onclick = () => {
-              showVerificationScreen(properRole);
-              setTimeout(() => {
-                const newInput = document.getElementById('auth-id-input');
-                if (newInput) newInput.value = matchedUser.employeeId || matchedUser.username;
-              }, 50);
-            };
-          }
-          return;
-        }
       }
 
       if (isHrOrManager && !enteredPwd) {
@@ -405,7 +359,7 @@ export function renderLoginView() {
       }
       warningEl.style.display = 'none';
 
-      // Authenticate via backend to get a real server-issued session token
+      // Authenticate via backend to verify ID and assigned role directly against the database
       const apiBase = window.apiBaseUrl || '';
       fetch(`${apiBase}/api/auth/login`, {
         method: 'POST',
@@ -418,27 +372,42 @@ export function renderLoginView() {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Log In';
         }
+        if (status === 403) {
+          const properRole = (data && (data.baseRole || data.assignedRole)) || '';
+          const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' || properRole === 'finance_manager' ? 'Manager Portal' : 'Employee Portal');
+          warningEl.innerHTML = `
+            <div style="margin-bottom:8px;">⚠️ ${Utils.escape((data && data.error) || 'Access Denied: Account role is not authorized for this portal.')}</div>
+            ${properRole ? `<button type="button" class="btn btn-sm btn-primary" id="btn-switch-portal" style="font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; background:linear-gradient(135deg,#89201B,#5c0f0a); border:none; color:#fff;">➔ Switch to ${properTitle}</button>` : ''}
+          `;
+          warningEl.style.display = 'block';
+          const switchBtn = warningEl.querySelector('#btn-switch-portal');
+          if (switchBtn) {
+            switchBtn.onclick = () => {
+              showVerificationScreen(properRole === 'finance_manager' ? 'manager' : properRole);
+              setTimeout(() => {
+                const newInput = document.getElementById('auth-id-input');
+                if (newInput) newInput.value = enteredId;
+              }, 50);
+            };
+          }
+          return;
+        }
         if (status !== 200 || !data.success) {
-          const errMsg = data.error || 'Invalid credentials. Please try again.';
+          const errMsg = (data && data.error) || 'Invalid credentials. Please try again.';
           warningEl.textContent = `⚠️ ${errMsg}`;
           warningEl.style.display = 'block';
           return;
         }
-        // Use the real server-issued token so all API calls (DB save, fetch state) work correctly
+        // Save verified session and launch correct dashboard
         proceedLogin(data.user, data.token);
       })
-      .catch(() => {
+      .catch((err) => {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Log In';
         }
-        // Server unreachable: fall back to client-side login with strict role check
-        warningEl.textContent = '⚠️ Server unreachable. Continuing in offline mode.';
+        warningEl.textContent = `⚠️ Connection error: ${err.message || 'Unable to communicate with authentication server.'}`;
         warningEl.style.display = 'block';
-        setTimeout(() => {
-          warningEl.style.display = 'none';
-          if (matchedUser) proceedLogin(matchedUser, null);
-        }, 1200);
       });
     };
 
@@ -454,82 +423,6 @@ export function renderLoginView() {
           handleVerification();
         }
       });
-    }
-
-    const handleSkip = () => {
-      const enteredId = inputEl.value.trim();
-      let userToLogin = null;
-
-      if (enteredId) {
-        const candidate = DB.getUserByUsernameOrId(enteredId);
-        if (candidate) {
-          const reqBaseRole = DB.getUserBaseRole(role);
-          const candBaseRole = DB.getUserBaseRole(candidate.role);
-          if (reqBaseRole !== candBaseRole) {
-            const properRole = (candBaseRole === 'manager' || candBaseRole === 'finance_manager') ? 'manager' : candBaseRole;
-            const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' ? 'Manager Portal' : 'Employee Portal');
-            warningEl.innerHTML = `
-              <div style="margin-bottom:6px;">⚠️ Account <strong>${Utils.escape(candidate.name || enteredId)}</strong> belongs to <strong>${properTitle}</strong>.</div>
-              <button type="button" class="btn btn-sm btn-primary" id="btn-switch-portal" style="font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; background:linear-gradient(135deg,#89201B,#5c0f0a); border:none; color:#fff;">➔ Switch to ${properTitle}</button>
-            `;
-            warningEl.style.display = 'block';
-            const switchBtn = warningEl.querySelector('#btn-switch-portal');
-            if (switchBtn) {
-              switchBtn.onclick = () => {
-                showVerificationScreen(properRole);
-                setTimeout(() => {
-                  const newInput = document.getElementById('auth-id-input');
-                  if (newInput) newInput.value = candidate.employeeId || candidate.username;
-                }, 50);
-              };
-            }
-            return;
-          }
-          userToLogin = candidate;
-        } else {
-          warningEl.textContent = `⚠️ No account found with ID "${enteredId}". Please select from the dropdown.`;
-          warningEl.style.display = 'block';
-          return;
-        }
-      } else {
-        userToLogin = getDefaultUserForRole();
-      }
-
-      if (!userToLogin) {
-        warningEl.textContent = `⚠️ No active account found for ${role.toUpperCase()} role.`;
-        warningEl.style.display = 'block';
-        return;
-      }
-
-      // Call backend with skipCheck so it creates a real server session token
-      const apiBase = window.apiBaseUrl || '';
-      fetch(`${apiBase}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: userToLogin ? userToLogin.employeeId || userToLogin.username : '', skipCheck: true, role })
-      })
-      .then(res => res.json().then(data => ({ status: res.status, data })))
-      .then(({ status, data }) => {
-        if (status === 200 && data.success) {
-          proceedLogin(data.user || userToLogin, data.token);
-        } else {
-          if (data && data.error) {
-            warningEl.textContent = `⚠️ ${data.error}`;
-            warningEl.style.display = 'block';
-            return;
-          }
-          proceedLogin(userToLogin, null);
-        }
-      })
-      .catch(() => proceedLogin(userToLogin, null));
-    };
-
-    if (skipBtn) {
-      skipBtn.addEventListener('click', handleSkip);
-    }
-
-    if (skipDevBtn) {
-      skipDevBtn.addEventListener('click', handleSkip);
     }
 
     backBtn.addEventListener('click', () => {
@@ -550,8 +443,15 @@ export function renderLoginView() {
   };
 
   const proceedLogin = (user, serverToken) => {
+    // 1. Purge all prior user/session/role data to guarantee no cross-role bleed
+    try {
+      Auth.logout();
+    } catch (e) {}
+
     Auth.currentUser = user;
-    // Use real server-issued token if available; otherwise generate a client-side fallback token
+    if (typeof window !== 'undefined') {
+      window.__ATTENDANCE_AUTH_USER__ = user;
+    }
     const token = serverToken || ('session_' + Math.random().toString(36).substring(2) + '_' + Date.now());
     const sessionData = JSON.stringify({
       id: user.id,

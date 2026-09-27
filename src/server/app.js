@@ -226,13 +226,48 @@ app.use('/api', createReportsRouter(User, AttendanceLog, getUseLocalFileDB));
 app.use('/api', createAuditRouter(AuditLog, getUseLocalFileDB));
 app.use('/api', eventsRouter);
 
-// Sync whole DB endpoint
+// Sync whole DB endpoint (Safe Merge — Never Truncates Historical Logs)
 app.post('/api/mutate', async (req, res) => {
   try {
     const { action, data } = req.body || {};
     if (action === 'sync' && data) {
       if (fs.existsSync(LOCAL_DB_FILE)) {
-        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        let existing = {};
+        try {
+          existing = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf-8'));
+        } catch (e) {
+          existing = {};
+        }
+
+        // 1. Merge attendanceLogs safely by ID so historical records are NEVER lost
+        const logMap = new Map((existing.attendanceLogs || []).map(l => [l.id, l]));
+        (data.attendanceLogs || []).forEach(l => {
+          if (l && l.id) {
+            logMap.set(l.id, { ...(logMap.get(l.id) || {}), ...l });
+          }
+        });
+        existing.attendanceLogs = Array.from(logMap.values());
+
+        // 2. Merge users safely by ID
+        const userMap = new Map((existing.users || []).map(u => [u.id, u]));
+        (data.users || []).forEach(u => {
+          if (u && u.id) {
+            userMap.set(u.id, { ...(userMap.get(u.id) || {}), ...u });
+          }
+        });
+        existing.users = Array.from(userMap.values());
+
+        // 3. Merge other collections
+        for (const k of Object.keys(data)) {
+          if (k !== 'attendanceLogs' && k !== 'users') {
+            if (Array.isArray(data[k]) && Array.isArray(existing[k]) && data[k].length < existing[k].length && k !== 'leaveRequests' && k !== 'shiftSwaps') {
+              continue;
+            }
+            existing[k] = data[k];
+          }
+        }
+
+        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(existing, null, 2), 'utf-8');
         invalidateLocalDbCache();
       }
       broadcastSSEEvent('db_updated', { action: 'sync', timestamp: Date.now() });

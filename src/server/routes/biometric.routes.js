@@ -418,6 +418,21 @@ router.get('/biometric/dashboard', async (req, res) => {
         };
       });
 
+    // Enforce proper order: employees with punches today first (descending by latest punch / check-in), then alphabetical
+    dashboard.sort((a, b) => {
+      const hasPunchA = a.todayAttendance && a.todayAttendance !== 'No Punch';
+      const hasPunchB = b.todayAttendance && b.todayAttendance !== 'No Punch';
+      if (hasPunchA && !hasPunchB) return -1;
+      if (!hasPunchA && hasPunchB) return 1;
+      if (hasPunchA && hasPunchB) {
+        const timeA = a.todayCheckIn || a.latestPunch || '';
+        const timeB = b.todayCheckIn || b.latestPunch || '';
+        const cmp = timeB.localeCompare(timeA);
+        if (cmp !== 0) return cmp;
+      }
+      return (a.employeeName || '').localeCompare(b.employeeName || '');
+    });
+
     return res.json({
       success: true,
       device: {

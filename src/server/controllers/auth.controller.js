@@ -25,23 +25,6 @@ function findUserByLoginKey(users, loginKey, targetRole = null) {
   const digitsOnlyKey = rawKey.replace(/\D/g, '');
   const hasLetters = /[a-zA-Z]/.test(rawKey);
 
-  const roleMatches = (u) => {
-    if (!targetRole) return true;
-    const reqBase = getBaseRole(targetRole);
-    const userBase = getBaseRole(u.role);
-    return reqBase && userBase && reqBase === userBase;
-  };
-
-  const pickBest = (candidates) => {
-    if (!candidates || candidates.length === 0) return null;
-    if (candidates.length === 1) return candidates[0];
-    if (targetRole) {
-      const match = candidates.find(roleMatches);
-      if (match) return match;
-    }
-    return candidates[0];
-  };
-
   // Pass 1: Exact matches on unique primary identifiers (employeeId, username, id, biometric ID)
   const pass1 = users.filter(u => {
     if (!u) return false;
@@ -56,9 +39,9 @@ function findUserByLoginKey(users, loginKey, targetRole = null) {
     if (uBio && uBio === upperKey) return true;
     return false;
   });
-  if (pass1.length > 0) return pickBest(pass1);
+  if (pass1.length > 0) return pass1[0];
 
-  // Pass 2: Cleaned alphanumeric match (e.g. EMP-1 vs EMP1, or EMP01)
+  // Pass 2: Cleaned alphanumeric match on primary identifiers (e.g. EMP-1 vs EMP1, or EMP01)
   if (cleanAlphaNumKey) {
     const pass2 = users.filter(u => {
       if (!u) return false;
@@ -71,7 +54,7 @@ function findUserByLoginKey(users, loginKey, targetRole = null) {
       if (uBio && uBio === cleanAlphaNumKey) return true;
       return false;
     });
-    if (pass2.length > 0) return pickBest(pass2);
+    if (pass2.length > 0) return pass2[0];
   }
 
   // Pass 3: Email match (exact or username prefix before @)
@@ -83,14 +66,19 @@ function findUserByLoginKey(users, loginKey, targetRole = null) {
     if (prefix && prefix === lowerKey) return true;
     return false;
   });
-  if (pass3.length > 0) return pickBest(pass3);
+  if (pass3.length > 0) return pass3[0];
 
-  // Pass 4: Full Name exact match
+  // Pass 4: Full Name exact match (case-insensitive, trimmed)
   const pass4 = users.filter(u => {
     if (!u || !u.name) return false;
     return u.name.trim().toLowerCase() === lowerKey;
   });
-  if (pass4.length > 0) return pickBest(pass4);
+  if (pass4.length === 1) return pass4[0];
+  if (pass4.length > 1 && targetRole) {
+    const roleMatch = pass4.find(u => getBaseRole(u.role) === getBaseRole(targetRole));
+    if (roleMatch) return roleMatch;
+    return pass4[0];
+  }
 
   // Pass 5: Phone match ONLY if no letters in query and digits length >= 7
   if (!hasLetters && digitsOnlyKey && digitsOnlyKey.length >= 7) {
@@ -108,18 +96,12 @@ function findUserByLoginKey(users, loginKey, targetRole = null) {
       }
       return false;
     });
-    if (pass5.length > 0) return pickBest(pass5);
-  }
-
-  // Pass 6: First name or name token match (only for queries >= 3 chars)
-  if (lowerKey.length >= 3) {
-    const pass6 = users.filter(u => {
-      if (!u || !u.name) return false;
-      const uFullName = u.name.trim().toLowerCase();
-      const uFirstName = uFullName.split(' ')[0];
-      return uFirstName === lowerKey || uFullName === lowerKey;
-    });
-    if (pass6.length > 0) return pickBest(pass6);
+    if (pass5.length === 1) return pass5[0];
+    if (pass5.length > 1 && targetRole) {
+      const roleMatch = pass5.find(u => getBaseRole(u.role) === getBaseRole(targetRole));
+      if (roleMatch) return roleMatch;
+      return pass5[0];
+    }
   }
 
   return null;
@@ -157,15 +139,19 @@ async function loginUser(req, res) {
       return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
     }
 
+    const foundUserBaseRole = getBaseRole(foundUser.role);
+
     if (role) {
       const reqBaseRole = getBaseRole(role);
-      const userBaseRole = getBaseRole(foundUser.role);
-      if (reqBaseRole && userBaseRole && reqBaseRole !== userBaseRole) {
-        return res.status(403).json({ error: `Access Denied: Account role '${foundUser.role}' is not authorized for '${role}' portal.` });
+      if (reqBaseRole && foundUserBaseRole && reqBaseRole !== foundUserBaseRole) {
+        return res.status(403).json({ 
+          error: `Access Denied: Account '${key}' is assigned to the '${foundUser.role.toUpperCase()}' role and cannot log in through the '${role.toUpperCase()}' portal.`,
+          assignedRole: foundUser.role,
+          baseRole: foundUserBaseRole
+        });
       }
     }
 
-    const foundUserBaseRole = getBaseRole(foundUser.role);
     const isHrOrManager = foundUserBaseRole === 'hr' || foundUserBaseRole === 'manager';
 
     if (isHrOrManager && !password && !req.body.skipCheck) {

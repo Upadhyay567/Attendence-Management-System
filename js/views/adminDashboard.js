@@ -419,15 +419,7 @@ export async function renderAdminDashboard() {
   }
 
   const getAssignedUserIds = () => {
-    const freshUser = DB.getUser(currentUser.id) || currentUser;
-    let users = DB.getUsers().filter(u => u.role === 'employee' && u.status !== 'Inactive');
-    if (freshUser.role === 'manager') {
-      users = users.filter(u => u.managerId === freshUser.id);
-    } else if (freshUser.role === 'hr') {
-      const hrAssigned = users.filter(u => u.assignedById === freshUser.id);
-      if (hrAssigned.length > 0) users = hrAssigned;
-    }
-    return users;
+    return DB.getUsers().filter(u => u.role === 'employee' && u.status !== 'Inactive');
   };
 
   function showPresentNowModal() {
@@ -456,6 +448,8 @@ export async function renderAdminDashboard() {
         gpsStatus: gpsStatus
       };
     });
+    // Sort in proper order: latest check-in first, then name
+    items.sort((a, b) => (b.time || '').localeCompare(a.time || '') || (a.user?.name || '').localeCompare(b.user?.name || ''));
     showDashboardDetailModal('Present Now - Currently Checked In', items, 'present');
   }
 
@@ -466,6 +460,8 @@ export async function renderAdminDashboard() {
     const checkedInUserIds = new Set(DB.getLogs().filter(l => l.date === todayStr && l.checkIn).map(l => l.userId));
     const onLeaveUserIds = new Set(DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate).map(lv => lv.userId));
     const absentUsers = activeEmployees.filter(u => !checkedInUserIds.has(u.id) && !onLeaveUserIds.has(u.id));
+    // Sort absent users alphabetically
+    absentUsers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     showDashboardDetailModal('Absent Today - Active Staff Missing Logs', absentUsers, 'absent');
   }
 
@@ -477,7 +473,7 @@ export async function renderAdminDashboard() {
     
     const items = logs.map(l => {
       const u = DB.getUser(l.userId);
-      const sch = DB.getSchedule(u.scheduleId);
+      const sch = DB.getSchedule(u?.scheduleId);
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;
@@ -496,6 +492,8 @@ export async function renderAdminDashboard() {
         gpsStatus: gpsStatus
       };
     });
+    // Sort in proper order: latest late check-in first, then name
+    items.sort((a, b) => (b.time || '').localeCompare(a.time || '') || (a.user?.name || '').localeCompare(b.user?.name || ''));
     showDashboardDetailModal('Late Arrivals - Checked In Late Today', items, 'late');
   }
 
@@ -515,6 +513,8 @@ export async function renderAdminDashboard() {
         reason: lv.reason
       };
     });
+    // Sort in proper order: latest start date first, then name
+    items.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || '') || (a.user?.name || '').localeCompare(b.user?.name || ''));
     showDashboardDetailModal('Approved Leave - Active Leaves Today', items, 'leave');
   }
 
@@ -523,26 +523,13 @@ export async function renderAdminDashboard() {
     const isManager = freshUser.role === 'manager';
     const isHr = freshUser.role === 'hr';
 
-    let users = DB.getUsers().filter(u => u.status !== 'Inactive');
-    if (isManager) {
-      users = users.filter(u => u.managerId === freshUser.id);
-    } else if (isHr) {
-      const hrUsers = users.filter(u => u.assignedById === freshUser.id);
-      if (hrUsers.length > 0) users = hrUsers;
-    }
+    let users = DB.getUsers().filter(u => u.status !== 'Inactive' && u.role === 'employee');
 
-    const activeEmployees = users.filter(u => u.role === 'employee');
+    const activeEmployees = users;
     const assignedUserIds = activeEmployees.map(u => u.id);
 
-    let logs = DB.getLogs();
-    if (isManager || isHr) {
-      logs = logs.filter(l => assignedUserIds.includes(l.userId));
-    }
-
-    let leaves = DB.getLeaveRequests();
-    if (isManager || isHr) {
-      leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
-    }
+    let logs = DB.getLogs().filter(l => assignedUserIds.includes(l.userId));
+    let leaves = DB.getLeaveRequests().filter(lv => assignedUserIds.includes(lv.userId));
 
     const todayStr = new Date().toISOString().split('T')[0];
     const presentToday = logs.filter(l => l.date === todayStr && l.checkIn && !l.checkOut && assignedUserIds.includes(l.userId));
@@ -650,6 +637,15 @@ export async function renderAdminDashboard() {
 
     // Group checked-in employees by location
     const todayLogs = logs.filter(l => l.date === todayStr && l.checkIn);
+    // Sort todayLogs in proper order: descending by check-in time (latest punch first), then alphabetical
+    todayLogs.sort((a, b) => {
+      const timeCmp = (b.checkIn || '').localeCompare(a.checkIn || '');
+      if (timeCmp !== 0) return timeCmp;
+      const userA = DB.getUser(a.userId)?.name || '';
+      const userB = DB.getUser(b.userId)?.name || '';
+      return userA.localeCompare(userB);
+    });
+
     const locationGroups = {};
     Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
       locationGroups[loc] = [];
@@ -668,6 +664,11 @@ export async function renderAdminDashboard() {
       }
     });
 
+    // Ensure staff inside each location group is sorted descending by check-in time
+    Object.values(locationGroups).forEach(group => {
+      group.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
+    });
+
     let worksitePanelHTML = '';
     if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager')) {
       worksitePanelHTML = `
@@ -677,6 +678,7 @@ export async function renderAdminDashboard() {
           </div>
           <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
             ${Object.entries(locationGroups).map(([locName, staffList]) => {
+              staffList.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
               let locIcon = '📍';
               if (locName.includes('HQ')) locIcon = '🏢';
               else if (locName.includes('Hub')) locIcon = '🏬';
@@ -1330,7 +1332,24 @@ export async function renderAdminDashboard() {
         return;
       }
 
-      tbody.innerHTML = result.data.map(emp => {
+      // Sort biometric records in proper order:
+      // 1. Employees with punches today first (sorted descending by check-in / latest punch)
+      // 2. Employees with no punches today sorted alphabetically by employee name
+      const sortedData = [...result.data].sort((a, b) => {
+        const hasPunchA = (a.todayAttendance && a.todayAttendance !== 'No Punch') || a.todayCheckIn || a.checkIn;
+        const hasPunchB = (b.todayAttendance && b.todayAttendance !== 'No Punch') || b.todayCheckIn || b.checkIn;
+        if (hasPunchA && !hasPunchB) return -1;
+        if (!hasPunchA && hasPunchB) return 1;
+        if (hasPunchA && hasPunchB) {
+          const timeA = a.todayCheckIn || a.checkIn || a.latestPunch || '';
+          const timeB = b.todayCheckIn || b.checkIn || b.latestPunch || '';
+          const cmp = timeB.localeCompare(timeA);
+          if (cmp !== 0) return cmp;
+        }
+        return (a.employeeName || '').localeCompare(b.employeeName || '');
+      });
+
+      tbody.innerHTML = sortedData.map(emp => {
         const att = emp.todayAttendance || 'No Punch';
         let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
         if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
@@ -1617,7 +1636,10 @@ function renderAdminUsers() {
   const addBtn = document.getElementById('btn-add-user-modal');
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
   const dlProfileBtn = document.getElementById('btn-download-profile-users');
-  if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => openProfileDownloadModal());
+  if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => {
+    if (typeof openProfileDownloadModal === 'function') openProfileDownloadModal();
+    else if (typeof window.openProfileDownloadModal === 'function') window.openProfileDownloadModal();
+  });
 
   const triggerAdminPushSync = async () => {
     try {

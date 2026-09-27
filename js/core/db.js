@@ -1,3 +1,3 @@
 // js/core/db.js - Core Data Store Bridge
-import { DB } from '../db.js';
+import { DB } from '../db.js?v=65';
 export { DB };

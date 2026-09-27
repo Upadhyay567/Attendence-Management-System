@@ -442,16 +442,24 @@ const defaultLeaves = [
   { id: 'lv_3', userId: 'usr_david', type: 'Casual', startDate: '2026-06-18', endDate: '2026-06-18', reason: 'Personal urgent matter', status: 'Rejected', requestDate: '2026-06-17', managerComment: 'High priority project deadline scheduled on that day.' }
 ];
 
+const initialDbData = (typeof window !== 'undefined' && window.__ATTENDANCE_DB_DATA__) ? window.__ATTENDANCE_DB_DATA__ : {
+  users: [],
+  schedules: [],
+  attendanceLogs: [],
+  leaveRequests: []
+};
+if (typeof window !== 'undefined' && !window.__ATTENDANCE_DB_DATA__) {
+  window.__ATTENDANCE_DB_DATA__ = initialDbData;
+}
+
 export const DB = {
   lastLocalWrite: null,
-  data: {
-    users: [],
-    schedules: [],
-    attendanceLogs: [],
-    leaveRequests: []
-  },
+  data: initialDbData,
 
   async resolveApiBase() {
+    if (typeof window === 'undefined') {
+      return 'http://localhost:8080';
+    }
     if (typeof window.apiBaseUrl === 'undefined') {
       const defaultPort = 8080;
       let targetPort = defaultPort;
@@ -490,7 +498,7 @@ export const DB = {
         window.sseSource = new EventSource(streamUrl);
         window.sseSource.addEventListener('db_updated', async () => {
           console.log('⚡ Real-time SSE DB update signal received from backend.');
-          await DB.init();
+          await DB.init(true);
           window.dispatchEvent(new CustomEvent('db_updated'));
         });
       } catch (e) {
@@ -499,7 +507,45 @@ export const DB = {
     }
   },
 
-  async init() {
+  _safeSaveLocalStorage() {
+    if (!this.data) return;
+    try {
+      localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+    } catch (err) {
+      try {
+        console.warn('⚠️ LocalStorage quota exceeded. Pruning historical logs for client cache.');
+        const pruned = { ...this.data };
+        if (Array.isArray(pruned.attendanceLogs)) {
+          pruned.attendanceLogs = pruned.attendanceLogs.slice(-150);
+        }
+        if (Array.isArray(pruned.auditLogs)) {
+          pruned.auditLogs = pruned.auditLogs.slice(-50);
+        }
+        if (Array.isArray(pruned.biometricSyncLogs)) {
+          pruned.biometricSyncLogs = pruned.biometricSyncLogs.slice(-30);
+        }
+        localStorage.setItem(DB_KEY, JSON.stringify(pruned));
+      } catch (innerErr) {
+        try {
+          const minimal = {
+            users: this.data.users || [],
+            schedules: this.data.schedules || [],
+            attendanceLogs: (this.data.attendanceLogs || []).slice(-50),
+            leaveRequests: this.data.leaveRequests || [],
+            shiftSwaps: this.data.shiftSwaps || []
+          };
+          localStorage.setItem(DB_KEY, JSON.stringify(minimal));
+        } catch (minimalErr) {
+          console.warn('⚠️ LocalStorage full. Continuing safely in in-memory + backend sync mode.');
+        }
+      }
+    }
+  },
+
+  async init(forceRefresh = false) {
+    if (!forceRefresh && this.data && Array.isArray(this.data.users) && this.data.users.length > 0 && this.lastFetchSuccess && (Date.now() - this.lastFetchSuccess < 15000)) {
+      return;
+    }
     if (this._inFlightInit) {
       return this._inFlightInit;
     }
@@ -546,9 +592,9 @@ export const DB = {
           const fetchedData = await res.json();
           if (fetchedData && typeof fetchedData === 'object') {
             this.data = fetchedData;
-            try {
-              localStorage.setItem(DB_KEY, JSON.stringify(this.data));
-            } catch (storageErr) {}
+            if (typeof window !== 'undefined') window.__ATTENDANCE_DB_DATA__ = this.data;
+            this.lastFetchSuccess = Date.now();
+            this._safeSaveLocalStorage();
             try {
               this.validateAndMigrateState(false);
             } catch (migErr) {}
@@ -568,13 +614,17 @@ export const DB = {
     try {
       const raw = localStorage.getItem(DB_KEY);
       if (raw) {
-        this.data = JSON.parse(raw);
-      } else {
+        const cached = JSON.parse(raw);
+        if (!this.data || !Array.isArray(this.data.attendanceLogs) || this.data.attendanceLogs.length === 0) {
+          this.data = cached;
+        } else if (cached && Array.isArray(cached.attendanceLogs) && cached.attendanceLogs.length > this.data.attendanceLogs.length) {
+          this.data = cached;
+        }
+      } else if (!this.data) {
         await this.reset();
       }
     } catch (err) {
-      console.error('Failed to parse local storage cache, resetting to defaults.', err);
-      await this.reset();
+      if (!this.data) await this.reset();
     }
     
     try {
@@ -582,6 +632,7 @@ export const DB = {
     } catch (migErr) {
       console.error('State migration warning:', migErr);
     }
+    if (typeof window !== 'undefined') window.__ATTENDANCE_DB_DATA__ = this.data;
   },
 
   validateAndMigrateState(shouldSave = true) {
@@ -730,15 +781,20 @@ export const DB = {
       if (shouldSave) {
         this.save();
       } else {
-        localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+        this._safeSaveLocalStorage();
       }
     }
   },
 
   save(mutationMeta = null) {
     this.lastLocalWrite = Date.now();
-    localStorage.setItem(DB_KEY, JSON.stringify(this.data));
-    window.dispatchEvent(new Event('db_updated'));
+    this._safeSaveLocalStorage();
+    if (typeof window !== 'undefined') {
+      window.__ATTENDANCE_DB_DATA__ = this.data;
+      if (typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(new Event('db_updated'));
+      }
+    }
 
     return this.resolveApiBase().then(() => {
       let token = '';
@@ -750,9 +806,11 @@ export const DB = {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
+      const baseUrl = (typeof window !== 'undefined' && window.apiBaseUrl) ? window.apiBaseUrl : 'http://localhost:8080';
+
       if (mutationMeta) {
         // Granular mutations to prevent race conditions and payload overhead
-        return fetch((window.apiBaseUrl || '') + '/api/mutate-granular', {
+        return fetch(baseUrl + '/api/mutate-granular', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify(mutationMeta)
@@ -763,7 +821,7 @@ export const DB = {
         });
       } else {
         // Fallback to full state sync if no meta is provided (e.g. imports or resets)
-        return fetch((window.apiBaseUrl || '') + '/api/mutate', {
+        return fetch(baseUrl + '/api/mutate', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify({ action: 'sync', data: this.data })
@@ -1435,9 +1493,10 @@ export const DB = {
 
     if (!selectedSchedule && isToday) {
       // 1. Check if there is an active clocked-in session today without checkout
+      const todayLogs = (this.data.attendanceLogs || []).filter(l => (l.userId === user.id || (user.employeeId && l.employeeId === user.employeeId)) && l.date === todayStr);
       for (const s of candidateList) {
-        const log = this.getTodayLog(user.id, s.id);
-        if (log && log.checkIn && !log.checkOut) {
+        const log = todayLogs.find(l => String(l.shiftId) === String(s.id) && l.checkIn && !l.checkOut);
+        if (log) {
           selectedSchedule = s;
           break;
         }
@@ -1467,6 +1526,17 @@ export const DB = {
                 break;
               }
             }
+          }
+        }
+      }
+
+      // 3. If previous shifts have already completed check-out today, advance to next uncompleted shift
+      if (!selectedSchedule) {
+        for (const s of candidateList) {
+          const log = todayLogs.find(l => String(l.shiftId) === String(s.id));
+          if (!log || !log.checkOut) {
+            selectedSchedule = s;
+            break;
           }
         }
       }
@@ -1621,20 +1691,23 @@ export const DB = {
         const unassignedMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
         if (unassignedMatch) return unassignedMatch;
       }
-      // Fallback: check if there is an active open log for this user today
-      const openFallback = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && l.checkIn && !l.checkOut);
-      if (openFallback) return openFallback;
       return null;
     }
-    const openLog = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && l.checkIn && !l.checkOut);
-    if (openLog) return openLog;
-    
+
     const resolved = user ? this.resolveUserShiftForDate(user, todayStr) : null;
     if (resolved && resolved.scheduleId) {
       const match = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(resolved.scheduleId));
       if (match) return match;
+      const isPrimary = user && String(user.scheduleId) === String(resolved.scheduleId);
+      if (isPrimary) {
+        const unassigned = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
+        if (unassigned) return unassigned;
+      }
+      return null;
     }
 
+    const openLog = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && l.checkIn && !l.checkOut);
+    if (openLog) return openLog;
     return (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr);
   },
 

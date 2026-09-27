@@ -1,55 +1,80 @@
-import { DB } from './db.js';
+import { DB } from './core/db.js';
 import { Auth } from './auth.js';
 import { Utils } from './utils.js';
 import { AppAPI } from './AppAPI.js';
 
+export function getActiveDB() {
+  if (typeof window !== 'undefined' && window.DB && window.DB.data && Array.isArray(window.DB.data.users) && window.DB.data.users.length > 0) {
+    return window.DB;
+  }
+  return DB;
+}
+
+export function getActiveAuth() {
+  if (typeof window !== 'undefined' && window.Auth && window.Auth.currentUser) {
+    return window.Auth;
+  }
+  return Auth;
+}
+
 // Extend DB with custom query logic for Profile and Report downloads
-DB.queryEmployeeProfiles = function(userIds) {
-  return DB.getUsers().filter(u => userIds.includes(u.id));
-};
+export function registerCustomQueries(targetDb) {
+  if (!targetDb) return;
+  targetDb.queryEmployeeProfiles = function(userIds) {
+    const list = (targetDb.getUsers ? targetDb.getUsers() : (targetDb.data ? targetDb.data.users : [])) || [];
+    return list.filter(u => userIds.includes(u.id) || (u.employeeId && userIds.includes(u.employeeId)));
+  };
 
-DB.queryAttendanceReport = function(userIds, month, year) {
-  return userIds.map(userId => {
-    const user = DB.getUser(userId);
-    if (!user) return null;
-    const schedule = DB.getSchedule(user.scheduleId) || {};
-    const payroll = DB.calculateMonthlyPayroll(userId, month, year) || {};
-    
-    const logs = DB.getLogs(userId).filter(l => {
-      const [lY, lM] = l.date.split('-').map(Number);
-      return lY === year && (lM - 1) === month;
-    });
+  targetDb.queryAttendanceReport = function(userIds, month, year) {
+    const list = (targetDb.getUsers ? targetDb.getUsers() : (targetDb.data ? targetDb.data.users : [])) || [];
+    return userIds.map(userId => {
+      const user = list.find(u => u.id === userId || u.employeeId === userId) || (targetDb.getUser ? targetDb.getUser(userId) : null);
+      if (!user) return null;
+      const schedule = (targetDb.getSchedule ? targetDb.getSchedule(user.scheduleId) : null) || {};
+      const payroll = (targetDb.calculateMonthlyPayroll ? targetDb.calculateMonthlyPayroll(user.id, month, year) : null) || {};
+      
+      const logs = (targetDb.getLogs ? targetDb.getLogs(user.id) : []).filter(l => {
+        if (!l || !l.date) return false;
+        const [lY, lM] = l.date.split('-').map(Number);
+        return lY === year && (lM - 1) === month;
+      });
 
-    let totalWorkingMinutes = 0;
-    logs.forEach(l => {
-      if (l.checkIn && l.checkOut) {
-        const [inH, inM] = l.checkIn.split(':').map(Number);
-        const [outH, outM] = l.checkOut.split(':').map(Number);
-        const diff = (outH * 60 + outM) - (inH * 60 + inM);
-        if (diff > 0) totalWorkingMinutes += diff;
-      }
-    });
+      let totalWorkingMinutes = 0;
+      logs.forEach(l => {
+        if (l.checkIn && l.checkOut) {
+          const [inH, inM] = l.checkIn.split(':').map(Number);
+          const [outH, outM] = l.checkOut.split(':').map(Number);
+          const diff = (outH * 60 + outM) - (inH * 60 + inM);
+          if (diff > 0) totalWorkingMinutes += diff;
+        }
+      });
 
-    let overtimeMinutes = 0;
-    logs.forEach(l => {
-      if (l.checkIn && l.checkOut) {
-        const [inH, inM] = l.checkIn.split(':').map(Number);
-        const [outH, outM] = l.checkOut.split(':').map(Number);
-        const diff = (outH * 60 + outM) - (inH * 60 + inM);
-        if (diff > 480) overtimeMinutes += (diff - 480);
-      }
-    });
+      let overtimeMinutes = 0;
+      logs.forEach(l => {
+        if (l.checkIn && l.checkOut) {
+          const [inH, inM] = l.checkIn.split(':').map(Number);
+          const [outH, outM] = l.checkOut.split(':').map(Number);
+          const diff = (outH * 60 + outM) - (inH * 60 + inM);
+          if (diff > 480) overtimeMinutes += (diff - 480);
+        }
+      });
 
-    return {
-      user,
-      schedule,
-      payroll,
-      logs,
-      totalHours: (totalWorkingMinutes / 60).toFixed(1) + ' hrs',
-      overtimeHours: (overtimeMinutes / 60).toFixed(1) + ' hrs'
-    };
-  }).filter(Boolean);
-};
+      return {
+        user,
+        schedule,
+        payroll,
+        logs,
+        totalHours: (totalWorkingMinutes / 60).toFixed(1) + ' hrs',
+        overtimeHours: (overtimeMinutes / 60).toFixed(1) + ' hrs'
+      };
+    }).filter(Boolean);
+  };
+}
+
+registerCustomQueries(DB);
+if (typeof window !== 'undefined' && window.DB) {
+  registerCustomQueries(window.DB);
+}
 
 // Loader utility for SheetJS Excel export
 export function loadSheetJS(callback, onError) {
@@ -71,7 +96,7 @@ export function loadSheetJS(callback, onError) {
 // -------------------------------------------------------------------------
 // COMPONENT 1: DOWNLOAD PROFILE MODAL
 // -------------------------------------------------------------------------
-export function openProfileDownloadModal(preSelectedUserId) {
+export async function openProfileDownloadModal(preSelectedUserId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.cssText = `
@@ -80,15 +105,66 @@ export function openProfileDownloadModal(preSelectedUserId) {
     display:flex; justify-content:center; align-items:center; z-index:10000;
   `;
   
-  const loggedInUser = Auth.getCurrentUser() || {};
-  let users = [];
+  const activeDB = getActiveDB();
+  const activeAuth = getActiveAuth();
 
-  if (loggedInUser.role === 'hr') {
-    users = DB.getUsers();
-  } else if (loggedInUser.role === 'manager') {
-    users = DB.getUsers().filter(u => u.managerId === loggedInUser.id || u.id === loggedInUser.id);
+  // If DB data is not yet populated, await DB.init()
+  if (!activeDB.data || !Array.isArray(activeDB.data.users) || activeDB.data.users.length === 0) {
+    if (typeof activeDB.init === 'function') {
+      try {
+        await activeDB.init();
+      } catch (e) {
+        console.warn('DB.init warning in openProfileDownloadModal:', e);
+      }
+    }
+  }
+
+  let rawUsers = (activeDB.getUsers ? activeDB.getUsers() : (activeDB.data ? activeDB.data.users : [])) || [];
+
+  // Fallback direct fetch to /api/db-state if users array is still empty
+  if (!rawUsers || rawUsers.length === 0) {
+    try {
+      const baseUrl = (typeof window !== 'undefined' && window.apiBaseUrl) ? window.apiBaseUrl : '';
+      const res = await fetch(baseUrl + '/api/db-state?v=' + Date.now());
+      if (res.ok) {
+        const state = await res.json();
+        if (state && Array.isArray(state.users) && state.users.length > 0) {
+          activeDB.data = state;
+          if (typeof window !== 'undefined' && window.DB) window.DB.data = state;
+          rawUsers = state.users;
+        }
+      }
+    } catch (err) {
+      console.warn('Fallback direct fetch to /api/db-state failed:', err);
+    }
+  }
+
+  // Ensure current user is resolved
+  if (activeAuth && typeof activeAuth.init === 'function' && !activeAuth.currentUser) {
+    activeAuth.init();
+  }
+  const loggedInUser = (activeAuth.getCurrentUser ? activeAuth.getCurrentUser() : activeAuth.currentUser) || {};
+  const userRole = String(loggedInUser.role || '').toLowerCase();
+  const isAdminOrHrOrManager = userRole === 'hr' || userRole === 'admin' || userRole === 'manager' || userRole.includes('admin') || userRole.includes('manager');
+
+  let users = [];
+  if (isAdminOrHrOrManager || !loggedInUser.id) {
+    // HR, Admin, and Operations Managers (and default view) see all employees in company
+    users = rawUsers.filter(u => u && u.status !== 'Inactive');
+    if (users.length === 0) {
+      users = rawUsers.filter(Boolean);
+    }
+  } else if (loggedInUser.id) {
+    // Individual employees download their own profile
+    users = rawUsers.filter(u => u && (u.id === loggedInUser.id || (u.employeeId && u.employeeId === loggedInUser.employeeId)));
+    if (users.length === 0 && loggedInUser.name) {
+      users = [loggedInUser];
+    }
   } else {
-    users = DB.getUsers().filter(u => u.id === loggedInUser.id);
+    users = rawUsers.filter(u => u && u.status !== 'Inactive');
+    if (users.length === 0) {
+      users = rawUsers.filter(Boolean);
+    }
   }
 
   const isChecked = (uId) => {
@@ -119,13 +195,18 @@ export function openProfileDownloadModal(preSelectedUserId) {
         </div>
 
         <div id="profile-checkbox-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap:8px; background: rgba(0,0,0,0.15)">
-          ${users.map(u => `
-            <label class="profile-chk-item" data-name="${u.name.toLowerCase()}" data-empid="${(u.employeeId || '').toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
-              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${isChecked(u.id) ? 'checked' : ''}>
-              <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(u.name)}</span>
-              <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(u.employeeId || u.id)})</span>
+          ${users.map(u => {
+            const uName = u.name || u.username || 'Employee';
+            const uEmpId = u.employeeId || u.id || '';
+            const checked = isChecked(u.id);
+            return `
+            <label class="profile-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
+              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked ? 'checked' : ''}>
+              <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(uName)}</span>
+              <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(uEmpId)})</span>
             </label>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
 
@@ -182,7 +263,7 @@ export function openProfileDownloadModal(preSelectedUserId) {
       const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
         .filter(el => el.style.display !== 'none')
         .map(el => el.querySelector('.profile-user-checkbox'));
-      const allVisibleChecked = visibleCheckboxes.every(cb => cb.checked);
+      const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
       selectAllChk.checked = allVisibleChecked;
       checkValidation();
     }
@@ -233,20 +314,35 @@ export function openProfileDownloadModal(preSelectedUserId) {
 
   downloadBtn.addEventListener('click', async () => {
     const checkedIds = getCheckedUserIds();
+    if (checkedIds.length === 0) return;
     downloadBtn.setAttribute('disabled', 'true');
     downloadBtn.textContent = 'Generating...';
 
-    // Call API Route
-    const profiles = await AppAPI.fetchProfileDownload(checkedIds);
-    downloadProfilePDF(profiles);
+    try {
+      registerCustomQueries(activeDB);
+      if (typeof window !== 'undefined' && window.DB) registerCustomQueries(window.DB);
 
-    downloadBtn.removeAttribute('disabled');
-    downloadBtn.textContent = 'Download';
-    closeModalOverlay();
+      // Call API Route
+      const profiles = await AppAPI.fetchProfileDownload(checkedIds);
+      if (!profiles || profiles.length === 0) {
+        const fallbackProfiles = users.filter(u => checkedIds.includes(u.id) || (u.employeeId && checkedIds.includes(u.employeeId)));
+        downloadProfilePDF(fallbackProfiles, activeDB);
+      } else {
+        downloadProfilePDF(profiles, activeDB);
+      }
+    } catch (err) {
+      console.error('Error generating profile download:', err);
+      alert('Error generating profile download. Please try again.');
+    } finally {
+      downloadBtn.removeAttribute('disabled');
+      downloadBtn.textContent = 'Download';
+      closeModalOverlay();
+    }
   });
 }
 
-function downloadProfilePDF(profiles) {
+function downloadProfilePDF(profiles, dbInstance) {
+  const activeDB = dbInstance || getActiveDB();
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Popup blocker blocked the download window. Please allow popups for this site.');
@@ -391,8 +487,8 @@ function downloadProfilePDF(profiles) {
   `;
 
   const cardsHTML = profiles.map(u => {
-    const initials = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    const schedule = DB.getSchedule(u.scheduleId) || {};
+    const initials = (u.name || 'Staff').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const schedule = (activeDB && typeof activeDB.getSchedule === 'function' ? activeDB.getSchedule(u.scheduleId) : null) || {};
     const base = u.baseSalary || 50000;
     const hra = u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round(base * 0.15);
     const travel = u.allowanceTravel !== undefined ? u.allowanceTravel : 3000;
@@ -492,7 +588,7 @@ function downloadProfilePDF(profiles) {
 // -------------------------------------------------------------------------
 // COMPONENT 2: DOWNLOAD REPORT MODAL
 // -------------------------------------------------------------------------
-export function openReportDownloadModal(preSelectedUserId) {
+export async function openReportDownloadModal(preSelectedUserId) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.cssText = `
@@ -501,15 +597,61 @@ export function openReportDownloadModal(preSelectedUserId) {
     display:flex; justify-content:center; align-items:center; z-index:10000;
   `;
   
-  const loggedInUser = Auth.getCurrentUser() || {};
-  let users = [];
+  const activeDB = getActiveDB();
+  const activeAuth = getActiveAuth();
 
-  if (loggedInUser.role === 'hr') {
-    users = DB.getUsers();
-  } else if (loggedInUser.role === 'manager') {
-    users = DB.getUsers().filter(u => u.managerId === loggedInUser.id || u.id === loggedInUser.id);
+  if (!activeDB.data || !Array.isArray(activeDB.data.users) || activeDB.data.users.length === 0) {
+    if (typeof activeDB.init === 'function') {
+      try {
+        await activeDB.init();
+      } catch (e) {
+        console.warn('DB.init warning in openReportDownloadModal:', e);
+      }
+    }
+  }
+
+  let rawUsers = (activeDB.getUsers ? activeDB.getUsers() : (activeDB.data ? activeDB.data.users : [])) || [];
+
+  if (!rawUsers || rawUsers.length === 0) {
+    try {
+      const baseUrl = (typeof window !== 'undefined' && window.apiBaseUrl) ? window.apiBaseUrl : '';
+      const res = await fetch(baseUrl + '/api/db-state?v=' + Date.now());
+      if (res.ok) {
+        const state = await res.json();
+        if (state && Array.isArray(state.users) && state.users.length > 0) {
+          activeDB.data = state;
+          if (typeof window !== 'undefined' && window.DB) window.DB.data = state;
+          rawUsers = state.users;
+        }
+      }
+    } catch (err) {
+      console.warn('Fallback direct fetch to /api/db-state failed:', err);
+    }
+  }
+
+  if (activeAuth && typeof activeAuth.init === 'function' && !activeAuth.currentUser) {
+    activeAuth.init();
+  }
+  const loggedInUser = (activeAuth.getCurrentUser ? activeAuth.getCurrentUser() : activeAuth.currentUser) || {};
+  const userRole = String(loggedInUser.role || '').toLowerCase();
+  const isAdminOrHrOrManager = userRole === 'hr' || userRole === 'admin' || userRole === 'manager' || userRole.includes('admin') || userRole.includes('manager');
+
+  let users = [];
+  if (isAdminOrHrOrManager || !loggedInUser.id) {
+    users = rawUsers.filter(u => u && u.status !== 'Inactive');
+    if (users.length === 0) {
+      users = rawUsers.filter(Boolean);
+    }
+  } else if (loggedInUser.id) {
+    users = rawUsers.filter(u => u && (u.id === loggedInUser.id || (u.employeeId && u.employeeId === loggedInUser.employeeId)));
+    if (users.length === 0 && loggedInUser.name) {
+      users = [loggedInUser];
+    }
   } else {
-    users = DB.getUsers().filter(u => u.id === loggedInUser.id);
+    users = rawUsers.filter(u => u && u.status !== 'Inactive');
+    if (users.length === 0) {
+      users = rawUsers.filter(Boolean);
+    }
   }
 
   const isChecked = (uId) => {
@@ -560,13 +702,18 @@ export function openReportDownloadModal(preSelectedUserId) {
         </div>
 
         <div id="report-checkbox-list" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap:8px; background: rgba(0,0,0,0.15)">
-          ${users.map(u => `
-            <label class="report-chk-item" data-name="${u.name.toLowerCase()}" data-empid="${(u.employeeId || '').toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
-              <input type="checkbox" class="report-user-checkbox" value="${u.id}" style="cursor:pointer" ${isChecked(u.id) ? 'checked' : ''}>
-              <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(u.name)}</span>
-              <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(u.employeeId || u.id)})</span>
+          ${users.map(u => {
+            const uName = u.name || u.username || 'Employee';
+            const uEmpId = u.employeeId || u.id || '';
+            const checked = isChecked(u.id);
+            return `
+            <label class="report-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
+              <input type="checkbox" class="report-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked ? 'checked' : ''}>
+              <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(uName)}</span>
+              <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(uEmpId)})</span>
             </label>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
 

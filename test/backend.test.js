@@ -65,6 +65,84 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.body).toHaveProperty('token');
       expect(response.body.user.role).toBe('manager');
     });
+
+    it('should login successfully with multiple HR User IDs and reject on Employee/Manager portals', async () => {
+      const hrAccounts = ['admin', 'HR100', 'HR0789', 'hr'];
+      for (const accountId of hrAccounts) {
+        // Success on HR portal
+        const hrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'hr' });
+        expect(hrRes.status).toBe(200);
+        expect(hrRes.body.user.role).toBe('hr');
+
+        // Rejected on Employee portal
+        const empRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'employee' });
+        expect(empRes.status).toBe(403);
+        expect(empRes.body.error).toContain('Access Denied');
+
+        // Rejected on Manager portal
+        const mgrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'manager' });
+        expect(mgrRes.status).toBe(403);
+        expect(mgrRes.body.error).toContain('Access Denied');
+      }
+    });
+
+    it('should login successfully with multiple Manager User IDs and reject on HR/Employee portals', async () => {
+      const mgrAccounts = ['manager', 'MGR765', 'MGR102'];
+      for (const accountId of mgrAccounts) {
+        // Success on Manager portal
+        const mgrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'manager' });
+        expect(mgrRes.status).toBe(200);
+        expect(mgrRes.body.user.role).toBe('manager');
+
+        // Rejected on HR portal
+        const hrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'hr' });
+        expect(hrRes.status).toBe(403);
+        expect(hrRes.body.error).toContain('Access Denied');
+
+        // Rejected on Employee portal
+        const empRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'employee' });
+        expect(empRes.status).toBe(403);
+        expect(empRes.body.error).toContain('Access Denied');
+      }
+    });
+
+    it('should login successfully with multiple Employee User IDs and reject on HR/Manager portals', async () => {
+      const empAccounts = ['EMP1', '5174', '1094', 'ajaytripathi'];
+      for (const accountId of empAccounts) {
+        // Success on Employee portal
+        const empRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'employee' });
+        expect(empRes.status).toBe(200);
+        expect(empRes.body.user.role).toBe('employee');
+
+        // Rejected on HR portal
+        const hrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'hr' });
+        expect(hrRes.status).toBe(403);
+        expect(hrRes.body.error).toContain('Access Denied');
+
+        // Rejected on Manager portal
+        const mgrRes = await request(app)
+          .post('/api/auth/login')
+          .send({ username: accountId, password: 'Surya@123', role: 'manager' });
+        expect(mgrRes.status).toBe(403);
+        expect(mgrRes.body.error).toContain('Access Denied');
+      }
+    });
   });
 
   describe('Geofence Verification via POST /api/mutate-granular', () => {
@@ -102,6 +180,26 @@ describe('HS Group Attendance System API Integration Tests', () => {
 
   describe('Biometric Shift-Wise Attendance Resolution', () => {
     it('should assign biometric punches to correct active shift without overwriting previous shifts', async () => {
+      const zkDevice = require('../src/server/biometric/zkDevice');
+      const multiDeviceService = require('../src/server/biometric/biometricMultiDevice.service');
+      jest.spyOn(multiDeviceService, 'getRegisteredDevices').mockResolvedValue([{
+        id: 'mock_device_1',
+        name: 'Mock Device',
+        ip: zkDevice.DEVICE.ip,
+        port: 4370,
+        enabled: true
+      }]);
+      jest.spyOn(zkDevice, 'getDeviceSnapshot').mockResolvedValue({
+        users: [{ uid: 1, userId: 'EMP100', name: 'Test User' }],
+        logs: [{ deviceUserId: 'EMP100', recordTime: new Date().toISOString() }]
+      });
+      jest.spyOn(multiDeviceService, 'withDeviceConfig').mockResolvedValue({
+        users: [{ uid: 1, userId: 'EMP100', name: 'Test User' }],
+        logs: [{ deviceUserId: 'EMP100', recordTime: new Date().toISOString() }]
+      });
+      jest.spyOn(multiDeviceService, 'getVaultUsers').mockResolvedValue([]);
+      jest.spyOn(multiDeviceService, 'replicateTemplatesAcrossDevices').mockResolvedValue([]);
+
       const { syncBiometricAttendance } = require('../src/server/biometric/biometricSync.service');
       const res = await syncBiometricAttendance();
       expect(res).toHaveProperty('success');

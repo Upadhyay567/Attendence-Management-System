@@ -14,7 +14,8 @@ export const Auth = {
         const session = JSON.parse(raw);
         const sId = session ? (session.id || session.userId || (session.user && session.user.id)) : null;
         if (sId) {
-          const user = DB.getUser(sId);
+          const activeDB = (typeof window !== 'undefined' && window.DB && window.DB.data && window.DB.data.users && window.DB.data.users.length) ? window.DB : DB;
+          const user = activeDB.getUser ? activeDB.getUser(sId) : null;
           if (user && user.status !== 'Inactive') {
             this.currentUser = user;
           } else if (!user) {
@@ -29,9 +30,15 @@ export const Auth = {
         console.error('Failed to parse session', e);
       }
     }
+    if (typeof window !== 'undefined' && this.currentUser) {
+      window.__ATTENDANCE_AUTH_USER__ = this.currentUser;
+    }
   },
 
   getCurrentUser() {
+    if (!this.currentUser && typeof window !== 'undefined' && window.__ATTENDANCE_AUTH_USER__) {
+      this.currentUser = window.__ATTENDANCE_AUTH_USER__;
+    }
     const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
     let session = null;
     if (raw) {
@@ -40,12 +47,16 @@ export const Auth = {
     const sId = (this.currentUser && this.currentUser.id) || (session ? (session.id || session.userId || (session.user && session.user.id)) : null);
 
     if (sId) {
-      const freshUser = DB.getUser(sId);
+      const activeDB = (typeof window !== 'undefined' && window.DB && window.DB.data && window.DB.data.users && window.DB.data.users.length) ? window.DB : DB;
+      const freshUser = activeDB.getUser ? activeDB.getUser(sId) : null;
       if (freshUser && freshUser.status !== 'Inactive') {
         this.currentUser = freshUser;
       } else if (!this.currentUser && session && session.user) {
         this.currentUser = session.user;
       }
+    }
+    if (typeof window !== 'undefined' && this.currentUser) {
+      window.__ATTENDANCE_AUTH_USER__ = this.currentUser;
     }
     return this.currentUser;
   },
@@ -94,8 +105,37 @@ export const Auth = {
 
   logout() {
     this.currentUser = null;
+    if (typeof window !== 'undefined') {
+      window.__ATTENDANCE_AUTH_USER__ = null;
+      window.lastGpsInRangeState = undefined;
+      if (window.activeTimer) {
+        clearInterval(window.activeTimer);
+        window.activeTimer = null;
+      }
+      if (window.radarInterval) {
+        clearInterval(window.radarInterval);
+        window.radarInterval = null;
+      }
+      if (window.activeGpsWatchId !== undefined && window.activeGpsWatchId !== null) {
+        try {
+          navigator.geolocation.clearWatch(window.activeGpsWatchId);
+        } catch (e) {}
+        window.activeGpsWatchId = null;
+      }
+      const root = document.getElementById('app-root');
+      if (root) {
+        root.removeAttribute('data-shell-user-id');
+      }
+    }
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('hs_selected_shift_id');
+    sessionStorage.removeItem('hs_last_was_early');
+    sessionStorage.removeItem('hs_pending_auto_checkin_time');
+    sessionStorage.removeItem('hs_mock_location');
+    sessionStorage.removeItem('hs_current_resolved_coords');
+    sessionStorage.removeItem('hs_current_resolved_distance');
+    sessionStorage.removeItem('hs_current_resolved_in_range');
   },
 
   // Password Security Strength Validation

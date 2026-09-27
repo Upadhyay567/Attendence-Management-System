@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=61';
-import { renderAdminSchedules } from './views/schedulesView.js?v=61';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=61';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=61';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=61';
-import { renderAdminAttendances } from './views/attendancesView.js?v=61';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=61';
-import { renderAdminFinance } from './views/financeView.js?v=61';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=61';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=61';
-import { drawRadarMap } from './components/geofenceMap.js?v=61';
-import { openProfileDownloadModal, loadSheetJS } from './downloads.js?v=61';
+import { renderLoginView } from './views/loginView.js?v=66';
+import { renderAdminSchedules } from './views/schedulesView.js?v=66';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=66';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=66';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=66';
+import { renderAdminAttendances } from './views/attendancesView.js?v=66';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=66';
+import { renderAdminFinance } from './views/financeView.js?v=66';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=66';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=66';
+import { drawRadarMap } from './components/geofenceMap.js?v=66';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=66';
 
 // app.js - SPA Router & Controller
-import { DB } from './db.js?v=44';
-import { Auth } from './auth.js?v=35';
-import { Utils, html } from './utils.js?v=61';
-import { triggerBirthdayCelebration } from './celebration.js?v=35';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=49';
+import { DB } from './core/db.js?v=66';
+import { Auth } from './auth.js?v=66';
+import { Utils, html } from './utils.js?v=66';
+import { triggerBirthdayCelebration } from './celebration.js?v=66';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=66';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -36,6 +36,7 @@ export function registerWindowGlobals() {
   window.triggerBirthdayCelebration = triggerBirthdayCelebration;
   window.drawRadarMap = drawRadarMap;
   window.openProfileDownloadModal = openProfileDownloadModal;
+  window.openReportDownloadModal = openReportDownloadModal;
   window.loadSheetJS = loadSheetJS;
   window.renderEmployeeDashboard = renderEmployeeDashboard;
   window.renderAdminDashboard = renderAdminDashboard;
@@ -460,6 +461,48 @@ function getCheckInTimeStatus(user, targetShiftId = null) {
   const schedule = resolved.schedule || DB.getSchedule(resolved.scheduleId);
   if (!schedule || !schedule.startTime) {
     return { allowed: false, reason: 'No shift assigned today. Please contact your manager or HR to assign a shift schedule.', type: 'NoShift' };
+  }
+
+  // Multi-shift sequential validation: check-in is restricted to active/first assigned shift
+  const allSchedules = resolved.candidateSchedules && resolved.candidateSchedules.length > 0 
+    ? resolved.candidateSchedules 
+    : (resolved.allSchedules || []);
+
+  if (allSchedules.length > 1) {
+    // 1. If another shift is currently clocked in without checkout:
+    const otherOpenShift = allSchedules.find(s => {
+      if (String(s.id) === String(schedule.id)) return false;
+      const log = DB.getTodayLog(user.id, s.id);
+      return log && log.checkIn && !log.checkOut;
+    });
+    if (otherOpenShift) {
+      return { 
+        allowed: false, 
+        reason: `Shift "${otherOpenShift.name}" is currently active and clocked in. Please complete Check-Out before starting another shift.`, 
+        type: 'OtherShiftActive',
+        activeShiftName: otherOpenShift.name 
+      };
+    }
+
+    // 2. Identify the first unfinished assigned shift in order:
+    const sorted = [...allSchedules].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+    const firstUnfinishedShift = sorted.find(s => {
+      const log = DB.getTodayLog(user.id, s.id);
+      return !log || !log.checkOut;
+    });
+
+    if (firstUnfinishedShift && String(firstUnfinishedShift.id) !== String(schedule.id)) {
+      const currentIdx = sorted.findIndex(s => String(s.id) === String(schedule.id));
+      const unfinishedIdx = sorted.findIndex(s => String(s.id) === String(firstUnfinishedShift.id));
+      if (currentIdx > unfinishedIdx) {
+        return {
+          allowed: false,
+          reason: `Shift "${firstUnfinishedShift.name}" is currently active. Please complete "${firstUnfinishedShift.name}" before starting this shift.`,
+          type: 'PreviousShiftIncomplete',
+          activeShiftName: firstUnfinishedShift.name
+        };
+      }
+    }
   }
   
   const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
@@ -2114,7 +2157,7 @@ async function handleClockOut(userId, shiftId = null) {
   } else {
     renderEmployeeDashboard();
   }
-  const finalLog = log || (schedule ? DB.getTodayLog(userId, schedule.id) : DB.getTodayLog(userId));
+  const finalLog = log || (schedule ? DB.getTodayLog(userId, schedule.id) : null);
   const checkOutTime = (finalLog && finalLog.checkOut) || new Date().toTimeString().split(' ')[0].substring(0, 5);
   const workingHours = (finalLog && finalLog.checkIn && finalLog.checkOut) ? Utils.calculateDuration(finalLog.checkIn, finalLog.checkOut) : '--:--';
   (window.showClockOutThankYou || showClockOutThankYou)(checkOutTime, workingHours);
@@ -4194,23 +4237,11 @@ function startLiveClock() {
     
     // Periodically update Check In button enabled states
     const currentUser = Auth.getCurrentUser();
-    if (currentUser) {
-      const checkInStatus = getCheckInTimeStatus(currentUser);
+    if (currentUser && !window._isRenderingDashboard) {
+      const selectedShiftId = sessionStorage.getItem('hs_selected_shift_id') || null;
+      const checkInStatus = getCheckInTimeStatus(currentUser, selectedShiftId);
       const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
       
-      // Auto re-render dashboard if early status transitions
-      const wasEarly = sessionStorage.getItem('hs_last_was_early') === 'true';
-      if (isEarly !== wasEarly) {
-        sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
-        if (window.location.hash === '#dashboard') {
-          renderEmployeeDashboard();
-          return;
-        } else if (window.location.hash === '#admin-my-attendances') {
-          renderAdminMyAttendances();
-          return;
-        }
-      }
-
       const regularIn = document.getElementById('btn-regular-checkin');
       const geoCheckIn = document.getElementById('btn-geofence-checkin');
       
@@ -4255,6 +4286,12 @@ function startLiveClock() {
             }
           }
         }
+      }
+
+      // Record early transition cleanly without synchronous re-render loop
+      const wasEarly = sessionStorage.getItem('hs_last_was_early') === 'true';
+      if (isEarly !== wasEarly) {
+        sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
       }
     }
   };
@@ -6589,27 +6626,43 @@ function renderAdminMyAttendances() {
                       No shift assigned today. Please contact your manager or HR.
                     </div>
                   `
-                  : (isEarly 
+                  : (checkInStatus.type === 'OtherShiftActive'
                       ? `
                         <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
-                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
-                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Active Shift In Progress</div>
+                          Shift "${Utils.escape(checkInStatus.activeShiftName || 'Another shift')}" is currently active. Complete Check-Out on that shift before checking in here.
                         </div>
                       `
-                      : (!todayLog || !todayLog.checkIn
+                      : (checkInStatus.type === 'PreviousShiftIncomplete'
                           ? `
-                            <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
-                          ` 
-                          : (todayLog.checkOut 
+                            <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                              <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⏳ Shift On Hold</div>
+                              Shift "${Utils.escape(checkInStatus.activeShiftName || 'First assigned shift')}" is currently active. You can check in once the previous shift is completed.
+                            </div>
+                          `
+                          : (isEarly 
                               ? `
-                                <div class="checkout-banner-badge" style="width:100%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; color: var(--success, #10b981); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                  <span>🏁</span>
-                                  <span>Checked Out Today at ${todayLog.checkOut}</span>
+                                <div style="text-align: center; font-size: 13px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500; width: 100%;">
+                                  <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                                  Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
                                 </div>
                               `
-                              : `
-                                <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
-                              `
+                              : (!todayLog || !todayLog.checkIn
+                                  ? `
+                                    <button class="btn btn-success" id="btn-regular-checkin">Clock In</button>
+                                  ` 
+                                  : (todayLog.checkOut 
+                                      ? `
+                                        <div class="checkout-banner-badge" style="width:100%; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-sm); padding: 10px 14px; text-align: center; color: var(--success, #10b981); font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                          <span>🏁</span>
+                                          <span>Checked Out Today at ${todayLog.checkOut}</span>
+                                        </div>
+                                      `
+                                      : `
+                                        <button class="btn btn-danger" id="btn-regular-checkout">Clock Out</button>
+                                      `
+                                    )
+                                )
                             )
                         )
                     )
@@ -6691,39 +6744,55 @@ function renderAdminMyAttendances() {
                       No shift assigned today. Please contact your manager or HR.
                     </div>
                   `
-                  : (isEarly 
+                  : (checkInStatus.type === 'OtherShiftActive'
                       ? `
                         <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
-                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
-                          Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                          <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Active Shift In Progress</div>
+                          Shift "${Utils.escape(checkInStatus.activeShiftName || 'Another shift')}" is currently active. Complete Check-Out on that shift before checking in here.
                         </div>
                       `
-                      : (todayLog && todayLog.checkOut
+                      : (checkInStatus.type === 'PreviousShiftIncomplete'
                           ? `
-                            <div id="geofence-checked-out-msg" class="checkout-banner-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                              <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
-                                <span style="font-size: 18px;">🎉</span>
-                                <span>Checked Out Successfully</span>
-                              </div>
-                              <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
-                                <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
-                                <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${(todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--'}</strong></span>
-                                <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
-                              </div>
+                            <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                              <div style="color: var(--warning); font-weight: 700; margin-bottom: 4px;">⏳ Shift On Hold</div>
+                              Shift "${Utils.escape(checkInStatus.activeShiftName || 'First assigned shift')}" is currently active. You can check in once the previous shift is completed.
                             </div>
                           `
-                          : `
-                            <div style="display: grid; grid-template-columns: 1fr; gap:8px" id="geofence-btn-group">
-                              ${!todayLog || !todayLog.checkIn
-                                ? `<button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600;">Check In</button>`
-                                : ''
-                              }
-                              ${todayLog && todayLog.checkIn && !todayLog.checkOut
-                                ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600;">Check Out</button>`
-                                : ''
-                              }
-                            </div>
-                          `
+                          : (isEarly 
+                              ? `
+                                <div style="text-align: center; font-size: 12px; color: var(--text-secondary); background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-weight: 500;">
+                                  <div style="color: var(--danger); font-weight: 700; margin-bottom: 4px;">⚠️ Too Early</div>
+                                  Your shift has not started yet. You can check in only 30 minutes before your scheduled shift.
+                                </div>
+                              `
+                              : (todayLog && todayLog.checkOut
+                                  ? `
+                                    <div id="geofence-checked-out-msg" class="checkout-banner-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: var(--radius-md); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+                                      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--success, #10b981);">
+                                        <span style="font-size: 18px;">🎉</span>
+                                        <span>Checked Out Successfully</span>
+                                      </div>
+                                      <div style="display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--text-secondary); border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; margin-top: 2px;">
+                                        <span>⏰ Checkout: <strong style="color:var(--text-primary); font-weight: 700;">${todayLog.checkOut}</strong></span>
+                                        <span>⏳ Duration: <strong style="color:var(--cyan, #06b6d4); font-weight: 700;">${(todayLog.checkIn && todayLog.checkOut) ? Utils.calculateDuration(todayLog.checkIn, todayLog.checkOut) : '--:--'}</strong></span>
+                                        <span class="badge badge-on-time" style="font-size: 10px; padding: 2px 8px;">${todayLog.status || 'Completed'}</span>
+                                      </div>
+                                    </div>
+                                  `
+                                  : `
+                                    <div style="display: grid; grid-template-columns: 1fr; gap:8px" id="geofence-btn-group">
+                                      ${!todayLog || !todayLog.checkIn
+                                        ? `<button class="btn btn-success" id="btn-geofence-checkin" style="font-size:13px; padding:10px; font-weight:600;">Check In</button>`
+                                        : ''
+                                      }
+                                      ${todayLog && todayLog.checkIn && !todayLog.checkOut
+                                        ? `<button class="btn btn-danger" id="btn-geofence-checkout" style="font-size:13px; padding:10px; font-weight:600;">Check Out</button>`
+                                        : ''
+                                      }
+                                    </div>
+                                  `
+                                )
+                            )
                         )
                     )
                 }
@@ -6978,6 +7047,8 @@ function renderAdminMyAttendances() {
     btn.addEventListener('click', (e) => {
       const shiftId = e.currentTarget.dataset.shiftId;
       sessionStorage.setItem('hs_selected_shift_id', shiftId);
+      const oldBanner = document.getElementById('geofence-checked-out-msg');
+      if (oldBanner) oldBanner.remove();
       renderAdminMyAttendances();
     });
   });
@@ -7093,7 +7164,7 @@ function renderAdminMyAttendances() {
       const log = DB.checkOut(user.id, 'none', null, schedule ? schedule.id : null);
       requestsPushDBState();
       renderAdminMyAttendances();
-      const finalLog = log || (schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id));
+      const finalLog = log || (schedule ? DB.getTodayLog(user.id, schedule.id) : null);
       const checkOutTime = (finalLog && finalLog.checkOut) || new Date().toTimeString().split(' ')[0].substring(0, 5);
       const workingHours = (finalLog && finalLog.checkIn && finalLog.checkOut) ? Utils.calculateDuration(finalLog.checkIn, finalLog.checkOut) : '--:--';
       (window.showClockOutThankYou || showClockOutThankYou)(checkOutTime, workingHours);
@@ -7474,25 +7545,57 @@ function renderAdminMyAttendances() {
           geoCheckIn.style.opacity = '0.4';
         }
       } else {
+        const checkInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
+        const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
+        const isShiftBlocked = !checkInStatus.allowed && (checkInStatus.type === 'OtherShiftActive' || checkInStatus.type === 'PreviousShiftIncomplete' || checkInStatus.type === 'NoShift');
+
         if (inRange) {
           if (regularIn) {
-            regularIn.removeAttribute('disabled');
-            regularIn.style.opacity = '1';
-            regularIn.style.cursor = 'pointer';
+            if (isShiftBlocked) {
+              regularIn.style.display = 'none';
+            } else if (isEarly) {
+              regularIn.style.display = 'block';
+              regularIn.style.opacity = '0.4';
+              regularIn.style.cursor = 'not-allowed';
+            } else {
+              regularIn.style.display = 'block';
+              regularIn.removeAttribute('disabled');
+              regularIn.style.opacity = '1';
+              regularIn.style.cursor = 'pointer';
+            }
           }
           if (geoCheckIn) {
-            geoCheckIn.removeAttribute('disabled');
-            geoCheckIn.style.opacity = '1';
-            geoCheckIn.style.cursor = 'pointer';
+            if (isShiftBlocked) {
+              geoCheckIn.style.display = 'none';
+            } else if (isEarly) {
+              geoCheckIn.style.display = 'block';
+              geoCheckIn.style.opacity = '0.4';
+              geoCheckIn.style.cursor = 'not-allowed';
+            } else {
+              geoCheckIn.style.display = 'block';
+              geoCheckIn.removeAttribute('disabled');
+              geoCheckIn.style.opacity = '1';
+              geoCheckIn.style.cursor = 'pointer';
+            }
           }
         } else {
           if (regularIn) {
-            regularIn.setAttribute('disabled', 'true');
-            regularIn.style.opacity = '0.4';
+            if (isShiftBlocked) {
+              regularIn.style.display = 'none';
+            } else {
+              regularIn.style.display = 'block';
+              regularIn.setAttribute('disabled', 'true');
+              regularIn.style.opacity = '0.4';
+            }
           }
           if (geoCheckIn) {
-            geoCheckIn.setAttribute('disabled', 'true');
-            geoCheckIn.style.opacity = '0.4';
+            if (isShiftBlocked) {
+              geoCheckIn.style.display = 'none';
+            } else {
+              geoCheckIn.style.display = 'block';
+              geoCheckIn.setAttribute('disabled', 'true');
+              geoCheckIn.style.opacity = '0.4';
+            }
           }
         }
       }
@@ -7525,17 +7628,24 @@ function renderAdminMyAttendances() {
           checkedOutMsg.style.display = 'flex';
         }
       } else {
-        if (btnGroup) btnGroup.style.display = 'grid';
-        if (checkedOutMsg) checkedOutMsg.style.display = 'none';
+        if (checkedOutMsg) checkedOutMsg.remove();
 
         if (todayLog && todayLog.checkIn) {
+          if (btnGroup) btnGroup.style.display = 'grid';
           if (geoCheckIn) geoCheckIn.style.display = 'none';
           if (geoCheckOut) geoCheckOut.style.display = 'block';
           if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
         } else {
-          if (geoCheckIn) geoCheckIn.style.display = 'block';
+          const currentCheckInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
+          if (!currentCheckInStatus.allowed && (currentCheckInStatus.type === 'OtherShiftActive' || currentCheckInStatus.type === 'PreviousShiftIncomplete' || currentCheckInStatus.type === 'NoShift')) {
+            if (geoCheckIn) geoCheckIn.style.display = 'none';
+            if (btnGroup) btnGroup.style.display = 'none';
+          } else {
+            if (btnGroup) btnGroup.style.display = 'grid';
+            if (geoCheckIn) geoCheckIn.style.display = 'block';
+            if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
+          }
           if (geoCheckOut) geoCheckOut.style.display = 'none';
-          if (btnGroup) btnGroup.style.gridTemplateColumns = '1fr';
         }
       }
 
@@ -9515,18 +9625,21 @@ function showAutoCheckinBanner(active, timeString = '') {
 
 
 function requestsPushDBState() {
-  // Push database mutation to sync backend so admin view is up to date immediately
-  if (typeof DB !== 'undefined' && DB.save) {
-    // DB.save() already triggers localStorage save. We trigger API save manually:
-    try {
-      fetch((window.apiBaseUrl || '') + '/api/mutate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync', data: DB.data })
-      }).catch(err => console.warn("API state sync failed:", err));
-    } catch (e) {
-      console.warn("API state sync exception:", e);
-    }
+  // DB.save() already sends fast granular mutations via /api/mutate-granular.
+  // Full sync via /api/mutate is debounced to avoid choking the server and network with 4.4MB payloads.
+  if (typeof DB !== 'undefined') {
+    if (window._pushDebounceTimer) clearTimeout(window._pushDebounceTimer);
+    window._pushDebounceTimer = setTimeout(() => {
+      try {
+        fetch((window.apiBaseUrl || '') + '/api/mutate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync', data: DB.data })
+        }).catch(err => console.warn("API state sync failed:", err));
+      } catch (e) {
+        console.warn("API state sync exception:", e);
+      }
+    }, 1500);
   }
 }
 
