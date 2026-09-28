@@ -14,6 +14,7 @@ const createReportsRouter = require('./routes/reports.routes');
 const createAuditRouter = require('./routes/audit.routes');
 const { eventsRouter, broadcastSSEEvent } = require('./routes/events.routes');
 const biometricRoutes = require('./routes/biometric.routes');
+const { iclockRouter, admsApiRouter } = require('./routes/adms.routes');
 const { invalidateLocalDbCache } = require('./controllers/attendance.controller');
 const { authenticateToken } = require('./middleware/auth.middleware');
 const multer = require('multer');
@@ -31,6 +32,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// ZKTeco ADMS hardware raw/plain-text payload parser
+app.use('/iclock', express.text({ type: () => true, limit: '20mb' }));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -226,6 +230,10 @@ app.use('/api', createReportsRouter(User, AttendanceLog, getUseLocalFileDB));
 app.use('/api', createAuditRouter(AuditLog, getUseLocalFileDB));
 app.use('/api', eventsRouter);
 
+// ZKTeco ADMS / iClock Cloud Server Push Hardware & Management Endpoints
+app.use('/iclock', iclockRouter);
+app.use('/api/adms', admsApiRouter);
+
 // Sync whole DB endpoint (Safe Merge — Never Truncates Historical Logs)
 app.post('/api/mutate', async (req, res) => {
   try {
@@ -313,9 +321,14 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: `API endpoint ${req.method} ${req.originalUrl || req.path} not found.` });
 });
 
+// ADMS Hardware Safety Handler: Never return HTML to biometric devices; always reply plain text OK
+app.use('/iclock', (req, res) => {
+  res.status(200).type('text/plain').send('OK');
+});
+
 // SPA shell fallback
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+  if (req.method === 'GET' && !req.path.startsWith('/api/') && !req.path.startsWith('/iclock')) {
     const ext = path.extname(req.path).toLowerCase();
     if (['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map', '.txt', '.xml'].includes(ext)) {
       return res.status(404).end();

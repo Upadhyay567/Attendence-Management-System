@@ -41,6 +41,16 @@ export function renderAdminUsers() {
       ${addBtnHTML}
     </div>
     <div class="content-body">
+      <!-- Search bar placed above the "All Department" button/filter -->
+      <div class="employee-search-bar-container" style="margin-bottom: 14px; display: flex; align-items: center; justify-content: flex-start;">
+        <div style="position: relative; width: 100%; max-width: 380px;">
+          <input type="text" id="employee-search-input" class="form-input" placeholder="Search by Employee Name or ID..." style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; width: 100%; height: 36px; padding: 0 12px 0 36px; font-size: 13.5px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card, #ffffff); color: var(--text-primary); box-sizing: border-box; transition: all 0.2s ease;">
+          <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+      </div>
       <div class="equify-filter-bar">
         <div class="equify-filter-pills">
           <select class="equify-filter-select" id="filter-dept-select">
@@ -246,8 +256,9 @@ export function renderAdminUsers() {
 
   bindUserRowEvents();
 
-  // Setup real-time dynamic filter listeners on dropdowns
+  // Setup real-time dynamic filter listeners on dropdowns and search bar
   const setupFilterListeners = () => {
+    const sInput = document.getElementById('employee-search-input');
     const dSel = document.getElementById('filter-dept-select');
     const rSel = document.getElementById('filter-role-select');
     const sSel = document.getElementById('filter-status-select');
@@ -255,15 +266,22 @@ export function renderAdminUsers() {
     const tbody = document.querySelector('.card-panel .custom-table tbody');
     const pInfo = document.querySelector('.equify-pagination-info');
 
-    if (!dSel || !tbody) return;
+    if (!tbody) return;
 
     const applyFilters = () => {
+      const q = sInput ? sInput.value.toLowerCase().trim() : '';
       const dVal = dSel ? dSel.value : 'all';
       const rVal = rSel ? rSel.value : 'all';
       const sVal = sSel ? sSel.value : 'all';
 
-      const allUsers = DB.getUsers() || [];
-      const filtered = allUsers.filter(u => {
+      const filtered = users.filter(u => {
+        if (q) {
+          const name = (u.name || '').toLowerCase();
+          const empId = (u.employeeId || '').toLowerCase();
+          const uid = (u.id || '').toLowerCase();
+          const bioId = (u.biometricUserId || u.biometricId || '').toLowerCase();
+          if (!name.includes(q) && !empId.includes(q) && !uid.includes(q) && !bioId.includes(q)) return false;
+        }
         if (dVal !== 'all') {
           const uDept = (u.department || '').toLowerCase();
           const targetDept = dVal.toLowerCase();
@@ -285,7 +303,7 @@ export function renderAdminUsers() {
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
+        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for "${Utils.escape(q || 'selected filters')}".</td></tr>`;
       } else {
         tbody.innerHTML = filtered.map(u => {
           const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
@@ -353,9 +371,13 @@ export function renderAdminUsers() {
       }
 
       if (pInfo) {
-        pInfo.textContent = `Total: ${filtered.length} showing filtered employees`;
+        pInfo.textContent = `Total: ${filtered.length} showing ${filtered.length === users.length ? 'all employees' : 'matching employees'}`;
       }
     };
+
+    if (sInput) {
+      sInput.addEventListener('input', applyFilters);
+    }
 
     [dSel, rSel, sSel, tSel].forEach(sel => {
       if (sel) sel.addEventListener('change', applyFilters);

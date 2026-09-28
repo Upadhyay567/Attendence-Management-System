@@ -51,26 +51,103 @@ export const Utils = {
 
   // Export array of objects to CSV download
   exportToCSV(filename, headers, rows) {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Add headers
-    csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
-    
-    // Add rows
+    let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
+    csvContent += headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",") + "\r\n";
     rows.forEach(row => {
       csvContent += row.map(cell => {
         const val = cell === null || cell === undefined ? '' : String(cell);
+        // If cell is a date like YYYY-MM-DD, prepend \t so Excel treats it as text and NEVER shows ########
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val.trim())) {
+          return `"\t${val.trim()}"`;
+        }
         return `"${val.replace(/"/g, '""')}"`;
-      }).join(",") + "\n";
+      }).join(",") + "\r\n";
     });
 
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  },
+
+  // Export to formatted Excel sheet (.xlsx / .xls) supporting column widths and formatting
+  exportToExcel(filename, headers, rows) {
+    const finalFilename = filename.endsWith('.xlsx') ? filename : (filename.endsWith('.csv') ? filename.replace(/\.csv$/, '.xlsx') : `${filename}.xlsx`);
+    
+    // 1. Try SheetJS (window.XLSX) if available for genuine OpenXML .xlsx workbook
+    if (typeof window !== 'undefined' && window.XLSX) {
+      try {
+        const sheetData = [
+          headers,
+          ...rows.map(row => row.map(cell => {
+            if (cell === null || cell === undefined) return '';
+            return String(cell);
+          }))
+        ];
+        
+        const ws = window.XLSX.utils.aoa_to_sheet(sheetData);
+        
+        // Explicitly set column widths so Date (14ch), Employee Name (24ch), etc. fit with plenty of room
+        ws['!cols'] = headers.map((h, i) => {
+          let maxLen = String(h).length;
+          rows.forEach(r => {
+            const cellLen = String(r[i] || '').length;
+            if (cellLen > maxLen) maxLen = cellLen;
+          });
+          return { wch: Math.max(maxLen + 4, 14) };
+        });
+
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, 'Attendance Register');
+        window.XLSX.writeFile(wb, finalFilename);
+        return;
+      } catch (err) {
+        console.warn('SheetJS XLSX generation failed, falling back to XML/HTML Excel:', err);
+      }
+    }
+
+    // 2. High-fidelity HTML/XML Excel sheet (.xls) fallback with explicit text format mso-number-format:"\@"
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
+    html += `<head><meta charset="utf-8">`;
+    html += `<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Attendance</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->`;
+    html += `<style>`;
+    html += `table { border-collapse: collapse; }`;
+    html += `th { background-color: #ef4444; color: #ffffff; font-weight: bold; border: 0.5pt solid #cbd5e1; text-align: left; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; padding: 6px 12px; }`;
+    html += `td { border: 0.5pt solid #cbd5e1; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; padding: 6px 12px; mso-number-format:"\\@"; }`;
+    html += `</style></head><body>`;
+    html += `<table>`;
+    html += `<colgroup>`;
+    headers.forEach(() => {
+      html += `<col width="140">`;
+    });
+    html += `</colgroup>`;
+    html += `<tr>`;
+    headers.forEach(h => {
+      html += `<th>${Utils.escape(h)}</th>`;
+    });
+    html += `</tr>`;
+    rows.forEach(row => {
+      html += `<tr>`;
+      row.forEach(cell => {
+        const val = cell === null || cell === undefined ? '' : String(cell);
+        html += `<td>${Utils.escape(val)}</td>`;
+      });
+      html += `</tr>`;
+    });
+    html += `</table></body></html>`;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = finalFilename.replace(/\.xlsx$/, '.xls');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   },
 
   // Generate full month days array for reports

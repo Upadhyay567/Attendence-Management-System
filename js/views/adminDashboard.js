@@ -5,6 +5,11 @@ import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
+let liveFeedCurrentPage = 1;
+const liveFeedPageSize = 10;
+let liveFeedSelectedLocations = new Set();
+let currentTodayLogs = [];
+
 export async function renderAdminDashboard() {
   const main = document.getElementById('main-view');
   const currentUser = Auth.getCurrentUser();
@@ -53,25 +58,68 @@ export async function renderAdminDashboard() {
       </div>
 
       <div class="dashboard-split" style="grid-template-columns: 1.8fr 1fr">
-        <div class="card-panel">
-          <div class="card-panel-header"><h3 class="card-panel-title">Today's Live Attendance Feed</h3></div>
-          <div class="table-container">
-            <table class="custom-table">
+        <div class="card-panel" style="padding: 0; overflow: visible; display: flex; flex-direction: column;">
+          <div class="card-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--border); overflow: visible;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h3 class="card-panel-title" style="margin: 0; font-size: 17px; font-weight: 700;">Today's Live Attendance Feed</h3>
+              <span id="live-feed-count-badge" class="badge badge-on-time" style="font-size: 11px; font-weight: 700; padding: 3px 9px;">0 PUNCHES</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; position: relative;">
+              <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Locations:</label>
+              <div style="position: relative;" id="live-feed-location-container">
+                <button type="button" id="live-feed-location-btn" class="form-input" style="height: 34px; padding: 0 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 210px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box;">
+                  <span id="live-feed-location-btn-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;">All Locations</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="live-feed-location-dropdown" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); z-index: 1050; min-width: 270px; max-height: 380px; overflow-y: auto; padding: 6px 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.02);">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700; margin: 0; user-select: none;">
+                      <input type="checkbox" id="cb-live-feed-all-locations" style="accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer;">
+                      <span>All Locations</span>
+                    </label>
+                    <button type="button" id="btn-live-feed-clear-locations" style="border: none; background: none; color: #ef4444; font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 0;">Reset</button>
+                  </div>
+                  <div id="live-feed-location-checkbox-list" style="padding: 4px 0;">
+                    <!-- Dynamically rendered location checkboxes -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="table-container" style="overflow-x: auto; margin: 0; flex: 1;">
+            <table class="custom-table" style="width: 100%; border-collapse: collapse; margin: 0;">
               <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Shift</th>
-                  <th>Checked In</th>
-                  <th>Checked Out</th>
-                  <th>Live GPS</th>
-                  <th>Location</th>
-                  <th>Status</th>
+                <tr style="border-bottom: 1px solid var(--border); background: rgba(243, 237, 230, 0.5);">
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Employee</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Shift</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Checked In</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Checked Out</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Live GPS</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Location</th>
+                  <th style="padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text-primary);">Status</th>
                 </tr>
               </thead>
               <tbody id="live-feed-table-body">
                 <tr><td colspan="7" style="text-align:center; padding: 20px 0; color:var(--text-muted);">Loading live feed...</td></tr>
               </tbody>
             </table>
+          </div>
+          <!-- Clean Horizontal Box Pagination Panel (10 per page) -->
+          <div id="live-feed-pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.01);">
+            <div style="font-size: 13px; color: var(--text-secondary); font-weight: 500;" id="live-feed-page-info">
+              Showing 0-0 of 0 punches
+            </div>
+            <div class="live-feed-pagination-panel" style="display: inline-flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; height: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              <button id="btn-live-feed-first" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="First Page">&laquo;</button>
+              <button id="btn-live-feed-prev" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Previous Page">Previous</button>
+              <div style="display: flex; align-items: center; justify-content: center; padding: 0 10px; height: 100%; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); border-right: 1px solid var(--border); background: rgba(0,0,0,0.015);">
+                <span id="live-feed-current-page-num" style="font-weight: 700; color: var(--text-primary);">1</span>
+                <span style="color: var(--text-muted); margin: 0 4px;">/</span>
+                <span id="live-feed-total-pages-num" style="color: var(--text-primary);">1</span>
+              </div>
+              <button id="btn-live-feed-next" style="border: none; background: transparent; height: 100%; padding: 0 12px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s ease;" title="Next Page">Next</button>
+              <button id="btn-live-feed-last" style="border: none; background: transparent; height: 100%; padding: 0 10px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: background 0.15s ease;" title="Last Page">&raquo;</button>
+            </div>
           </div>
         </div>
         <div style="display:flex; flex-direction:column; gap:20px; margin-top:0">
@@ -422,14 +470,51 @@ export async function renderAdminDashboard() {
     return DB.getUsers().filter(u => u.role === 'employee' && u.status !== 'Inactive');
   };
 
-  function showPresentNowModal() {
-    const activeEmployees = getAssignedUserIds();
-    const activeUserIds = activeEmployees.map(u => u.id);
+  // Helper to fetch Present Now records strictly following:
+  // Today's actual attendance records -> group by employee -> check latest attendance record -> no checkout -> Present Now
+  function getTodayPresentNowRecords() {
     const todayStr = new Date().toISOString().split('T')[0];
-    const logs = DB.getLogs().filter(l => l.date === todayStr && l.checkIn && !l.checkOut && activeUserIds.includes(l.userId));
+    const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
+
+    // Group today's actual attendance records strictly by employee (deduplicating multiple device punches)
+    const userTodayMap = new Map();
+    allTodayLogs.forEach(log => {
+      const empKey = log.userId || log.employeeId || log.biometricUserId;
+      if (!empKey) return;
+      if (!userTodayMap.has(empKey)) {
+        userTodayMap.set(empKey, []);
+      }
+      userTodayMap.get(empKey).push(log);
+    });
+
+    // Check latest attendance record per employee -> no checkout -> Present Now
+    const presentNowList = [];
+    for (const [empKey, ulogs] of userTodayMap.entries()) {
+      ulogs.sort((a, b) => (b.checkIn || '').localeCompare(a.checkIn || ''));
+      const latest = ulogs[0];
+      const hasCheckedOut = latest.checkOut && latest.checkOut !== '--' && latest.checkOut !== '--:--';
+      if (!hasCheckedOut) {
+        presentNowList.push(latest);
+      }
+    }
+
+    // Sort in proper order: latest check-in first, then name
+    presentNowList.sort((a, b) => {
+      const timeCmp = (b.checkIn || '').localeCompare(a.checkIn || '');
+      if (timeCmp !== 0) return timeCmp;
+      const userA = DB.getUser(a.userId)?.name || a.userName || a.employeeName || '';
+      const userB = DB.getUser(b.userId)?.name || b.userName || b.employeeName || '';
+      return userA.localeCompare(userB);
+    });
+
+    return presentNowList;
+  }
+
+  function showPresentNowModal() {
+    const logs = getTodayPresentNowRecords();
     
     const items = logs.map(l => {
-      const u = DB.getUser(l.userId);
+      const u = DB.getUser(l.userId) || { name: l.userName || l.employeeName || 'Employee', employeeId: l.employeeId || '—', department: l.department || '—' };
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;
@@ -532,16 +617,16 @@ export async function renderAdminDashboard() {
     let leaves = DB.getLeaveRequests().filter(lv => assignedUserIds.includes(lv.userId));
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const presentToday = logs.filter(l => l.date === todayStr && l.checkIn && !l.checkOut && assignedUserIds.includes(l.userId));
-    const lateToday = presentToday.filter(l => l.status === 'Late');
+    const presentNowRecords = getTodayPresentNowRecords();
+    const presentCount = presentNowRecords.length;
+    const lateToday = presentNowRecords.filter(l => l.status === 'Late');
     const onLeaveToday = leaves.filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));
     
-    const presentCount = presentToday.length;
     const lateCount = lateToday.length;
     const leaveCount = onLeaveToday.length;
     const totalEmployees = activeEmployees.length;
-    const checkedInAtAllCount = logs.filter(l => l.date === todayStr && l.checkIn && assignedUserIds.includes(l.userId)).length;
-    const absentCount = totalEmployees - checkedInAtAllCount - leaveCount;
+    const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId)).size;
+    const absentCount = Math.max(0, totalEmployees - checkedInAtAllCount - leaveCount);
     
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
       if (s.status !== 'Pending Manager') return false;
@@ -635,23 +720,13 @@ export async function renderAdminDashboard() {
       `;
     }
 
-    // Group checked-in employees by location
-    const todayLogs = logs.filter(l => l.date === todayStr && l.checkIn);
-    // Sort todayLogs in proper order: descending by check-in time (latest punch first), then alphabetical
-    todayLogs.sort((a, b) => {
-      const timeCmp = (b.checkIn || '').localeCompare(a.checkIn || '');
-      if (timeCmp !== 0) return timeCmp;
-      const userA = DB.getUser(a.userId)?.name || '';
-      const userB = DB.getUser(b.userId)?.name || '';
-      return userA.localeCompare(userB);
-    });
-
+    // Group Present Now records by worksite location
     const locationGroups = {};
     Object.keys(DB.getOfficeCoordinates()).forEach(loc => {
       locationGroups[loc] = [];
     });
 
-    todayLogs.forEach(l => {
+    presentNowRecords.forEach(l => {
       if (l.checkIn) {
         const u = DB.getUser(l.userId);
         if (u) {
@@ -725,84 +800,9 @@ export async function renderAdminDashboard() {
       });
     });
 
-    // Populate Live Feed Table
-    const feedBody = document.getElementById('live-feed-table-body');
-    if (feedBody) {
-      if (todayLogs.length === 0) {
-        feedBody.innerHTML = html`<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No check-ins logged today.</td></tr>`;
-      } else {
-        feedBody.innerHTML = todayLogs.map(l => {
-          const u = DB.getUser(l.userId);
-          const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
-          let displayStatus = l.status;
-          if (!displayStatus || displayStatus === 'Present') {
-            displayStatus = 'On Time';
-            if (sch && sch.startTime && l.checkIn) {
-              const [sH, sM] = sch.startTime.split(':').map(Number);
-              const [iH, iM] = l.checkIn.split(':').map(Number);
-              const sMins = sH * 60 + (sM || 0);
-              const iMins = iH * 60 + (iM || 0);
-              const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
-              const halfDayLimit = sch.halfDayLimit !== undefined ? Number(sch.halfDayLimit) : 120;
-              if (iMins > sMins + grace) displayStatus = 'Late';
-              if (iMins >= sMins + halfDayLimit) displayStatus = 'Half Day';
-            }
-          }
-          let statusClass = 'badge-on-time';
-          if (displayStatus === 'Late') statusClass = 'badge-late';
-          else if (displayStatus === 'Half Day') statusClass = 'badge-half-day';
-          else if (displayStatus === 'Absent') statusClass = 'badge-absent';
-          else if (displayStatus === 'Pending Verification') statusClass = 'badge-late';
-
-          let checkInVal = l.checkIn || '--:--';
-          let checkOutVal = l.checkOut || '--:--';
-          if (checkInVal !== '--:--' && checkOutVal !== '--:--' && checkInVal > checkOutVal) {
-            const tmp = checkInVal;
-            checkInVal = checkOutVal;
-            checkOutVal = tmp;
-          }
-
-          const distKm = parseFloat(l.distance) || 0;
-          const distM = Math.round(distKm * 1000);
-          let gpsCellHTML;
-          if (l.checkOut) {
-            gpsCellHTML = `
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="width:8px;height:8px;border-radius:50%;background:var(--text-secondary);flex-shrink:0;"></span>
-                <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">OFFLINE</span>
-              </div>`;
-          } else if (!l.location) {
-            gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">— No GPS Data</span>`;
-          } else if (distKm <= 0.1) {
-            const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
-            gpsCellHTML = `
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px rgba(16,185,129,0.7);animation:pulse 1.5s infinite"></span>
-                <span style="font-size:11px;font-weight:700;color:#10b981">IN RANGE</span>
-              </div>
-              <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distLabel}</div>`;
-          } else {
-            gpsCellHTML = `
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px rgba(239,68,68,0.6)"></span>
-                <span style="font-size:11px;font-weight:700;color:#ef4444">OUT OF RANGE</span>
-              </div>
-              <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
-          }
-          return `
-            <tr>
-              <td style="font-weight:600">${Utils.escape(u ? u.name : 'Employee')}</td>
-              <td>${sch ? Utils.escape(sch.name) : '-'}</td>
-              <td>${checkInVal}</td>
-              <td>${checkOutVal}</td>
-              <td>${gpsCellHTML}</td>
-              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(l.location || 'Office Headquarters')}</td>
-              <td><span class="badge ${statusClass}">${displayStatus}</span></td>
-            </tr>
-          `;
-        }).join('');
-      }
-    }
+    // Update live feed current logs and render strictly from presentNowRecords
+    currentTodayLogs = presentNowRecords;
+    renderLiveFeedTable();
 
     // Populate Leave request alert inbox
     const pendingInbox = document.getElementById('admin-pending-leaves-box');
@@ -844,6 +844,251 @@ export async function renderAdminDashboard() {
 
     // Biometric Device Attendance Feed
     renderBiometricDashboardPanel();
+  }
+
+  function renderLocationCheckboxDropdown(distinctLocs) {
+    const btnText = document.getElementById('live-feed-location-btn-text');
+    const listContainer = document.getElementById('live-feed-location-checkbox-list');
+    const cbAll = document.getElementById('cb-live-feed-all-locations');
+    if (!listContainer || !btnText) return;
+
+    const isAllSelected = liveFeedSelectedLocations.size === 0;
+    if (cbAll) cbAll.checked = isAllSelected;
+
+    if (isAllSelected) {
+      btnText.textContent = `All Locations (${currentTodayLogs.length})`;
+    } else if (liveFeedSelectedLocations.size === 1) {
+      const singleLoc = Array.from(liveFeedSelectedLocations)[0];
+      const count = currentTodayLogs.filter(l => (l.location || '').toLowerCase().trim() === singleLoc.toLowerCase().trim()).length;
+      btnText.textContent = `${singleLoc} (${count})`;
+    } else {
+      let combinedCount = 0;
+      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
+      currentTodayLogs.forEach(l => {
+        if (selLower.has((l.location || '').toLowerCase().trim())) combinedCount++;
+      });
+      btnText.textContent = `${liveFeedSelectedLocations.size} Locations (${combinedCount} punches)`;
+    }
+
+    listContainer.innerHTML = distinctLocs.map(loc => {
+      const count = currentTodayLogs.filter(l => (l.location || '').toLowerCase().trim() === loc.toLowerCase().trim()).length;
+      const isChecked = !isAllSelected && liveFeedSelectedLocations.has(loc);
+      return `
+        <div class="live-feed-loc-row" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='transparent'">
+          <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
+            <input type="checkbox" class="cb-live-feed-loc-item" data-location="${Utils.escape(loc)}" ${isChecked ? 'checked' : ''} style="accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer;">
+            <span style="font-size: 13px; font-weight: 500; color: #1e293b;">${Utils.escape(loc)}</span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="badge badge-neutral" style="font-size: 11px; padding: 2px 7px; font-weight: 700;">${count}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listContainer.querySelectorAll('.cb-live-feed-loc-item').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const loc = cb.getAttribute('data-location');
+        if (isAllSelected) {
+          liveFeedSelectedLocations = new Set([loc]);
+        } else {
+          if (cb.checked) {
+            liveFeedSelectedLocations.add(loc);
+          } else {
+            liveFeedSelectedLocations.delete(loc);
+          }
+        }
+        if (liveFeedSelectedLocations.size === distinctLocs.length) {
+          liveFeedSelectedLocations.clear();
+        }
+        liveFeedCurrentPage = 1;
+        renderLiveFeedTable();
+      });
+    });
+  }
+
+  function renderLiveFeedTable() {
+    const feedBody = document.getElementById('live-feed-table-body');
+    if (!feedBody) return;
+
+    const distinctLocs = Array.from(new Set([
+      ...currentTodayLogs.map(l => (l.location || '').trim()).filter(Boolean),
+      ...Object.keys(DB.getOfficeCoordinates() || {}).filter(k => !k.includes('('))
+    ])).sort((a, b) => a.localeCompare(b));
+
+    renderLocationCheckboxDropdown(distinctLocs);
+
+    let filteredLogs = currentTodayLogs;
+    if (liveFeedSelectedLocations.size > 0) {
+      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
+      filteredLogs = currentTodayLogs.filter(l => {
+        const loc = (l.location || '').toLowerCase().trim();
+        return selLower.has(loc);
+      });
+    }
+
+    const totalEntries = filteredLogs.length;
+    const totalPages = Math.ceil(totalEntries / liveFeedPageSize) || 1;
+    if (liveFeedCurrentPage > totalPages) liveFeedCurrentPage = totalPages;
+    if (liveFeedCurrentPage < 1) liveFeedCurrentPage = 1;
+
+    const startIndex = (liveFeedCurrentPage - 1) * liveFeedPageSize;
+    const endIndex = Math.min(startIndex + liveFeedPageSize, totalEntries);
+    const paginatedLogs = filteredLogs.slice(startIndex, endIndex);
+
+    const countBadge = document.getElementById('live-feed-count-badge');
+    if (countBadge) {
+      countBadge.textContent = `${totalEntries} PUNCHES`;
+    }
+
+    const pageInfo = document.getElementById('live-feed-page-info');
+    if (pageInfo) {
+      pageInfo.textContent = totalEntries > 0
+        ? `Showing ${startIndex + 1}-${endIndex} of ${totalEntries} punches`
+        : 'No punches to show';
+    }
+
+    const pageNumSpan = document.getElementById('live-feed-current-page-num');
+    const totalPagesSpan = document.getElementById('live-feed-total-pages-num');
+    if (pageNumSpan) pageNumSpan.textContent = liveFeedCurrentPage;
+    if (totalPagesSpan) totalPagesSpan.textContent = totalPages;
+
+    const btnFirst = document.getElementById('btn-live-feed-first');
+    const btnPrev = document.getElementById('btn-live-feed-prev');
+    const btnNext = document.getElementById('btn-live-feed-next');
+    const btnLast = document.getElementById('btn-live-feed-last');
+
+    if (btnFirst) {
+      btnFirst.style.opacity = liveFeedCurrentPage <= 1 ? '0.35' : '1';
+      btnFirst.style.cursor = liveFeedCurrentPage <= 1 ? 'not-allowed' : 'pointer';
+      btnFirst.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (liveFeedCurrentPage > 1) {
+          liveFeedCurrentPage = 1;
+          renderLiveFeedTable();
+        }
+      };
+    }
+    if (btnPrev) {
+      btnPrev.style.opacity = liveFeedCurrentPage <= 1 ? '0.35' : '1';
+      btnPrev.style.cursor = liveFeedCurrentPage <= 1 ? 'not-allowed' : 'pointer';
+      btnPrev.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (liveFeedCurrentPage > 1) {
+          liveFeedCurrentPage -= 1;
+          renderLiveFeedTable();
+        }
+      };
+    }
+    if (btnNext) {
+      btnNext.style.opacity = liveFeedCurrentPage >= totalPages ? '0.35' : '1';
+      btnNext.style.cursor = liveFeedCurrentPage >= totalPages ? 'not-allowed' : 'pointer';
+      btnNext.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (liveFeedCurrentPage < totalPages) {
+          liveFeedCurrentPage += 1;
+          renderLiveFeedTable();
+        }
+      };
+    }
+    if (btnLast) {
+      btnLast.style.opacity = liveFeedCurrentPage >= totalPages ? '0.35' : '1';
+      btnLast.style.cursor = liveFeedCurrentPage >= totalPages ? 'not-allowed' : 'pointer';
+      btnLast.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (liveFeedCurrentPage < totalPages) {
+          liveFeedCurrentPage = totalPages;
+          renderLiveFeedTable();
+        }
+      };
+    }
+
+    if (paginatedLogs.length === 0) {
+      const selectedLocNames = Array.from(liveFeedSelectedLocations).join(', ');
+      feedBody.innerHTML = html`
+        <tr>
+          <td colspan="7" style="text-align:center; padding: 36px 0; color:var(--text-muted); font-size:14px;">
+            ${liveFeedSelectedLocations.size > 0 ? `No check-ins logged today for "${Utils.escape(selectedLocNames)}".` : 'No check-ins logged today.'}
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    feedBody.innerHTML = paginatedLogs.map(l => {
+      const u = DB.getUser(l.userId);
+      const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
+      let displayStatus = l.status;
+      if (!displayStatus || displayStatus === 'Present') {
+        displayStatus = 'On Time';
+        if (sch && sch.startTime && l.checkIn) {
+          const [sH, sM] = sch.startTime.split(':').map(Number);
+          const [iH, iM] = l.checkIn.split(':').map(Number);
+          const sMins = sH * 60 + (sM || 0);
+          const iMins = iH * 60 + (iM || 0);
+          const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
+          const halfDayLimit = sch.halfDayLimit !== undefined ? Number(sch.halfDayLimit) : 120;
+          if (iMins > sMins + grace) displayStatus = 'Late';
+          if (iMins >= sMins + halfDayLimit) displayStatus = 'Half Day';
+        }
+      }
+      let statusClass = 'badge-on-time';
+      if (displayStatus === 'Late') statusClass = 'badge-late';
+      else if (displayStatus === 'Half Day') statusClass = 'badge-half-day';
+      else if (displayStatus === 'Absent') statusClass = 'badge-absent';
+      else if (displayStatus === 'Pending Verification') statusClass = 'badge-late';
+
+      let checkInVal = l.checkIn || '--:--';
+      let checkOutVal = l.checkOut || '--:--';
+      if (checkInVal !== '--:--' && checkOutVal !== '--:--' && checkInVal > checkOutVal) {
+        const tmp = checkInVal;
+        checkInVal = checkOutVal;
+        checkOutVal = tmp;
+      }
+
+      const distKm = parseFloat(l.distance) || 0;
+      const distM = Math.round(distKm * 1000);
+      let gpsCellHTML;
+      if (l.checkOut) {
+        gpsCellHTML = `
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--text-secondary);flex-shrink:0;"></span>
+            <span style="font-size:11px;font-weight:700;color:var(--text-secondary)">OFFLINE</span>
+          </div>`;
+      } else if (!l.location) {
+        gpsCellHTML = `<span style="font-size:11px;color:var(--text-muted)">— No GPS Data</span>`;
+      } else if (distKm <= 0.1) {
+        const distLabel = distM > 0 ? `${distM}m from worksite` : 'At worksite';
+        gpsCellHTML = `
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;box-shadow:0 0 6px rgba(16,185,129,0.7);animation:pulse 1.5s infinite"></span>
+            <span style="font-size:11px;font-weight:700;color:#10b981">IN RANGE</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distLabel}</div>`;
+      } else {
+        gpsCellHTML = `
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;box-shadow:0 0 6px rgba(239,68,68,0.6)"></span>
+            <span style="font-size:11px;font-weight:700;color:#ef4444">OUT OF RANGE</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
+      }
+      return `
+        <tr>
+          <td style="font-weight:600">${Utils.escape(u ? u.name : 'Employee')}</td>
+          <td>${sch ? Utils.escape(sch.name) : '-'}</td>
+          <td>${checkInVal}</td>
+          <td>${checkOutVal}</td>
+          <td>${gpsCellHTML}</td>
+          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(l.location || 'Office Headquarters')}</td>
+          <td><span class="badge ${statusClass}">${displayStatus}</span></td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function renderBiometricDashboardPanel() {
@@ -993,12 +1238,18 @@ export async function renderAdminDashboard() {
                 <div><strong>Serial:</strong> <span style="font-size: 11px; font-family: monospace;">${Utils.escape(dev.serial || '—')}</span></div>
               </div>
             </div>
-            <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-color, #f1f5f9); padding-top: 10px;">
-              <button class="btn btn-secondary btn-test-device" data-id="${dev.id}" style="flex: 1; font-size: 11px; padding: 5px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
-                <span>⚡</span> Test Ping
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid var(--border-color, #f1f5f9); padding-top: 10px;">
+              <button class="btn btn-secondary btn-test-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Test Ping Latency">
+                <span>⚡</span> Ping
               </button>
-              <button class="btn btn-secondary btn-sync-single-device" data-id="${dev.id}" style="flex: 1; font-size: 11px; padding: 5px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;">
-                <span>🔄</span> Sync Device
+              <button class="btn btn-secondary btn-sync-single-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Synchronize Users & Templates">
+                <span>🔄</span> Sync
+              </button>
+              <button class="btn btn-secondary btn-edit-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--primary, #c93830); border-color: rgba(201, 56, 48, 0.25);" title="Edit Device Settings">
+                <span>✏️</span> Edit
+              </button>
+              <button class="btn btn-secondary btn-delete-device" data-id="${dev.id}" data-name="${Utils.escape(dev.name)}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #ef4444; border-color: rgba(239, 68, 68, 0.25);" title="Remove Device">
+                <span>🗑️</span> Remove
               </button>
             </div>
           </div>
@@ -1035,7 +1286,7 @@ export async function renderAdminDashboard() {
           } finally {
             setTimeout(() => {
               btn.disabled = false;
-              btn.innerHTML = '<span>⚡</span> Test Ping';
+              btn.innerHTML = '<span>⚡</span> Ping';
             }, 3000);
           }
         });
@@ -1048,7 +1299,55 @@ export async function renderAdminDashboard() {
           btn.innerHTML = '<span>⏳</span> Syncing...';
           await triggerGlobalTemplateSync();
           btn.disabled = false;
-          btn.innerHTML = '<span>🔄</span> Sync Device';
+          btn.innerHTML = '<span>🔄</span> Sync';
+        });
+      });
+
+      // Bind Edit Device buttons
+      grid.querySelectorAll('.btn-edit-device').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const dev = devices.find(d => String(d.id) === String(id));
+          if (dev) {
+            showEditBiometricDeviceModal(dev);
+          }
+        });
+      });
+
+      // Bind Remove Device buttons
+      grid.querySelectorAll('.btn-delete-device').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          const devName = btn.getAttribute('data-name') || id;
+          if (!confirm(`Are you sure you want to remove the biometric device "${devName}"?`)) {
+            return;
+          }
+
+          btn.disabled = true;
+          btn.innerHTML = '<span>⏳</span> Removing...';
+
+          try {
+            const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+              if (typeof showToastNotification === 'function') {
+                showToastNotification(`🗑️ Device "${devName}" removed successfully`, 'success');
+              } else {
+                alert(`🗑️ Device "${devName}" removed successfully.`);
+              }
+              loadBiometricFleetData();
+            } else {
+              alert('⚠️ Failed to remove device: ' + (data.message || 'Unknown error'));
+              btn.disabled = false;
+              btn.innerHTML = '<span>🗑️</span> Remove';
+            }
+          } catch (err) {
+            alert('❌ Network error: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<span>🗑️</span> Remove';
+          }
         });
       });
 
@@ -1173,6 +1472,138 @@ export async function renderAdminDashboard() {
           loadBiometricFleetData();
         } else {
           alert('⚠️ Error: ' + (data.message || 'Failed to add device'));
+        }
+      } catch (err) {
+        alert('❌ Network error: ' + err.message);
+      }
+    });
+
+    document.body.appendChild(overlay);
+  }
+
+  function showEditBiometricDeviceModal(dev) {
+    document.querySelectorAll('.modal-overlay.biometric-edit-overlay').forEach(el => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay biometric-edit-overlay';
+    overlay.style.cssText = `
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+      background: rgba(10, 15, 29, 0.75); backdrop-filter: blur(10px);
+      display: flex; justify-content: center; align-items: center; z-index: 999999;
+      animation: fadeIn 0.2s ease forwards; padding: 20px; box-sizing: border-box;
+    `;
+
+    overlay.innerHTML = `
+      <div class="custom-dialog-card" style="max-width: 520px; width: 100%; background: var(--surface, #ffffff); border-radius: 16px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(--border-color, #e2e8f0);" onclick="event.stopPropagation();">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <span>✏️</span> Edit Biometric Device
+          </h3>
+          <button id="btn-close-edit-device-modal" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <form id="form-edit-biometric-device" style="display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Device Name *</label>
+            <input type="text" id="edit-device-name" required value="${Utils.escape(dev.name || '')}" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">IP Address / Hostname *</label>
+              <input type="text" id="edit-device-ip" required value="${Utils.escape(dev.ip || '')}" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Port</label>
+              <input type="number" id="edit-device-port" value="${dev.port || 4370}" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Branch Name</label>
+              <input type="text" id="edit-device-branch" value="${Utils.escape(dev.branch || '')}" placeholder="e.g. Chattarpur Branch" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Device Serial</label>
+              <input type="text" id="edit-device-serial" value="${Utils.escape(dev.serial || '')}" placeholder="e.g. ZK9823410" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Office Location</label>
+            <input type="text" id="edit-device-location" value="${Utils.escape(dev.location || '')}" placeholder="e.g. HS Group Worksite" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color, #cbd5e1); border-radius: 8px; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            <input type="checkbox" id="edit-device-enabled" ${dev.enabled !== false ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+            <label for="edit-device-enabled" style="font-size: 12px; font-weight: 600; color: var(--text-primary); cursor: pointer;">Device Enabled for Attendance Sync</label>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <button type="button" id="btn-delete-from-edit-modal" class="btn btn-secondary" style="font-size: 12px; padding: 8px 14px; color: #ef4444; border-color: rgba(239,68,68,0.3);">
+              <span>🗑️</span> Remove Device
+            </button>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" id="btn-cancel-edit-device" class="btn btn-secondary" style="font-size: 13px; padding: 8px 16px;">Cancel</button>
+              <button type="submit" class="btn btn-primary" style="font-size: 13px; padding: 8px 18px; font-weight: 600; background: linear-gradient(135deg, #c93830, #89201b); border: none; color: #fff;">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    `;
+
+    const closeOverlay = () => overlay.remove();
+    overlay.addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-close-edit-device-modal').addEventListener('click', closeOverlay);
+    overlay.querySelector('#btn-cancel-edit-device').addEventListener('click', closeOverlay);
+
+    overlay.querySelector('#btn-delete-from-edit-modal').addEventListener('click', async () => {
+      if (!confirm(`Are you sure you want to remove the biometric device "${dev.name || dev.id}"?`)) return;
+      try {
+        const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${encodeURIComponent(dev.id)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeOverlay();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`🗑️ Device "${dev.name}" removed successfully`, 'success');
+          } else {
+            alert(`🗑️ Device "${dev.name}" removed successfully.`);
+          }
+          loadBiometricFleetData();
+        } else {
+          alert('⚠️ Error: ' + (data.message || 'Failed to remove device'));
+        }
+      } catch (err) {
+        alert('❌ Network error: ' + err.message);
+      }
+    });
+
+    overlay.querySelector('#form-edit-biometric-device').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('edit-device-name').value.trim(),
+        ip: document.getElementById('edit-device-ip').value.trim(),
+        port: Number(document.getElementById('edit-device-port').value) || 4370,
+        branch: document.getElementById('edit-device-branch').value.trim() || 'Branch Office',
+        serial: document.getElementById('edit-device-serial').value.trim() || dev.serial,
+        location: document.getElementById('edit-device-location').value.trim() || 'Office Location',
+        enabled: document.getElementById('edit-device-enabled').checked
+      };
+
+      try {
+        const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${encodeURIComponent(dev.id)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeOverlay();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`✅ Device '${payload.name}' updated successfully!`, 'success');
+          } else {
+            alert(`✅ Device '${payload.name}' updated successfully!`);
+          }
+          loadBiometricFleetData();
+        } else {
+          alert('⚠️ Error: ' + (data.message || 'Failed to update device'));
         }
       } catch (err) {
         alert('❌ Network error: ' + err.message);
@@ -1435,6 +1866,42 @@ export async function renderAdminDashboard() {
 
   // Populate all views with the loaded state
   updateDashboardViews();
+
+  // Bind Live Feed Multi-Select Location Dropdown Listeners
+  const btnLiveFeedLocation = document.getElementById('live-feed-location-btn');
+  const dropdownLiveFeed = document.getElementById('live-feed-location-dropdown');
+  if (btnLiveFeedLocation && dropdownLiveFeed) {
+    btnLiveFeedLocation.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownLiveFeed.style.display = dropdownLiveFeed.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdownLiveFeed.contains(e.target) && e.target !== btnLiveFeedLocation && !btnLiveFeedLocation.contains(e.target)) {
+        dropdownLiveFeed.style.display = 'none';
+      }
+    });
+  }
+
+  const cbLiveFeedAll = document.getElementById('cb-live-feed-all-locations');
+  if (cbLiveFeedAll) {
+    cbLiveFeedAll.addEventListener('change', () => {
+      liveFeedSelectedLocations.clear();
+      liveFeedCurrentPage = 1;
+      renderLiveFeedTable();
+    });
+  }
+
+  const btnLiveFeedClear = document.getElementById('btn-live-feed-clear-locations');
+  if (btnLiveFeedClear) {
+    btnLiveFeedClear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      liveFeedSelectedLocations.clear();
+      liveFeedCurrentPage = 1;
+      renderLiveFeedTable();
+    });
+  }
+
 
   const onSseDbUpdate = () => {
     if (window.location.hash === '#admin-dashboard') {

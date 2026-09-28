@@ -87,6 +87,9 @@ function normalizeDeviceUser(user) {
       user.userId ??
       user.userid ??
       user.deviceUserId ??
+      user.biometricUserId ??
+      user.biometricId ??
+      user.employeeId ??
       ''
     ).trim(),
 
@@ -176,6 +179,10 @@ function writeLocalDatabase(state) {
       JSON.stringify(state, null, 2),
       'utf8'
     );
+    try {
+      const { invalidateLocalDbCache } = require('../controllers/attendance.controller');
+      invalidateLocalDbCache();
+    } catch (_) {}
   } catch (err) {
     console.error('⚠️ Failed to write local database:', err.message);
   }
@@ -533,17 +540,28 @@ function processLocalPunch(
     state.processedPunchIds = [];
   }
 
-  const biometricUser =
+  let biometricUser =
     deviceUserMap.get(
       punch.biometricUserId
     );
 
   if (!biometricUser) {
-    result.unmatched++;
-    result.unmatchedUsers.push(
-      punch.biometricUserId
-    );
-    return;
+    const existingEmp = findLocalEmployee(users, punch.biometricUserId);
+    if (existingEmp) {
+      biometricUser = {
+        userId: String(punch.biometricUserId),
+        name: existingEmp.name,
+        role: existingEmp.role || '0'
+      };
+      deviceUserMap.set(String(punch.biometricUserId), biometricUser);
+    } else {
+      biometricUser = {
+        userId: String(punch.biometricUserId),
+        name: `Employee ${punch.biometricUserId}`,
+        role: '0'
+      };
+      deviceUserMap.set(String(punch.biometricUserId), biometricUser);
+    }
   }
 
   /*
@@ -1014,14 +1032,28 @@ async function syncMongoDatabase(
   for (const punch of sortedPunches) {
     result.processed++;
     try {
-      const biometricUser =
+      let biometricUser =
         deviceUserMap.get(
           punch.biometricUserId
         );
 
       if (!biometricUser) {
-        result.unmatched++;
-        continue;
+        const existingEmp = await findMongoEmployee(punch.biometricUserId);
+        if (existingEmp) {
+          biometricUser = {
+            userId: String(punch.biometricUserId),
+            name: existingEmp.name,
+            role: existingEmp.role || '0'
+          };
+          deviceUserMap.set(String(punch.biometricUserId), biometricUser);
+        } else {
+          biometricUser = {
+            userId: String(punch.biometricUserId),
+            name: `Employee ${punch.biometricUserId}`,
+            role: '0'
+          };
+          deviceUserMap.set(String(punch.biometricUserId), biometricUser);
+        }
       }
 
       if (
@@ -1472,8 +1504,59 @@ async function syncBiometricAttendance(options = {}) {
   }
 }
 
+/**
+ * Direct ingestion helper for ADMS / Cloud Server push protocol.
+ * Accepts normalized punch objects and user objects, commits them to MongoDB and/or seed.json,
+ * and notifies connected dashboard clients via SSE.
+ */
+async function ingestPunchesAndUsers(users = [], punches = [], deviceMeta = {}) {
+  const online = await connectMongoose();
+  const useLocal = getUseLocalFileDB();
+
+  let result = {
+    processed: 0,
+    created: 0,
+    updated: 0,
+    duplicates: 0,
+    unmatched: 0,
+    ignored: 0,
+    unmatchedUsers: []
+  };
+
+  if (online && !useLocal) {
+    result = await syncMongoDatabase(users, punches);
+    try {
+      await syncLocalDatabase(users, punches);
+    } catch (localMirrorErr) {
+      console.warn('⚠️ seed.json local mirror notice:', localMirrorErr.message);
+    }
+  } else {
+    result = await syncLocalDatabase(users, punches);
+  }
+
+  if (result && (result.created > 0 || result.updated > 0)) {
+    broadcastSSEEvent(
+      'db_updated',
+      {
+        type: 'biometric_sync',
+        timestamp: Date.now(),
+        devices: deviceMeta ? [deviceMeta] : [],
+        result
+      }
+    );
+  }
+
+  return result;
+}
+
 
 module.exports = {
   syncBiometricAttendance,
-  computeAttendanceStatus
+  computeAttendanceStatus,
+  ingestPunchesAndUsers,
+  syncLocalDatabase,
+  syncMongoDatabase,
+  normalizePunch,
+  createPunchId,
+  getLocalDateTimeParts
 };

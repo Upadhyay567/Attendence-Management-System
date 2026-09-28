@@ -52,7 +52,7 @@ const defaultUsers = [
     "username": "admin",
     "employeeId": "HR100",
     "name": "HR Admin Manager",
-    "password": "Deepak@123",
+    "password": "Hs@20267",
     "role": "hr",
     "scheduleId": "sch_1",
     "baseSalary": 95000,

@@ -13,6 +13,7 @@ let adminAttendancesSearchQuery = '';
 let adminAttendancesSelectedIds = new Set();
 let adminAttendancesSelectedMonth = new Date().getMonth();
 let adminAttendancesSelectedYear = new Date().getFullYear();
+let adminAttendancesLocationFilter = '';
 
 export function renderAdminAttendances() {
   const main = document.getElementById('main-view');
@@ -54,6 +55,13 @@ export function renderAdminAttendances() {
               </svg>
             </button>
             <input type="month" id="admin-att-month-picker" value="${adminAttendancesSelectedYear}-${String(adminAttendancesSelectedMonth + 1).padStart(2, '0')}" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+          </div>
+
+          <!-- Location Filter Dropdown -->
+          <div style="position: relative; flex-shrink: 0;">
+            <select id="admin-att-location-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 150px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
+              <option value="">All Locations</option>
+            </select>
           </div>
 
           <!-- Actions Dropdown Button -->
@@ -218,6 +226,16 @@ export function renderAdminAttendances() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       adminAttendancesSearchQuery = e.target.value.trim();
+      adminAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
+
+  // Location Filter Dropdown Event
+  const locSelectInput = document.getElementById('admin-att-location-filter');
+  if (locSelectInput) {
+    locSelectInput.addEventListener('change', (e) => {
+      adminAttendancesLocationFilter = e.target.value.trim();
       adminAttendancesCurrentPage = 1;
       updateTable();
     });
@@ -426,6 +444,7 @@ export function renderAdminAttendances() {
       const empId = emp ? (emp.employeeId || emp.id) : '';
       const shift = DB.getSchedule(log.shiftId);
       const shiftName = shift ? shift.name : 'Regular Shift';
+      const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || 'Office Headquarters';
       
       let atWorkStr = '--:--';
       let atWorkMins = 0;
@@ -444,6 +463,7 @@ export function renderAdminAttendances() {
 
       return {
         ...log,
+        location,
         emp,
         employeeName: empName,
         employeeId: empId,
@@ -453,14 +473,44 @@ export function renderAdminAttendances() {
       };
     });
 
-    // 2. Filter by search query
+    // Populate Location Dropdown options dynamically for current month
+    const locFilterSelect = document.getElementById('admin-att-location-filter');
+    if (locFilterSelect) {
+      const distinctLocs = Array.from(new Set([
+        ...mappedLogs.map(l => (l.location || '').trim()).filter(Boolean),
+        ...Object.keys(DB.getOfficeCoordinates() || {})
+      ])).sort((a, b) => a.localeCompare(b));
+
+      const currentVal = adminAttendancesLocationFilter;
+      const opts = `<option value="">All Locations (${mappedLogs.length})</option>` +
+        distinctLocs.map(loc => {
+          const count = mappedLogs.filter(l => (l.location || '').toLowerCase().trim() === loc.toLowerCase().trim()).length;
+          return `<option value="${Utils.escape(loc)}" ${currentVal === loc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
+        }).join('');
+
+      if (locFilterSelect.innerHTML !== opts) {
+        locFilterSelect.innerHTML = opts;
+      }
+    }
+
+    // 2. Filter by location
     let filtered = mappedLogs;
+    if (adminAttendancesLocationFilter) {
+      const targetLoc = adminAttendancesLocationFilter.toLowerCase().trim();
+      filtered = filtered.filter(l => {
+        const logLoc = (l.location || '').toLowerCase().trim();
+        return logLoc === targetLoc;
+      });
+    }
+
+    // 3. Filter by search query
     if (adminAttendancesSearchQuery) {
       const q = adminAttendancesSearchQuery.toLowerCase();
-      filtered = mappedLogs.filter(l => {
+      filtered = filtered.filter(l => {
         return l.employeeName.toLowerCase().includes(q) ||
                l.employeeId.toLowerCase().includes(q) ||
                l.date.toLowerCase().includes(q) ||
+               (l.location && l.location.toLowerCase().includes(q)) ||
                l.shiftName.toLowerCase().includes(q) ||
                (l.checkIn && l.checkIn.includes(q)) ||
                (l.checkOut && l.checkOut.includes(q)) ||
@@ -594,7 +644,12 @@ export function renderAdminAttendances() {
               ${checkOutDisplay}
               ${isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
             </td>
-            <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${Utils.escape(log.shiftName)}</td>
+            <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
+              <div style="font-weight: 500;">${Utils.escape(log.shiftName)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+                <span style="opacity: 0.85;">📍</span> <span>${Utils.escape(log.location)}</span>
+              </div>
+            </td>
             <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.atWorkStr}</td>
             <td style="padding: 12px 14px; font-size: 13px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
               <span class="badge ${badgeClass}">${s}</span>
@@ -666,54 +721,52 @@ export function renderAdminAttendances() {
   // Pagination navigation listeners
   const btnFirst = document.getElementById('btn-att-first-page');
   if (btnFirst) {
-    btnFirst.addEventListener('click', () => {
+    btnFirst.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (adminAttendancesCurrentPage !== 1) {
         adminAttendancesCurrentPage = 1;
         updateTable();
       }
-    });
+    };
   }
 
   const btnPrev = document.getElementById('btn-att-prev-page');
   if (btnPrev) {
-    btnPrev.addEventListener('click', () => {
+    btnPrev.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (adminAttendancesCurrentPage > 1) {
         adminAttendancesCurrentPage--;
         updateTable();
       }
-    });
+    };
   }
 
   const btnNext = document.getElementById('btn-att-next-page');
   if (btnNext) {
-    btnNext.addEventListener('click', () => {
-      const allUsers = DB.getUsers();
-      const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
-      const userMap = new Map(activeUsers.map(u => [u.id, u]));
-      const rawLogs = DB.getLogs().filter(log => userMap.has(log.userId));
-      const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
-
+    btnNext.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const totalPages = parseInt(document.getElementById('span-att-total-pages')?.textContent, 10) || 1;
       if (adminAttendancesCurrentPage < totalPages) {
         adminAttendancesCurrentPage++;
         updateTable();
       }
-    });
+    };
   }
 
   const btnLast = document.getElementById('btn-att-last-page');
   if (btnLast) {
-    btnLast.addEventListener('click', () => {
-      const allUsers = DB.getUsers();
-      const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
-      const userMap = new Map(activeUsers.map(u => [u.id, u]));
-      const rawLogs = DB.getLogs().filter(log => userMap.has(log.userId));
-      const totalPages = Math.ceil(rawLogs.length / adminAttendancesRowsPerPage) || 1;
-
+    btnLast.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const totalPages = parseInt(document.getElementById('span-att-total-pages')?.textContent, 10) || 1;
       if (adminAttendancesCurrentPage !== totalPages) {
         adminAttendancesCurrentPage = totalPages;
         updateTable();
       }
-    });
+    };
   }
 
   const inputCurrentPage = document.getElementById('input-att-current-page');
@@ -934,46 +987,121 @@ function showEditAttendanceModal(logId) {
   });
 }
 
-// Helper to export Attendance records to CSV/Excel
+// Helper to export Attendance records to CSV/Excel matching active view filters
 function exportEmployeeAttendancesCSV(specificLogIds = null) {
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
   const allUsers = DB.getUsers();
   const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
   const userMap = new Map(activeUsers.map(u => [u.id, u]));
 
-  let logs = DB.getLogs().filter(log => userMap.has(log.userId));
-  if (specificLogIds && specificLogIds.length > 0) {
-    const idSet = new Set(specificLogIds);
-    logs = logs.filter(l => idSet.has(l.id));
-  }
-
-  const filename = `Attendances_${new Date().toISOString().split('T')[0]}.xls`;
-  const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
-  const rows = logs.map(l => {
-    const emp = userMap.get(l.userId);
-    const shift = DB.getSchedule(l.shiftId);
-    const atWork = Utils.calculateDuration(l.checkIn, l.checkOut);
-    
-    // Format check-in/out times to show seconds, matching dashboard UI
-    let checkInDisplay = l.checkIn || '--';
-    if (checkInDisplay !== '--' && checkInDisplay.length === 5) checkInDisplay += ':00';
-    
-    let checkOutDisplay = l.checkOut || '--';
-    if (checkOutDisplay !== '--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
-
-    return [
-      emp ? emp.name : 'Unknown',
-      emp ? (emp.employeeId || emp.id) : '',
-      l.date,
-      checkInDisplay,
-      checkOutDisplay,
-      shift ? shift.name : 'Regular Shift',
-      atWork === '-' ? '--' : atWork,
-      l.status || 'On Time',
-      l.location || 'N/A'
-    ];
+  let logs = DB.getLogs().filter(log => {
+    if (!userMap.has(log.userId)) return false;
+    if (log.date) {
+      const [y, m] = log.date.split('-');
+      const logYear = parseInt(y, 10);
+      const logMonth = parseInt(m, 10) - 1;
+      return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
+    }
+    return false;
   });
 
+  // Map with rich attributes
+  let mappedLogs = logs.map(log => {
+    const emp = userMap.get(log.userId);
+    const empName = emp ? emp.name : 'Unknown User';
+    const empId = emp ? (emp.employeeId || emp.id) : '';
+    const shift = DB.getSchedule(log.shiftId);
+    const shiftName = shift ? shift.name : 'Regular Shift';
+    const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || 'Office Headquarters';
+    
+    let atWorkStr = '--';
+    if (log.checkIn && log.checkOut) {
+      const atWork = Utils.calculateDuration(log.checkIn, log.checkOut);
+      atWorkStr = atWork === '-' ? '--' : atWork;
+    } else if (log.checkIn && !log.checkOut) {
+      atWorkStr = 'In Session';
+    }
+
+    let checkInDisplay = log.checkIn || '--';
+    if (checkInDisplay !== '--' && checkInDisplay.length === 5) checkInDisplay += ':00';
+    
+    let checkOutDisplay = log.checkOut || '--';
+    if (checkOutDisplay !== '--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
+
+    return {
+      ...log,
+      emp,
+      employeeName: empName,
+      employeeId: empId,
+      shiftName,
+      location,
+      atWorkStr,
+      checkInDisplay,
+      checkOutDisplay
+    };
+  });
+
+  // Apply location filter if set
+  if (adminAttendancesLocationFilter) {
+    const targetLoc = adminAttendancesLocationFilter.toLowerCase().trim();
+    mappedLogs = mappedLogs.filter(l => (l.location || '').toLowerCase().trim() === targetLoc);
+  }
+
+  // Apply search query filter if set
+  if (adminAttendancesSearchQuery) {
+    const q = adminAttendancesSearchQuery.toLowerCase().trim();
+    mappedLogs = mappedLogs.filter(l => {
+      return (l.employeeName || '').toLowerCase().includes(q) ||
+             (l.employeeId || '').toLowerCase().includes(q) ||
+             (l.date || '').toLowerCase().includes(q) ||
+             (l.location || '').toLowerCase().includes(q) ||
+             (l.shiftName || '').toLowerCase().includes(q) ||
+             (l.checkIn || '').includes(q) ||
+             (l.checkOut || '').includes(q) ||
+             (l.status || '').toLowerCase().includes(q);
+    });
+  }
+
+  // If specific checkbox IDs selected, narrow down to those
+  if (specificLogIds && specificLogIds.length > 0) {
+    const idSet = new Set(specificLogIds);
+    mappedLogs = mappedLogs.filter(l => idSet.has(l.id));
+  }
+
+  if (mappedLogs.length === 0) {
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('⚠️ No attendance records to export for current filter criteria.', 'warning');
+    } else {
+      alert('No attendance records to export for current filter criteria.');
+    }
+    return;
+  }
+
+  const locSlug = adminAttendancesLocationFilter ? `_${adminAttendancesLocationFilter.replace(/\s+/g, '_')}` : '';
+  const monthName = monthNames[adminAttendancesSelectedMonth] || 'All';
+  const filename = `Attendances_${monthName}_${adminAttendancesSelectedYear}${locSlug}.xlsx`;
+  const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
+  
+  const rows = mappedLogs.map(l => [
+    l.employeeName,
+    l.employeeId,
+    l.date || '',
+    l.checkInDisplay,
+    l.checkOutDisplay,
+    l.shiftName,
+    l.atWorkStr,
+    l.status || 'On Time',
+    l.location
+  ]);
+
   Utils.exportToExcel(filename, headers, rows);
+
+  if (typeof showToastNotification === 'function') {
+    showToastNotification(`📥 Exported ${rows.length} attendance records (${monthName} ${adminAttendancesSelectedYear}) successfully.`, 'success');
+  }
 }
 
 // ==========================================

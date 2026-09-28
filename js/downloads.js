@@ -84,11 +84,17 @@ export function loadSheetJS(callback, onError) {
     return;
   }
   const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  script.src = 'js/libs/xlsx.full.min.js';
   script.onload = callback;
   script.onerror = () => {
-    if (onError) onError();
-    else alert('Failed to load Excel library from CDN. Please check your internet connection.');
+    const cdnScript = document.createElement('script');
+    cdnScript.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    cdnScript.onload = callback;
+    cdnScript.onerror = () => {
+      if (onError) onError();
+      else alert('Failed to load Excel library. Please check your internet connection.');
+    };
+    document.head.appendChild(cdnScript);
   };
   document.head.appendChild(script);
 }

@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=66';
-import { renderAdminSchedules } from './views/schedulesView.js?v=66';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=66';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=66';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=66';
-import { renderAdminAttendances } from './views/attendancesView.js?v=66';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=66';
-import { renderAdminFinance } from './views/financeView.js?v=66';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=66';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=66';
-import { drawRadarMap } from './components/geofenceMap.js?v=66';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=66';
+import { renderLoginView } from './views/loginView.js?v=71';
+import { renderAdminSchedules } from './views/schedulesView.js?v=71';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=71';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=71';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=71';
+import { renderAdminAttendances } from './views/attendancesView.js?v=71';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=71';
+import { renderAdminFinance } from './views/financeView.js?v=71';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=71';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=71';
+import { drawRadarMap } from './components/geofenceMap.js?v=71';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=71';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=66';
-import { Auth } from './auth.js?v=66';
-import { Utils, html } from './utils.js?v=66';
-import { triggerBirthdayCelebration } from './celebration.js?v=66';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=66';
+import { DB } from './core/db.js?v=71';
+import { Auth } from './auth.js?v=71';
+import { Utils, html } from './utils.js?v=71';
+import { triggerBirthdayCelebration } from './celebration.js?v=71';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=71';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -6142,8 +6142,26 @@ function renderAdminReports() {
       </div>
     </div>
     <div class="content-body">
+      <!-- Search bar placed above the "All Department" button/filter -->
+      <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: flex-start;">
+        <div style="position: relative; width: 100%; max-width: 380px;">
+          <input type="text" id="report-search-input" class="form-input" placeholder="Search payroll by Employee Name or ID..." style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; width: 100%; height: 36px; padding: 0 12px 0 36px; font-size: 13.5px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card, #ffffff); color: var(--text-primary); box-sizing: border-box;">
+          <svg style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: var(--text-muted); fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+      </div>
       <div class="card-panel report-filter-bar" style="margin-bottom:24px">
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select class="form-input" id="report-dept-select" style="min-width:180px;padding:8px;font-size:13px">
+            <option value="all">Department: All Departments</option>
+            <option value="Human Resources">Department: Human Resources</option>
+            <option value="Engineering">Department: Engineering</option>
+            <option value="Operations">Department: Operations</option>
+            <option value="Sales">Department: Sales & Marketing</option>
+            <option value="Finance">Department: Finance</option>
+          </select>
           <label class="form-label" style="margin:0" for="report-month">Period:</label>
           <select class="form-input" id="report-month" style="width:130px;padding:8px">
             ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, idx) => `<option value="${idx}" ${idx === selectedMonth ? 'selected' : ''}>${m}</option>`).join('')}
@@ -6177,6 +6195,10 @@ function renderAdminReports() {
     </div>
   `;
   const refreshReports = () => compileReports(selectedMonth, selectedYear);
+  const searchInputEl = document.getElementById('report-search-input');
+  if (searchInputEl) searchInputEl.addEventListener('input', refreshReports);
+  const deptSelectEl = document.getElementById('report-dept-select');
+  if (deptSelectEl) deptSelectEl.addEventListener('change', refreshReports);
   document.getElementById('report-month').addEventListener('change', (e) => { selectedMonth = Number(e.target.value); refreshReports(); });
   document.getElementById('report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshReports(); });
   document.getElementById('btn-export-csv').addEventListener('click', () => exportReportCSV(selectedMonth, selectedYear));
@@ -6195,12 +6217,27 @@ function renderAdminReports() {
 
 function compileReports(month, year) {
   const loggedInUser = Auth.getCurrentUser();
+  const searchInput = document.getElementById('report-search-input');
+  const deptSelect = document.getElementById('report-dept-select');
+  const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const dVal = deptSelect ? deptSelect.value : 'all';
+
   const users = DB.getUsers().filter(u => {
     if (u.role !== 'employee') return false;
     if (loggedInUser.role === 'manager') {
-      return u.managerId === loggedInUser.id;
+      if (u.managerId !== loggedInUser.id) return false;
     } else if (loggedInUser.role === 'hr') {
-      return u.assignedById === loggedInUser.id;
+      if (u.assignedById !== loggedInUser.id && loggedInUser.username !== 'admin') return false;
+    }
+    if (dVal !== 'all') {
+      const uDept = (u.department || '').toLowerCase();
+      if (!uDept.includes(dVal.toLowerCase())) return false;
+    }
+    if (q) {
+      const name = (u.name || '').toLowerCase();
+      const empId = (u.employeeId || '').toLowerCase();
+      const uid = (u.id || '').toLowerCase();
+      if (!name.includes(q) && !empId.includes(q) && !uid.includes(q)) return false;
     }
     return true;
   });
