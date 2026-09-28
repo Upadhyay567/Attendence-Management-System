@@ -26910,7 +26910,7 @@
       "date": "2026-09-28",
       "shiftId": "sch_q8jji9v",
       "checkIn": "09:28:38",
-      "checkOut": "15:39:49",
+      "checkOut": "17:58:24",
       "checkInPunchId": "CEZF192660044_703_2026-09-28T03:58:38.000Z",
       "biometricPunchId": "CEZF192660044_703_2026-09-28T03:58:38.000Z",
       "allPunchIds": [
@@ -26926,13 +26926,14 @@
         "GED7241901313_703_2026-09-28T07:44:46.000Z",
         "GED7241901313_703_2026-09-28T07:53:24.000Z",
         "GED7241901313_703_2026-09-28T09:56:29.000Z",
-        "GED7241901313_703_2026-09-28T10:09:49.000Z"
+        "GED7241901313_703_2026-09-28T10:09:49.000Z",
+        "GED7241901313_703_2026-09-28T12:28:24.000Z"
       ],
       "status": "On Time",
       "biometricUsed": "PITAM PURA",
       "biometricDeviceId": "GED7241900691",
       "biometricUserId": "703",
-      "lastBiometricPunchAt": "2026-09-28T10:09:49.000Z",
+      "lastBiometricPunchAt": "2026-09-28T12:28:24.000Z",
       "location": "Delhi Head Office",
       "deviationFlag": false,
       "justification": "",
@@ -26942,8 +26943,8 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-09-28T04:20:16.179Z",
-      "updatedAt": "2026-09-28T10:12:46.665Z",
-      "checkOutPunchId": "GED7241901313_703_2026-09-28T10:09:49.000Z"
+      "updatedAt": "2026-09-28T12:31:54.567Z",
+      "checkOutPunchId": "GED7241901313_703_2026-09-28T12:28:24.000Z"
     },
     {
       "id": "BIO_usr_bio_1246_2026-09-28_sch_q8jji9v",
@@ -226658,8 +226659,8 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-09-28T11:42:20.950Z",
-    "lastLogCount": 3787
+    "lastSyncAt": "2026-09-28T12:31:54.573Z",
+    "lastLogCount": 3788
   },
   "activityLogs": [
     {
@@ -484925,7 +484926,8 @@
     "GED7241901313_1287_2026-09-28T09:30:29.000Z",
     "GED7241901313_703_2026-09-28T09:56:29.000Z",
     "GED7241901313_703_2026-09-28T10:09:49.000Z",
-    "GED7241901313_1063_2026-09-28T11:40:47.000Z"
+    "GED7241901313_1063_2026-09-28T11:40:47.000Z",
+    "GED7241901313_703_2026-09-28T12:28:24.000Z"
   ],
   "biometricDevices": [
     {
