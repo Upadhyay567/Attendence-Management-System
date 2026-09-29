@@ -21,6 +21,7 @@ const getRegisteredDevices = (...args) => biometricMultiDevice.getRegisteredDevi
 const withDeviceConfig = (...args) => biometricMultiDevice.withDeviceConfig(...args);
 const replicateTemplatesAcrossDevices = (...args) => biometricMultiDevice.replicateTemplatesAcrossDevices(...args);
 const getVaultUsers = (...args) => biometricMultiDevice.getVaultUsers(...args);
+const isPortReachable = (...args) => biometricMultiDevice.isPortReachable(...args);
 
 const {
   broadcastSSEEvent
@@ -36,6 +37,7 @@ const DEVICE_NAME =
   process.env.BIOMETRIC_DEVICE_NAME || 'ZKTeco K40 Pro';
 
 let syncRunning = false;
+let syncStartedAt = 0;
 
 
 /* =========================================================
@@ -1290,16 +1292,22 @@ async function syncMongoDatabase(
 async function syncBiometricAttendance(options = {}) {
   const isManual = !!options.manual;
 
+  const now = Date.now();
   if (syncRunning) {
-    return {
-      success: false,
-      skipped: true,
-      reason:
-        'Biometric synchronization already running.'
-    };
+    if (now - syncStartedAt > 45000) {
+      console.warn('⚠️ Force clearing stale biometric sync lock (>45s)');
+      syncRunning = false;
+    } else {
+      return {
+        success: false,
+        skipped: true,
+        reason: 'Biometric synchronization already running.'
+      };
+    }
   }
 
   syncRunning = true;
+  syncStartedAt = Date.now();
 
   try {
     let devices = [];
@@ -1329,8 +1337,31 @@ async function syncBiometricAttendance(options = {}) {
       console.log(`🔄 Starting multi-device biometric synchronization across ${devices.length} registered device(s)...`);
     }
 
+    // Instant parallel reachability probe (400ms) across all devices
+    // Prevents offline machines or different subnets from freezing the sync loop
+    const reachabilityResults = await Promise.all(
+      devices.map(async (dev) => ({
+        id: dev.id,
+        reachable: dev.enabled ? await isPortReachable(dev.ip, dev.port, 400) : false
+      }))
+    );
+    const reachableMap = new Map(reachabilityResults.map(r => [r.id, r.reachable]));
+
     for (const dev of devices) {
       if (!dev.enabled) continue;
+
+      const isReachable = reachableMap.get(dev.id);
+      if (!isReachable) {
+        deviceStatuses.push({
+          id: dev.id,
+          name: dev.name,
+          ip: dev.ip,
+          online: false,
+          usersCount: 0,
+          logsCount: 0
+        });
+        continue;
+      }
 
       let devUsers = [];
       let devLogs = [];

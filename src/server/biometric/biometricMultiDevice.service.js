@@ -190,9 +190,17 @@ async function withDeviceConfig(deviceConfig, callback) {
   const currentQueue = getDeviceQueue(queueKey);
 
   const execute = async () => {
+    // 0. Instant reachability probe (400ms) to bypass offline branch machines immediately
+    const reachable = await isPortReachable(deviceConfig.ip, deviceConfig.port, 400);
+    if (!reachable) {
+      const err = new Error(`Device ${deviceConfig.name || deviceConfig.ip} (${deviceConfig.ip}:${deviceConfig.port}) is unreachable`);
+      err.isOffline = true;
+      throw err;
+    }
+
     // 1. Try Python bridge first for modern firmware support
     try {
-      const bridgeData = await runPythonBridge('snapshot', deviceConfig.ip, deviceConfig.port, deviceConfig.commKey || deviceConfig.commCode || 0, 5);
+      const bridgeData = await runPythonBridge('snapshot', deviceConfig.ip, deviceConfig.port, deviceConfig.commKey || deviceConfig.commCode || 0, 12);
       const zkBridge = {
         connectionType: 'tcp',
         async getInfo() {
@@ -566,12 +574,21 @@ async function replicateTemplatesAcrossDevices(options = {}) {
     }
   });
 
-  // Check connectivity and read users from all online devices
+  // Check connectivity in parallel (400ms) across all devices
+  const reachResults = await Promise.all(
+    updatedDevices.map(async dev => ({
+      id: dev.id,
+      reachable: dev.enabled ? await isPortReachable(dev.ip, dev.port, 400) : false
+    }))
+  );
+  const reachMap = new Map(reachResults.map(r => [r.id, r.reachable]));
+
+  // Read users from all online devices
   for (let i = 0; i < updatedDevices.length; i++) {
     const dev = updatedDevices[i];
     if (!dev.enabled) continue;
 
-    const reachable = await isPortReachable(dev.ip, dev.port, 600);
+    const reachable = reachMap.get(dev.id);
     dev.status = reachable ? 'Online' : 'Offline';
     dev.lastSyncAt = new Date().toISOString();
 

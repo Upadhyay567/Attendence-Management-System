@@ -393,9 +393,18 @@ router.get('/biometric/dashboard', async (req, res) => {
           return false;
         });
 
+        const toIsoDateTime = (dStr, tStr) => {
+          if (!tStr) return null;
+          const d = dStr || today;
+          const parts = String(tStr).trim().split(':');
+          if (parts.length === 2) return `${d}T${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:00.000Z`;
+          if (parts.length >= 3) return `${d}T${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}:${parts[2].padStart(2, '0')}.000Z`;
+          return `${d}T${tStr}.000Z`;
+        };
+
         const todayLog = userLogs.find(l => l.date === today);
         const latestPunchTime = userLogs.length > 0 
-          ? (userLogs[0].lastBiometricPunchAt || userLogs[0].createdAt || (userLogs[0].date && userLogs[0].checkIn ? `${userLogs[0].date}T${userLogs[0].checkIn}:00.000Z` : null))
+          ? (userLogs[0].lastBiometricPunchAt || userLogs[0].createdAt || (userLogs[0].date && userLogs[0].checkIn ? toIsoDateTime(userLogs[0].date, userLogs[0].checkIn) : null))
           : null;
 
         return {
@@ -411,8 +420,8 @@ router.get('/biometric/dashboard', async (req, res) => {
           totalPunches: userLogs.length,
           latestPunch: latestPunchTime,
           latestPunchIp: DEVICE.ip,
-          todayCheckIn: todayLog && todayLog.checkIn ? `${today}T${todayLog.checkIn}:00.000Z` : null,
-          todayCheckOut: todayLog && todayLog.checkOut ? `${today}T${todayLog.checkOut}:00.000Z` : null,
+          todayCheckIn: todayLog && todayLog.checkIn ? toIsoDateTime(today, todayLog.checkIn) : null,
+          todayCheckOut: todayLog && todayLog.checkOut ? toIsoDateTime(today, todayLog.checkOut) : null,
           todayAttendance: todayLog ? (todayLog.status || 'On Time') : 'No Punch',
           punches: userLogs
         };

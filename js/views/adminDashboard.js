@@ -1079,7 +1079,7 @@ export async function renderAdminDashboard() {
       }
       return `
         <tr>
-          <td style="font-weight:600">${Utils.escape(u ? u.name : 'Employee')}</td>
+          <td style="font-weight:600">${Utils.escape(u ? u.name : (l.employeeName || l.userName || 'Employee'))}</td>
           <td>${sch ? Utils.escape(sch.name) : '-'}</td>
           <td>${checkInVal}</td>
           <td>${checkOutVal}</td>
@@ -1789,16 +1789,21 @@ export async function renderAdminDashboard() {
         else if (att === 'Absent') statusBadge = '<span class="badge badge-absent">Absent</span>';
         else if (att !== 'No Punch') statusBadge = `<span class="badge badge-on-time">${Utils.escape(att)}</span>`;
 
-        const checkInStr = emp.todayCheckIn 
-          ? new Date(emp.todayCheckIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 
-          : (emp.checkIn || '—');
+        const formatPunchTime = (val) => {
+          if (!val || val === '—' || val === '--:--' || val === '--') return '—';
+          const trimmed = String(val).trim();
+          if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) return trimmed;
+          const d = new Date(trimmed);
+          if (!isNaN(d.getTime())) {
+            return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+          }
+          return trimmed;
+        };
 
-        const checkOutStr = emp.todayCheckOut 
-          ? new Date(emp.todayCheckOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) 
-          : (emp.checkOut || '—');
-
+        const checkInStr = formatPunchTime(emp.todayCheckIn || emp.checkIn);
+        const checkOutStr = formatPunchTime(emp.todayCheckOut || emp.checkOut);
         const latestPunchStr = emp.latestPunch 
-          ? new Date(emp.latestPunch).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true }) 
+          ? (!isNaN(new Date(emp.latestPunch).getTime()) ? new Date(emp.latestPunch).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true }) : String(emp.latestPunch))
           : '—';
 
         const isPresent = att === 'On Time' || att === 'Late';

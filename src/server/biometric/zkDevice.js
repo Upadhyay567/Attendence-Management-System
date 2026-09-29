@@ -280,11 +280,11 @@ async function createDeviceConnection() {
 // and exact TCP framing that pyzk handles with 100% reliability.
 // =====================================================
 
-function runPythonBridge(cmd = 'snapshot', ip = DEVICE.ip, port = DEVICE.port, commCode = DEVICE.commCode, timeoutSec = 5) {
+function runPythonBridge(cmd = 'snapshot', ip = DEVICE.ip, port = DEVICE.port, commCode = DEVICE.commCode, timeoutSec = 12) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, 'zk_bridge.py');
     const args = [cmd, String(ip), String(port), String(commCode), String(timeoutSec)];
-    execFile('python', [scriptPath, ...args], { timeout: (timeoutSec + 5) * 1000 }, (error, stdout, stderr) => {
+    execFile('python', [scriptPath, ...args], { timeout: (timeoutSec + 8) * 1000 }, (error, stdout, stderr) => {
       if (error) {
         const err = new Error(stderr || error.message || 'Python bridge execution error');
         err.isOffline = true;
@@ -319,7 +319,7 @@ async function withDevice(callback) {
   const execute = async () => {
     // 1. Try Python bridge first for modern K40 firmware support
     try {
-      const bridgeData = await runPythonBridge('snapshot', DEVICE.ip, DEVICE.port, DEVICE.commCode, 5);
+      const bridgeData = await runPythonBridge('snapshot', DEVICE.ip, DEVICE.port, DEVICE.commCode, 12);
       if (lastLoggedOffline) {
         console.log(`✅ Biometric hardware connected: ${bridgeData.deviceName || DEVICE.name} @ ${DEVICE.ip}:${DEVICE.port} (${bridgeData.firmware || 'TCP'})`);
         lastLoggedOffline = false;
