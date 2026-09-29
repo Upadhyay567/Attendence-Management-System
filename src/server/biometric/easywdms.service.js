@@ -18,8 +18,51 @@ const {
 
 const { broadcastSSEEvent } = require('../routes/events.routes');
 
-const WDMS_HOST = process.env.WDMS_HOST || '203.115.110.93';
+let activeHost = process.env.WDMS_HOST || '203.115.110.93';
 const WDMS_PORT = parseInt(process.env.WDMS_PORT || '8081', 10);
+
+function getCandidateHosts() {
+  const hosts = [];
+  if (process.env.WDMS_HOST) hosts.push(process.env.WDMS_HOST);
+  if (process.env.WDMS_HOST_ALT) hosts.push(process.env.WDMS_HOST_ALT);
+  hosts.push('203.115.110.93');
+  hosts.push('203.115.101.226');
+  return [...new Set(hosts.filter(Boolean))];
+}
+
+function getActiveHost() {
+  return activeHost;
+}
+
+// Canonical hardware terminal mapping across all branches
+function resolveDeviceLocation(sn, alias) {
+  const cleanSn = String(sn || '').trim().toUpperCase();
+  const cleanAlias = String(alias || '').trim();
+
+  const map = {
+    'GED7241901313': { name: 'SURYA OMAXE', location: 'Delhi Head Office', branch: 'Delhi Head Office' },
+    'CJOU232660306': { name: 'Ashok Vihar_Extra', location: 'Noida sector 61', branch: 'Noida Branch' },
+    'GED7254501292': { name: 'Raagwaas Chattarpur', location: 'Chattarpur Office', branch: 'Chattarpur Branch' },
+    '0056120200363': { name: 'WH-1340-close', location: 'WH-1340-close', branch: 'WH-1340-close' },
+    'CEZF192660043': { name: 'Siyonee', location: 'Siyonee', branch: 'Siyonee' },
+    'GED7242602598': { name: 'RETAIL', location: 'RETAIL', branch: 'RETAIL' },
+    'GED7241900691': { name: 'PITAM PURA', location: 'PITAM PURA', branch: 'PITAM PURA' },
+    'CGKK230961662': { name: 'ASHOK VIHAR', location: 'ASHOK VIHAR', branch: 'ASHOK VIHAR' },
+    'CJOU232660338': { name: 'HS Office', location: 'HS Office', branch: 'HS Office' },
+    'CJOU232660943': { name: 'HS Office', location: 'HS Office', branch: 'HS Office' },
+    'GED7253700398': { name: 'WH-1340', location: 'WH-1340', branch: 'WH-1340' },
+    'GED7261303265': { name: 'Surya Gurugram', location: 'Surya Gurugram', branch: 'Surya Gurugram' },
+    'CEZF192660067': { name: 'PUNJABI BAGH', location: 'PUNJABI BAGH', branch: 'PUNJABI BAGH' },
+    'CEZF192660044': { name: 'GT KARNAL SITE', location: 'GT KARNAL SITE', branch: 'GT KARNAL SITE' }
+  };
+
+  if (map[cleanSn]) return map[cleanSn];
+  return {
+    name: cleanAlias || `ZKTeco ${cleanSn}`,
+    location: cleanAlias || 'Branch Office',
+    branch: cleanAlias || 'Branch Office'
+  };
+}
 
 // =====================================================
 // ZKTECO EASY WDMS RC4 STREAM CIPHER & BASE64 ENCODING
@@ -70,13 +113,14 @@ function zkEncrypt(data, key) {
 let cachedCookie = null;
 let cookieExpiresAt = 0;
 
-function getInitialLoginPage() {
+function getInitialLoginPage(host) {
+  const targetHost = host || activeHost;
   return new Promise((resolve, reject) => {
     http.get({
-      hostname: WDMS_HOST,
+      hostname: targetHost,
       port: WDMS_PORT,
       path: '/login/',
-      timeout: 10000
+      timeout: 8000
     }, res => {
       let data = '';
       res.on('data', c => data += c);
@@ -97,70 +141,85 @@ function getInitialLoginPage() {
 
 /**
  * Authenticate against ZKTeco easy WDMS Web Portal using RC4 encryption
+ * Automatically fails over between candidate hosts (203.115.110.93 and 203.115.101.226)
  */
 async function authenticate(username, password) {
-  if (!username || !password) {
-    throw new Error('Username and password are required to authenticate with ZKTeco WDMS (203.115.110.93:8081)');
+  const user = username || process.env.WDMS_USER || 'admin';
+  const pass = password || process.env.WDMS_PASS || 'Hs@20267';
+
+  if (!user || !pass) {
+    throw new Error('Username and password are required to authenticate with ZKTeco WDMS');
   }
 
   if (cachedCookie && Date.now() < cookieExpiresAt) {
     return cachedCookie;
   }
 
-  const init = await getInitialLoginPage();
-  const rawForm = `csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&template10=&login_type=pwd`;
-  const encryptedData = zkEncrypt(rawForm, init.formCsrf);
-  const postBody = `encrypt_data=${encodeURIComponent(encryptedData)}&csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}`;
-  const cookieHeader = init.cookies.map(c => c.split(';')[0]).join('; ');
+  const candidateHosts = getCandidateHosts();
+  let lastError = null;
 
-  const res = await new Promise((resolve, reject) => {
-    const req = http.request({
-      hostname: WDMS_HOST,
-      port: WDMS_PORT,
-      path: '/login/',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Referer': `http://${WDMS_HOST}:${WDMS_PORT}/login/`,
-        'Cookie': cookieHeader,
-        'Content-Length': Buffer.byteLength(postBody)
-      },
-      timeout: 15000
-    }, r => {
-      let data = '';
-      r.on('data', c => data += c);
-      r.on('end', () => {
-        let json = null;
-        try { json = JSON.parse(data); } catch (_) {}
-        resolve({ statusCode: r.statusCode, headers: r.headers, data, json });
+  for (const host of candidateHosts) {
+    try {
+      const init = await getInitialLoginPage(host);
+      const rawForm = `csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&template10=&login_type=pwd`;
+      const encryptedData = zkEncrypt(rawForm, init.formCsrf);
+      const postBody = `encrypt_data=${encodeURIComponent(encryptedData)}&csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}`;
+      const cookieHeader = init.cookies.map(c => c.split(';')[0]).join('; ');
+
+      const res = await new Promise((resolve, reject) => {
+        const req = http.request({
+          hostname: host,
+          port: WDMS_PORT,
+          path: '/login/',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': `http://${host}:${WDMS_PORT}/login/`,
+            'Cookie': cookieHeader,
+            'Content-Length': Buffer.byteLength(postBody)
+          },
+          timeout: 10000
+        }, r => {
+          let data = '';
+          r.on('data', c => data += c);
+          r.on('end', () => {
+            let json = null;
+            try { json = JSON.parse(data); } catch (_) {}
+            resolve({ statusCode: r.statusCode, headers: r.headers, data, json });
+          });
+        });
+        req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout connecting to WDMS login on ${host}`)); });
+        req.on('error', reject);
+        req.write(postBody);
+        req.end();
       });
-    });
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout connecting to WDMS login')); });
-    req.on('error', reject);
-    req.write(postBody);
-    req.end();
-  });
 
-  if (res.statusCode === 200 && res.json?.ret === 0) {
-    const setCookies = res.headers['set-cookie'] || [];
-    let cookieMap = {};
-    init.cookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
-    setCookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
-    cachedCookie = Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
-    cookieExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
-    console.log(`✅ [WDMS] Authenticated successfully with ZKTeco Cloud Server (${WDMS_HOST}:${WDMS_PORT})`);
-    return cachedCookie;
+      if (res.statusCode === 200 && res.json?.ret === 0) {
+        const setCookies = res.headers['set-cookie'] || [];
+        let cookieMap = {};
+        init.cookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
+        setCookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
+        cachedCookie = Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
+        cookieExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        activeHost = host;
+        console.log(`✅ [WDMS] Authenticated successfully with ZKTeco Cloud Server (${activeHost}:${WDMS_PORT})`);
+        return cachedCookie;
+      }
+
+      lastError = new Error(`WDMS login failed on ${host}: ${res.json?.message || res.data || 'Wrong credentials'}`);
+    } catch (err) {
+      lastError = err;
+    }
   }
 
-  const errMsg = res.json?.message || res.data || 'Invalid WDMS credentials';
-  throw new Error(`WDMS Authentication failed (${res.statusCode}): ${errMsg}`);
+  throw lastError || new Error('All WDMS candidate hosts failed authentication');
 }
 
 function fetchWithCookie(path, cookieStr) {
   return new Promise((resolve, reject) => {
     const req = http.get({
-      hostname: WDMS_HOST,
+      hostname: activeHost,
       port: WDMS_PORT,
       path,
       headers: {
@@ -178,7 +237,7 @@ function fetchWithCookie(path, cookieStr) {
         resolve({ statusCode: res.statusCode, headers: res.headers, data, json });
       });
     });
-    req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout fetching ${path} from WDMS`)); });
+    req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout fetching ${path} from WDMS (${activeHost})`)); });
     req.on('error', reject);
   });
 }
@@ -196,7 +255,7 @@ async function fetchTerminals(cookieStr) {
   }
 
   const terminals = Array.isArray(res.json?.data) ? res.json.data : (Array.isArray(res.json) ? res.json : []);
-  console.log(`📡 [WDMS] Fetched ${terminals.length} terminals from ZKTeco Cloud Server`);
+  console.log(`📡 [WDMS] Fetched ${terminals.length} terminals from ZKTeco Cloud Server (${activeHost})`);
 
   // Update biometricDevices list in seed.json and MongoDB
   if (terminals.length > 0) {
@@ -205,15 +264,11 @@ async function fetchTerminals(cookieStr) {
       if (!Array.isArray(db.biometricDevices)) db.biometricDevices = [];
 
       terminals.forEach(term => {
-        const sn = String(term.sn || term.terminal_sn || term.serial_number || '').trim();
-        const alias = term.alias || term.terminal_name || term.area_name || `ZKTeco ${sn}`;
+        const sn = String(term.sn || term.terminal_sn || term.serial_number || '').trim().toUpperCase();
         const ip = term.ip_address || term.ip || '';
-        const isChattarpur = alias.toLowerCase().includes('chattarpur') || ip === '192.168.0.105' || sn === 'GED7254501292';
+        const meta = resolveDeviceLocation(sn, term.alias || term.terminal_name);
 
-        let existing = db.biometricDevices.find(d => d.serial === sn);
-        if (!existing && isChattarpur) {
-          existing = db.biometricDevices.find(d => d.id === 'dev_zk_chattarpur' || d.ip === '192.168.0.105');
-        }
+        let existing = db.biometricDevices.find(d => String(d.serial || '').trim().toUpperCase() === sn);
         if (!existing && (sn === 'CEZF192660044' || ip === '192.168.1.7')) {
           existing = db.biometricDevices.find(d => d.id === 'dev_zk_main' || d.serial === 'CEZF192660044');
         }
@@ -222,25 +277,29 @@ async function fetchTerminals(cookieStr) {
 
         if (existing) {
           existing.serial = sn;
-          existing.name = alias || existing.name;
+          existing.name = meta.name;
+          existing.location = meta.location;
+          existing.branch = meta.branch;
           existing.status = isOnline ? 'Online' : 'Offline';
           existing.lastSyncAt = new Date().toISOString();
+          existing.source = 'easywdms';
           if (ip) existing.ip = ip;
           existing.enrolledUsersCount = term.user_count || existing.enrolledUsersCount || 0;
           existing.totalPunchesCount = term.transaction_count || existing.totalPunchesCount || 0;
         } else {
           db.biometricDevices.push({
             id: `dev_wdms_${sn.toLowerCase()}`,
-            name: alias,
-            ip: ip || WDMS_HOST,
+            name: meta.name,
+            ip: ip || activeHost,
             port: 4370,
             serial: sn,
-            location: isChattarpur ? 'Chattarpur' : (alias || 'Branch Office'),
-            branch: isChattarpur ? 'Chattarpur Branch' : (alias || 'Remote Branch'),
+            location: meta.location,
+            branch: meta.branch,
             status: isOnline ? 'Online' : 'Offline',
             enabled: true,
             isPrimary: false,
             lastSyncAt: new Date().toISOString(),
+            source: 'easywdms',
             enrolledUsersCount: term.user_count || 0,
             totalPunchesCount: term.transaction_count || 0
           });
@@ -330,8 +389,16 @@ async function fetchTransactions(cookieStr, query = {}) {
  * Comprehensive Sync: Pulls terminals, employees, and attendance logs from 203.115.110.93:8081
  * and ingests them into the HRMS database
  */
-async function syncFromWDMS(username, password) {
-  const cookie = await authenticate(username, password);
+/**
+ * Comprehensive Sync: Pulls terminals, employees, and attendance logs from ZKTeco easy WDMS Cloud Server
+ * and ingests them into the HRMS database
+ */
+async function syncFromWDMS(username, password, options = {}) {
+  const user = username || process.env.WDMS_USER || 'admin';
+  const pass = password || process.env.WDMS_PASS || 'Hs@20267';
+  const maxPages = options.maxPages || 3;
+
+  const cookie = await authenticate(user, pass);
 
   const terminals = await fetchTerminals(cookie).catch(err => {
     console.warn('⚠️ [WDMS] Terminals fetch warning:', err.message);
@@ -343,7 +410,7 @@ async function syncFromWDMS(username, password) {
     return [];
   });
 
-  const transactions = await fetchTransactions(cookie, { maxPages: 5 }).catch(err => {
+  const transactions = await fetchTransactions(cookie, { maxPages }).catch(err => {
     console.warn('⚠️ [WDMS] Transactions fetch warning:', err.message);
     return [];
   });
@@ -353,10 +420,7 @@ async function syncFromWDMS(username, password) {
   terminals.forEach(t => {
     const sn = String(t.sn || t.terminal_sn || '').trim().toUpperCase();
     if (sn) {
-      terminalMap.set(sn, {
-        name: t.alias || t.terminal_name || `ZKTeco ${sn}`,
-        location: (t.alias || '').toLowerCase().includes('chattarpur') ? 'Chattarpur' : (t.alias || 'Office HQ')
-      });
+      terminalMap.set(sn, resolveDeviceLocation(sn, t.alias || t.terminal_name));
     }
   });
 
@@ -368,10 +432,7 @@ async function syncFromWDMS(username, password) {
     const sn = String(tx.terminal_sn || tx.sn || '').trim().toUpperCase();
 
     if (pin && punchTime) {
-      const termInfo = terminalMap.get(sn) || {
-        name: sn === 'GED7254501292' ? 'Raagwaas Chattarpur' : `ZKTeco (${sn})`,
-        location: sn === 'GED7254501292' ? 'Chattarpur' : 'Office HQ'
-      };
+      const termInfo = terminalMap.get(sn) || resolveDeviceLocation(sn, tx.terminal_alias || `ZKTeco (${sn})`);
 
       normalizedPunches.push({
         biometricUserId: pin,
@@ -412,8 +473,8 @@ async function syncFromWDMS(username, password) {
         status: 'Active',
         scheduleId: 'sch_q8jji9v',
         scheduleIds: ['sch_q8jji9v'],
-        shiftLocations: { sch_q8jji9v: 'Chattarpur' },
-        preferredLocation: 'Chattarpur',
+        shiftLocations: { sch_q8jji9v: 'Delhi Head Office' },
+        preferredLocation: 'Delhi Head Office',
         department: emp.department?.dept_name || 'Operations'
       });
       newEmployeesAdded++;
@@ -430,15 +491,16 @@ async function syncFromWDMS(username, password) {
 
   // Ingest via centralized punctuality and check-in/check-out anchoring engine
   const result = await ingestPunchesAndUsers(dbUsers, normalizedPunches, {
-    name: 'ZKTeco WDMS Cloud (203.115.110.93)',
-    serial: 'WDMS_CLOUD_203.115.110.93',
-    location: 'Chattarpur',
+    name: `ZKTeco WDMS Cloud (${activeHost})`,
+    serial: `WDMS_CLOUD_${activeHost}`,
+    location: 'Delhi Head Office',
     online: true
   });
 
   // Broadcast real-time SSE event to frontend
   broadcastSSEEvent('biometric_sync_complete', {
     source: 'easywdms',
+    host: activeHost,
     devices: terminals.length,
     employees: employees.length,
     punches: transactions.length,
@@ -448,6 +510,7 @@ async function syncFromWDMS(username, password) {
 
   return {
     success: true,
+    host: activeHost,
     terminalsCount: terminals.length,
     employeesCount: employees.length,
     newEmployeesAdded,
@@ -462,6 +525,8 @@ module.exports = {
   fetchEmployees,
   fetchTransactions,
   syncFromWDMS,
-  WDMS_HOST,
+  getActiveHost,
+  getCandidateHosts,
+  resolveDeviceLocation,
   WDMS_PORT
 };

@@ -373,6 +373,31 @@ router.get('/biometric/dashboard', async (req, res) => {
     const activeUsers = (Array.isArray(dbState.users) && dbState.users.length > 0) ? dbState.users : hrmsUsers;
     const today = new Date().toISOString().split('T')[0];
 
+    // High-performance O(1) Map pre-indexing of logs
+    const logsByUserId = new Map();
+    const logsByBioId = new Map();
+    const logsByDigits = new Map();
+
+    attendanceLogs.forEach(l => {
+      if (!l) return;
+      if (l.userId) {
+        const uKey = String(l.userId).trim();
+        if (!logsByUserId.has(uKey)) logsByUserId.set(uKey, []);
+        logsByUserId.get(uKey).push(l);
+      }
+      if (l.biometricUserId) {
+        const bioKey = String(l.biometricUserId).trim();
+        if (!logsByBioId.has(bioKey)) logsByBioId.set(bioKey, []);
+        logsByBioId.get(bioKey).push(l);
+
+        const digits = bioKey.replace(/\D/g, '');
+        if (digits) {
+          if (!logsByDigits.has(digits)) logsByDigits.set(digits, []);
+          logsByDigits.get(digits).push(l);
+        }
+      }
+    });
+
     const dashboard = activeUsers
       .filter(user => user && user.status !== 'Inactive')
       .map((user, index) => {
@@ -380,18 +405,24 @@ router.get('/biometric/dashboard', async (req, res) => {
         const employeeId = user.employeeId || userId;
         const biometricId = String(user.biometricUserId || user.biometricId || user.employeeId || userId);
         const name = user.name || 'Employee';
-
         const userDigits = String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '');
-        const userLogs = attendanceLogs.filter(l => {
-          if (String(l.userId) === userId) return true;
-          if (l.biometricUserId && String(l.biometricUserId) === biometricId) return true;
-          if (user.employeeId && String(l.employeeId) === String(user.employeeId)) return true;
-          if (user.biometricUserId && String(l.biometricUserId) === String(user.biometricUserId)) return true;
-          if (user.biometricId && String(l.biometricId || l.biometricUserId) === String(user.biometricId)) return true;
-          const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
-          if (userDigits && logDigits && userDigits === logDigits) return true;
-          return false;
-        });
+
+        const seenLogIds = new Set();
+        const userLogs = [];
+        const addLogs = (list) => {
+          if (!list) return;
+          for (const l of list) {
+            if (l && l.id && !seenLogIds.has(l.id)) {
+              seenLogIds.add(l.id);
+              userLogs.push(l);
+            }
+          }
+        };
+
+        addLogs(logsByUserId.get(userId));
+        addLogs(logsByBioId.get(biometricId));
+        if (user.employeeId) addLogs(logsByBioId.get(String(user.employeeId).trim()));
+        if (userDigits) addLogs(logsByDigits.get(userDigits));
 
         const toIsoDateTime = (dStr, tStr) => {
           if (!tStr) return null;
@@ -407,6 +438,9 @@ router.get('/biometric/dashboard', async (req, res) => {
           ? (userLogs[0].lastBiometricPunchAt || userLogs[0].createdAt || (userLogs[0].date && userLogs[0].checkIn ? toIsoDateTime(userLogs[0].date, userLogs[0].checkIn) : null))
           : null;
 
+        const deviceName = todayLog?.biometricUsed || userLogs[0]?.biometricUsed || DEVICE.name;
+        const punchLocation = todayLog?.location || userLogs[0]?.location || user.preferredLocation || 'Branch Office';
+
         return {
           userId: userId,
           employeeId: employeeId,
@@ -414,12 +448,14 @@ router.get('/biometric/dashboard', async (req, res) => {
           biometricId: biometricId,
           biometricName: name,
           uid: index + 1,
-          device: DEVICE.name,
-          deviceIp: DEVICE.ip,
+          device: deviceName,
+          location: punchLocation,
+          deviceDisplay: `${deviceName} • ${punchLocation}`,
+          deviceIp: todayLog?.biometricDeviceId || DEVICE.ip,
           devicePort: DEVICE.port,
           totalPunches: userLogs.length,
           latestPunch: latestPunchTime,
-          latestPunchIp: DEVICE.ip,
+          latestPunchIp: todayLog?.biometricDeviceId || DEVICE.ip,
           todayCheckIn: todayLog && todayLog.checkIn ? toIsoDateTime(today, todayLog.checkIn) : null,
           todayCheckOut: todayLog && todayLog.checkOut ? toIsoDateTime(today, todayLog.checkOut) : null,
           todayAttendance: todayLog ? (todayLog.status || 'On Time') : 'No Punch',

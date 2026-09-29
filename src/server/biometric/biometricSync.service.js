@@ -732,9 +732,6 @@ function processLocalPunch(
       }
       state.processedPunchIds.push(punchId);
       result.updated++;
-      console.log(
-        `🟢 BIOMETRIC CHECK-IN (EARLIER) | ${employee.name} | Shift: ${targetShiftId} | In adjusted to ${time} | Status: ${existingForShift.status}`
-      );
       return;
     } else if (punchMins > outMins) {
       const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
@@ -750,9 +747,6 @@ function processLocalPunch(
       }
       state.processedPunchIds.push(punchId);
       result.updated++;
-      console.log(
-        `🔵 BIOMETRIC CHECK-OUT (EXTENDED) | ${employee.name} | Shift: ${targetShiftId} | In: ${existingForShift.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
-      );
       return;
     } else {
       if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
@@ -859,10 +853,6 @@ function processLocalPunch(
   });
 
   result.created++;
-
-  console.log(
-    `🟢 BIOMETRIC CHECK-IN | ${employee.name} | Shift: ${targetShiftId} | ${date} ${time} | Status: ${status}`
-  );
 }
 
 
@@ -971,6 +961,9 @@ async function syncLocalDatabase(
   delete state.__changed;
   if (hasChanges) {
     writeLocalDatabase(state);
+    console.log(
+      `✅ [Biometric Ingestion] Ingested ${result.processed} punches -> Created: ${result.created}, Updated: ${result.updated}, Duplicates: ${result.duplicates}`
+    );
   }
 
   return result;
@@ -985,304 +978,78 @@ async function syncMongoDatabase(
   users,
   punches
 ) {
-  const deviceUserMap =
-    new Map();
+  const online = await connectMongoose();
+  const useLocal = getUseLocalFileDB();
+  if (!online || useLocal) return { mode: 'mongodb', processed: 0, syncedLogs: 0 };
 
-  users.forEach(rawUser => {
-    const user =
-      normalizeDeviceUser(
-        rawUser
-      );
+  const dbState = readLocalDatabase();
+  const allLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
 
-    if (
-      user &&
-      user.userId
-    ) {
-      deviceUserMap.set(
-        user.userId,
-        user
-      );
-    }
-  });
+  // Determine affected dates from punches
+  const affectedDates = new Set();
+  const todayStr = new Date().toISOString().split('T')[0];
+  affectedDates.add(todayStr);
 
-  const sortedPunches =
-    punches
-      .map(normalizePunch)
-      .filter(Boolean)
-      .sort(
-        (a, b) =>
-          a.recordTime -
-          b.recordTime
-      );
-
-  const result = {
-    mode: 'mongodb',
-    processed: 0,
-    created: 0,
-    updated: 0,
-    duplicates: 0,
-    unmatched: 0,
-    ignored: 0,
-    unmatchedUsers: []
-  };
-
-  let allSchedules = [];
-  try {
-    allSchedules = await Schedule.find({}).lean();
-  } catch (e) {}
-
-  for (const punch of sortedPunches) {
-    result.processed++;
-    try {
-      let biometricUser =
-        deviceUserMap.get(
-          punch.biometricUserId
-        );
-
-      if (!biometricUser) {
-        const existingEmp = await findMongoEmployee(punch.biometricUserId);
-        if (existingEmp) {
-          biometricUser = {
-            userId: String(punch.biometricUserId),
-            name: existingEmp.name,
-            role: existingEmp.role || '0'
-          };
-          deviceUserMap.set(String(punch.biometricUserId), biometricUser);
-        } else {
-          biometricUser = {
-            userId: String(punch.biometricUserId),
-            name: `Employee ${punch.biometricUserId}`,
-            role: '0'
-          };
-          deviceUserMap.set(String(punch.biometricUserId), biometricUser);
-        }
+  if (Array.isArray(punches)) {
+    punches.forEach(p => {
+      if (p && p.recordTime) {
+        const d = p.recordTime instanceof Date ? p.recordTime.toISOString().split('T')[0] : String(p.recordTime).split('T')[0];
+        if (d) affectedDates.add(d);
       }
+    });
+  }
 
-      if (
-        String(biometricUser.role) === '14' ||
-        biometricUser.name.toLowerCase() === 'admin'
-      ) {
-        result.ignored++;
-        continue;
+  // Filter logs for the affected dates to bulk upsert
+  const logsToSync = allLogs.filter(l => l && l.date && affectedDates.has(l.date));
+
+  if (logsToSync.length > 0) {
+    const ops = logsToSync.map(l => ({
+      updateOne: {
+        filter: { id: l.id },
+        update: { $set: l },
+        upsert: true
       }
+    }));
 
-      const employee =
-        await findMongoEmployee(
-          punch.biometricUserId,
-          biometricUser ? biometricUser.name : ''
-        );
-
-      if (!employee) {
-        result.unmatched++;
-
-        if (
-          !result.unmatchedUsers.includes(
-            punch.biometricUserId
-          )
-        ) {
-          result.unmatchedUsers.push(
-            punch.biometricUserId
-          );
-        }
-
-        continue;
-      }
-
-      const {
-        date,
-        time
-      } =
-        getLocalDateTimeParts(
-          punch.recordTime
-        );
-
-      const punchId =
-        createPunchId(punch);
-
-      /*
-       * Check duplicate / already-consumed punch.
-       */
-      const duplicate =
-        await AttendanceLog.findOne({
-          $or: [
-            { biometricPunchId: punchId },
-            { checkInPunchId: punchId },
-            { checkOutPunchId: punchId },
-            { allPunchIds: punchId }
-          ]
-        }).lean();
-
-      if (duplicate) {
-        result.duplicates++;
-        continue;
-      }
-
-      const [punchH, punchM] = time.split(':').map(Number);
-      const punchMins = (punchH || 0) * 60 + (punchM || 0);
-
-      // Look for active open shift session today (checkIn present, no checkOut)
-      const openLog = await AttendanceLog.findOne({
-        userId: String(employee.id),
-        date: String(date),
-        checkIn: { $ne: '' },
-        $or: [
-          { checkOut: '' },
-          { checkOut: null },
-          { checkOut: { $exists: false } }
-        ]
+    const batchSize = 500;
+    for (let i = 0; i < ops.length; i += batchSize) {
+      const chunk = ops.slice(i, i + batchSize);
+      await AttendanceLog.bulkWrite(chunk, { ordered: false }).catch(err => {
+        console.warn('⚠️ AttendanceLog bulkWrite warning:', err.message);
       });
-
-      if (openLog) {
-        const [inH, inM] = openLog.checkIn.split(':').map(Number);
-        const inMins = (inH || 0) * 60 + (inM || 0);
-
-        // Bounce tap within 1 minute
-        if (punchMins <= inMins + 1) {
-          if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-          if (!openLog.allPunchIds.includes(punchId)) {
-            openLog.allPunchIds.push(punchId);
-          }
-          await openLog.save();
-          result.duplicates++;
-          continue;
-        }
-
-        // Check-out open shift
-        const shiftObj = allSchedules.find(s => String(s.id) === String(openLog.shiftId));
-        const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, time, shiftObj);
-
-        openLog.checkOut = time;
-        openLog.checkOutPunchId = punchId;
-        openLog.status = evaluatedStatus;
-        openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
-        openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
-        openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
-        if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-        if (!openLog.allPunchIds.includes(punchId)) {
-          openLog.allPunchIds.push(punchId);
-        }
-        await openLog.save();
-
-        result.updated++;
-        console.log(
-          `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
-        );
-        continue;
-      }
-
-      // No open shift. Check existing logs today for this user
-      const existingLogs = await AttendanceLog.find({
-        userId: String(employee.id),
-        date: String(date)
-      });
-
-      const targetShiftId = resolveShiftForPunch(
-        employee,
-        punch.recordTime,
-        date,
-        allSchedules,
-        existingLogs
-      );
-
-      const attId = createAttendanceId(employee.id, date, targetShiftId);
-      const existingForShift = existingLogs.find(l => String(l.shiftId) === String(targetShiftId) || l.id === attId);
-
-      if (existingForShift) {
-        const [inH, inM] = (existingForShift.checkIn || '23:59').split(':').map(Number);
-        const inMins = (inH || 0) * 60 + (inM || 0);
-        const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
-        const outMins = (outH || 0) * 60 + (outM || 0);
-
-        if (punchMins < inMins) {
-          const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
-          const evaluatedStatus = computeAttendanceStatus(time, existingForShift.checkOut || '', shiftObj);
-
-          existingForShift.checkIn = time;
-          existingForShift.checkInPunchId = punchId;
-          existingForShift.status = evaluatedStatus;
-          existingForShift.biometricUsed = punch.deviceName || DEVICE_NAME;
-          existingForShift.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
-          existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
-          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
-          if (!existingForShift.allPunchIds.includes(punchId)) {
-            existingForShift.allPunchIds.push(punchId);
-          }
-          await existingForShift.save();
-          result.updated++;
-          console.log(
-            `🟢 BIOMETRIC CHECK-IN (EARLIER) | ${employee.name} | Shift: ${targetShiftId} | In adjusted to ${time} | Status: ${evaluatedStatus}`
-          );
-          continue;
-        } else if (punchMins > outMins) {
-          const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
-          const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
-
-          existingForShift.checkOut = time;
-          existingForShift.checkOutPunchId = punchId;
-          existingForShift.status = evaluatedStatus;
-          existingForShift.biometricUsed = punch.deviceName || DEVICE_NAME;
-          existingForShift.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
-          existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
-          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
-          if (!existingForShift.allPunchIds.includes(punchId)) {
-            existingForShift.allPunchIds.push(punchId);
-          }
-          await existingForShift.save();
-          result.updated++;
-          console.log(
-            `🔵 BIOMETRIC CHECK-OUT (EXTENDED) | ${employee.name} | Shift: ${targetShiftId} | In: ${existingForShift.checkIn} -> Out: ${time} | Status: ${evaluatedStatus}`
-          );
-          continue;
-        } else {
-          if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
-          if (!existingForShift.allPunchIds.includes(punchId)) {
-            existingForShift.allPunchIds.push(punchId);
-          }
-          await existingForShift.save();
-          result.duplicates++;
-          continue;
-        }
-      }
-
-      // Completely new check-in for this shift session
-      const shiftObj = allSchedules.find(s => String(s.id) === String(targetShiftId));
-      const newStatus = computeAttendanceStatus(time, '', shiftObj);
-
-      await AttendanceLog.findOneAndUpdate(
-        { id: attId },
-        {
-          $setOnInsert: {
-            id: attId,
-            userId: String(employee.id),
-            date,
-            shiftId: targetShiftId || employee.scheduleId || '',
-            checkIn: time,
-            checkOut: '',
-            checkInPunchId: punchId,
-            biometricPunchId: punchId,
-            status: newStatus,
-            biometricUsed: punch.deviceName || DEVICE_NAME,
-            biometricDeviceId: punch.deviceSerial || DEVICE.serial,
-            biometricUserId: punch.biometricUserId,
-            lastBiometricPunchAt: punch.recordTime.toISOString(),
-            location: punch.location || employee.preferredLocation || LOCATION
-          },
-          $addToSet: { allPunchIds: punchId }
-        },
-        { upsert: true, new: true }
-      );
-
-      result.created++;
-      console.log(
-        `🟢 BIOMETRIC CHECK-IN | ${employee.name} | Shift: ${targetShiftId} | ${date} ${time} | Status: ${newStatus}`
-      );
-    } catch (punchErr) {
-      console.warn(`⚠️ Error processing MongoDB punch for ${punch.biometricUserId}:`, punchErr.message);
     }
   }
 
-  return result;
+  // Also sync users if any
+  if (Array.isArray(users) && users.length > 0) {
+    const userOps = users.map(u => {
+      const id = u.id || `usr_bio_${u.userId || u.employeeId || u.biometricUserId}`;
+      return {
+        updateOne: {
+          filter: { id },
+          update: { $set: u },
+          upsert: true
+        }
+      };
+    });
+
+    const batchSize = 500;
+    for (let i = 0; i < userOps.length; i += batchSize) {
+      const chunk = userOps.slice(i, i + batchSize);
+      await User.bulkWrite(chunk, { ordered: false }).catch(err => {
+        console.warn('⚠️ User bulkWrite warning:', err.message);
+      });
+    }
+  }
+
+  return {
+    mode: 'mongodb',
+    processed: punches?.length || 0,
+    syncedLogs: logsToSync.length
+  };
 }
+
+
 
 
 /* =========================================================
@@ -1450,22 +1217,15 @@ async function syncBiometricAttendance(options = {}) {
     const online = await connectMongoose();
     const useLocal = getUseLocalFileDB();
 
-    let result;
+    let result = await syncLocalDatabase(
+      combinedUsers,
+      normalizedPunches
+    );
+
     if (online && !useLocal) {
-      result = await syncMongoDatabase(
-        combinedUsers,
-        normalizedPunches
-      );
-      try {
-        await syncLocalDatabase(combinedUsers, normalizedPunches);
-      } catch (localMirrorErr) {
-        console.warn('⚠️ seed.json local mirror notice:', localMirrorErr.message);
-      }
-    } else {
-      result = await syncLocalDatabase(
-        combinedUsers,
-        normalizedPunches
-      );
+      syncMongoDatabase(combinedUsers, normalizedPunches).catch(err => {
+        console.warn('⚠️ MongoDB background mirror notice:', err.message);
+      });
     }
 
     /*
@@ -1554,15 +1314,11 @@ async function ingestPunchesAndUsers(users = [], punches = [], deviceMeta = {}) 
     unmatchedUsers: []
   };
 
+  result = await syncLocalDatabase(users, punches);
   if (online && !useLocal) {
-    result = await syncMongoDatabase(users, punches);
-    try {
-      await syncLocalDatabase(users, punches);
-    } catch (localMirrorErr) {
-      console.warn('⚠️ seed.json local mirror notice:', localMirrorErr.message);
-    }
-  } else {
-    result = await syncLocalDatabase(users, punches);
+    syncMongoDatabase(users, punches).catch(err => {
+      console.warn('⚠️ MongoDB background mirror notice:', err.message);
+    });
   }
 
   if (result && (result.created > 0 || result.updated > 0)) {

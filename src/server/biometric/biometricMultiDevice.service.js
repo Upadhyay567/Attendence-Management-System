@@ -426,6 +426,48 @@ async function appendSyncLog(logEntry) {
  */
 async function testDeviceConnectivity(deviceConfig) {
   const start = Date.now();
+  
+  // Check if this is a WDMS cloud-managed terminal
+  const isWDMSDevice = deviceConfig.source === 'easywdms' || 
+                       String(deviceConfig.id).startsWith('dev_wdms_') ||
+                       (deviceConfig.ip && !deviceConfig.ip.startsWith('192.168.1.'));
+
+  if (isWDMSDevice) {
+    const { getActiveHost, WDMS_PORT } = require('./easywdms.service');
+    const host = getActiveHost() || process.env.WDMS_HOST || '203.115.110.93';
+    const port = WDMS_PORT || 8081;
+    const reachable = await isPortReachable(host, port, 1200);
+    const latencyMs = Date.now() - start;
+
+    if (reachable) {
+      try {
+        const db = readLocalDB();
+        const d = (db.biometricDevices || []).find(x => x.id === deviceConfig.id || x.serial === deviceConfig.serial);
+        if (d) {
+          d.status = 'Online';
+          d.lastSyncAt = new Date().toISOString();
+          writeLocalDB(db);
+        }
+      } catch (_) {}
+
+      return {
+        success: true,
+        isOffline: false,
+        latencyMs,
+        userCount: deviceConfig.enrolledUsersCount || 0,
+        punchCount: deviceConfig.totalPunchesCount || 0,
+        message: `Connected via Cloud WDMS (${host}) in ${latencyMs}ms`
+      };
+    } else {
+      return {
+        success: false,
+        isOffline: true,
+        latencyMs,
+        message: `ZKTeco Cloud Server (${host}:${port}) unreachable`
+      };
+    }
+  }
+
   const reachable = await isPortReachable(deviceConfig.ip, deviceConfig.port, 600);
   if (!reachable) {
     return {

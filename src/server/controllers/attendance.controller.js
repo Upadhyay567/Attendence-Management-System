@@ -113,12 +113,33 @@ async function getDbState(req, res) {
         OfficeCoordinate.find({}).lean()
       ]);
 
+      const localData = readLocalDbStateCached();
+      
+      // Merge in any users from localData that might not have mirrored to Mongo yet
+      let finalUsers = users;
+      if (localData && Array.isArray(localData.users) && localData.users.length > users.length) {
+        const mongoIds = new Set(users.map(u => u.id));
+        const missing = localData.users.filter(u => u && !mongoIds.has(u.id));
+        finalUsers = [...users, ...missing];
+      }
+
+      // Merge in any attendanceLogs from localData that might not have mirrored to Mongo yet
+      let finalLogs = attendanceLogs;
+      if (localData && Array.isArray(localData.attendanceLogs) && localData.attendanceLogs.length > attendanceLogs.length) {
+        const mongoLogIds = new Set(attendanceLogs.map(l => l.id));
+        const missingLogs = localData.attendanceLogs.filter(l => l && !mongoLogIds.has(l.id));
+        finalLogs = [...attendanceLogs, ...missingLogs];
+      }
+
       const officeCoordinatesObj = {};
       officeCoords.forEach(c => { officeCoordinatesObj[c.name] = { lat: c.lat, lng: c.lng }; });
+      if (localData && localData.officeCoordinates) {
+        Object.assign(officeCoordinatesObj, localData.officeCoordinates);
+      }
 
       return res.json({
-        users,
-        attendanceLogs,
+        users: finalUsers,
+        attendanceLogs: finalLogs,
         leaveRequests,
         shiftSwaps,
         schedules,

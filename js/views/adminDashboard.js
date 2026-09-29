@@ -1819,7 +1819,10 @@ export async function renderAdminDashboard() {
             <td style="padding: 12px 14px; text-align: center;">${checkOutStr}</td>
             <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">${latestPunchStr}</td>
             <td style="padding: 12px 14px; text-align: center; font-weight: 700;">${emp.totalPunches ?? 0}</td>
-            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">📟 ${Utils.escape(emp.device || 'ZKTeco K40 Pro')}</td>
+            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">
+              <div style="font-weight: 600; color: var(--text-primary);">📟 ${Utils.escape(emp.device || 'ZKTeco')}</div>
+              ${emp.location ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${Utils.escape(emp.location)}</div>` : ''}
+            </td>
           </tr>
         `;
       }).join('');

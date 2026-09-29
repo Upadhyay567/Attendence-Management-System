@@ -48,19 +48,15 @@ admsApiRouter.post('/sync', admsController.triggerSync);
 // Send arbitrary ADMS command to device
 admsApiRouter.post('/command', admsController.sendCommand);
 
-// Pull data from existing ZKTeco easy WDMS Cloud Server (203.115.110.93:8081)
+// Pull data from existing ZKTeco easy WDMS Cloud Server (203.115.110.93:8081 / 203.115.101.226)
 const easywdmsService = require('../biometric/easywdms.service');
 admsApiRouter.post('/wdms-sync', async (req, res) => {
   try {
-    const { username, password } = req.body || {};
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Please provide username and password for the ZKTeco easy WDMS server (203.115.110.93:8081)'
-      });
-    }
+    const username = req.body?.username || process.env.WDMS_USER || 'admin';
+    const password = req.body?.password || process.env.WDMS_PASS || 'Hs@20267';
+    const maxPages = req.body?.maxPages ? parseInt(req.body.maxPages, 10) : 3;
 
-    const result = await easywdmsService.syncFromWDMS(username, password);
+    const result = await easywdmsService.syncFromWDMS(username, password, { maxPages });
     return res.json({
       success: true,
       message: `Successfully synchronized from ZKTeco WDMS: ${result.terminalsCount} devices, ${result.employeesCount} employees, ${result.transactionsCount} punches`,
