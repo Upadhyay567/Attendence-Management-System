@@ -507,38 +507,52 @@ export const DB = {
     }
   },
 
-  _safeSaveLocalStorage() {
+  _safeSaveLocalStorage(immediate = false) {
     if (!this.data) return;
-    try {
-      localStorage.setItem(DB_KEY, JSON.stringify(this.data));
-    } catch (err) {
+    if (this._saveStorageTimer) {
+      clearTimeout(this._saveStorageTimer);
+      this._saveStorageTimer = null;
+    }
+    const executeStorageSave = () => {
+      this._saveStorageTimer = null;
+      if (!this.data) return;
       try {
-        console.warn('⚠️ LocalStorage quota exceeded. Pruning historical logs for client cache.');
-        const pruned = { ...this.data };
-        if (Array.isArray(pruned.attendanceLogs)) {
-          pruned.attendanceLogs = pruned.attendanceLogs.slice(-150);
-        }
-        if (Array.isArray(pruned.auditLogs)) {
-          pruned.auditLogs = pruned.auditLogs.slice(-50);
-        }
-        if (Array.isArray(pruned.biometricSyncLogs)) {
-          pruned.biometricSyncLogs = pruned.biometricSyncLogs.slice(-30);
-        }
-        localStorage.setItem(DB_KEY, JSON.stringify(pruned));
-      } catch (innerErr) {
+        localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+      } catch (err) {
         try {
-          const minimal = {
-            users: this.data.users || [],
-            schedules: this.data.schedules || [],
-            attendanceLogs: (this.data.attendanceLogs || []).slice(-50),
-            leaveRequests: this.data.leaveRequests || [],
-            shiftSwaps: this.data.shiftSwaps || []
-          };
-          localStorage.setItem(DB_KEY, JSON.stringify(minimal));
-        } catch (minimalErr) {
-          console.warn('⚠️ LocalStorage full. Continuing safely in in-memory + backend sync mode.');
+          console.warn('⚠️ LocalStorage quota exceeded. Pruning historical logs for client cache.');
+          const pruned = { ...this.data };
+          if (Array.isArray(pruned.attendanceLogs)) {
+            pruned.attendanceLogs = pruned.attendanceLogs.slice(-150);
+          }
+          if (Array.isArray(pruned.auditLogs)) {
+            pruned.auditLogs = pruned.auditLogs.slice(-50);
+          }
+          if (Array.isArray(pruned.biometricSyncLogs)) {
+            pruned.biometricSyncLogs = pruned.biometricSyncLogs.slice(-30);
+          }
+          localStorage.setItem(DB_KEY, JSON.stringify(pruned));
+        } catch (innerErr) {
+          try {
+            const minimal = {
+              users: this.data.users || [],
+              schedules: this.data.schedules || [],
+              attendanceLogs: (this.data.attendanceLogs || []).slice(-50),
+              leaveRequests: this.data.leaveRequests || [],
+              shiftSwaps: this.data.shiftSwaps || []
+            };
+            localStorage.setItem(DB_KEY, JSON.stringify(minimal));
+          } catch (minimalErr) {
+            console.warn('⚠️ LocalStorage full. Continuing safely in in-memory + backend sync mode.');
+          }
         }
       }
+    };
+
+    if (immediate) {
+      executeStorageSave();
+    } else {
+      this._saveStorageTimer = setTimeout(executeStorageSave, 250);
     }
   },
 
@@ -786,12 +800,12 @@ export const DB = {
     }
   },
 
-  save(mutationMeta = null) {
+  save(mutationMeta = null, options = {}) {
     this.lastLocalWrite = Date.now();
-    this._safeSaveLocalStorage();
+    this._safeSaveLocalStorage(options.immediate || false);
     if (typeof window !== 'undefined') {
       window.__ATTENDANCE_DB_DATA__ = this.data;
-      if (typeof window.dispatchEvent === 'function') {
+      if (typeof window.dispatchEvent === 'function' && !options.silent) {
         window.dispatchEvent(new Event('db_updated'));
       }
     }
@@ -1204,7 +1218,7 @@ export const DB = {
     return this.addUser(userData);
   },
 
-  updateUser(id, updates) {
+  updateUser(id, updates, options = {}) {
     if (!id) return null;
     const cleanId = id.toString().trim();
     let userIndex = this.data.users.findIndex(u => u.id === cleanId);
@@ -1225,10 +1239,42 @@ export const DB = {
         updates.biometricUserId = updates.biometricId;
       }
       this.data.users[userIndex] = { ...this.data.users[userIndex], ...updates };
-      this.save({ type: 'update', key: 'users', query: { id: realId }, updates });
+      this.save({ type: 'update', key: 'users', query: { id: realId }, updates }, options);
       return this.data.users[userIndex];
     }
     return null;
+  },
+
+  updateUsersBatch(updatesList, options = {}) {
+    if (!Array.isArray(updatesList) || updatesList.length === 0) return [];
+    const updatedUsers = [];
+    for (const item of updatesList) {
+      if (!item || !item.id || !item.updates) continue;
+      const cleanId = item.id.toString().trim();
+      let userIndex = this.data.users.findIndex(u => u.id === cleanId);
+      if (userIndex === -1) {
+        const lower = cleanId.toLowerCase();
+        userIndex = this.data.users.findIndex(u => 
+          (u.employeeId && u.employeeId.toLowerCase() === lower) ||
+          (u.username && u.username.toLowerCase() === lower) ||
+          (u.email && u.email.toLowerCase() === lower)
+        );
+      }
+      if (userIndex !== -1) {
+        const u = this.data.users[userIndex];
+        const up = item.updates;
+        if (up.biometricUserId !== undefined && up.biometricId === undefined) {
+          up.biometricId = up.biometricUserId;
+        }
+        if (up.biometricId !== undefined && up.biometricUserId === undefined) {
+          up.biometricUserId = up.biometricId;
+        }
+        this.data.users[userIndex] = { ...u, ...up };
+        updatedUsers.push(this.data.users[userIndex]);
+      }
+    }
+    this.save(null, options);
+    return updatedUsers;
   },
 
   deleteUser(id) {

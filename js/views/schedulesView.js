@@ -27,6 +27,59 @@ export function renderAdminSchedules(tab) {
   const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
   if (currentScheduleViewTab === 'locations') {
+    // High-performance schedule Map for O(1) lookups
+    const scheduleMap = new Map(schedules.map(s => [s.id, s]));
+
+    // Precompute lowercase search index for instant filtering across 1,200+ employees
+    allUsers.forEach(u => {
+      u._search = `${u.name || ''} ${u.employeeId || u.username || u.id || ''} ${u.department || ''}`.toLowerCase();
+      const locs = Array.isArray(u.preferredLocations)
+        ? u.preferredLocations
+        : (u.preferredLocation ? [u.preferredLocation] : []);
+      u._locStr = locs.join(' , ').toLowerCase();
+      u._dept = (u.department || '').toLowerCase();
+    });
+
+    // In-memory state
+    const selectedEmpIds = new Set();
+    let currentPage = 1;
+    let pageSize = 30;
+    let filteredUsers = [...allUsers];
+
+    // Helper functions for chip generation
+    const getShiftChipsHtml = (shiftIds) => {
+      const list = (shiftIds || []).map(id => scheduleMap.get(id)).filter(Boolean);
+      if (list.length === 0) {
+        return `<span class="emp-multi-select-placeholder">-- No Shift Assigned --</span>`;
+      }
+      return `
+        <div class="emp-multi-select-chips">
+          ${list.map(s => `
+            <span class="emp-multi-chip shift-chip" title="${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})">
+              ⏰ ${Utils.escape(s.name)}
+            </span>
+          `).join('')}
+        </div>
+      `;
+    };
+
+    const getLocChipsHtml = (locations) => {
+      const list = (locations || []).filter(Boolean);
+      if (list.length === 0) {
+        return `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
+      }
+      return `
+        <div class="emp-multi-select-chips">
+          ${list.map(loc => `
+            <span class="emp-multi-chip loc-chip" title="${Utils.escape(loc)}">
+              📍 ${Utils.escape(loc)}
+            </span>
+          `).join('')}
+        </div>
+      `;
+    };
+
+    // Render the main view shell
     main.innerHTML = html`
       <div class="content-header">
         <div>
@@ -145,14 +198,14 @@ export function renderAdminSchedules(tab) {
           </div>
         </div>
 
-        <!-- Full Employee Location & Shift Table -->
+        <!-- Full Employee Location & Shift Table (Lightweight Rows, 0 Embedded Popovers) -->
         <div class="card-panel">
           <div class="table-container">
             <table class="custom-table" id="emp-locations-table">
               <thead>
                 <tr>
                   <th style="width:40px; text-align:center">
-                    <input type="checkbox" id="chk-select-all-emps" title="Select All" style="cursor:pointer; width:16px; height:16px; accent-color:var(--primary)">
+                    <input type="checkbox" id="chk-select-all-emps" title="Select All on Current Page" style="cursor:pointer; width:16px; height:16px; accent-color:var(--primary)">
                   </th>
                   <th>Employee</th>
                   <th>Department & Role</th>
@@ -162,164 +215,44 @@ export function renderAdminSchedules(tab) {
                 </tr>
               </thead>
               <tbody id="emp-locations-tbody">
-                ${allUsers.map(u => {
-                  const assignedShiftIds = (Array.isArray(u.scheduleIds))
-                    ? u.scheduleIds.filter(Boolean)
-                    : (u.scheduleId ? [u.scheduleId] : []);
-                  const assignedSchedules = assignedShiftIds.map(id => DB.getSchedule(id)).filter(Boolean);
-
-                  let assignedLocations = [];
-                  if (Array.isArray(u.preferredLocations)) {
-                    assignedLocations = [...new Set(u.preferredLocations.filter(Boolean))];
-                  } else if (u.preferredLocation && u.preferredLocation !== 'No Worksite Location' && u.preferredLocation !== 'None' && u.preferredLocation.trim() !== '') {
-                    assignedLocations = [u.preferredLocation.trim()];
-                  } else if (u.shiftLocations && typeof u.shiftLocations === 'object') {
-                    assignedLocations = [...new Set(Object.values(u.shiftLocations))].filter(l => l && l !== 'No Worksite Location' && l !== 'None' && String(l).trim() !== '');
-                  }
-
-                  const shiftChipsHtml = assignedSchedules.length > 0
-                    ? `<div class="emp-multi-select-chips">
-                         ${assignedSchedules.map(s => `
-                           <span class="emp-multi-chip shift-chip" title="${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})">
-                             ⏰ ${Utils.escape(s.name)}
-                           </span>
-                         `).join('')}
-                       </div>`
-                    : `<span class="emp-multi-select-placeholder">-- No Shift Assigned --</span>`;
-
-                  const locChipsHtml = assignedLocations.length > 0
-                    ? `<div class="emp-multi-select-chips">
-                         ${assignedLocations.map(loc => `
-                           <span class="emp-multi-chip loc-chip" title="${Utils.escape(loc)}">
-                             📍 ${Utils.escape(loc)}
-                           </span>
-                         `).join('')}
-                       </div>`
-                    : `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
-
-                  return `
-                    <tr class="emp-loc-row" data-id="${u.id}" data-name="${Utils.escape(u.name).toLowerCase()}" data-empid="${(u.employeeId || u.username || '').toLowerCase()}" data-dept="${Utils.escape(u.department || '').toLowerCase()}" data-loc="${Utils.escape(assignedLocations.join(' , ')).toLowerCase()}">
-                      <td style="text-align:center">
-                        <input type="checkbox" class="chk-emp-loc" data-id="${u.id}" style="cursor:pointer; width:15px; height:15px; accent-color:var(--primary)">
-                      </td>
-                      <td>
-                        <div style="display:flex; align-items:center; gap:12px">
-                          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}">
-                            ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
-                          </div>
-                          <div>
-                            <div style="font-weight:700; color:var(--text-primary); font-size:13px">${Utils.escape(u.name)}</div>
-                            <div style="font-size:11px; color:var(--text-muted); font-family:monospace; margin-top:2px">ID: ${Utils.escape(u.employeeId || u.username || u.id)}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div style="font-weight:600; font-size:12.5px; color:var(--text-primary)">${Utils.escape(u.department || 'General')}</div>
-                        <div style="font-size:11px; color:var(--text-muted); text-transform:capitalize; margin-top:2px">${Utils.escape(u.role || 'employee')}</div>
-                      </td>
-                      <!-- Shift Multi-Select Cell -->
-                      <td>
-                        <div class="emp-multi-select-wrap">
-                          <button type="button" class="emp-multi-select-btn emp-trigger-shift" data-empid="${u.id}" id="shift-trigger-${u.id}">
-                            ${shiftChipsHtml}
-                            <span class="emp-multi-select-arrow">▼</span>
-                          </button>
-                          <div class="emp-multi-select-popover" id="shift-popover-${u.id}">
-                            <div class="emp-multi-select-header">
-                              <span class="emp-multi-select-title">Select Shift(s)</span>
-                              <div class="emp-multi-select-actions">
-                                <button type="button" class="emp-multi-select-action-btn emp-btn-select-all-shifts" data-empid="${u.id}">Select All</button>
-                                <span style="color:var(--border)">|</span>
-                                <button type="button" class="emp-multi-select-action-btn btn-clear emp-btn-clear-shifts" data-empid="${u.id}">Clear All</button>
-                              </div>
-                            </div>
-                            <div class="emp-multi-select-search">
-                              <input type="text" class="emp-search-shifts" placeholder="Filter shifts..." data-empid="${u.id}">
-                            </div>
-                            <div class="emp-multi-select-list">
-                              <label class="emp-multi-select-option emp-multi-select-none-option ${assignedShiftIds.length === 0 ? 'selected' : ''}" data-txt="-- no shift assigned --">
-                                <input type="checkbox" class="emp-multi-select-chk emp-shift-none-chk" data-empid="${u.id}" value="__NONE__" ${assignedShiftIds.length === 0 ? 'checked' : ''}>
-                                <div class="emp-multi-select-label">
-                                  <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Shift Assigned --</span>
-                                </div>
-                              </label>
-                              ${schedules.map(s => {
-                                const isChecked = assignedShiftIds.includes(s.id);
-                                return `
-                                  <label class="emp-multi-select-option ${isChecked ? 'selected' : ''}" data-txt="${Utils.escape(s.name).toLowerCase()}">
-                                    <input type="checkbox" class="emp-multi-select-chk emp-shift-chk" data-empid="${u.id}" value="${s.id}" ${isChecked ? 'checked' : ''}>
-                                    <div class="emp-multi-select-label">
-                                      <span class="emp-multi-select-main-txt">⏰ ${Utils.escape(s.name)}</span>
-                                      <span class="emp-multi-select-sub-txt">${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)}</span>
-                                    </div>
-                                  </label>
-                                `;
-                              }).join('')}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <!-- Worksite Location Multi-Select Cell -->
-                      <td>
-                        <div class="emp-multi-select-wrap">
-                          <button type="button" class="emp-multi-select-btn emp-trigger-loc" data-empid="${u.id}" id="loc-trigger-${u.id}">
-                            ${locChipsHtml}
-                            <span class="emp-multi-select-arrow">▼</span>
-                          </button>
-                          <div class="emp-multi-select-popover" id="loc-popover-${u.id}">
-                            <div class="emp-multi-select-header">
-                              <span class="emp-multi-select-title">Select Location(s)</span>
-                              <div class="emp-multi-select-actions">
-                                <button type="button" class="emp-multi-select-action-btn emp-btn-select-all-locs" data-empid="${u.id}">Select All</button>
-                                <span style="color:var(--border)">|</span>
-                                <button type="button" class="emp-multi-select-action-btn btn-clear emp-btn-clear-locs" data-empid="${u.id}">Clear All</button>
-                              </div>
-                            </div>
-                            <div class="emp-multi-select-search">
-                              <input type="text" class="emp-search-locs" placeholder="Filter locations..." data-empid="${u.id}">
-                            </div>
-                            <div class="emp-multi-select-list">
-                              <label class="emp-multi-select-option emp-multi-select-none-option ${assignedLocations.length === 0 ? 'selected' : ''}" data-txt="-- no worksite location --">
-                                <input type="checkbox" class="emp-multi-select-chk emp-loc-none-chk" data-empid="${u.id}" value="__NONE__" ${assignedLocations.length === 0 ? 'checked' : ''}>
-                                <div class="emp-multi-select-label">
-                                  <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Worksite Location --</span>
-                                </div>
-                              </label>
-                              ${allLocationNames.map(loc => {
-                                const isChecked = assignedLocations.includes(loc);
-                                return `
-                                  <label class="emp-multi-select-option ${isChecked ? 'selected' : ''}" data-txt="${Utils.escape(loc).toLowerCase()}">
-                                    <input type="checkbox" class="emp-multi-select-chk emp-loc-chk" data-empid="${u.id}" value="${Utils.escape(loc)}" ${isChecked ? 'checked' : ''}>
-                                    <div class="emp-multi-select-label">
-                                      <span class="emp-multi-select-main-txt">📍 ${Utils.escape(loc)}</span>
-                                    </div>
-                                  </label>
-                                `;
-                              }).join('')}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style="text-align:center">
-                        <span class="badge badge-approved" id="loc-status-${u.id}" style="font-size:11px; padding:3px 8px; background:rgba(16,185,129,0.1); color:var(--success); border-radius:6px">
-                          Saved ✓
-                        </span>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
               </tbody>
             </table>
+          </div>
+
+          <!-- High-Performance Pagination Bar -->
+          <div id="loc-pagination-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px">
+            <div style="display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap">
+              <span id="loc-pagination-range" style="font-weight:600">Showing 1 to ${Math.min(30, allUsers.length)} of ${allUsers.length} employees</span>
+              <span style="color:var(--border)">|</span>
+              <label style="display:flex; align-items:center; gap:6px; font-size:12px">
+                Rows per page:
+                <select id="loc-page-size-select" class="form-input" style="padding:4px 8px; font-size:12px; width:auto; border-radius:6px">
+                  <option value="15">15</option>
+                  <option value="25">25</option>
+                  <option value="30" selected>30</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="250">250</option>
+                  <option value="all">All (${allUsers.length})</option>
+                </select>
+              </label>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px">
+              <button class="btn btn-secondary btn-sm" id="btn-page-first" style="padding:5px 10px; font-size:12px; width:auto" title="First Page">⏮ First</button>
+              <button class="btn btn-secondary btn-sm" id="btn-page-prev" style="padding:5px 12px; font-size:12px; width:auto" title="Previous Page">◀ Prev</button>
+              <span id="loc-page-indicator" style="font-size:12.5px; font-weight:700; color:var(--text-primary); padding:0 8px">Page 1 of 1</span>
+              <button class="btn btn-secondary btn-sm" id="btn-page-next" style="padding:5px 12px; font-size:12px; width:auto" title="Next Page">Next ▶</button>
+              <button class="btn btn-secondary btn-sm" id="btn-page-last" style="padding:5px 10px; font-size:12px; width:auto" title="Last Page">Last ⏭</button>
+            </div>
           </div>
         </div>
       </div>
     `;
 
-    // Attach Event Listeners for Location & Shift Assignment View
+    // Top Navigation Action Listeners
     document.getElementById('btn-toggle-sched-view').addEventListener('click', () => {
       renderAdminSchedules('shifts');
     });
-
     const expressUploadBtn = document.getElementById('btn-express-upload-modal');
     if (expressUploadBtn) {
       expressUploadBtn.addEventListener('click', () => openExpressUploadModal());
@@ -329,203 +262,113 @@ export function renderAdminSchedules(tab) {
       addSchedBtn.addEventListener('click', () => openScheduleModal());
     }
 
-    // Helper functions to update trigger button displays
-    const updateShiftTriggerUI = (empId, shiftIds) => {
-      const trigger = document.getElementById(`shift-trigger-${empId}`);
-      if (!trigger) return;
-      const schedList = (shiftIds || []).map(id => DB.getSchedule(id)).filter(Boolean);
-
-      let contentHtml = '';
-      if (schedList.length === 0) {
-        contentHtml = `<span class="emp-multi-select-placeholder">-- No Shift Assigned --</span>`;
-      } else {
-        contentHtml = `
-          <div class="emp-multi-select-chips">
-            ${schedList.map(s => `
-              <span class="emp-multi-chip shift-chip" title="${Utils.escape(s.name)} (${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)})">
-                ⏰ ${Utils.escape(s.name)}
-              </span>
-            `).join('')}
+    // =========================================================================
+    // TWO GLOBAL FLYWEIGHT POPOVERS (Created Once on document.body)
+    // =========================================================================
+    let sharedShiftPopover = document.getElementById('global-shared-shift-popover');
+    if (!sharedShiftPopover) {
+      sharedShiftPopover = document.createElement('div');
+      sharedShiftPopover.className = 'emp-multi-select-popover';
+      sharedShiftPopover.id = 'global-shared-shift-popover';
+      sharedShiftPopover.style.display = 'none';
+      sharedShiftPopover.style.position = 'fixed';
+      sharedShiftPopover.style.zIndex = '999999';
+      sharedShiftPopover.innerHTML = `
+        <div class="emp-multi-select-header">
+          <span class="emp-multi-select-title">Select Shift(s)</span>
+          <div class="emp-multi-select-actions">
+            <button type="button" class="emp-multi-select-action-btn" id="global-shift-select-all">Select All</button>
+            <span style="color:var(--border)">|</span>
+            <button type="button" class="emp-multi-select-action-btn btn-clear" id="global-shift-clear-all">Clear All</button>
           </div>
-        `;
-      }
-      trigger.innerHTML = contentHtml + `<span class="emp-multi-select-arrow">▼</span>`;
-    };
+        </div>
+        <div class="emp-multi-select-search">
+          <input type="text" id="global-shift-search-input" placeholder="Filter shifts...">
+        </div>
+        <div class="emp-multi-select-list" id="global-shift-options-list">
+          <label class="emp-multi-select-option emp-multi-select-none-option" data-txt="-- no shift assigned --">
+            <input type="checkbox" class="emp-multi-select-chk global-shift-none-chk" value="__NONE__">
+            <div class="emp-multi-select-label">
+              <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Shift Assigned --</span>
+            </div>
+          </label>
+          ${schedules.map(s => `
+            <label class="emp-multi-select-option" data-txt="${Utils.escape(s.name).toLowerCase()}">
+              <input type="checkbox" class="emp-multi-select-chk global-shift-chk" value="${s.id}">
+              <div class="emp-multi-select-label">
+                <span class="emp-multi-select-main-txt">⏰ ${Utils.escape(s.name)}</span>
+                <span class="emp-multi-select-sub-txt">${formatTime12h(s.startTime)} - ${formatTime12h(s.endTime)}</span>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      `;
+      document.body.appendChild(sharedShiftPopover);
+    }
 
-    const updateLocTriggerUI = (empId, locations) => {
-      const trigger = document.getElementById(`loc-trigger-${empId}`);
-      if (!trigger) return;
-      const locList = (locations || []).filter(Boolean);
-
-      let contentHtml = '';
-      if (locList.length === 0) {
-        contentHtml = `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
-      } else {
-        contentHtml = `
-          <div class="emp-multi-select-chips">
-            ${locList.map(loc => `
-              <span class="emp-multi-chip loc-chip" title="${Utils.escape(loc)}">
-                📍 ${Utils.escape(loc)}
-              </span>
-            `).join('')}
+    let sharedLocPopover = document.getElementById('global-shared-loc-popover');
+    if (!sharedLocPopover) {
+      sharedLocPopover = document.createElement('div');
+      sharedLocPopover.className = 'emp-multi-select-popover';
+      sharedLocPopover.id = 'global-shared-loc-popover';
+      sharedLocPopover.style.display = 'none';
+      sharedLocPopover.style.position = 'fixed';
+      sharedLocPopover.style.zIndex = '999999';
+      sharedLocPopover.innerHTML = `
+        <div class="emp-multi-select-header">
+          <span class="emp-multi-select-title">Select Location(s)</span>
+          <div class="emp-multi-select-actions">
+            <button type="button" class="emp-multi-select-action-btn" id="global-loc-select-all">Select All</button>
+            <span style="color:var(--border)">|</span>
+            <button type="button" class="emp-multi-select-action-btn btn-clear" id="global-loc-clear-all">Clear All</button>
           </div>
-        `;
-      }
-      trigger.innerHTML = contentHtml + `<span class="emp-multi-select-arrow">▼</span>`;
-    };
+        </div>
+        <div class="emp-multi-select-search">
+          <input type="text" id="global-loc-search-input" placeholder="Filter locations...">
+        </div>
+        <div class="emp-multi-select-list" id="global-loc-options-list">
+          <label class="emp-multi-select-option emp-multi-select-none-option" data-txt="-- no worksite location --">
+            <input type="checkbox" class="emp-multi-select-chk global-loc-none-chk" value="__NONE__">
+            <div class="emp-multi-select-label">
+              <span class="emp-multi-select-main-txt" style="color:var(--text-muted); font-style:italic">-- No Worksite Location --</span>
+            </div>
+          </label>
+          ${allLocationNames.map(loc => `
+            <label class="emp-multi-select-option" data-txt="${Utils.escape(loc).toLowerCase()}">
+              <input type="checkbox" class="emp-multi-select-chk global-loc-chk" value="${Utils.escape(loc)}">
+              <div class="emp-multi-select-label">
+                <span class="emp-multi-select-main-txt">📍 ${Utils.escape(loc)}</span>
+              </div>
+            </label>
+          `).join('')}
+        </div>
+      `;
+      document.body.appendChild(sharedLocPopover);
+    }
 
-    // Helper function to apply shifts to an employee immediately
-    const applyUserShifts = (empId, shiftIds) => {
-      const user = DB.getUser(empId);
-      if (!user) return;
-      const finalShiftIds = [...new Set((shiftIds || []).filter(Boolean))];
-
-      const updates = {
-        scheduleIds: finalShiftIds,
-        scheduleId: finalShiftIds[0] || ''
-      };
-
-      // Keep shiftLocations in sync
-      const currentShiftLocs = {};
-      const userLocs = (Array.isArray(user.preferredLocations))
-        ? user.preferredLocations
-        : (user.preferredLocation ? [user.preferredLocation] : []);
-      if (userLocs.length > 0) {
-        finalShiftIds.forEach(sid => {
-          currentShiftLocs[sid] = userLocs[0];
-        });
-      }
-      updates.shiftLocations = currentShiftLocs;
-
-      DB.updateUser(empId, updates);
-
-      // Update checkboxes in shift popover
-      const popover = document.getElementById(`shift-popover-${empId}`);
-      if (popover) {
-        const noneChk = popover.querySelector('.emp-shift-none-chk');
-        const isNone = (finalShiftIds.length === 0);
-        if (noneChk) {
-          noneChk.checked = isNone;
-          const opt = noneChk.closest('.emp-multi-select-option');
-          if (opt) {
-            if (isNone) opt.classList.add('selected');
-            else opt.classList.remove('selected');
-          }
-        }
-        popover.querySelectorAll('.emp-shift-chk').forEach(cb => {
-          cb.checked = finalShiftIds.includes(cb.value);
-          const opt = cb.closest('.emp-multi-select-option');
-          if (opt) {
-            if (cb.checked) opt.classList.add('selected');
-            else opt.classList.remove('selected');
-          }
-        });
-      }
-
-      // Update trigger UI immediately
-      updateShiftTriggerUI(empId, finalShiftIds);
-
-      const statusBadge = document.getElementById(`loc-status-${empId}`);
-      if (statusBadge) {
-        statusBadge.innerHTML = 'Saved ✓';
-        statusBadge.style.color = 'var(--success)';
-      }
-    };
-
-    // Helper function to apply locations to an employee immediately
-    const applyUserLocations = (empId, locations) => {
-      const user = DB.getUser(empId);
-      if (!user) return;
-      const finalLocs = [...new Set((locations || []).filter(Boolean))];
-
-      const updates = {
-        preferredLocations: finalLocs,
-        preferredLocation: finalLocs[0] || ''
-      };
-
-      // Clear or set shiftLocations in sync
-      const currentShiftLocs = {};
-      const shiftList = (Array.isArray(user.scheduleIds)) ? user.scheduleIds : (user.scheduleId ? [user.scheduleId] : []);
-      if (finalLocs.length > 0) {
-        shiftList.forEach(sid => {
-          currentShiftLocs[sid] = finalLocs[0];
-        });
-      }
-      updates.shiftLocations = currentShiftLocs;
-
-      DB.updateUser(empId, updates);
-
-      // Update checkboxes in location popover
-      const popover = document.getElementById(`loc-popover-${empId}`);
-      if (popover) {
-        const noneChk = popover.querySelector('.emp-loc-none-chk');
-        const isNone = (finalLocs.length === 0);
-        if (noneChk) {
-          noneChk.checked = isNone;
-          const opt = noneChk.closest('.emp-multi-select-option');
-          if (opt) {
-            if (isNone) opt.classList.add('selected');
-            else opt.classList.remove('selected');
-          }
-        }
-        popover.querySelectorAll('.emp-loc-chk').forEach(cb => {
-          cb.checked = finalLocs.includes(cb.value);
-          const opt = cb.closest('.emp-multi-select-option');
-          if (opt) {
-            if (cb.checked) opt.classList.add('selected');
-            else opt.classList.remove('selected');
-          }
-        });
-      }
-
-      // Update trigger UI immediately
-      updateLocTriggerUI(empId, finalLocs);
-
-      // Update row data-loc for table filtering
-      const row = document.querySelector(`.emp-loc-row[data-id="${empId}"]`);
-      if (row) {
-        row.dataset.loc = finalLocs.join(' , ').toLowerCase();
-      }
-
-      const statusBadge = document.getElementById(`loc-status-${empId}`);
-      if (statusBadge) {
-        statusBadge.innerHTML = 'Saved ✓';
-        statusBadge.style.color = 'var(--success)';
-      }
-    };
-
-    // Popover Floating Positioning & Visibility Management
-    let currentOpenPopover = null;
-    let currentOpenTrigger = null;
+    // Active popover tracker
+    let activeEditingEmpId = null;
+    let activeEditingType = null; // 'shift' or 'loc'
+    let activeTriggerBtn = null;
 
     const closeAllPopovers = () => {
-      document.querySelectorAll('.emp-multi-select-popover').forEach(p => {
-        p.style.display = 'none';
-      });
-      document.querySelectorAll('.emp-multi-select-btn').forEach(b => {
-        b.classList.remove('active');
-      });
-      currentOpenPopover = null;
-      currentOpenTrigger = null;
+      if (sharedShiftPopover) sharedShiftPopover.style.display = 'none';
+      if (sharedLocPopover) sharedLocPopover.style.display = 'none';
+      const bulkSP = document.getElementById('bulk-shift-popover');
+      if (bulkSP) bulkSP.style.display = 'none';
+      const bulkLP = document.getElementById('bulk-loc-popover');
+      if (bulkLP) bulkLP.style.display = 'none';
+
+      document.querySelectorAll('.emp-multi-select-btn').forEach(b => b.classList.remove('active'));
+      activeEditingEmpId = null;
+      activeEditingType = null;
+      activeTriggerBtn = null;
     };
 
-    const positionAndOpenPopover = (popover, trigger) => {
-      if (currentOpenPopover === popover) {
-        closeAllPopovers();
-        return;
-      }
+    const positionPopoverAt = (popover, trigger) => {
       closeAllPopovers();
-
-      if (popover.parentNode !== document.body) {
-        document.body.appendChild(popover);
-      }
-
-      popover.style.display = 'flex';
-      popover.style.position = 'fixed';
-      popover.style.zIndex = '999999';
       trigger.classList.add('active');
-      currentOpenPopover = popover;
-      currentOpenTrigger = trigger;
+      popover.style.display = 'flex';
 
       const rect = trigger.getBoundingClientRect();
       const popoverHeight = 280;
@@ -540,59 +383,324 @@ export function renderAdminSchedules(tab) {
       const calculatedLeft = Math.max(10, Math.min(rect.left, window.innerWidth - 370));
       popover.style.left = calculatedLeft + 'px';
       popover.style.width = Math.max(rect.width, 290) + 'px';
-
-      // Prevent clicks inside popover from closing it
-      if (!popover.dataset.clickBound) {
-        popover.addEventListener('click', (e) => e.stopPropagation());
-        popover.dataset.clickBound = 'true';
-      }
-
-      // Focus search input if present
-      const searchInput = popover.querySelector('input[type="text"]');
-      if (searchInput) {
-        setTimeout(() => searchInput.focus(), 50);
-      }
     };
 
-    // Trigger button click listeners
-    document.querySelectorAll('.emp-trigger-shift').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const empId = btn.dataset.empid;
-        const popover = document.getElementById(`shift-popover-${empId}`);
-        if (popover) positionAndOpenPopover(popover, btn);
-      });
-    });
+    // Prevent clicks inside shared popovers from closing them
+    sharedShiftPopover.addEventListener('click', (e) => e.stopPropagation());
+    sharedLocPopover.addEventListener('click', (e) => e.stopPropagation());
 
-    document.querySelectorAll('.emp-trigger-loc').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const empId = btn.dataset.empid;
-        const popover = document.getElementById(`loc-popover-${empId}`);
-        if (popover) positionAndOpenPopover(popover, btn);
-      });
-    });
-
-    // Bulk Trigger Listeners
-    const bulkShiftTrigger = document.getElementById('bulk-shift-trigger');
-    const bulkShiftPopover = document.getElementById('bulk-shift-popover');
-    if (bulkShiftTrigger && bulkShiftPopover) {
-      bulkShiftTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        positionAndOpenPopover(bulkShiftPopover, bulkShiftTrigger);
+    // Search filters inside shared popovers
+    const shiftSearchInput = document.getElementById('global-shift-search-input');
+    if (shiftSearchInput) {
+      shiftSearchInput.addEventListener('input', (e) => {
+        const query = (e.target.value || '').toLowerCase().trim();
+        sharedShiftPopover.querySelectorAll('.emp-multi-select-option').forEach(opt => {
+          const txt = (opt.dataset.txt || '').toLowerCase();
+          opt.style.display = (!query || txt.includes(query)) ? 'flex' : 'none';
+        });
       });
     }
 
-    const bulkLocTrigger = document.getElementById('bulk-loc-trigger');
-    const bulkLocPopover = document.getElementById('bulk-loc-popover');
-    if (bulkLocTrigger && bulkLocPopover) {
-      bulkLocTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        positionAndOpenPopover(bulkLocPopover, bulkLocTrigger);
+    const locSearchInput = document.getElementById('global-loc-search-input');
+    if (locSearchInput) {
+      locSearchInput.addEventListener('input', (e) => {
+        const query = (e.target.value || '').toLowerCase().trim();
+        sharedLocPopover.querySelectorAll('.emp-multi-select-option').forEach(opt => {
+          const txt = (opt.dataset.txt || '').toLowerCase();
+          opt.style.display = (!query || txt.includes(query)) ? 'flex' : 'none';
+        });
       });
     }
 
-    // Close on click outside or on window/container scroll
+    // =========================================================================
+    // OPENING SHARED POPOVERS (Instant setup for selected employee)
+    // =========================================================================
+    const openShiftPopoverFor = (empId, triggerBtn) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+
+      activeEditingEmpId = empId;
+      activeEditingType = 'shift';
+      activeTriggerBtn = triggerBtn;
+
+      const assignedShiftIds = Array.isArray(user.scheduleIds)
+        ? user.scheduleIds.filter(Boolean)
+        : (user.scheduleId ? [user.scheduleId] : []);
+
+      if (shiftSearchInput) shiftSearchInput.value = '';
+      sharedShiftPopover.querySelectorAll('.emp-multi-select-option').forEach(opt => opt.style.display = 'flex');
+
+      const isNone = (assignedShiftIds.length === 0);
+      const noneChk = sharedShiftPopover.querySelector('.global-shift-none-chk');
+      if (noneChk) {
+        noneChk.checked = isNone;
+        noneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', isNone);
+      }
+
+      sharedShiftPopover.querySelectorAll('.global-shift-chk').forEach(cb => {
+        const checked = assignedShiftIds.includes(cb.value);
+        cb.checked = checked;
+        cb.closest('.emp-multi-select-option')?.classList.toggle('selected', checked);
+      });
+
+      positionPopoverAt(sharedShiftPopover, triggerBtn);
+      setTimeout(() => shiftSearchInput?.focus(), 50);
+    };
+
+    const openLocPopoverFor = (empId, triggerBtn) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+
+      activeEditingEmpId = empId;
+      activeEditingType = 'loc';
+      activeTriggerBtn = triggerBtn;
+
+      let assignedLocations = [];
+      if (Array.isArray(user.preferredLocations)) {
+        assignedLocations = user.preferredLocations.filter(Boolean);
+      } else if (user.preferredLocation && user.preferredLocation !== 'No Worksite Location' && user.preferredLocation !== 'None' && user.preferredLocation.trim() !== '') {
+        assignedLocations = [user.preferredLocation.trim()];
+      }
+
+      if (locSearchInput) locSearchInput.value = '';
+      sharedLocPopover.querySelectorAll('.emp-multi-select-option').forEach(opt => opt.style.display = 'flex');
+
+      const isNone = (assignedLocations.length === 0);
+      const noneChk = sharedLocPopover.querySelector('.global-loc-none-chk');
+      if (noneChk) {
+        noneChk.checked = isNone;
+        noneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', isNone);
+      }
+
+      sharedLocPopover.querySelectorAll('.global-loc-chk').forEach(cb => {
+        const checked = assignedLocations.includes(cb.value);
+        cb.checked = checked;
+        cb.closest('.emp-multi-select-option')?.classList.toggle('selected', checked);
+      });
+
+      positionPopoverAt(sharedLocPopover, triggerBtn);
+      setTimeout(() => locSearchInput?.focus(), 50);
+    };
+
+    // =========================================================================
+    // IN-PLACE OPTIMISTIC UPDATE HANDLERS (0ms UI feedback, Background Save)
+    // =========================================================================
+    const saveTimerMap = new Map();
+
+    const commitShiftChange = (empId, shiftIds) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+
+      const finalShiftIds = [...new Set((shiftIds || []).filter(Boolean))];
+      user.scheduleIds = finalShiftIds;
+      user.scheduleId = finalShiftIds[0] || '';
+
+      // Update trigger chips immediately
+      const trigger = document.getElementById(`shift-trigger-${empId}`);
+      if (trigger) {
+        trigger.innerHTML = getShiftChipsHtml(finalShiftIds) + `<span class="emp-multi-select-arrow">▼</span>`;
+      }
+
+      // Mark row saving status
+      const statusBadge = document.getElementById(`loc-status-${empId}`);
+      if (statusBadge) {
+        statusBadge.innerHTML = '⏳ Saving...';
+        statusBadge.style.color = 'var(--warning)';
+      }
+
+      // Debounce database write for rapid multi-clicks
+      if (saveTimerMap.has(`shift_${empId}`)) {
+        clearTimeout(saveTimerMap.get(`shift_${empId}`));
+      }
+      saveTimerMap.set(`shift_${empId}`, setTimeout(() => {
+        saveTimerMap.delete(`shift_${empId}`);
+        const updates = {
+          scheduleIds: finalShiftIds,
+          scheduleId: finalShiftIds[0] || ''
+        };
+        DB.updateUser(empId, updates, { silent: true });
+        if (statusBadge) {
+          statusBadge.innerHTML = 'Saved ✓';
+          statusBadge.style.color = 'var(--success)';
+        }
+      }, 200));
+    };
+
+    const commitLocChange = (empId, locations) => {
+      const user = DB.getUser(empId);
+      if (!user) return;
+
+      const finalLocs = [...new Set((locations || []).filter(Boolean))];
+      user.preferredLocations = finalLocs;
+      user.preferredLocation = finalLocs[0] || '';
+      user._locStr = finalLocs.join(' , ').toLowerCase();
+
+      // Update trigger chips immediately
+      const trigger = document.getElementById(`loc-trigger-${empId}`);
+      if (trigger) {
+        trigger.innerHTML = getLocChipsHtml(finalLocs) + `<span class="emp-multi-select-arrow">▼</span>`;
+      }
+
+      // Mark row saving status
+      const statusBadge = document.getElementById(`loc-status-${empId}`);
+      if (statusBadge) {
+        statusBadge.innerHTML = '⏳ Saving...';
+        statusBadge.style.color = 'var(--warning)';
+      }
+
+      // Debounce database write for rapid multi-clicks
+      if (saveTimerMap.has(`loc_${empId}`)) {
+        clearTimeout(saveTimerMap.get(`loc_${empId}`));
+      }
+      saveTimerMap.set(`loc_${empId}`, setTimeout(() => {
+        saveTimerMap.delete(`loc_${empId}`);
+        const updates = {
+          preferredLocations: finalLocs,
+          preferredLocation: finalLocs[0] || ''
+        };
+        DB.updateUser(empId, updates, { silent: true });
+        if (statusBadge) {
+          statusBadge.innerHTML = 'Saved ✓';
+          statusBadge.style.color = 'var(--success)';
+        }
+      }, 200));
+    };
+
+    // Shared Shift Popover Checkbox Listeners
+    const shiftNoneChk = sharedShiftPopover.querySelector('.global-shift-none-chk');
+    if (shiftNoneChk) {
+      shiftNoneChk.addEventListener('change', (e) => {
+        if (!activeEditingEmpId) return;
+        shiftNoneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
+        if (e.target.checked) {
+          sharedShiftPopover.querySelectorAll('.global-shift-chk').forEach(c => {
+            c.checked = false;
+            c.closest('.emp-multi-select-option')?.classList.remove('selected');
+          });
+          commitShiftChange(activeEditingEmpId, []);
+        } else {
+          const checked = Array.from(sharedShiftPopover.querySelectorAll('.global-shift-chk:checked')).map(c => c.value);
+          if (checked.length === 0) {
+            e.target.checked = true;
+            shiftNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    sharedShiftPopover.querySelectorAll('.global-shift-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        if (!activeEditingEmpId) return;
+        chk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
+        if (e.target.checked && shiftNoneChk) {
+          shiftNoneChk.checked = false;
+          shiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        const checked = Array.from(sharedShiftPopover.querySelectorAll('.global-shift-chk:checked')).map(c => c.value);
+        if (checked.length === 0 && shiftNoneChk) {
+          shiftNoneChk.checked = true;
+          shiftNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+        }
+        commitShiftChange(activeEditingEmpId, checked);
+      });
+    });
+
+    document.getElementById('global-shift-select-all')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activeEditingEmpId) return;
+      if (shiftNoneChk) {
+        shiftNoneChk.checked = false;
+        shiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      sharedShiftPopover.querySelectorAll('.global-shift-chk').forEach(c => {
+        c.checked = true;
+        c.closest('.emp-multi-select-option')?.classList.add('selected');
+      });
+      commitShiftChange(activeEditingEmpId, schedules.map(s => s.id));
+    });
+
+    document.getElementById('global-shift-clear-all')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activeEditingEmpId) return;
+      if (shiftNoneChk) {
+        shiftNoneChk.checked = true;
+        shiftNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+      }
+      sharedShiftPopover.querySelectorAll('.global-shift-chk').forEach(c => {
+        c.checked = false;
+        c.closest('.emp-multi-select-option')?.classList.remove('selected');
+      });
+      commitShiftChange(activeEditingEmpId, []);
+    });
+
+    // Shared Location Popover Checkbox Listeners
+    const locNoneChk = sharedLocPopover.querySelector('.global-loc-none-chk');
+    if (locNoneChk) {
+      locNoneChk.addEventListener('change', (e) => {
+        if (!activeEditingEmpId) return;
+        locNoneChk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
+        if (e.target.checked) {
+          sharedLocPopover.querySelectorAll('.global-loc-chk').forEach(c => {
+            c.checked = false;
+            c.closest('.emp-multi-select-option')?.classList.remove('selected');
+          });
+          commitLocChange(activeEditingEmpId, []);
+        } else {
+          const checked = Array.from(sharedLocPopover.querySelectorAll('.global-loc-chk:checked')).map(c => c.value);
+          if (checked.length === 0) {
+            e.target.checked = true;
+            locNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    sharedLocPopover.querySelectorAll('.global-loc-chk').forEach(chk => {
+      chk.addEventListener('change', (e) => {
+        if (!activeEditingEmpId) return;
+        chk.closest('.emp-multi-select-option')?.classList.toggle('selected', e.target.checked);
+        if (e.target.checked && locNoneChk) {
+          locNoneChk.checked = false;
+          locNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+        }
+        const checked = Array.from(sharedLocPopover.querySelectorAll('.global-loc-chk:checked')).map(c => c.value);
+        if (checked.length === 0 && locNoneChk) {
+          locNoneChk.checked = true;
+          locNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+        }
+        commitLocChange(activeEditingEmpId, checked);
+      });
+    });
+
+    document.getElementById('global-loc-select-all')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activeEditingEmpId) return;
+      if (locNoneChk) {
+        locNoneChk.checked = false;
+        locNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      sharedLocPopover.querySelectorAll('.global-loc-chk').forEach(c => {
+        c.checked = true;
+        c.closest('.emp-multi-select-option')?.classList.add('selected');
+      });
+      commitLocChange(activeEditingEmpId, allLocationNames);
+    });
+
+    document.getElementById('global-loc-clear-all')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activeEditingEmpId) return;
+      if (locNoneChk) {
+        locNoneChk.checked = true;
+        locNoneChk.closest('.emp-multi-select-option')?.classList.add('selected');
+      }
+      sharedLocPopover.querySelectorAll('.global-loc-chk').forEach(c => {
+        c.checked = false;
+        c.closest('.emp-multi-select-option')?.classList.remove('selected');
+      });
+      commitLocChange(activeEditingEmpId, []);
+    });
+
+    // Close popovers on click outside or scroll
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.emp-multi-select-wrap') && !e.target.closest('.emp-multi-select-popover')) {
         closeAllPopovers();
@@ -602,142 +710,281 @@ export function renderAdminSchedules(tab) {
     const mainContainer = document.getElementById('main-view');
     if (mainContainer) mainContainer.addEventListener('scroll', closeAllPopovers, { passive: true });
     window.addEventListener('scroll', closeAllPopovers, { passive: true });
-
     window.addEventListener('resize', closeAllPopovers);
 
-    // Filter search inside popovers
-    document.querySelectorAll('.emp-search-shifts, .emp-search-locs').forEach(input => {
-      input.addEventListener('input', (e) => {
-        const query = (e.target.value || '').toLowerCase().trim();
-        const popover = e.target.closest('.emp-multi-select-popover');
-        if (!popover) return;
-        popover.querySelectorAll('.emp-multi-select-option').forEach(opt => {
-          const txt = (opt.dataset.txt || opt.textContent || '').toLowerCase();
-          opt.style.display = (!query || txt.includes(query)) ? 'flex' : 'none';
+    // =========================================================================
+    // TABLE RENDERING & EVENT DELEGATION
+    // =========================================================================
+    const tbody = document.getElementById('emp-locations-tbody');
+    const chkSelectAll = document.getElementById('chk-select-all-emps');
+    const paginationRange = document.getElementById('loc-pagination-range');
+    const pageIndicator = document.getElementById('loc-page-indicator');
+    const btnFirst = document.getElementById('btn-page-first');
+    const btnPrev = document.getElementById('btn-page-prev');
+    const btnNext = document.getElementById('btn-page-next');
+    const btnLast = document.getElementById('btn-page-last');
+    const pageSizeSelect = document.getElementById('loc-page-size-select');
+    const countInfo = document.getElementById('loc-assign-count-info');
+    const bulkSelectedCount = document.getElementById('bulk-selected-count');
+
+    const updateBulkSelectedCount = () => {
+      if (bulkSelectedCount) bulkSelectedCount.textContent = selectedEmpIds.size;
+    };
+
+    const syncSelectAllState = (visibleUsers) => {
+      if (!chkSelectAll) return;
+      if (visibleUsers.length === 0) {
+        chkSelectAll.checked = false;
+        chkSelectAll.indeterminate = false;
+        return;
+      }
+      let selectedVisibleCount = 0;
+      for (const u of visibleUsers) {
+        if (selectedEmpIds.has(u.id)) selectedVisibleCount++;
+      }
+      if (selectedVisibleCount === visibleUsers.length) {
+        chkSelectAll.checked = true;
+        chkSelectAll.indeterminate = false;
+      } else if (selectedVisibleCount > 0) {
+        chkSelectAll.checked = false;
+        chkSelectAll.indeterminate = true;
+      } else {
+        chkSelectAll.checked = false;
+        chkSelectAll.indeterminate = false;
+      }
+    };
+
+    const renderTablePage = () => {
+      closeAllPopovers();
+      const totalCount = filteredUsers.length;
+      const effectivePageSize = (pageSize === 'all' || pageSize >= totalCount) ? totalCount : pageSize;
+      const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+
+      if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+      if (currentPage < 1) currentPage = 1;
+
+      const startIndex = effectivePageSize > 0 ? (currentPage - 1) * effectivePageSize : 0;
+      const endIndex = effectivePageSize > 0 ? Math.min(startIndex + effectivePageSize, totalCount) : totalCount;
+      const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+      // Render ultra-fast lightweight rows (<5ms)
+      if (pageUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted)">No employees match the selected criteria.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageUsers.map(u => {
+          const isChecked = selectedEmpIds.has(u.id);
+          const assignedShiftIds = Array.isArray(u.scheduleIds)
+            ? u.scheduleIds.filter(Boolean)
+            : (u.scheduleId ? [u.scheduleId] : []);
+          
+          let assignedLocations = [];
+          if (Array.isArray(u.preferredLocations)) {
+            assignedLocations = u.preferredLocations.filter(Boolean);
+          } else if (u.preferredLocation && u.preferredLocation !== 'No Worksite Location' && u.preferredLocation !== 'None' && u.preferredLocation.trim() !== '') {
+            assignedLocations = [u.preferredLocation.trim()];
+          }
+
+          return `
+            <tr class="emp-loc-row" data-id="${u.id}">
+              <td style="text-align:center">
+                <input type="checkbox" class="chk-emp-loc" data-id="${u.id}" ${isChecked ? 'checked' : ''} style="cursor:pointer; width:15px; height:15px; accent-color:var(--primary)">
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:12px">
+                  <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}">
+                    ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+                  </div>
+                  <div>
+                    <div style="font-weight:700; color:var(--text-primary); font-size:13px">${Utils.escape(u.name)}</div>
+                    <div style="font-size:11px; color:var(--text-muted); font-family:monospace; margin-top:2px">ID: ${Utils.escape(u.employeeId || u.username || u.id)}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-weight:600; font-size:12.5px; color:var(--text-primary)">${Utils.escape(u.department || 'General')}</div>
+                <div style="font-size:11px; color:var(--text-muted); text-transform:capitalize; margin-top:2px">${Utils.escape(u.role || 'employee')}</div>
+              </td>
+              <td>
+                <div class="emp-multi-select-wrap">
+                  <button type="button" class="emp-multi-select-btn emp-trigger-shift" data-empid="${u.id}" id="shift-trigger-${u.id}">
+                    ${getShiftChipsHtml(assignedShiftIds)}
+                    <span class="emp-multi-select-arrow">▼</span>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div class="emp-multi-select-wrap">
+                  <button type="button" class="emp-multi-select-btn emp-trigger-loc" data-empid="${u.id}" id="loc-trigger-${u.id}">
+                    ${getLocChipsHtml(assignedLocations)}
+                    <span class="emp-multi-select-arrow">▼</span>
+                  </button>
+                </div>
+              </td>
+              <td style="text-align:center">
+                <span class="badge badge-approved" id="loc-status-${u.id}" style="font-size:11px; padding:3px 8px; background:rgba(16,185,129,0.1); color:var(--success); border-radius:6px">
+                  Saved ✓
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Sync pagination controls
+      if (paginationRange) {
+        paginationRange.textContent = totalCount > 0 
+          ? `Showing ${startIndex + 1} to ${endIndex} of ${totalCount.toLocaleString()} employee(s)`
+          : `Showing 0 employees`;
+      }
+      if (pageIndicator) {
+        pageIndicator.textContent = `Page ${currentPage} of ${totalPages}`;
+      }
+      if (btnFirst) btnFirst.disabled = (currentPage <= 1);
+      if (btnPrev) btnPrev.disabled = (currentPage <= 1);
+      if (btnNext) btnNext.disabled = (currentPage >= totalPages);
+      if (btnLast) btnLast.disabled = (currentPage >= totalPages);
+
+      syncSelectAllState(pageUsers);
+    };
+
+    // Table Event Delegation: Single click listener handles triggers with 0ms overhead
+    tbody.addEventListener('click', (e) => {
+      const shiftBtn = e.target.closest('.emp-trigger-shift');
+      if (shiftBtn) {
+        e.stopPropagation();
+        const empId = shiftBtn.dataset.empid;
+        openShiftPopoverFor(empId, shiftBtn);
+        return;
+      }
+
+      const locBtn = e.target.closest('.emp-trigger-loc');
+      if (locBtn) {
+        e.stopPropagation();
+        const empId = locBtn.dataset.empid;
+        openLocPopoverFor(empId, locBtn);
+        return;
+      }
+    });
+
+    // Table Event Delegation: Single change listener handles checkboxes in 0ms without full DOM scan
+    tbody.addEventListener('change', (e) => {
+      if (e.target.matches('.chk-emp-loc')) {
+        const empId = e.target.dataset.id;
+        if (e.target.checked) {
+          selectedEmpIds.add(empId);
+        } else {
+          selectedEmpIds.delete(empId);
+        }
+        updateBulkSelectedCount();
+        const effectivePageSize = (pageSize === 'all' || pageSize >= filteredUsers.length) ? filteredUsers.length : pageSize;
+        const startIndex = (currentPage - 1) * effectivePageSize;
+        const pageUsers = filteredUsers.slice(startIndex, startIndex + effectivePageSize);
+        syncSelectAllState(pageUsers);
+      }
+    });
+
+    // Select All Checkbox Handler (Fast In-Memory)
+    if (chkSelectAll) {
+      chkSelectAll.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const effectivePageSize = (pageSize === 'all' || pageSize >= filteredUsers.length) ? filteredUsers.length : pageSize;
+        const startIndex = (currentPage - 1) * effectivePageSize;
+        const pageUsers = filteredUsers.slice(startIndex, startIndex + effectivePageSize);
+
+        pageUsers.forEach(u => {
+          if (isChecked) selectedEmpIds.add(u.id);
+          else selectedEmpIds.delete(u.id);
         });
+
+        tbody.querySelectorAll('.chk-emp-loc').forEach(cb => {
+          cb.checked = isChecked;
+        });
+
+        updateBulkSelectedCount();
       });
-      input.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // Pagination Button Listeners
+    if (btnFirst) btnFirst.addEventListener('click', () => { currentPage = 1; renderTablePage(); });
+    if (btnPrev) btnPrev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTablePage(); } });
+    if (btnNext) btnNext.addEventListener('click', () => { currentPage++; renderTablePage(); });
+    if (btnLast) btnLast.addEventListener('click', () => {
+      const effectivePageSize = (pageSize === 'all' || pageSize >= filteredUsers.length) ? filteredUsers.length : pageSize;
+      currentPage = Math.ceil(filteredUsers.length / effectivePageSize);
+      renderTablePage();
     });
 
-    // SHIFT CHECKBOX TOGGLE HANDLER
-    document.querySelectorAll('.emp-shift-chk').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        const empId = e.target.dataset.empid;
-        const checkedBoxes = document.querySelectorAll(`.emp-shift-chk[data-empid="${empId}"]:checked`);
-        const checkedShiftIds = Array.from(checkedBoxes).map(c => c.value);
-        applyUserShifts(empId, checkedShiftIds);
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          const msg = checkedShiftIds.length > 0
-            ? `✅ Assigned ${checkedShiftIds.length} shift(s) to ${user ? user.name : 'employee'}`
-            : `ℹ️ All shifts removed for ${user ? user.name : 'employee'}`;
-          showToastNotification(msg, 'success');
-        }
+    if (pageSizeSelect) {
+      pageSizeSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        pageSize = val === 'all' ? 'all' : parseInt(val, 10);
+        currentPage = 1;
+        renderTablePage();
       });
-    });
+    }
 
-    // NO SHIFT ASSIGNED HANDLER
-    document.querySelectorAll('.emp-shift-none-chk').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        const empId = e.target.dataset.empid;
-        if (e.target.checked) {
-          applyUserShifts(empId, []);
-          if (typeof showToastNotification === 'function') {
-            const user = DB.getUser(empId);
-            showToastNotification(`ℹ️ All shifts removed for ${user ? user.name : 'employee'}`, 'info');
+    // =========================================================================
+    // SEARCH & FILTERING (In-Memory <2ms Execution)
+    // =========================================================================
+    const searchInput = document.getElementById('loc-assign-search');
+    const deptFilter = document.getElementById('loc-assign-dept-filter');
+    const locFilter = document.getElementById('loc-assign-loc-filter');
+
+    const applyFilters = () => {
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const d = (deptFilter ? deptFilter.value : '').toLowerCase().trim();
+      const l = (locFilter ? locFilter.value : '').toLowerCase().trim();
+
+      filteredUsers = allUsers.filter(u => {
+        if (q && !u._search.includes(q)) return false;
+        if (d && u._dept !== d) return false;
+        if (l) {
+          if (l === '__none__') {
+            if (u._locStr && u._locStr !== 'no worksite location' && u._locStr !== 'none' && u._locStr !== '') return false;
+          } else {
+            if (!u._locStr.includes(l)) return false;
           }
-        } else {
-          const checkedBoxes = document.querySelectorAll(`.emp-shift-chk[data-empid="${empId}"]:checked`);
-          if (checkedBoxes.length === 0) e.target.checked = true;
         }
+        return true;
       });
-    });
 
-    // LOCATION CHECKBOX TOGGLE HANDLER
-    document.querySelectorAll('.emp-loc-chk').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        const empId = e.target.dataset.empid;
-        const checkedBoxes = document.querySelectorAll(`.emp-loc-chk[data-empid="${empId}"]:checked`);
-        const checkedLocs = Array.from(checkedBoxes).map(c => c.value);
-        applyUserLocations(empId, checkedLocs);
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          const msg = checkedLocs.length > 0
-            ? `✅ Assigned ${checkedLocs.length} location(s) to ${user ? user.name : 'employee'}`
-            : `ℹ️ All worksite locations removed for ${user ? user.name : 'employee'}`;
-          showToastNotification(msg, 'success');
-        }
-      });
-    });
+      currentPage = 1;
+      if (countInfo) {
+        countInfo.textContent = filteredUsers.length === allUsers.length
+          ? `Showing ${allUsers.length} employee(s)`
+          : `Showing ${filteredUsers.length} of ${allUsers.length} employee(s)`;
+      }
+      renderTablePage();
+    };
 
-    // NO LOCATION ASSIGNED HANDLER
-    document.querySelectorAll('.emp-loc-none-chk').forEach(chk => {
-      chk.addEventListener('change', (e) => {
-        const empId = e.target.dataset.empid;
-        if (e.target.checked) {
-          applyUserLocations(empId, []);
-          if (typeof showToastNotification === 'function') {
-            const user = DB.getUser(empId);
-            showToastNotification(`ℹ️ All worksite locations removed for ${user ? user.name : 'employee'}`, 'info');
-          }
-        } else {
-          const checkedBoxes = document.querySelectorAll(`.emp-loc-chk[data-empid="${empId}"]:checked`);
-          if (checkedBoxes.length === 0) e.target.checked = true;
-        }
-      });
-    });
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (deptFilter) deptFilter.addEventListener('change', applyFilters);
+    if (locFilter) locFilter.addEventListener('change', applyFilters);
 
-    // Select All / Clear All Shift buttons in individual popovers
-    document.querySelectorAll('.emp-btn-select-all-shifts').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    // Initial render of page 1
+    renderTablePage();
+
+    // =========================================================================
+    // BULK ASSIGNMENT DROPDOWNS & ACTION
+    // =========================================================================
+    const bulkShiftTrigger = document.getElementById('bulk-shift-trigger');
+    const bulkShiftPopover = document.getElementById('bulk-shift-popover');
+    if (bulkShiftTrigger && bulkShiftPopover) {
+      bulkShiftTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        const empId = btn.dataset.empid;
-        applyUserShifts(empId, schedules.map(s => s.id));
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          showToastNotification(`✅ All ${schedules.length} shifts assigned to ${user ? user.name : 'employee'}`, 'success');
-        }
+        positionPopoverAt(bulkShiftPopover, bulkShiftTrigger);
       });
-    });
+    }
 
-    document.querySelectorAll('.emp-btn-clear-shifts').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const bulkLocTrigger = document.getElementById('bulk-loc-trigger');
+    const bulkLocPopover = document.getElementById('bulk-loc-popover');
+    if (bulkLocTrigger && bulkLocPopover) {
+      bulkLocTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
-        const empId = btn.dataset.empid;
-        applyUserShifts(empId, []);
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          showToastNotification(`ℹ️ All shifts cleared for ${user ? user.name : 'employee'}`, 'info');
-        }
+        positionPopoverAt(bulkLocPopover, bulkLocTrigger);
       });
-    });
+    }
 
-    // Select All / Clear All Location buttons in individual popovers
-    document.querySelectorAll('.emp-btn-select-all-locs').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const empId = btn.dataset.empid;
-        applyUserLocations(empId, allLocationNames);
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          showToastNotification(`✅ All ${allLocationNames.length} locations assigned to ${user ? user.name : 'employee'}`, 'success');
-        }
-      });
-    });
-
-    document.querySelectorAll('.emp-btn-clear-locs').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const empId = btn.dataset.empid;
-        applyUserLocations(empId, []);
-        if (typeof showToastNotification === 'function') {
-          const user = DB.getUser(empId);
-          showToastNotification(`ℹ️ All worksite locations cleared for ${user ? user.name : 'employee'}`, 'info');
-        }
-      });
-    });
-
-    // Bulk Multi-Select Shifts: None vs Specific & Select All / Clear
     const bulkShiftNoneChk = document.querySelector('.bulk-shift-none-chk');
     const updateBulkShiftTriggerLabel = () => {
       const isNone = document.querySelector('.bulk-shift-none-chk')?.checked;
@@ -750,7 +997,7 @@ export function renderAdminSchedules(tab) {
         const checked = document.querySelectorAll('.bulk-shift-chk:checked');
         if (checked.length === 0) label.textContent = '-- Select Shift(s) --';
         else if (checked.length === 1) {
-          const s = DB.getSchedule(checked[0].value);
+          const s = scheduleMap.get(checked[0].value);
           label.textContent = `⏰ ${s ? s.name : '1 Shift Selected'}`;
         } else {
           label.textContent = `⏰ ${checked.length} Shifts Selected`;
@@ -782,38 +1029,32 @@ export function renderAdminSchedules(tab) {
       });
     });
 
-    const btnBulkSelectAllShifts = document.getElementById('btn-bulk-select-all-shifts');
-    if (btnBulkSelectAllShifts) {
-      btnBulkSelectAllShifts.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (bulkShiftNoneChk) {
-          bulkShiftNoneChk.checked = false;
-          bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
-        }
-        document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
-          c.checked = true; 
-          c.closest('.emp-multi-select-option')?.classList.add('selected');
-        });
-        updateBulkShiftTriggerLabel();
+    document.getElementById('btn-bulk-select-all-shifts')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bulkShiftNoneChk) {
+        bulkShiftNoneChk.checked = false;
+        bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
+        c.checked = true; 
+        c.closest('.emp-multi-select-option')?.classList.add('selected');
       });
-    }
-    const btnBulkClearShifts = document.getElementById('btn-bulk-clear-shifts');
-    if (btnBulkClearShifts) {
-      btnBulkClearShifts.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (bulkShiftNoneChk) {
-          bulkShiftNoneChk.checked = false;
-          bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
-        }
-        document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
-          c.checked = false; 
-          c.closest('.emp-multi-select-option')?.classList.remove('selected');
-        });
-        updateBulkShiftTriggerLabel();
-      });
-    }
+      updateBulkShiftTriggerLabel();
+    });
 
-    // Bulk Multi-Select Locations: None vs Specific & Select All / Clear
+    document.getElementById('btn-bulk-clear-shifts')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bulkShiftNoneChk) {
+        bulkShiftNoneChk.checked = false;
+        bulkShiftNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      document.querySelectorAll('.bulk-shift-chk').forEach(c => { 
+        c.checked = false; 
+        c.closest('.emp-multi-select-option')?.classList.remove('selected');
+      });
+      updateBulkShiftTriggerLabel();
+    });
+
     const bulkLocNoneChk = document.querySelector('.bulk-loc-none-chk');
     const updateBulkLocTriggerLabel = () => {
       const isNone = document.querySelector('.bulk-loc-none-chk')?.checked;
@@ -857,63 +1098,33 @@ export function renderAdminSchedules(tab) {
       });
     });
 
-    const btnBulkSelectAllLocs = document.getElementById('btn-bulk-select-all-locs');
-    if (btnBulkSelectAllLocs) {
-      btnBulkSelectAllLocs.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (bulkLocNoneChk) {
-          bulkLocNoneChk.checked = false;
-          bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
-        }
-        document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
-          c.checked = true; 
-          c.closest('.emp-multi-select-option')?.classList.add('selected');
-        });
-        updateBulkLocTriggerLabel();
+    document.getElementById('btn-bulk-select-all-locs')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bulkLocNoneChk) {
+        bulkLocNoneChk.checked = false;
+        bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
+        c.checked = true; 
+        c.closest('.emp-multi-select-option')?.classList.add('selected');
       });
-    }
-    const btnBulkClearLocs = document.getElementById('btn-bulk-clear-locs');
-    if (btnBulkClearLocs) {
-      btnBulkClearLocs.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (bulkLocNoneChk) {
-          bulkLocNoneChk.checked = false;
-          bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
-        }
-        document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
-          c.checked = false; 
-          c.closest('.emp-multi-select-option')?.classList.remove('selected');
-        });
-        updateBulkLocTriggerLabel();
-      });
-    }
-
-    // Select All Checkbox Handler for Employees
-    const chkAll = document.getElementById('chk-select-all-emps');
-    const updateSelectedCount = () => {
-      const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
-      const countEl = document.getElementById('bulk-selected-count');
-      if (countEl) countEl.textContent = checkedBoxes.length;
-    };
-
-    if (chkAll) {
-      chkAll.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        document.querySelectorAll('.emp-loc-row').forEach(row => {
-          if (row.style.display !== 'none') {
-            const chk = row.querySelector('.chk-emp-loc');
-            if (chk) chk.checked = isChecked;
-          }
-        });
-        updateSelectedCount();
-      });
-    }
-
-    document.querySelectorAll('.chk-emp-loc').forEach(chk => {
-      chk.addEventListener('change', updateSelectedCount);
+      updateBulkLocTriggerLabel();
     });
 
-    // Bulk Apply Location & Shift Handler
+    document.getElementById('btn-bulk-clear-locs')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bulkLocNoneChk) {
+        bulkLocNoneChk.checked = false;
+        bulkLocNoneChk.closest('.emp-multi-select-option')?.classList.remove('selected');
+      }
+      document.querySelectorAll('.bulk-loc-chk').forEach(c => { 
+        c.checked = false; 
+        c.closest('.emp-multi-select-option')?.classList.remove('selected');
+      });
+      updateBulkLocTriggerLabel();
+    });
+
+    // Fast Batch Bulk Assignment
     const btnApplyBulk = document.getElementById('btn-apply-bulk-location');
     if (btnApplyBulk) {
       btnApplyBulk.addEventListener('click', () => {
@@ -930,25 +1141,44 @@ export function renderAdminSchedules(tab) {
           return;
         }
 
-        const checkedBoxes = document.querySelectorAll('.chk-emp-loc:checked');
-        if (!checkedBoxes.length) {
+        if (selectedEmpIds.size === 0) {
           alert('Please select at least one employee using the row checkboxes.');
           return;
         }
 
-        checkedBoxes.forEach(chk => {
-          const empId = chk.dataset.id;
+        const shiftTargets = bulkShiftNone ? [] : selectedBulkShifts;
+        const locTargets = bulkLocNone ? [] : selectedBulkLocs;
+
+        const batchUpdates = [];
+        selectedEmpIds.forEach(empId => {
+          const user = DB.getUser(empId);
+          if (!user) return;
+          const up = {};
           if (hasShiftAction) {
-            const shiftTargets = bulkShiftNone ? [] : selectedBulkShifts;
-            applyUserShifts(empId, shiftTargets);
+            up.scheduleIds = shiftTargets;
+            up.scheduleId = shiftTargets[0] || '';
+            user.scheduleIds = shiftTargets;
+            user.scheduleId = shiftTargets[0] || '';
           }
           if (hasLocAction) {
-            const locTargets = bulkLocNone ? [] : selectedBulkLocs;
-            applyUserLocations(empId, locTargets);
+            up.preferredLocations = locTargets;
+            up.preferredLocation = locTargets[0] || '';
+            user.preferredLocations = locTargets;
+            user.preferredLocation = locTargets[0] || '';
+            user._locStr = locTargets.join(' , ').toLowerCase();
           }
+          batchUpdates.push({ id: empId, updates: up });
         });
 
+        // Fast batch persistence
+        if (typeof DB.updateUsersBatch === 'function') {
+          DB.updateUsersBatch(batchUpdates, { silent: true });
+        } else {
+          batchUpdates.forEach(b => DB.updateUser(b.id, b.updates, { silent: true }));
+        }
+
         closeAllPopovers();
+        renderTablePage();
 
         const msgParts = [];
         if (bulkShiftNone) msgParts.push(`Removed Shift(s)`);
@@ -957,55 +1187,14 @@ export function renderAdminSchedules(tab) {
         if (bulkLocNone) msgParts.push(`Removed Location(s)`);
         else if (selectedBulkLocs.length > 0) msgParts.push(`${selectedBulkLocs.length} Location(s)`);
 
-        const successMsg = `Successfully assigned ${msgParts.join(' & ')} to ${checkedBoxes.length} employee(s).`;
+        const successMsg = `Successfully assigned ${msgParts.join(' & ')} to ${selectedEmpIds.size} employee(s).`;
         if (typeof showToastNotification === 'function') {
           showToastNotification(`✅ ${successMsg}`, 'success');
-        } else if (typeof CustomDialog !== 'undefined' && CustomDialog.alert) {
-          CustomDialog.alert(successMsg, 'Bulk Assignment Complete');
         } else {
           alert(`✅ ${successMsg}`);
         }
       });
     }
-
-    // Search and Filter Filtering Logic (Supports multiple assigned locations)
-    const searchInput = document.getElementById('loc-assign-search');
-    const deptFilter = document.getElementById('loc-assign-dept-filter');
-    const locFilter = document.getElementById('loc-assign-loc-filter');
-    const countInfo = document.getElementById('loc-assign-count-info');
-
-    const filterRows = () => {
-      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
-      const d = (deptFilter ? deptFilter.value : '').toLowerCase().trim();
-      const l = (locFilter ? locFilter.value : '').toLowerCase().trim();
-
-      let visible = 0;
-      document.querySelectorAll('.emp-loc-row').forEach(row => {
-        const name = row.dataset.name || '';
-        const empId = row.dataset.empid || '';
-        const dept = row.dataset.dept || '';
-        const loc = row.dataset.loc || '';
-
-        const matchQ = !q || name.includes(q) || empId.includes(q) || dept.includes(q);
-        const matchD = !d || dept === d;
-        const matchL = !l || (l === '__none__' ? (!loc || loc === 'no worksite location' || loc === 'none' || loc === '') : loc.includes(l));
-
-        if (matchQ && matchD && matchL) {
-          row.style.display = '';
-          visible++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-
-      if (countInfo) {
-        countInfo.textContent = `Showing ${visible} of ${allUsers.length} employee(s)`;
-      }
-    };
-
-    if (searchInput) searchInput.addEventListener('input', filterRows);
-    if (deptFilter) deptFilter.addEventListener('change', filterRows);
-    if (locFilter) locFilter.addEventListener('change', filterRows);
 
     return;
   }

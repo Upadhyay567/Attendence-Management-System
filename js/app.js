@@ -745,6 +745,9 @@ const startApp = async () => {
       if (typeof loadBiometricDashboardData === 'function') loadBiometricDashboardData(true);
     } else if (activeHash === '#dashboard') {
       if (typeof renderEmployeeDashboard === 'function') renderEmployeeDashboard();
+    } else if (activeHash === '#schedules') {
+      // Do not re-render #schedules on background db_updated events to avoid wiping away active user interactions/popovers
+      return;
     } else {
       const openModal = document.querySelector('.modal-overlay, .custom-dialog');
       if (!openModal && typeof window.appHandleRoute === 'function') {
@@ -4507,6 +4510,11 @@ function renderAdminSupport() {
   }));
 }
 
+const adminVerifyPageState = {
+  currentPage: 1,
+  pageSize: 30
+};
+
 function renderAdminVerificationView() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
@@ -4542,149 +4550,238 @@ function renderAdminVerificationView() {
                 <th>ID Verification Docs</th>
               </tr>
             </thead>
-            <tbody>
-              ${employees.map(u => {
-                const getDocStatusHTML = (doc, type) => {
-                  if (!doc) {
-                    return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
-                  }
-                  
-                  const status = u.verificationStatuses ? u.verificationStatuses[type] : null;
-                  let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
-                  if (status === 'Approved') {
-                    badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`;
-                  } else if (status === 'Rejected') {
-                    badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">❌ Rejected</span>`;
-                  }
-                  
-                  let approveBtnHTML = '';
-                  if (status !== 'Approved') {
-                    approveBtnHTML = `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
-                  }
-                  let rejectBtnHTML = '';
-                  if (status !== 'Rejected' && status !== 'Approved') {
-                    rejectBtnHTML = `<a href="#" class="btn-verify-reject" data-userid="${u.id}" data-doctype="${type}" style="color:var(--error); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Reject</a>`;
-                  }
-
-                  if (type === 'document') {
-                    if (Array.isArray(doc) && doc.length === 0) {
-                      return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
-                    }
-                    const docObj = Array.isArray(doc) ? doc[0] : doc;
-                    return `
-                      <div style="display:flex; flex-direction:column; gap:4px">
-                        ${badgeHTML}
-                        <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
-                        <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
-                          ${approveBtnHTML}
-                          ${rejectBtnHTML}
-                          <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
-                        </div>
-                      </div>
-                    `;
-                  }
-
-                  return `
-                    <div style="display:flex; flex-direction:column; gap:4px">
-                      ${badgeHTML}
-                      <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(doc.name)}">${Utils.escape(doc.name)}</div>
-                      <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
-                        <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">View</a>
-                        ${approveBtnHTML}
-                        ${rejectBtnHTML}
-                        <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
-                      </div>
-                    </div>
-                  `;
-                };
-
-                const resumeHTML = getDocStatusHTML(u.resume, 'resume');
-                const aadharHTML = getDocStatusHTML(u.aadhar, 'aadhar');
-                const bankHTML = getDocStatusHTML(u.bankDetails, 'bank');
-                const generalDocHTML = getDocStatusHTML(u.documents && u.documents.length > 0 ? u.documents[0] : null, 'document');
-
-                const avatarLetters = u.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-                return `
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:10px">
-                        <div class="avatar" style="width:36px; height:36px; font-size:12px; margin:0">${avatarLetters}</div>
-                        <div style="display:flex; flex-direction:column">
-                          <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
-                          <span style="font-size:11px; color:var(--text-muted)">${Utils.escape(u.email || '')}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style="font-weight:600">${Utils.escape(u.department || 'Engineering')}</td>
-                    <td>${resumeHTML}</td>
-                    <td>${aadharHTML}</td>
-                    <td>${bankHTML}</td>
-                    <td>${generalDocHTML}</td>
-                  </tr>
-                `;
-              }).join('')}
+            <tbody id="verify-table-tbody">
             </tbody>
           </table>
+        </div>
+
+        <!-- Verification Table Pagination Bar -->
+        <div id="verify-pagination-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px">
+          <div style="display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap">
+            <span id="verify-pagination-range" style="font-weight:600">Showing 1 to 30 of ${employees.length} employees</span>
+            <span style="color:var(--border)">|</span>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px">
+              Rows per page:
+              <select id="verify-page-size-select" class="form-input" style="padding:4px 8px; font-size:12px; width:auto; border-radius:6px">
+                <option value="15"${adminVerifyPageState.pageSize === 15 ? ' selected' : ''}>15</option>
+                <option value="25"${adminVerifyPageState.pageSize === 25 ? ' selected' : ''}>25</option>
+                <option value="30"${adminVerifyPageState.pageSize === 30 ? ' selected' : ''}>30</option>
+                <option value="50"${adminVerifyPageState.pageSize === 50 ? ' selected' : ''}>50</option>
+                <option value="100"${adminVerifyPageState.pageSize === 100 ? ' selected' : ''}>100</option>
+                <option value="250"${adminVerifyPageState.pageSize === 250 ? ' selected' : ''}>250</option>
+                <option value="all"${adminVerifyPageState.pageSize === 'all' ? ' selected' : ''}>All (${employees.length})</option>
+              </select>
+            </label>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px">
+            <button class="btn btn-secondary btn-sm" id="btn-verify-page-first" style="padding:5px 10px; font-size:12px; width:auto" title="First Page">⏮ First</button>
+            <button class="btn btn-secondary btn-sm" id="btn-verify-page-prev" style="padding:5px 12px; font-size:12px; width:auto" title="Previous Page">◀ Prev</button>
+            <span id="verify-page-indicator" style="font-size:12.5px; font-weight:700; color:var(--text-primary); padding:0 8px">Page 1 of 1</span>
+            <button class="btn btn-secondary btn-sm" id="btn-verify-page-next" style="padding:5px 12px; font-size:12px; width:auto" title="Next Page">Next ▶</button>
+            <button class="btn btn-secondary btn-sm" id="btn-verify-page-last" style="padding:5px 10px; font-size:12px; width:auto" title="Last Page">Last ⏭</button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  document.getElementById('btn-admin-open-upload').addEventListener('click', () => {
-    openUploadDocumentModal();
-  });
+  const tbody = document.getElementById('verify-table-tbody');
+  const paginationRange = document.getElementById('verify-pagination-range');
+  const pageIndicator = document.getElementById('verify-page-indicator');
+  const btnFirst = document.getElementById('btn-verify-page-first');
+  const btnPrev = document.getElementById('btn-verify-page-prev');
+  const btnNext = document.getElementById('btn-verify-page-next');
+  const btnLast = document.getElementById('btn-verify-page-last');
+  const pageSizeSelect = document.getElementById('verify-page-size-select');
 
-  document.querySelectorAll('.btn-verify-view').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const userId = e.target.closest('.btn-verify-view').dataset.userid;
-      const docType = e.target.closest('.btn-verify-view').dataset.doctype;
-      showDocumentPreview(userId, docType);
-    });
-  });
+  const getDocStatusHTML = (doc, type, u) => {
+    if (!doc) {
+      return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+    }
+    
+    const status = u.verificationStatuses ? u.verificationStatuses[type] : null;
+    let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
+    if (status === 'Approved') {
+      badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`;
+    } else if (status === 'Rejected') {
+      badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">❌ Rejected</span>`;
+    }
+    
+    let approveBtnHTML = '';
+    if (status !== 'Approved') {
+      approveBtnHTML = `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
+    }
+    let rejectBtnHTML = '';
+    if (status !== 'Rejected' && status !== 'Approved') {
+      rejectBtnHTML = `<a href="#" class="btn-verify-reject" data-userid="${u.id}" data-doctype="${type}" style="color:var(--error); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Reject</a>`;
+    }
 
-  document.querySelectorAll('.btn-verify-approve').forEach(link => {
-    link.addEventListener('click', (e) => {
+    if (type === 'document') {
+      if (Array.isArray(doc) && doc.length === 0) {
+        return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+      }
+      const docObj = Array.isArray(doc) ? doc[0] : doc;
+      return `
+        <div style="display:flex; flex-direction:column; gap:4px">
+          ${badgeHTML}
+          <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
+          <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
+            ${approveBtnHTML}
+            ${rejectBtnHTML}
+            <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="display:flex; flex-direction:column; gap:4px">
+        ${badgeHTML}
+        <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(doc.name)}">${Utils.escape(doc.name)}</div>
+        <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
+          <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">View</a>
+          ${approveBtnHTML}
+          ${rejectBtnHTML}
+          <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
+        </div>
+      </div>
+    `;
+  };
+
+  const renderVerificationTable = () => {
+    const totalCount = employees.length;
+    const effectivePageSize = (adminVerifyPageState.pageSize === 'all' || adminVerifyPageState.pageSize >= totalCount) ? totalCount : adminVerifyPageState.pageSize;
+    const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+
+    if (adminVerifyPageState.currentPage > totalPages) adminVerifyPageState.currentPage = Math.max(1, totalPages);
+    if (adminVerifyPageState.currentPage < 1) adminVerifyPageState.currentPage = 1;
+
+    const startIndex = effectivePageSize > 0 ? (adminVerifyPageState.currentPage - 1) * effectivePageSize : 0;
+    const endIndex = effectivePageSize > 0 ? Math.min(startIndex + effectivePageSize, totalCount) : totalCount;
+    const pageEmployees = employees.slice(startIndex, endIndex);
+
+    if (pageEmployees.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted)">No onboarding verification records found.</td></tr>`;
+    } else {
+      tbody.innerHTML = pageEmployees.map(u => {
+        const resumeHTML = getDocStatusHTML(u.resume, 'resume', u);
+        const aadharHTML = getDocStatusHTML(u.aadhar, 'aadhar', u);
+        const bankHTML = getDocStatusHTML(u.bankDetails, 'bank', u);
+        const generalDocHTML = getDocStatusHTML(u.documents && u.documents.length > 0 ? u.documents[0] : null, 'document', u);
+        const avatarLetters = (u.name || '').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px">
+                <div class="avatar" style="width:36px; height:36px; font-size:12px; margin:0">${avatarLetters}</div>
+                <div style="display:flex; flex-direction:column">
+                  <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
+                  <span style="font-size:11px; color:var(--text-muted)">${Utils.escape(u.email || '')}</span>
+                </div>
+              </div>
+            </td>
+            <td style="font-weight:600">${Utils.escape(u.department || 'Engineering')}</td>
+            <td>${resumeHTML}</td>
+            <td>${aadharHTML}</td>
+            <td>${bankHTML}</td>
+            <td>${generalDocHTML}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    if (paginationRange) {
+      paginationRange.textContent = totalCount > 0
+        ? `Showing ${startIndex + 1} to ${endIndex} of ${totalCount.toLocaleString()} employee(s)`
+        : `Showing 0 employees`;
+    }
+    if (pageIndicator) {
+      pageIndicator.textContent = `Page ${adminVerifyPageState.currentPage} of ${totalPages}`;
+    }
+    if (btnFirst) btnFirst.disabled = (adminVerifyPageState.currentPage <= 1);
+    if (btnPrev) btnPrev.disabled = (adminVerifyPageState.currentPage <= 1);
+    if (btnNext) btnNext.disabled = (adminVerifyPageState.currentPage >= totalPages);
+    if (btnLast) btnLast.disabled = (adminVerifyPageState.currentPage >= totalPages);
+  };
+
+  // Event delegation on tbody for actions
+  tbody.addEventListener('click', (e) => {
+    const viewBtn = e.target.closest('.btn-verify-view');
+    if (viewBtn) {
       e.preventDefault();
-      const userId = e.target.closest('.btn-verify-approve').dataset.userid;
-      const docType = e.target.closest('.btn-verify-approve').dataset.doctype;
+      showDocumentPreview(viewBtn.dataset.userid, viewBtn.dataset.doctype);
+      return;
+    }
+
+    const approveBtn = e.target.closest('.btn-verify-approve');
+    if (approveBtn) {
+      e.preventDefault();
+      const userId = approveBtn.dataset.userid;
+      const docType = approveBtn.dataset.doctype;
       const currentUser = Auth.getCurrentUser();
       DB.approveUserDocument(userId, docType);
       DB.notifyEmployeeProfileChange(userId, 'document', `Your ${docType || 'profile'} document has been verified and approved by ${currentUser ? currentUser.name : 'HR'}.`, currentUser);
       requestsPushDBState();
       renderAdminVerificationView();
-    });
-  });
+      return;
+    }
 
-  document.querySelectorAll('.btn-verify-reject').forEach(link => {
-    link.addEventListener('click', (e) => {
+    const rejectBtn = e.target.closest('.btn-verify-reject');
+    if (rejectBtn) {
       e.preventDefault();
-      const userId = e.target.closest('.btn-verify-reject').dataset.userid;
-      const docType = e.target.closest('.btn-verify-reject').dataset.doctype;
+      const userId = rejectBtn.dataset.userid;
+      const docType = rejectBtn.dataset.doctype;
       const currentUser = Auth.getCurrentUser();
       DB.rejectUserDocument(userId, docType);
       DB.notifyEmployeeProfileChange(userId, 'document', `Your ${docType || 'profile'} document verification was marked with issues by ${currentUser ? currentUser.name : 'HR'}.`, currentUser);
       requestsPushDBState();
       renderAdminVerificationView();
-    });
-  });
+      return;
+    }
 
-  document.querySelectorAll('.btn-verify-download').forEach(link => {
-    link.addEventListener('click', (e) => {
+    const downloadBtn = e.target.closest('.btn-verify-download');
+    if (downloadBtn) {
       e.preventDefault();
-      const userId = e.target.closest('.btn-verify-download').dataset.userid;
-      const docType = e.target.closest('.btn-verify-download').dataset.doctype;
-      
+      const userId = downloadBtn.dataset.userid;
+      const docType = downloadBtn.dataset.doctype;
       if (docType === 'document') {
         const u = DB.getUser(userId);
-        const doc = u.documents && u.documents.length > 0 ? u.documents[0] : null;
+        const doc = u && u.documents && u.documents.length > 0 ? u.documents[0] : null;
         if (doc) downloadDocumentSimulated(userId, doc.id);
       } else {
         downloadDocumentSimulated(userId, docType);
       }
-    });
+      return;
+    }
   });
+
+  // Pagination navigation listeners
+  if (btnFirst) btnFirst.addEventListener('click', () => { adminVerifyPageState.currentPage = 1; renderVerificationTable(); });
+  if (btnPrev) btnPrev.addEventListener('click', () => { if (adminVerifyPageState.currentPage > 1) { adminVerifyPageState.currentPage--; renderVerificationTable(); } });
+  if (btnNext) btnNext.addEventListener('click', () => { adminVerifyPageState.currentPage++; renderVerificationTable(); });
+  if (btnLast) btnLast.addEventListener('click', () => {
+    const totalCount = employees.length;
+    const effectivePageSize = (adminVerifyPageState.pageSize === 'all' || adminVerifyPageState.pageSize >= totalCount) ? totalCount : adminVerifyPageState.pageSize;
+    adminVerifyPageState.currentPage = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+    renderVerificationTable();
+  });
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      adminVerifyPageState.pageSize = val === 'all' ? 'all' : parseInt(val, 10);
+      adminVerifyPageState.currentPage = 1;
+      renderVerificationTable();
+    });
+  }
+
+  document.getElementById('btn-admin-open-upload')?.addEventListener('click', () => {
+    openUploadDocumentModal();
+  });
+
+  // Initial render of page
+  renderVerificationTable();
 }
 
 
@@ -6125,6 +6222,11 @@ function processGeofenceDeviation(logId, excuse) {
   });
 }
 
+const adminReportPageState = {
+  currentPage: 1,
+  pageSize: 30
+};
+
 function renderAdminReports() {
   const main = document.getElementById('main-view');
   const today = new Date();
@@ -6185,6 +6287,33 @@ function renderAdminReports() {
               <tbody id="report-table-body"></tbody>
             </table>
           </div>
+
+          <!-- Staff Salary Ledger Pagination Bar -->
+          <div id="report-pagination-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px">
+            <div style="display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap">
+              <span id="report-pagination-range" style="font-weight:600">Showing 1 to 30 employees</span>
+              <span style="color:var(--border)">|</span>
+              <label style="display:flex; align-items:center; gap:6px; font-size:12px">
+                Rows per page:
+                <select id="report-page-size-select" class="form-input" style="padding:4px 8px; font-size:12px; width:auto; border-radius:6px">
+                  <option value="15"${adminReportPageState.pageSize === 15 ? ' selected' : ''}>15</option>
+                  <option value="25"${adminReportPageState.pageSize === 25 ? ' selected' : ''}>25</option>
+                  <option value="30"${adminReportPageState.pageSize === 30 ? ' selected' : ''}>30</option>
+                  <option value="50"${adminReportPageState.pageSize === 50 ? ' selected' : ''}>50</option>
+                  <option value="100"${adminReportPageState.pageSize === 100 ? ' selected' : ''}>100</option>
+                  <option value="250"${adminReportPageState.pageSize === 250 ? ' selected' : ''}>250</option>
+                  <option value="all"${adminReportPageState.pageSize === 'all' ? ' selected' : ''}>All</option>
+                </select>
+              </label>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px">
+              <button class="btn btn-secondary btn-sm" id="btn-report-page-first" style="padding:5px 10px; font-size:12px; width:auto" title="First Page">⏮ First</button>
+              <button class="btn btn-secondary btn-sm" id="btn-report-page-prev" style="padding:5px 12px; font-size:12px; width:auto" title="Previous Page">◀ Prev</button>
+              <span id="report-page-indicator" style="font-size:12.5px; font-weight:700; color:var(--text-primary); padding:0 8px">Page 1 of 1</span>
+              <button class="btn btn-secondary btn-sm" id="btn-report-page-next" style="padding:5px 12px; font-size:12px; width:auto" title="Next Page">Next ▶</button>
+              <button class="btn btn-secondary btn-sm" id="btn-report-page-last" style="padding:5px 10px; font-size:12px; width:auto" title="Last Page">Last ⏭</button>
+            </div>
+          </div>
         </div>
         <div class="card-panel">
           <div class="card-panel-header"><h3 class="card-panel-title">Monthly Punctuality Ratio</h3></div>
@@ -6194,7 +6323,10 @@ function renderAdminReports() {
       <div id="admin-payslip-preview-drawer" style="display:none;margin-top:30px"></div>
     </div>
   `;
-  const refreshReports = () => compileReports(selectedMonth, selectedYear);
+  const refreshReports = () => {
+    adminReportPageState.currentPage = 1;
+    compileReports(selectedMonth, selectedYear);
+  };
   const searchInputEl = document.getElementById('report-search-input');
   if (searchInputEl) searchInputEl.addEventListener('input', refreshReports);
   const deptSelectEl = document.getElementById('report-dept-select');
@@ -6272,23 +6404,69 @@ function compileReports(month, year) {
     </div>
   `;
 
-  document.getElementById('report-table-body').innerHTML = userPayrollData.map(p => `
-    <tr>
-      <td style="font-weight:600">${Utils.escape(p.employeeName)}</td>
-      <td>₹${p.baseSalary.toLocaleString()}</td>
-      <td style="font-size:12px">Present: <strong>${p.presentDays}</strong>d<br>Absent: <span style="color:${p.absentDays > 0 ? 'var(--error)' : 'currentColor'}">${p.absentDays}</span>d</td>
-      <td style="color:var(--error);font-weight:600">-₹${p.totalDeductions.toLocaleString()}</td>
-      <td style="color:var(--success);font-weight:700">₹${p.netSalary.toLocaleString()}</td>
-      <td><button class="btn btn-cyan btn-view-payslip-admin" data-id="${p.userId}" style="padding:6px 10px;width:auto;font-size:11px">Inspect</button></td>
-    </tr>
-  `).join('');
-
   renderReportChart(totalPresentDays, totalLateDays);
 
-  document.querySelectorAll('.btn-view-payslip-admin').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const uId = e.target.closest('.btn-view-payslip-admin').dataset.id;
+  const tbody = document.getElementById('report-table-body');
+  const paginationRange = document.getElementById('report-pagination-range');
+  const pageIndicator = document.getElementById('report-page-indicator');
+  const btnFirst = document.getElementById('btn-report-page-first');
+  const btnPrev = document.getElementById('btn-report-page-prev');
+  const btnNext = document.getElementById('btn-report-page-next');
+  const btnLast = document.getElementById('btn-report-page-last');
+  const pageSizeSelect = document.getElementById('report-page-size-select');
+
+  const renderReportTablePage = () => {
+    const totalCount = userPayrollData.length;
+    const effectivePageSize = (adminReportPageState.pageSize === 'all' || adminReportPageState.pageSize >= totalCount) ? totalCount : adminReportPageState.pageSize;
+    const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+
+    if (adminReportPageState.currentPage > totalPages) adminReportPageState.currentPage = Math.max(1, totalPages);
+    if (adminReportPageState.currentPage < 1) adminReportPageState.currentPage = 1;
+
+    const startIndex = effectivePageSize > 0 ? (adminReportPageState.currentPage - 1) * effectivePageSize : 0;
+    const endIndex = effectivePageSize > 0 ? Math.min(startIndex + effectivePageSize, totalCount) : totalCount;
+    const pagePayrollData = userPayrollData.slice(startIndex, endIndex);
+
+    if (pagePayrollData.length === 0) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted)">No employee payroll records match the selected filter.</td></tr>`;
+    } else {
+      if (tbody) {
+        tbody.innerHTML = pagePayrollData.map(p => `
+          <tr>
+            <td style="font-weight:600">${Utils.escape(p.employeeName)}</td>
+            <td>₹${p.baseSalary.toLocaleString()}</td>
+            <td style="font-size:12px">Present: <strong>${p.presentDays}</strong>d<br>Absent: <span style="color:${p.absentDays > 0 ? 'var(--error)' : 'currentColor'}">${p.absentDays}</span>d</td>
+            <td style="color:var(--error);font-weight:600">-₹${p.totalDeductions.toLocaleString()}</td>
+            <td style="color:var(--success);font-weight:700">₹${p.netSalary.toLocaleString()}</td>
+            <td><button class="btn btn-cyan btn-view-payslip-admin" data-id="${p.userId}" style="padding:6px 10px;width:auto;font-size:11px">Inspect</button></td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    if (paginationRange) {
+      paginationRange.textContent = totalCount > 0
+        ? `Showing ${startIndex + 1} to ${endIndex} of ${totalCount.toLocaleString()} employee(s)`
+        : `Showing 0 employees`;
+    }
+    if (pageIndicator) {
+      pageIndicator.textContent = `Page ${adminReportPageState.currentPage} of ${totalPages}`;
+    }
+    if (btnFirst) btnFirst.disabled = (adminReportPageState.currentPage <= 1);
+    if (btnPrev) btnPrev.disabled = (adminReportPageState.currentPage <= 1);
+    if (btnNext) btnNext.disabled = (adminReportPageState.currentPage >= totalPages);
+    if (btnLast) btnLast.disabled = (adminReportPageState.currentPage >= totalPages);
+  };
+
+  // Inspect Click Handler (Event Delegation on tbody)
+  if (tbody && !tbody._hasReportInspectListener) {
+    tbody._hasReportInspectListener = true;
+    tbody.addEventListener('click', (e) => {
+      const inspectBtn = e.target.closest('.btn-view-payslip-admin');
+      if (!inspectBtn) return;
+      const uId = inspectBtn.dataset.id;
       const drawer = document.getElementById('admin-payslip-preview-drawer');
+      if (!drawer) return;
       drawer.style.display = 'block';
       drawer.dataset.activeUserId = uId;
       
@@ -6307,8 +6485,8 @@ function compileReports(month, year) {
       }
 
       const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const loggedInUser = Auth.getCurrentUser();
-      const editBtnHTML = loggedInUser.role === 'manager'
+      const currentLoggedIn = Auth.getCurrentUser();
+      const editBtnHTML = currentLoggedIn && currentLoggedIn.role === 'manager'
         ? `<button class="btn btn-warning" id="btn-admin-edit-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">✏️ Edit Adjustments</button>`
         : '';
 
@@ -6437,17 +6615,41 @@ function compileReports(month, year) {
           </div>
         </div>
       `;
-      document.getElementById('btn-admin-print-single-payslip').addEventListener('click', () => {
+      document.getElementById('btn-admin-print-single-payslip')?.addEventListener('click', () => {
         printSinglePayslipPDF(uDetails.id, month, year);
       });
-      if (loggedInUser.role === 'manager') {
-        document.getElementById('btn-admin-edit-single-payslip').addEventListener('click', () => {
+      if (currentLoggedIn && currentLoggedIn.role === 'manager') {
+        document.getElementById('btn-admin-edit-single-payslip')?.addEventListener('click', () => {
           openPayrollAdjustmentModal(uDetails.id, month, year);
         });
       }
       drawer.scrollIntoView({ behavior: 'smooth' });
     });
-  });
+  }
+
+  // Navigation button click handlers
+  if (btnFirst) btnFirst.onclick = () => { adminReportPageState.currentPage = 1; renderReportTablePage(); };
+  if (btnPrev) btnPrev.onclick = () => { if (adminReportPageState.currentPage > 1) { adminReportPageState.currentPage--; renderReportTablePage(); } };
+  if (btnNext) btnNext.onclick = () => { adminReportPageState.currentPage++; renderReportTablePage(); };
+  if (btnLast) btnLast.onclick = () => {
+    const totalCount = userPayrollData.length;
+    const effectivePageSize = (adminReportPageState.pageSize === 'all' || adminReportPageState.pageSize >= totalCount) ? totalCount : adminReportPageState.pageSize;
+    adminReportPageState.currentPage = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+    renderReportTablePage();
+  };
+
+  if (pageSizeSelect) {
+    pageSizeSelect.onchange = (e) => {
+      const val = e.target.value;
+      adminReportPageState.pageSize = val === 'all' ? 'all' : parseInt(val, 10);
+      adminReportPageState.currentPage = 1;
+      renderReportTablePage();
+    };
+  }
+
+  // Initial page render
+  renderReportTablePage();
+
   const dlReportBtn = document.getElementById('btn-download-report-payroll');
   if (dlReportBtn) {
     dlReportBtn.addEventListener('click', () => openAttendanceReportModal());
