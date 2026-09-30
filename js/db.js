@@ -498,16 +498,21 @@ export const DB = {
           const streamUrl = (window.apiBaseUrl || '') + '/api/events';
           window.sseSource = new EventSource(streamUrl);
           
-          window.sseSource.addEventListener('db_updated', async (evt) => {
-            console.log('⚡ Real-time SSE DB update signal received from backend.');
-            await DB.init(true);
-            window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
+          let dbUpdateDebounceTimer = null;
+          window.sseSource.addEventListener('db_updated', (evt) => {
+            if (dbUpdateDebounceTimer) clearTimeout(dbUpdateDebounceTimer);
+            dbUpdateDebounceTimer = setTimeout(async () => {
+              dbUpdateDebounceTimer = null;
+              await DB.init(true);
+              window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
+            }, 300);
           });
 
-          window.sseSource.addEventListener('biometric_sync_complete', async (evt) => {
-            console.log('⚡ Real-time Biometric sync signal received from backend.');
-            await DB.init(true);
-            window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
+          window.sseSource.addEventListener('biometric_devices_updated', (evt) => {
+            window.dispatchEvent(new CustomEvent('biometric_devices_updated', { detail: evt ? evt.data : null }));
+          });
+
+          window.sseSource.addEventListener('biometric_sync_complete', (evt) => {
             window.dispatchEvent(new CustomEvent('biometric_sync_complete', { detail: evt ? evt.data : null }));
           });
 
@@ -529,6 +534,51 @@ export const DB = {
     }
   },
 
+  _buildCompactStorageSnapshot() {
+    if (!this.data || typeof this.data !== 'object') return null;
+    return {
+      users: (this.data.users || []).map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        department: u.department,
+        status: u.status,
+        scheduleId: u.scheduleId,
+        avatar: u.avatar || '',
+        designation: u.designation || '',
+        employeeId: u.employeeId || '',
+        phone: u.phone || '',
+        company: u.company || '',
+        companyName: u.companyName || '',
+        preferredLocation: u.preferredLocation || '',
+        shiftLocations: u.shiftLocations || {},
+        documents: Array.isArray(u.documents) ? u.documents : [],
+        verificationStatuses: u.verificationStatuses || {},
+        profileVerificationStatus: u.profileVerificationStatus || 'Approved',
+        profileVerificationComment: u.profileVerificationComment || '',
+        resume: u.resume || null,
+        aadhar: u.aadhar || null,
+        bankDetails: u.bankDetails || null
+      })),
+      schedules: this.data.schedules || [],
+      attendanceLogs: Array.isArray(this.data.attendanceLogs) ? this.data.attendanceLogs.slice(-150) : [],
+      leaveRequests: this.data.leaveRequests || [],
+      shiftSwaps: this.data.shiftSwaps || [],
+      notices: this.data.notices || [],
+      officeCoordinates: this.data.officeCoordinates || {},
+      announcements: this.data.announcements || [],
+      tickets: this.data.tickets || [],
+      customRoles: this.data.customRoles || [],
+      financeData: this.data.financeData || {},
+      financialRecords: this.data.financialRecords || [],
+      budgets: this.data.budgets || [],
+      biometricDevices: this.data.biometricDevices || [],
+      biometricSyncLogs: Array.isArray(this.data.biometricSyncLogs) ? this.data.biometricSyncLogs.slice(-15) : [],
+      auditLogs: Array.isArray(this.data.auditLogs) ? this.data.auditLogs.slice(-30) : []
+    };
+  },
+
   _safeSaveLocalStorage(immediate = false) {
     if (!this.data) return;
     if (this._saveStorageTimer) {
@@ -539,34 +589,22 @@ export const DB = {
       this._saveStorageTimer = null;
       if (!this.data) return;
       try {
-        localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+        const compact = this._buildCompactStorageSnapshot();
+        if (compact) {
+          localStorage.setItem(DB_KEY, JSON.stringify(compact));
+        }
       } catch (err) {
         try {
-          console.warn('⚠️ LocalStorage quota exceeded. Pruning historical logs for client cache.');
-          const pruned = { ...this.data };
-          if (Array.isArray(pruned.attendanceLogs)) {
-            pruned.attendanceLogs = pruned.attendanceLogs.slice(-150);
-          }
-          if (Array.isArray(pruned.auditLogs)) {
-            pruned.auditLogs = pruned.auditLogs.slice(-50);
-          }
-          if (Array.isArray(pruned.biometricSyncLogs)) {
-            pruned.biometricSyncLogs = pruned.biometricSyncLogs.slice(-30);
-          }
-          localStorage.setItem(DB_KEY, JSON.stringify(pruned));
-        } catch (innerErr) {
-          try {
-            const minimal = {
-              users: this.data.users || [],
-              schedules: this.data.schedules || [],
-              attendanceLogs: (this.data.attendanceLogs || []).slice(-50),
-              leaveRequests: this.data.leaveRequests || [],
-              shiftSwaps: this.data.shiftSwaps || []
-            };
-            localStorage.setItem(DB_KEY, JSON.stringify(minimal));
-          } catch (minimalErr) {
-            console.warn('⚠️ LocalStorage full. Continuing safely in in-memory + backend sync mode.');
-          }
+          const minimal = {
+            users: (this.data.users || []).slice(0, 100),
+            schedules: this.data.schedules || [],
+            attendanceLogs: (this.data.attendanceLogs || []).slice(-30),
+            leaveRequests: this.data.leaveRequests || [],
+            shiftSwaps: this.data.shiftSwaps || []
+          };
+          localStorage.setItem(DB_KEY, JSON.stringify(minimal));
+        } catch (minimalErr) {
+          // Graceful fallback to memory mode - no console quota warnings
         }
       }
     };

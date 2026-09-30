@@ -167,7 +167,8 @@ async function getDbState(req, res) {
     } else {
       const localData = readLocalDbStateCached();
       if (localData) {
-        return res.json(localData);
+        const { activityLogs, processedPunchIds, biometricVault, ...clientData } = localData;
+        return res.json(clientData);
       }
       return res.status(404).json({ error: 'Seed database file missing.' });
     }

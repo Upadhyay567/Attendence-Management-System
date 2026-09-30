@@ -176,11 +176,29 @@ function readLocalDatabase() {
 
 function writeLocalDatabase(state) {
   try {
-    fs.writeFileSync(
-      LOCAL_DB_FILE,
-      JSON.stringify(state, null, 2),
-      'utf8'
-    );
+    if (state) {
+      if (Array.isArray(state.activityLogs) && state.activityLogs.length > 500) {
+        state.activityLogs = state.activityLogs.slice(0, 500);
+      }
+      if (Array.isArray(state.processedPunchIds) && state.processedPunchIds.length > 5000) {
+        state.processedPunchIds = state.processedPunchIds.slice(-5000);
+      }
+    }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        fs.writeFileSync(
+          LOCAL_DB_FILE,
+          JSON.stringify(state, null, 2),
+          'utf8'
+        );
+        break;
+      } catch (writeErr) {
+        if (attempt === 2) throw writeErr;
+        const waitMs = 50 * (attempt + 1);
+        const start = Date.now();
+        while (Date.now() - start < waitMs) {}
+      }
+    }
     try {
       const { invalidateLocalDbCache } = require('../controllers/attendance.controller');
       invalidateLocalDbCache();

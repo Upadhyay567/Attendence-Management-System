@@ -667,28 +667,49 @@ export async function renderAdminDashboard() {
     // Fill Welcome Banner
     const bannerEl = document.getElementById('dashboard-welcome-banner');
     if (bannerEl) {
-      bannerEl.innerHTML = html`
-        <div>
-          <span style="font-size: 11px; font-weight: 700; color: #89201B; letter-spacing: 0.05em; text-transform: uppercase;">${greeting}</span>
-          <h2 style="font-size: 20px; font-weight: 800; color: #1a0504; margin: 6px 0 4px;">Welcome back, ${Utils.escape(welcomeName)}!</h2>
-          <p style="font-size: 13px; color: #7c2d12; margin: 0; opacity: 0.8">${Utils.escape(companyMsg)}</p>
-        </div>
-        <div style="display: flex; gap: 32px; align-items: center; z-index: 1;">
-          <div style="text-align: center;">
-            <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">Active Staff</span>
-            <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px;">${totalEmployees}</div>
+      const activeStaffVal = bannerEl.querySelector('.banner-active-staff');
+      const onDutyVal = bannerEl.querySelector('.banner-on-duty');
+      if (activeStaffVal && onDutyVal) {
+        if (activeStaffVal.textContent != totalEmployees) activeStaffVal.textContent = totalEmployees;
+        if (onDutyVal.textContent != presentCount) onDutyVal.textContent = presentCount;
+      } else {
+        bannerEl.innerHTML = html`
+          <div>
+            <span style="font-size: 11px; font-weight: 700; color: #89201B; letter-spacing: 0.05em; text-transform: uppercase;">${greeting}</span>
+            <h2 style="font-size: 20px; font-weight: 800; color: #1a0504; margin: 6px 0 4px;">Welcome back, ${Utils.escape(welcomeName)}!</h2>
+            <p style="font-size: 13px; color: #7c2d12; margin: 0; opacity: 0.8">${Utils.escape(companyMsg)}</p>
           </div>
-          <div style="text-align: center;">
-            <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">On Duty</span>
-            <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;">${presentCount}</div>
+          <div style="display: flex; gap: 32px; align-items: center; z-index: 1;">
+            <div style="text-align: center;">
+              <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">Active Staff</span>
+              <div class="banner-active-staff" style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px;">${totalEmployees}</div>
+            </div>
+            <div style="text-align: center;">
+              <span style="font-size: 9.5px; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">On Duty</span>
+              <div class="banner-on-duty" style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 4px;">${presentCount}</div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
 
-    // Fill Stats Grid
+    // Fill Stats Grid (in-place zero-flicker update if cards already rendered)
     const statsGrid = document.getElementById('dashboard-stats-grid');
-    if (statsGrid) {
+    const existingStaffCard = document.querySelector('#card-total-staff .stat-value');
+    if (existingStaffCard) {
+      if (existingStaffCard.textContent != totalEmployees) existingStaffCard.textContent = totalEmployees;
+      const presentVal = document.querySelector('#card-present-now .stat-value');
+      if (presentVal && presentVal.textContent != presentCount) presentVal.textContent = presentCount;
+      const absentVal = document.querySelector('#card-absent-today .stat-value');
+      const safeAbsent = absentCount < 0 ? 0 : absentCount;
+      if (absentVal && absentVal.textContent != safeAbsent) absentVal.textContent = safeAbsent;
+      const lateVal = document.querySelector('#card-late-arrivals .stat-value');
+      if (lateVal && lateVal.textContent != lateCount) lateVal.textContent = lateCount;
+      const leaveVal = document.querySelector('#card-approved-leave .stat-value');
+      if (leaveVal && leaveVal.textContent != leaveCount) leaveVal.textContent = leaveCount;
+      const swapsVal = document.querySelector('#card-pending-swaps .stat-value');
+      if (swapsVal && swapsVal.textContent != pendingSwapsCount) swapsVal.textContent = pendingSwapsCount;
+    } else if (statsGrid) {
       statsGrid.innerHTML = html`
         <!-- Total Employees -->
         <div class="stat-card" id="card-total-staff" style="cursor: pointer;">
@@ -1211,27 +1232,6 @@ export async function renderAdminDashboard() {
 
     loadBiometricFleetData();
     loadBiometricDashboardData();
-
-    // Dedicated 15-second auto-refresh timer for biometric machine connected devices & live feed
-    if (window.biometricFleetRefreshInterval) {
-      clearInterval(window.biometricFleetRefreshInterval);
-      window.biometricFleetRefreshInterval = null;
-    }
-    window.biometricFleetRefreshInterval = setInterval(() => {
-      const grid = document.getElementById('biometric-fleet-grid');
-      if (grid) {
-        loadBiometricFleetData();
-        loadBiometricDashboardData(true);
-        const lastSyncEl = document.getElementById('fleet-last-sync');
-        if (lastSyncEl) {
-          const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-          lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
-        }
-      } else {
-        clearInterval(window.biometricFleetRefreshInterval);
-        window.biometricFleetRefreshInterval = null;
-      }
-    }, 15000);
   }
 
   async function loadBiometricFleetData() {
@@ -1244,10 +1244,37 @@ export async function renderAdminDashboard() {
       const json = await res.json();
       const devices = json.devices || [];
 
-      if (badgeCount) badgeCount.textContent = devices.length;
+      if (badgeCount && badgeCount.textContent != devices.length) badgeCount.textContent = devices.length;
 
       if (devices.length === 0) {
         grid.innerHTML = '<div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">No biometric devices registered yet. Click "Add Device" to configure a branch machine.</div>';
+        return;
+      }
+
+      // Check if all device cards are already in the DOM for smooth zero-flicker in-place updates
+      const existingCards = grid.querySelectorAll('.fleet-device-card');
+      const allExist = devices.length > 0 && existingCards.length === devices.length && devices.every(dev => document.getElementById(`badge-status-${dev.id}`));
+      if (allExist) {
+        devices.forEach(dev => {
+          const isOnline = dev.status === 'Online';
+          const badgeClass = isOnline ? 'badge badge-on-time' : 'badge badge-neutral';
+          const badgeText = isOnline ? '● Online' : '○ Offline';
+          const badge = document.getElementById(`badge-status-${dev.id}`);
+          if (badge) {
+            if (badge.textContent.trim() !== badgeText) badge.textContent = badgeText;
+            if (badge.className !== badgeClass) badge.className = badgeClass;
+          }
+          const vaultSpan = document.getElementById(`vault-count-${dev.id}`);
+          if (vaultSpan) {
+            const countText = `${dev.enrolledUsersCount || 0} Synced`;
+            if (vaultSpan.textContent !== countText) vaultSpan.textContent = countText;
+          }
+        });
+        const lastSyncEl = document.getElementById('fleet-last-sync');
+        if (lastSyncEl) {
+          const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+          lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Updated ${timeNow} (15s auto-refresh)`;
+        }
         return;
       }
 
@@ -1274,7 +1301,7 @@ export async function renderAdminDashboard() {
               </div>
               <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
                 <div><strong>IP Address:</strong> <code style="font-size: 11.5px;">${Utils.escape(dev.ip)}:${dev.port || 4370}</code></div>
-                <div><strong>Vault Templates:</strong> <span style="font-weight: 600; color: var(--text-primary);">${dev.enrolledUsersCount || 0} Synced</span></div>
+                <div><strong>Vault Templates:</strong> <span id="vault-count-${dev.id}" style="font-weight: 600; color: var(--text-primary);">${dev.enrolledUsersCount || 0} Synced</span></div>
                 <div><strong>Serial:</strong> <span style="font-size: 11px; font-family: monospace;">${Utils.escape(dev.serial || '—')}</span></div>
               </div>
             </div>
@@ -1826,7 +1853,7 @@ export async function renderAdminDashboard() {
         return (a.employeeName || '').localeCompare(b.employeeName || '');
       });
 
-      tbody.innerHTML = sortedData.map(emp => {
+      const newRowsHTML = sortedData.map(emp => {
         const att = emp.todayAttendance || 'No Punch';
         let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
         if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
@@ -1872,6 +1899,10 @@ export async function renderAdminDashboard() {
           </tr>
         `;
       }).join('');
+
+      if (tbody.innerHTML !== newRowsHTML) {
+        tbody.innerHTML = newRowsHTML;
+      }
 
     } catch (err) {
       if (badge) {
@@ -1962,20 +1993,30 @@ export async function renderAdminDashboard() {
   window.loadBiometricDashboardData = loadBiometricDashboardData;
   window.loadBiometricFleetData = loadBiometricFleetData;
 
-  const onSseDbUpdate = () => {
+  const onBiometricDevicesUpdated = () => {
+    if (window.location.hash === '#admin-dashboard' && typeof loadBiometricFleetData === 'function') {
+      loadBiometricFleetData();
+    }
+  };
+  window.removeEventListener('biometric_devices_updated', window._adminBiometricDevicesHandler);
+  window._adminBiometricDevicesHandler = onBiometricDevicesUpdated;
+  window.addEventListener('biometric_devices_updated', window._adminBiometricDevicesHandler);
+
+  const onBiometricSyncComplete = () => {
     if (window.location.hash === '#admin-dashboard') {
-      updateDashboardViews();
       if (typeof loadBiometricDashboardData === 'function') {
         loadBiometricDashboardData(true);
       }
-      if (typeof loadBiometricFleetData === 'function') {
-        loadBiometricFleetData();
+      const lastSyncEl = document.getElementById('fleet-last-sync');
+      if (lastSyncEl) {
+        const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
       }
     }
   };
-  window.removeEventListener('db_updated', window._adminSseHandler);
-  window._adminSseHandler = onSseDbUpdate;
-  window.addEventListener('db_updated', window._adminSseHandler);
+  window.removeEventListener('biometric_sync_complete', window._adminBiometricSyncHandler);
+  window._adminBiometricSyncHandler = onBiometricSyncComplete;
+  window.addEventListener('biometric_sync_complete', window._adminBiometricSyncHandler);
 
   if (window.adminDashboardInterval) {
     clearInterval(window.adminDashboardInterval);
@@ -1986,31 +2027,34 @@ export async function renderAdminDashboard() {
   window.adminDashboardInterval = setInterval(async () => {
     if (window.location.hash === '#admin-dashboard') {
       try {
-        await DB.init();
-
-        // Check if the current user has been deactivated
-        const freshUser = DB.getUser(currentUser.id);
-        if (freshUser && freshUser.status === 'Inactive') {
-          Auth.logout();
-          window.location.hash = '#login';
-          if (typeof showToastNotification === 'function') {
-            showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
-          } else {
-            alert('Your account is Inactive. Please contact HR.');
-          }
-          clearInterval(window.adminDashboardInterval);
-          window.adminDashboardInterval = null;
-          return;
+        // Smoothly refresh biometric fleet hardware status and today's punch feed
+        if (typeof loadBiometricFleetData === 'function') {
+          loadBiometricFleetData();
         }
-
-        updateDashboardViews();
-        
-        // Auto-refresh biometric feed and fleet status silently without any user action
         if (typeof loadBiometricDashboardData === 'function') {
           loadBiometricDashboardData(true);
         }
-        if (typeof loadBiometricFleetData === 'function') {
-          loadBiometricFleetData();
+
+        // Only do DB.init if data is stale (> 30s) to avoid unnecessary heavy network & storage overhead
+        if (!DB.lastFetchSuccess || (Date.now() - DB.lastFetchSuccess >= 30000)) {
+          await DB.init();
+
+          // Check if the current user has been deactivated
+          const freshUser = DB.getUser(currentUser.id);
+          if (freshUser && freshUser.status === 'Inactive') {
+            Auth.logout();
+            window.location.hash = '#login';
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
+            } else {
+              alert('Your account is Inactive. Please contact HR.');
+            }
+            clearInterval(window.adminDashboardInterval);
+            window.adminDashboardInterval = null;
+            return;
+          }
+
+          updateDashboardViews();
         }
       } catch (err) {
         console.warn("Auto-refresh DB load failed:", err);

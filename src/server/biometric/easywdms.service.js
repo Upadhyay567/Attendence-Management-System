@@ -322,7 +322,7 @@ async function fetchTerminals(cookieStr) {
         }
       }
 
-      broadcastSSEEvent('db_updated', { type: 'biometric', action: 'devices', timestamp: Date.now() });
+      broadcastSSEEvent('biometric_devices_updated', { type: 'biometric', action: 'devices', timestamp: Date.now() });
     } catch (e) {
       console.warn('⚠️ [WDMS] Failed to save terminals to database:', e.message);
     }
