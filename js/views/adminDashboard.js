@@ -1051,11 +1051,26 @@ export async function renderAdminDashboard() {
 
     feedBody.innerHTML = paginatedLogs.map(l => {
       const u = DB.getUser(l.userId);
-      const sch = DB.getSchedule(l.shiftId || u?.scheduleId);
+      const userShiftIds = Array.isArray(u?.scheduleIds) && u.scheduleIds.length > 0
+        ? u.scheduleIds.filter(Boolean)
+        : (u?.scheduleId ? [u.scheduleId] : []);
+
+      let sch = null;
+      if (userShiftIds.length > 0) {
+        if (l.shiftId && userShiftIds.includes(l.shiftId)) {
+          sch = DB.getSchedule(l.shiftId);
+        } else {
+          sch = DB.getSchedule(userShiftIds[0]);
+        }
+      }
+
       let displayStatus = l.status;
-      if (!displayStatus || displayStatus === 'Present') {
+      if (!sch) {
+        // Employee has no shift assigned: they are not bound to any shift start time
+        displayStatus = l.checkIn ? 'On Time' : 'Absent';
+      } else if (!displayStatus || displayStatus === 'Present') {
         displayStatus = 'On Time';
-        if (sch && sch.startTime && l.checkIn) {
+        if (sch.startTime && l.checkIn) {
           const [sH, sM] = sch.startTime.split(':').map(Number);
           const [iH, iM] = l.checkIn.split(':').map(Number);
           const sMins = sH * 60 + (sM || 0);

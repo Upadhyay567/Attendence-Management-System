@@ -46,6 +46,25 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
       stateObj[key].unshift(payload);
     }
   } else if (type === 'update' && query && updates) {
+    if (key === 'users') {
+      if ((updates.scheduleId === '' || updates.scheduleId === null) || (Array.isArray(updates.scheduleIds) && updates.scheduleIds.length === 0)) {
+        if (updates.scheduleIds === undefined) updates.scheduleIds = [];
+        if (updates.scheduleId === undefined) updates.scheduleId = '';
+        if (updates.shiftLocations === undefined) updates.shiftLocations = {};
+        if (updates.preferredLocations === undefined) updates.preferredLocations = [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (Array.isArray(stateObj.attendanceLogs)) {
+          stateObj.attendanceLogs.forEach(l => {
+            if (query && query.id && String(l.userId) === String(query.id) && l.date === todayStr) {
+              l.shiftId = '';
+              if (l.checkIn && l.status === 'Late') {
+                l.status = 'On Time';
+              }
+            }
+          });
+        }
+      }
+    }
     if (Array.isArray(stateObj[key])) {
       stateObj[key] = stateObj[key].map(item => {
         let match = true;

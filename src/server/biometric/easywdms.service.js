@@ -484,10 +484,10 @@ async function syncFromWDMS(username, password, options = {}) {
         username: `bio_${pin}`,
         role: 'employee',
         status: 'Active',
-        scheduleId: 'sch_q8jji9v',
-        scheduleIds: ['sch_q8jji9v'],
-        shiftLocations: { sch_q8jji9v: 'Delhi Head Office' },
-        preferredLocation: 'Delhi Head Office',
+        scheduleId: '',
+        scheduleIds: [],
+        shiftLocations: {},
+        preferredLocation: '',
         department: emp.department?.dept_name || 'Operations'
       });
       newEmployeesAdded++;

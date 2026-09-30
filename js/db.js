@@ -1298,6 +1298,22 @@ export const DB = {
       if (updates.biometricId !== undefined && updates.biometricUserId === undefined) {
         updates.biometricUserId = updates.biometricId;
       }
+      if ((updates.scheduleId === '' || updates.scheduleId === null) || (Array.isArray(updates.scheduleIds) && updates.scheduleIds.length === 0)) {
+        if (updates.scheduleIds === undefined) updates.scheduleIds = [];
+        if (updates.scheduleId === undefined) updates.scheduleId = '';
+        if (updates.shiftLocations === undefined) updates.shiftLocations = {};
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (Array.isArray(this.data.attendanceLogs)) {
+          this.data.attendanceLogs.forEach(l => {
+            if (String(l.userId) === String(realId) && l.date === todayStr) {
+              l.shiftId = '';
+              if (l.checkIn && l.status === 'Late') {
+                l.status = 'On Time';
+              }
+            }
+          });
+        }
+      }
       this.data.users[userIndex] = { ...this.data.users[userIndex], ...updates };
       this.save({ type: 'update', key: 'users', query: { id: realId }, updates }, options);
       return this.data.users[userIndex];
@@ -1308,6 +1324,7 @@ export const DB = {
   updateUsersBatch(updatesList, options = {}) {
     if (!Array.isArray(updatesList) || updatesList.length === 0) return [];
     const updatedUsers = [];
+    const todayStr = new Date().toISOString().split('T')[0];
     for (const item of updatesList) {
       if (!item || !item.id || !item.updates) continue;
       const cleanId = item.id.toString().trim();
@@ -1328,6 +1345,21 @@ export const DB = {
         }
         if (up.biometricId !== undefined && up.biometricUserId === undefined) {
           up.biometricUserId = up.biometricId;
+        }
+        if ((up.scheduleId === '' || up.scheduleId === null) || (Array.isArray(up.scheduleIds) && up.scheduleIds.length === 0)) {
+          if (up.scheduleIds === undefined) up.scheduleIds = [];
+          if (up.scheduleId === undefined) up.scheduleId = '';
+          if (up.shiftLocations === undefined) up.shiftLocations = {};
+          if (Array.isArray(this.data.attendanceLogs)) {
+            this.data.attendanceLogs.forEach(l => {
+              if (String(l.userId) === String(u.id) && l.date === todayStr) {
+                l.shiftId = '';
+                if (l.checkIn && l.status === 'Late') {
+                  l.status = 'On Time';
+                }
+              }
+            });
+          }
         }
         this.data.users[userIndex] = { ...u, ...up };
         updatedUsers.push(this.data.users[userIndex]);

@@ -296,7 +296,6 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
 
   // Auto-register biometric user if missing from HRMS list
   if (target) {
-    const defaultSch = 'sch_q8jji9v';
     const cleanName = (targetName && targetName !== 'admin' && !targetName.startsWith('employee '))
       ? deviceUserName
       : ('Employee ' + biometricUserId);
@@ -310,9 +309,10 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       username: 'bio_' + String(biometricUserId).trim(),
       role: 'employee',
       status: 'Active',
-      scheduleId: defaultSch,
-      scheduleIds: [defaultSch],
-      shiftLocations: { [defaultSch]: LOCATION },
+      scheduleId: '',
+      scheduleIds: [],
+      shiftLocations: {},
+      preferredLocation: '',
       createdAt: new Date().toISOString()
     };
     users.push(newEmp);
@@ -350,7 +350,6 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
   }
 
   if (!employee && target) {
-    const defaultSch = 'sch_q8jji9v';
     const cleanName = (targetName && targetName.toLowerCase() !== 'admin' && !targetName.toLowerCase().startsWith('employee '))
       ? deviceUserName
       : ('Employee ' + target);
@@ -364,9 +363,10 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
         username: 'bio_' + target,
         role: 'employee',
         status: 'Active',
-        scheduleId: defaultSch,
-        scheduleIds: [defaultSch],
-        shiftLocations: { [defaultSch]: LOCATION }
+        scheduleId: '',
+        scheduleIds: [],
+        shiftLocations: {},
+        preferredLocation: ''
       });
       employee = created.toObject ? created.toObject() : created;
       console.log(`✨ Auto-registered biometric user in MongoDB: ${employee.name} (ID: ${target})`);

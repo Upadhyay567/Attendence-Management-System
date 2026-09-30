@@ -326,7 +326,6 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
   if (!Array.isArray(db.biometricVault)) db.biometricVault = [];
 
   let enrolledCount = 0;
-  const defaultScheduleId = 'sch_q8jji9v';
 
   for (const line of lines) {
     // Format A: Key-value pairs (PIN=101\tName=Rahul\tPri=0\tCard=...)
@@ -371,11 +370,8 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
       // Update details if missing
       if (!existingUser.biometricUserId) existingUser.biometricUserId = pin;
       if (!existingUser.name && name) existingUser.name = name;
-      if (!existingUser.shiftLocations) existingUser.shiftLocations = {};
-      existingUser.shiftLocations[defaultScheduleId] = deviceLocation;
-      existingUser.preferredLocation = deviceLocation;
     } else {
-      // Create new employee linked to Chattarpur machine
+      // Create new employee linked to machine
       const newUserId = `usr_bio_${pin}`;
       const newUser = {
         _id: newUserId,
@@ -389,10 +385,10 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
         status: 'Active',
         department: 'Operations',
         designation: 'Staff',
-        scheduleId: defaultScheduleId,
-        scheduleIds: [defaultScheduleId],
-        shiftLocations: { [defaultScheduleId]: deviceLocation },
-        preferredLocation: deviceLocation,
+        scheduleId: '',
+        scheduleIds: [],
+        shiftLocations: {},
+        preferredLocation: '',
         createdAt: new Date().toISOString()
       };
       db.users.push(newUser);

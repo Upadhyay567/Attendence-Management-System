@@ -260,7 +260,14 @@ app.post('/api/mutate', async (req, res) => {
         const userMap = new Map((existing.users || []).map(u => [u.id, u]));
         (data.users || []).forEach(u => {
           if (u && u.id) {
-            userMap.set(u.id, { ...(userMap.get(u.id) || {}), ...u });
+            const merged = { ...(userMap.get(u.id) || {}), ...u };
+            if (u.scheduleId === '' || u.scheduleId === null || (Array.isArray(u.scheduleIds) && u.scheduleIds.length === 0)) {
+              merged.scheduleId = '';
+              merged.scheduleIds = [];
+              merged.shiftLocations = {};
+              merged.preferredLocations = [];
+            }
+            userMap.set(u.id, merged);
           }
         });
         existing.users = Array.from(userMap.values());

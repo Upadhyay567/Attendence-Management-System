@@ -442,9 +442,20 @@ export function renderAdminAttendances() {
       const emp = userMap.get(log.userId);
       const empName = emp ? emp.name : 'Unknown User';
       const empId = emp ? (emp.employeeId || emp.id) : '';
-      const shift = DB.getSchedule(log.shiftId);
-      const shiftName = shift ? shift.name : 'Regular Shift';
-      const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || 'Office Headquarters';
+      const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0
+        ? emp.scheduleIds.filter(Boolean)
+        : (emp?.scheduleId ? [emp.scheduleId] : []);
+
+      let shift = null;
+      if (userShiftIds.length > 0) {
+        if (log.shiftId && userShiftIds.includes(log.shiftId)) {
+          shift = DB.getSchedule(log.shiftId);
+        } else {
+          shift = DB.getSchedule(userShiftIds[0]);
+        }
+      }
+      const shiftName = shift ? shift.name : '-';
+      const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       
       let atWorkStr = '--:--';
       let atWorkMins = 0;
@@ -576,9 +587,19 @@ export function renderAdminAttendances() {
         let checkOutDisplay = log.checkOut || '--:--';
         if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
 
-        const shift = DB.getSchedule(log.shiftId);
+        const userShiftIds = Array.isArray(log.emp?.scheduleIds) && log.emp.scheduleIds.length > 0
+          ? log.emp.scheduleIds.filter(Boolean)
+          : (log.emp?.scheduleId ? [log.emp.scheduleId] : []);
+        let shift = null;
+        if (userShiftIds.length > 0) {
+          if (log.shiftId && userShiftIds.includes(log.shiftId)) {
+            shift = DB.getSchedule(log.shiftId);
+          } else {
+            shift = DB.getSchedule(userShiftIds[0]);
+          }
+        }
         
-        let isLateArrival = log.status === 'Late';
+        let isLateArrival = false;
         if (log.checkIn && shift) {
           const [inH, inM] = log.checkIn.split(':').map(Number);
           const [startH, startM] = shift.startTime.split(':').map(Number);
@@ -602,7 +623,9 @@ export function renderAdminAttendances() {
         }
 
         let s = log.status;
-        if (!s || s === 'Present') {
+        if (!shift) {
+          s = log.checkIn ? 'On Time' : 'Absent';
+        } else if (!s || s === 'Present') {
           s = 'On Time';
           if (shift && shift.startTime && log.checkIn) {
             const [sH, sM] = shift.startTime.split(':').map(Number);
@@ -1013,9 +1036,20 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     const emp = userMap.get(log.userId);
     const empName = emp ? emp.name : 'Unknown User';
     const empId = emp ? (emp.employeeId || emp.id) : '';
-    const shift = DB.getSchedule(log.shiftId);
-    const shiftName = shift ? shift.name : 'Regular Shift';
-    const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || 'Office Headquarters';
+    const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0
+      ? emp.scheduleIds.filter(Boolean)
+      : (emp?.scheduleId ? [emp.scheduleId] : []);
+
+    let shift = null;
+    if (userShiftIds.length > 0) {
+      if (log.shiftId && userShiftIds.includes(log.shiftId)) {
+        shift = DB.getSchedule(log.shiftId);
+      } else {
+        shift = DB.getSchedule(userShiftIds[0]);
+      }
+    }
+    const shiftName = shift ? shift.name : '-';
+    const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
     
     let atWorkStr = '--';
     if (log.checkIn && log.checkOut) {
