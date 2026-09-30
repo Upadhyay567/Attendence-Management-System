@@ -277,6 +277,21 @@ app.post('/api/mutate', async (req, res) => {
 
         fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(existing, null, 2), 'utf-8');
         invalidateLocalDbCache();
+
+        const online = await connectMongoose();
+        const useLocal = getUseLocalFileDB();
+        if (online && !useLocal && Array.isArray(data.users)) {
+          const ops = data.users.filter(u => u && u.id).map(u => ({
+            updateOne: {
+              filter: { id: u.id },
+              update: { $set: u },
+              upsert: true
+            }
+          }));
+          if (ops.length > 0) {
+            await User.bulkWrite(ops).catch(e => console.warn('BulkWrite users non-fatal warning:', e.message));
+          }
+        }
       }
       broadcastSSEEvent('db_updated', { action: 'sync', timestamp: Date.now() });
       return res.json({ success: true });

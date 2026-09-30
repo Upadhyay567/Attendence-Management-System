@@ -116,11 +116,29 @@ async function getDbState(req, res) {
       const localData = readLocalDbStateCached();
       
       // Merge in any users from localData that might not have mirrored to Mongo yet
-      let finalUsers = users;
+      const localMap = new Map((localData?.users || []).map(u => [u.id, u]));
+      let finalUsers = users.map(u => {
+        const localUser = localMap.get(u.id);
+        if (localUser) {
+          return {
+            ...localUser,
+            ...u,
+            resume: u.resume || localUser.resume || null,
+            aadhar: u.aadhar || localUser.aadhar || null,
+            bankDetails: u.bankDetails || localUser.bankDetails || null,
+            documents: (Array.isArray(u.documents) && u.documents.length > 0) ? u.documents : (localUser.documents || []),
+            verificationStatuses: u.verificationStatuses || localUser.verificationStatuses || {},
+            profileVerificationStatus: u.profileVerificationStatus || localUser.profileVerificationStatus || 'Approved',
+            profileVerificationComment: u.profileVerificationComment || localUser.profileVerificationComment || ''
+          };
+        }
+        return u;
+      });
+
       if (localData && Array.isArray(localData.users) && localData.users.length > users.length) {
         const mongoIds = new Set(users.map(u => u.id));
         const missing = localData.users.filter(u => u && !mongoIds.has(u.id));
-        finalUsers = [...users, ...missing];
+        finalUsers = [...finalUsers, ...missing];
       }
 
       // Merge in any attendanceLogs from localData that might not have mirrored to Mongo yet
@@ -200,13 +218,22 @@ async function handleGranularMutation(req, res) {
       invalidateLocalDbCache();
     }
 
-    if (online && !useLocal && type === 'delete' && query) {
-      try {
-        if (key === 'leaveRequests') await LeaveRequest.deleteOne(query);
-        else if (key === 'shiftSwaps') await ShiftSwap.deleteOne(query);
-        else if (key === 'attendanceLogs') await AttendanceLog.deleteOne(query);
-      } catch (mongoDelErr) {
-        console.warn('⚠️ Non-fatal Mongo delete warning:', mongoDelErr.message);
+    if (online && !useLocal) {
+      if (type === 'update' && key === 'users' && query && updates) {
+        try {
+          await User.updateOne(query, { $set: updates });
+        } catch (mongoErr) {
+          console.warn('⚠️ Non-fatal Mongo user update warning:', mongoErr.message);
+        }
+      } else if (type === 'delete' && query) {
+        try {
+          if (key === 'leaveRequests') await LeaveRequest.deleteOne(query);
+          else if (key === 'shiftSwaps') await ShiftSwap.deleteOne(query);
+          else if (key === 'attendanceLogs') await AttendanceLog.deleteOne(query);
+          else if (key === 'users') await User.deleteOne(query);
+        } catch (mongoDelErr) {
+          console.warn('⚠️ Non-fatal Mongo delete warning:', mongoDelErr.message);
+        }
       }
     }
 

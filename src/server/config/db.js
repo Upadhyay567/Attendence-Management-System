@@ -53,8 +53,13 @@ const UserSchema = new mongoose.Schema({
   profileVerificationStatus: String,
   profileVerificationComment: String,
   pendingProfileEdits: mongoose.Schema.Types.Mixed,
-  passwordResetCount: { type: Number, default: 0 }
-}, { timestamps: true });
+  passwordResetCount: { type: Number, default: 0 },
+  resume: mongoose.Schema.Types.Mixed,
+  aadhar: mongoose.Schema.Types.Mixed,
+  bankDetails: mongoose.Schema.Types.Mixed,
+  documents: [mongoose.Schema.Types.Mixed],
+  verificationStatuses: mongoose.Schema.Types.Mixed
+}, { timestamps: true, strict: false });
 
 const AttendanceLogSchema = new mongoose.Schema({
   biometricDeviceId: String,

@@ -1396,7 +1396,19 @@ export const DB = {
         date: new Date().toISOString().split('T')[0]
       };
       user.documents.push(newDoc);
-      this.save();
+      user.verificationStatuses = user.verificationStatuses || {};
+      user.verificationStatuses.document = 'Pending';
+      user.profileVerificationStatus = 'Pending Approval';
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          documents: user.documents,
+          verificationStatuses: user.verificationStatuses,
+          profileVerificationStatus: user.profileVerificationStatus
+        }
+      });
       return newDoc;
     }
     return null;
@@ -1406,7 +1418,18 @@ export const DB = {
     const user = this.getUser(userId);
     if (user && user.documents) {
       user.documents = user.documents.filter(d => d.id !== docId);
-      this.save();
+      if (user.documents.length === 0 && user.verificationStatuses) {
+        delete user.verificationStatuses.document;
+      }
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          documents: user.documents,
+          verificationStatuses: user.verificationStatuses || {}
+        }
+      });
       return true;
     }
     return false;
@@ -1421,7 +1444,19 @@ export const DB = {
         url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
-      this.save();
+      user.verificationStatuses = user.verificationStatuses || {};
+      user.verificationStatuses.resume = 'Pending';
+      user.profileVerificationStatus = 'Pending Approval';
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          resume: user.resume,
+          verificationStatuses: user.verificationStatuses,
+          profileVerificationStatus: user.profileVerificationStatus
+        }
+      });
       return user.resume;
     }
     return null;
@@ -1431,7 +1466,16 @@ export const DB = {
     const user = this.getUser(userId);
     if (user) {
       user.resume = null;
-      this.save();
+      if (user.verificationStatuses) delete user.verificationStatuses.resume;
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          resume: null,
+          verificationStatuses: user.verificationStatuses || {}
+        }
+      });
       return true;
     }
     return false;
@@ -1446,7 +1490,19 @@ export const DB = {
         url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
-      this.save();
+      user.verificationStatuses = user.verificationStatuses || {};
+      user.verificationStatuses.aadhar = 'Pending';
+      user.profileVerificationStatus = 'Pending Approval';
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          aadhar: user.aadhar,
+          verificationStatuses: user.verificationStatuses,
+          profileVerificationStatus: user.profileVerificationStatus
+        }
+      });
       return user.aadhar;
     }
     return null;
@@ -1456,7 +1512,16 @@ export const DB = {
     const user = this.getUser(userId);
     if (user) {
       user.aadhar = null;
-      this.save();
+      if (user.verificationStatuses) delete user.verificationStatuses.aadhar;
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          aadhar: null,
+          verificationStatuses: user.verificationStatuses || {}
+        }
+      });
       return true;
     }
     return false;
@@ -1471,7 +1536,19 @@ export const DB = {
         url: url || '',
         date: new Date().toISOString().split('T')[0]
       };
-      this.save();
+      user.verificationStatuses = user.verificationStatuses || {};
+      user.verificationStatuses.bank = 'Pending';
+      user.profileVerificationStatus = 'Pending Approval';
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          bankDetails: user.bankDetails,
+          verificationStatuses: user.verificationStatuses,
+          profileVerificationStatus: user.profileVerificationStatus
+        }
+      });
       return user.bankDetails;
     }
     return null;
@@ -1481,7 +1558,16 @@ export const DB = {
     const user = this.getUser(userId);
     if (user) {
       user.bankDetails = null;
-      this.save();
+      if (user.verificationStatuses) delete user.verificationStatuses.bank;
+      this.save({
+        type: 'update',
+        key: 'users',
+        query: { id: user.id },
+        updates: {
+          bankDetails: null,
+          verificationStatuses: user.verificationStatuses || {}
+        }
+      });
       return true;
     }
     return false;
@@ -2612,7 +2698,25 @@ export const DB = {
       user.verificationStatuses = {};
     }
     user.verificationStatuses[docType] = 'Approved';
-    this.save({ type: 'update', key: 'users', query: { id: userId }, updates: { verificationStatuses: user.verificationStatuses } });
+
+    const statuses = Object.values(user.verificationStatuses || {});
+    if (statuses.some(s => s === 'Rejected')) {
+      user.profileVerificationStatus = 'Rejected';
+    } else if (statuses.some(s => s === 'Pending')) {
+      user.profileVerificationStatus = 'Pending Approval';
+    } else {
+      user.profileVerificationStatus = 'Approved';
+    }
+
+    this.save({
+      type: 'update',
+      key: 'users',
+      query: { id: userId },
+      updates: {
+        verificationStatuses: user.verificationStatuses,
+        profileVerificationStatus: user.profileVerificationStatus
+      }
+    });
     return user;
   },
 
@@ -2623,7 +2727,16 @@ export const DB = {
       user.verificationStatuses = {};
     }
     user.verificationStatuses[docType] = 'Rejected';
-    this.save({ type: 'update', key: 'users', query: { id: userId }, updates: { verificationStatuses: user.verificationStatuses } });
+    user.profileVerificationStatus = 'Rejected';
+    this.save({
+      type: 'update',
+      key: 'users',
+      query: { id: userId },
+      updates: {
+        verificationStatuses: user.verificationStatuses,
+        profileVerificationStatus: user.profileVerificationStatus
+      }
+    });
     return user;
   },
 

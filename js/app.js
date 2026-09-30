@@ -739,6 +739,10 @@ const startApp = async () => {
       updateNotificationsUI();
     }
 
+    if (typeof updateNavbarVerificationBadge === 'function') {
+      updateNavbarVerificationBadge();
+    }
+
     const activeHash = window.location.hash || '';
     if (activeHash === '#admin-dashboard') {
       if (typeof window.updateDashboardViews === 'function') window.updateDashboardViews();
@@ -1037,12 +1041,17 @@ function setupRouter() {
       if (typeof updateNotificationsUI === 'function') {
         updateNotificationsUI();
       }
+      if (typeof updateNavbarVerificationBadge === 'function') {
+        updateNavbarVerificationBadge();
+      }
       
       // Set Active Link in Sidebar
       document.querySelectorAll('.menu-item').forEach(li => {
         li.classList.remove('active');
         const href = li.querySelector('a')?.getAttribute('href');
-        if (href === hash) li.classList.add('active');
+        if (href === hash || ((hash === '#verification' || hash === '#verification-docs') && (href === '#admin-verification' || href === '#employee-verification'))) {
+          li.classList.add('active');
+        }
       });
 
       // Highlight active submenu items and parent
@@ -1143,7 +1152,13 @@ function setupRouter() {
           renderAdminReports();
           break;
         case '#admin-verification':
-          renderAdminVerificationView();
+        case '#verification':
+        case '#verification-docs':
+          if (user.role === 'employee') {
+            renderEmployeeVerification();
+          } else {
+            renderAdminVerificationView();
+          }
           break;
         case '#admin-profile':
           renderAdminProfile();
@@ -1697,6 +1712,10 @@ function renderAppShell() {
 
     // Initial render of notifications state
     updateNotificationsUI();
+  }
+
+  if (typeof updateNavbarVerificationBadge === 'function') {
+    updateNavbarVerificationBadge();
   }
 }
 
@@ -3916,13 +3935,17 @@ function handleMockUpload(userId, file, type) {
             DB.uploadDocument(userId, file.name, sizeStr, finalUrl);
           }
 
+          if (typeof updateNavbarVerificationBadge === 'function') {
+            updateNavbarVerificationBadge();
+          }
+
           const currentHash = window.location.hash || '#login';
           if (currentHash === '#employee-profile' || currentHash === '#employee-verification') {
             renderResumeDisplay(userId);
             renderAadharDisplay(userId);
             renderBankDetailsDisplay(userId);
             renderDocumentsDisplay(userId);
-          } else if (currentHash === '#admin-verification') {
+          } else if (currentHash === '#admin-verification' || currentHash === '#verification' || currentHash === '#verification-docs') {
             renderAdminVerificationView();
           }
         }, 200);
@@ -4065,11 +4088,35 @@ function showDocumentPreview(userId, docType) {
   
   let modalTitle = '';
   if (docType === 'resume') modalTitle = 'Resume / CV';
-  else if (docType === 'aadhar') modalTitle = 'Aadhar Card';
+  else if (docType === 'aadhar') modalTitle = 'Aadhaar Card';
   else if (docType === 'bank') modalTitle = 'Bank Details (Passbook / Cancelled Cheque)';
   else modalTitle = 'Verification Document';
 
-  const pdfUrl = getOrGenerateDocumentPdfUrl(user, doc, docType);
+  const fileUrl = getOrGenerateDocumentPdfUrl(user, doc, docType);
+  const isImage = (doc.url && (doc.url.startsWith('data:image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.name || ''))) || (doc.type && doc.type.startsWith('image/'));
+
+  let viewerHTML = '';
+  if (isImage) {
+    viewerHTML = `
+      <div style="width: 100%; height: 100%; min-height: 480px; max-height: 68vh; display: flex; align-items: center; justify-content: center; background: #0f172a; border-radius: 8px; overflow: auto; padding: 16px;">
+        <img src="${fileUrl}" alt="${Utils.escape(doc.name)}" style="max-width: 100%; max-height: 64vh; object-fit: contain; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); padding: 4px 6px;">
+        <span>Official employee image document.</span>
+        <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary, #89201B); font-weight: 600; text-decoration: underline;">Open Image in New Tab &nearr;</a>
+      </div>
+    `;
+  } else {
+    viewerHTML = `
+      <div style="width: 100%; height: 100%; min-height: 480px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); background: var(--bg-app);">
+        <iframe src="${fileUrl}#toolbar=1" type="application/pdf" style="width: 100%; height: 100%; min-height: 480px; border: none; display: block;" title="${Utils.escape(doc.name)}"></iframe>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); padding: 4px 6px;">
+        <span>Official document displayed in high-resolution PDF viewer.</span>
+        <a href="${fileUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary, #89201B); font-weight: 600; text-decoration: underline;">Open PDF in New Browser Tab &nearr;</a>
+      </div>
+    `;
+  }
 
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 860px; width: 92vw; padding: 22px; max-height: 94vh; display: flex; flex-direction: column; background: var(--bg-surface); border: 1.5px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg);">
@@ -4081,7 +4128,7 @@ function showDocumentPreview(userId, docType) {
           <div>
             <h3 class="modal-title" style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0;">${modalTitle} - Official Document Viewer</h3>
             <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
-              ${Utils.escape(doc.name)} &bull; ${doc.size || '1700 KB'} &bull; Uploaded on ${doc.date || '2026-09-23'}
+              ${Utils.escape(doc.name)} &bull; ${doc.size || '1700 KB'} &bull; Uploaded on ${doc.date || '2026-09-30'}
             </div>
           </div>
         </div>
@@ -4089,13 +4136,7 @@ function showDocumentPreview(userId, docType) {
       </div>
 
       <div class="modal-body" style="flex: 1; min-height: 480px; max-height: 68vh; display: flex; flex-direction: column; gap: 8px; padding: 0;">
-        <div style="width: 100%; height: 100%; min-height: 480px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); background: var(--bg-app);">
-          <iframe src="${pdfUrl}#toolbar=1" type="application/pdf" style="width: 100%; height: 100%; min-height: 480px; border: none; display: block;" title="${Utils.escape(doc.name)}"></iframe>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted); padding: 4px 6px;">
-          <span>Official document displayed in high-resolution PDF viewer.</span>
-          <a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary, #89201B); font-weight: 600; text-decoration: underline;">Open PDF in New Browser Tab &nearr;</a>
-        </div>
+        ${viewerHTML}
       </div>
 
       <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
@@ -4106,7 +4147,7 @@ function showDocumentPreview(userId, docType) {
         </button>
         <button class="btn btn-primary" id="btn-preview-download" style="width: auto; padding: 9px 22px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #89201B 0%, #5c0f0a 100%); color: #ffffff; border: 1px solid rgba(251,191,36,0.3); border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(137,32,27,0.25); transition: all 0.2s ease;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          Download PDF
+          Download ${isImage ? 'Image' : 'PDF'}
         </button>
       </div>
     </div>
@@ -4117,7 +4158,7 @@ function showDocumentPreview(userId, docType) {
   document.getElementById('close-preview-modal-btn').addEventListener('click', close);
   document.getElementById('close-preview-modal-btn2').addEventListener('click', close);
   document.getElementById('btn-preview-open-tab').addEventListener('click', () => {
-    window.open(pdfUrl, '_blank');
+    window.open(fileUrl, '_blank');
   });
   document.getElementById('btn-preview-download').addEventListener('click', () => {
     downloadDocumentSimulated(userId, docType);
@@ -4139,7 +4180,7 @@ function downloadDocumentSimulated(userId, docType) {
   }
   if (!doc) return;
 
-  const fileName = doc.name.toLowerCase().endsWith('.pdf') ? doc.name : (doc.name.replace(/\.[^/.]+$/, '') + '.pdf');
+  const fileName = doc.name || (docType + '.pdf');
 
   // If doc has a real uploaded file URL or base64 data URL
   if (doc.url && (doc.url.startsWith('data:') || doc.url.startsWith('/uploads/') || doc.url.startsWith('http'))) {
@@ -4158,7 +4199,7 @@ function downloadDocumentSimulated(userId, docType) {
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = blobUrl;
-  a.download = fileName;
+  a.download = fileName.toLowerCase().endsWith('.pdf') ? fileName : (fileName.replace(/\.[^/.]+$/, '') + '.pdf');
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -4511,32 +4552,158 @@ function renderAdminSupport() {
   }));
 }
 
+function updateNavbarVerificationBadge() {
+  const user = Auth.getCurrentUser();
+  if (!user) return;
+  const isHrOrAdmin = user.role === 'hr' || user.role === 'admin';
+  const isManager = user.role === 'manager';
+  if (!isHrOrAdmin && !isManager) return;
+
+  let employees = DB.getUsers().filter(u => u && u.status !== 'Inactive');
+  if (isManager) {
+    employees = employees.filter(u => u.managerId === user.id || u.assignedById === user.id);
+  }
+
+  let pendingCount = 0;
+  employees.forEach(u => {
+    const statuses = u.verificationStatuses || {};
+    const hasResume = !!u.resume;
+    const hasAadhar = !!u.aadhar;
+    const hasBank = !!u.bankDetails;
+    const hasDocs = Array.isArray(u.documents) && u.documents.length > 0;
+    const isPending = (hasResume && statuses.resume !== 'Approved' && statuses.resume !== 'Rejected') ||
+                      (hasAadhar && statuses.aadhar !== 'Approved' && statuses.aadhar !== 'Rejected') ||
+                      (hasBank && statuses.bank !== 'Approved' && statuses.bank !== 'Rejected') ||
+                      (hasDocs && statuses.document !== 'Approved' && statuses.document !== 'Rejected');
+    if (isPending) pendingCount++;
+  });
+
+  const navItem = document.getElementById('nav-admin-verification');
+  if (navItem) {
+    let badge = navItem.querySelector('#nav-verify-badge');
+    if (pendingCount > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'nav-verify-badge';
+        badge.className = 'badge';
+        badge.style.cssText = 'margin-left:auto; background:var(--primary); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; min-width:18px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.2)';
+        navItem.querySelector('a')?.appendChild(badge);
+      }
+      badge.textContent = pendingCount;
+      badge.style.display = 'inline-block';
+    } else if (badge) {
+      badge.style.display = 'none';
+    }
+  }
+}
+window.updateNavbarVerificationBadge = updateNavbarVerificationBadge;
+
 const adminVerifyPageState = {
   currentPage: 1,
-  pageSize: 30
+  pageSize: 30,
+  filter: 'all',
+  search: ''
 };
 
 function renderAdminVerificationView() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
+  if (!user) return;
   const isManager = user.role === 'manager';
-  let employees = DB.getUsers().filter(u => u.status !== 'Inactive');
-  if (isManager) {
-    employees = employees.filter(u => u.managerId === user.id);
-  } else if (user.role === 'hr') {
-    employees = employees.filter(u => u.assignedById === user.id);
+  const isHrOrAdmin = user.role === 'hr' || user.role === 'admin';
+  if (!isHrOrAdmin && !isManager) {
+    window.location.hash = '#employee-verification';
+    return;
   }
 
+  let allEmployees = DB.getUsers().filter(u => u && u.status !== 'Inactive');
+  if (isManager) {
+    allEmployees = allEmployees.filter(u => u.managerId === user.id || u.assignedById === user.id);
+  }
+
+  const getDocPendingStatus = (u) => {
+    const statuses = u.verificationStatuses || {};
+    const hasResume = !!u.resume;
+    const hasAadhar = !!u.aadhar;
+    const hasBank = !!u.bankDetails;
+    const hasDocs = Array.isArray(u.documents) && u.documents.length > 0;
+    
+    if (!hasResume && !hasAadhar && !hasBank && !hasDocs) return 'missing';
+
+    const isPending = (hasResume && statuses.resume !== 'Approved' && statuses.resume !== 'Rejected') ||
+                      (hasAadhar && statuses.aadhar !== 'Approved' && statuses.aadhar !== 'Rejected') ||
+                      (hasBank && statuses.bank !== 'Approved' && statuses.bank !== 'Rejected') ||
+                      (hasDocs && statuses.document !== 'Approved' && statuses.document !== 'Rejected');
+    
+    if (isPending) return 'pending';
+
+    const isAllApproved = (!hasResume || statuses.resume === 'Approved') &&
+                          (!hasAadhar || statuses.aadhar === 'Approved') &&
+                          (!hasBank || statuses.bank === 'Approved') &&
+                          (!hasDocs || statuses.document === 'Approved');
+
+    if (isAllApproved) return 'approved';
+    return 'reviewed';
+  };
+
+  const getVerificationPriority = (u) => {
+    const status = getDocPendingStatus(u);
+    if (status === 'pending') return 3;
+    if (status === 'approved' || status === 'reviewed') return 2;
+    return 1;
+  };
+
+  const counts = {
+    all: allEmployees.length,
+    pending: allEmployees.filter(u => getDocPendingStatus(u) === 'pending').length,
+    hasDocs: allEmployees.filter(u => u.resume || u.aadhar || u.bankDetails || (u.documents && u.documents.length > 0)).length,
+    approved: allEmployees.filter(u => getDocPendingStatus(u) === 'approved').length,
+    missing: allEmployees.filter(u => getDocPendingStatus(u) === 'missing').length
+  };
+
   main.innerHTML = `
-    <div class="content-header" style="display:flex; justify-content:space-between; align-items:center">
+    <div class="content-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px">
       <div>
         <h1 class="content-title">Employee Onboarding Verification</h1>
-        <div class="content-subtitle">Review onboarding documents and verification status.</div>
+        <div class="content-subtitle">Review onboarding documents, proof of identity, and compliance approval status across employees.</div>
       </div>
       <div>
-        <button class="btn" id="btn-admin-open-upload" style="width:auto; font-size:11px; padding:5px 10px; font-weight:600; background:var(--primary); color:var(--bg-app); display:flex; align-items:center; gap:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg> Upload Verification Document</button>
+        <button class="btn" id="btn-admin-open-upload" style="width:auto; font-size:12px; padding:7px 14px; font-weight:600; background:var(--primary); color:var(--bg-app); display:flex; align-items:center; gap:6px; border-radius:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px; height:16px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          Upload Verification Document
+        </button>
       </div>
     </div>
+
+    <!-- Filter Tabs & Real-Time Search Bar -->
+    <div class="verification-controls-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px">
+      <div class="filter-tabs" id="verify-filter-tabs" style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn btn-sm ${adminVerifyPageState.filter === 'all' ? 'btn-primary' : 'btn-secondary'}" data-filter="all" style="width:auto; font-size:12px; border-radius:20px; padding:5px 14px">
+          All (${counts.all.toLocaleString()})
+        </button>
+        <button class="btn btn-sm ${adminVerifyPageState.filter === 'pending' ? 'btn-primary' : 'btn-secondary'}" data-filter="pending" style="width:auto; font-size:12px; border-radius:20px; padding:5px 14px; ${counts.pending > 0 ? 'border:1px solid var(--primary);' : ''}">
+          ⏳ Pending Review (${counts.pending})
+        </button>
+        <button class="btn btn-sm ${adminVerifyPageState.filter === 'hasDocs' ? 'btn-primary' : 'btn-secondary'}" data-filter="hasDocs" style="width:auto; font-size:12px; border-radius:20px; padding:5px 14px">
+          📁 Has Documents (${counts.hasDocs})
+        </button>
+        <button class="btn btn-sm ${adminVerifyPageState.filter === 'approved' ? 'btn-primary' : 'btn-secondary'}" data-filter="approved" style="width:auto; font-size:12px; border-radius:20px; padding:5px 14px">
+          ✅ Approved (${counts.approved})
+        </button>
+        <button class="btn btn-sm ${adminVerifyPageState.filter === 'missing' ? 'btn-primary' : 'btn-secondary'}" data-filter="missing" style="width:auto; font-size:12px; border-radius:20px; padding:5px 14px">
+          ❌ Missing Docs (${counts.missing})
+        </button>
+      </div>
+      
+      <div style="display:flex; gap:10px; align-items:center; flex:1; max-width:360px; min-width:240px">
+        <div style="position:relative; width:100%">
+          <input type="text" id="verify-search-input" class="form-input" placeholder="Search employee name, ID or email..." value="${Utils.escape(adminVerifyPageState.search || '')}" style="padding-left:34px; padding-right:30px; font-size:12.5px; border-radius:8px">
+          <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--text-muted)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          ${adminVerifyPageState.search ? `<button id="btn-clear-verify-search" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; line-height:1" title="Clear search">&times;</button>` : ''}
+        </div>
+      </div>
+    </div>
+
     <div class="content-body">
       <div class="card-panel">
         <div class="table-container">
@@ -4559,7 +4726,7 @@ function renderAdminVerificationView() {
         <!-- Verification Table Pagination Bar -->
         <div id="verify-pagination-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding:12px 16px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px">
           <div style="display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap">
-            <span id="verify-pagination-range" style="font-weight:600">Showing 1 to 30 of ${employees.length} employees</span>
+            <span id="verify-pagination-range" style="font-weight:600">Showing 0 employees</span>
             <span style="color:var(--border)">|</span>
             <label style="display:flex; align-items:center; gap:6px; font-size:12px">
               Rows per page:
@@ -4570,7 +4737,7 @@ function renderAdminVerificationView() {
                 <option value="50"${adminVerifyPageState.pageSize === 50 ? ' selected' : ''}>50</option>
                 <option value="100"${adminVerifyPageState.pageSize === 100 ? ' selected' : ''}>100</option>
                 <option value="250"${adminVerifyPageState.pageSize === 250 ? ' selected' : ''}>250</option>
-                <option value="all"${adminVerifyPageState.pageSize === 'all' ? ' selected' : ''}>All (${employees.length})</option>
+                <option value="all"${adminVerifyPageState.pageSize === 'all' ? ' selected' : ''}>All</option>
               </select>
             </label>
           </div>
@@ -4594,63 +4761,106 @@ function renderAdminVerificationView() {
   const btnNext = document.getElementById('btn-verify-page-next');
   const btnLast = document.getElementById('btn-verify-page-last');
   const pageSizeSelect = document.getElementById('verify-page-size-select');
+  const searchInput = document.getElementById('verify-search-input');
+  const clearSearchBtn = document.getElementById('btn-clear-verify-search');
+  const filterTabsContainer = document.getElementById('verify-filter-tabs');
 
   const getDocStatusHTML = (doc, type, u) => {
     if (!doc) {
-      return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+      return `<span class="badge badge-absent" style="font-size:11px; opacity:0.85">❌ Missing</span>`;
     }
     
     const status = u.verificationStatuses ? u.verificationStatuses[type] : null;
-    let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content">✅ Uploaded</span>`;
+    let badgeHTML = `<span class="badge badge-on-time" style="font-size:11px; width:fit-content; background:rgba(251,191,36,0.12); color:var(--primary); border:1px solid rgba(251,191,36,0.25)">⏳ Pending</span>`;
     if (status === 'Approved') {
-      badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.1); color:var(--success)">✅ Approved</span>`;
+      badgeHTML = `<span class="badge badge-approved" style="font-size:11px; width:fit-content; background:rgba(16,185,129,0.12); color:var(--success); border:1px solid rgba(16,185,129,0.25)">✅ Approved</span>`;
     } else if (status === 'Rejected') {
-      badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.1); color:var(--error)">❌ Rejected</span>`;
+      badgeHTML = `<span class="badge badge-rejected" style="font-size:11px; width:fit-content; background:rgba(239,68,68,0.12); color:var(--error); border:1px solid rgba(239,68,68,0.25)">❌ Rejected</span>`;
     }
     
     let approveBtnHTML = '';
     if (status !== 'Approved') {
-      approveBtnHTML = `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--warning); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Approve</a>`;
+      approveBtnHTML = `<a href="#" class="btn-verify-approve" data-userid="${u.id}" data-doctype="${type}" style="color:var(--success); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px" title="Approve document">Approve</a>`;
     }
     let rejectBtnHTML = '';
-    if (status !== 'Rejected' && status !== 'Approved') {
-      rejectBtnHTML = `<a href="#" class="btn-verify-reject" data-userid="${u.id}" data-doctype="${type}" style="color:var(--error); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">Reject</a>`;
+    if (status !== 'Rejected') {
+      rejectBtnHTML = `<a href="#" class="btn-verify-reject" data-userid="${u.id}" data-doctype="${type}" style="color:var(--error); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px" title="Reject document">Reject</a>`;
     }
 
     if (type === 'document') {
-      if (Array.isArray(doc) && doc.length === 0) {
-        return `<span class="badge badge-absent" style="font-size:11px">❌ Missing</span>`;
+      const docList = Array.isArray(doc) ? doc : [doc];
+      if (docList.length === 0) {
+        return `<span class="badge badge-absent" style="font-size:11px; opacity:0.85">❌ Missing</span>`;
       }
-      const docObj = Array.isArray(doc) ? doc[0] : doc;
-      return `
-        <div style="display:flex; flex-direction:column; gap:4px">
-          ${badgeHTML}
-          <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
+      return docList.map(docObj => `
+        <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:4px">
+          <div style="display:flex; align-items:center; gap:6px">
+            ${badgeHTML}
+            <span style="font-size:10px; color:var(--text-muted)">${docObj.size || ''}</span>
+          </div>
+          <div style="font-size:11px; font-weight:500; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; max-width:180px; white-space:nowrap" title="${Utils.escape(docObj.name)}">${Utils.escape(docObj.name)}</div>
           <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
+            <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${docObj.id || 'document'}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:4px">View</a>
             ${approveBtnHTML}
             ${rejectBtnHTML}
-            <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
+            <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="document" data-docid="${docObj.id}" style="color:var(--text-secondary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
           </div>
         </div>
-      `;
+      `).join('');
     }
 
     return `
       <div style="display:flex; flex-direction:column; gap:4px">
-        ${badgeHTML}
-        <div style="font-size:10px; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; max-width:150px" title="${Utils.escape(doc.name)}">${Utils.escape(doc.name)}</div>
+        <div style="display:flex; align-items:center; gap:6px">
+          ${badgeHTML}
+          <span style="font-size:10px; color:var(--text-muted)">${doc.size || ''}</span>
+        </div>
+        <div style="font-size:11px; font-weight:500; color:var(--text-secondary); text-overflow:ellipsis; overflow:hidden; max-width:180px; white-space:nowrap" title="${Utils.escape(doc.name)}">${Utils.escape(doc.name)}</div>
         <div style="display:flex; gap:6px; margin-top:2px; align-items:center">
-          <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:8px">View</a>
+          <a href="#" class="btn-verify-view" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600; margin-right:4px">View</a>
           ${approveBtnHTML}
           ${rejectBtnHTML}
-          <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--primary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
+          <a href="#" class="btn-verify-download" data-userid="${u.id}" data-doctype="${type}" style="color:var(--text-secondary); text-decoration:none; font-size:11px; font-weight:600">Download</a>
         </div>
       </div>
     `;
   };
 
+  const getFilteredEmployees = () => {
+    let filtered = allEmployees.filter(u => {
+      const status = getDocPendingStatus(u);
+      const hasAnyDocs = u.resume || u.aadhar || u.bankDetails || (u.documents && u.documents.length > 0);
+
+      if (adminVerifyPageState.filter === 'pending' && status !== 'pending') return false;
+      if (adminVerifyPageState.filter === 'hasDocs' && !hasAnyDocs) return false;
+      if (adminVerifyPageState.filter === 'approved' && status !== 'approved') return false;
+      if (adminVerifyPageState.filter === 'missing' && status !== 'missing') return false;
+
+      if (adminVerifyPageState.search) {
+        const q = adminVerifyPageState.search.toLowerCase();
+        const matchName = (u.name || '').toLowerCase().includes(q);
+        const matchEmail = (u.email || '').toLowerCase().includes(q);
+        const matchDept = (u.department || '').toLowerCase().includes(q);
+        const matchId = (u.employeeId || u.id || '').toLowerCase().includes(q);
+        if (!matchName && !matchEmail && !matchDept && !matchId) return false;
+      }
+      return true;
+    });
+
+    // Prioritize pending reviews, then those with documents, then by name
+    filtered.sort((a, b) => {
+      const scoreA = getVerificationPriority(a);
+      const scoreB = getVerificationPriority(b);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    return filtered;
+  };
+
   const renderVerificationTable = () => {
-    const totalCount = employees.length;
+    const filteredEmployees = getFilteredEmployees();
+    const totalCount = filteredEmployees.length;
     const effectivePageSize = (adminVerifyPageState.pageSize === 'all' || adminVerifyPageState.pageSize >= totalCount) ? totalCount : adminVerifyPageState.pageSize;
     const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
 
@@ -4659,30 +4869,34 @@ function renderAdminVerificationView() {
 
     const startIndex = effectivePageSize > 0 ? (adminVerifyPageState.currentPage - 1) * effectivePageSize : 0;
     const endIndex = effectivePageSize > 0 ? Math.min(startIndex + effectivePageSize, totalCount) : totalCount;
-    const pageEmployees = employees.slice(startIndex, endIndex);
+    const pageEmployees = filteredEmployees.slice(startIndex, endIndex);
 
     if (pageEmployees.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted)">No onboarding verification records found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:36px; color:var(--text-muted)">No onboarding verification records match your filters.</td></tr>`;
     } else {
       tbody.innerHTML = pageEmployees.map(u => {
         const resumeHTML = getDocStatusHTML(u.resume, 'resume', u);
         const aadharHTML = getDocStatusHTML(u.aadhar, 'aadhar', u);
         const bankHTML = getDocStatusHTML(u.bankDetails, 'bank', u);
-        const generalDocHTML = getDocStatusHTML(u.documents && u.documents.length > 0 ? u.documents[0] : null, 'document', u);
+        const generalDocHTML = getDocStatusHTML(u.documents && u.documents.length > 0 ? u.documents : null, 'document', u);
         const avatarLetters = (u.name || '').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
+        const docPending = getDocPendingStatus(u) === 'pending';
 
         return `
-          <tr>
+          <tr style="${docPending ? 'background: rgba(251,191,36,0.03);' : ''}">
             <td>
               <div style="display:flex; align-items:center; gap:10px">
                 <div class="avatar" style="width:36px; height:36px; font-size:12px; margin:0">${avatarLetters}</div>
                 <div style="display:flex; flex-direction:column">
-                  <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
-                  <span style="font-size:11px; color:var(--text-muted)">${Utils.escape(u.email || '')}</span>
+                  <div style="display:flex; align-items:center; gap:6px">
+                    <strong style="font-size:13.5px">${Utils.escape(u.name)}</strong>
+                    ${docPending ? '<span class="badge" style="background:rgba(251,191,36,0.2); color:var(--primary); font-size:9.5px; padding:1px 5px; border-radius:4px">Pending</span>' : ''}
+                  </div>
+                  <span style="font-size:11px; color:var(--text-muted)">${Utils.escape(u.email || '')} &bull; ID: ${Utils.escape(u.employeeId || u.id)}</span>
                 </div>
               </div>
             </td>
-            <td style="font-weight:600">${Utils.escape(u.department || 'Engineering')}</td>
+            <td style="font-weight:600; font-size:12.5px">${Utils.escape(u.department || 'General')}</td>
             <td>${resumeHTML}</td>
             <td>${aadharHTML}</td>
             <td>${bankHTML}</td>
@@ -4706,6 +4920,44 @@ function renderAdminVerificationView() {
     if (btnLast) btnLast.disabled = (adminVerifyPageState.currentPage >= totalPages);
   };
 
+  // Filter Tabs click
+  if (filterTabsContainer) {
+    filterTabsContainer.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('button[data-filter]');
+      if (!tabBtn) return;
+      const newFilter = tabBtn.dataset.filter;
+      adminVerifyPageState.filter = newFilter;
+      adminVerifyPageState.currentPage = 1;
+
+      filterTabsContainer.querySelectorAll('button[data-filter]').forEach(b => {
+        b.className = `btn btn-sm ${b.dataset.filter === newFilter ? 'btn-primary' : 'btn-secondary'}`;
+      });
+      renderVerificationTable();
+    });
+  }
+
+  // Search input with debounce
+  if (searchInput) {
+    let searchTimeout = null;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        adminVerifyPageState.search = e.target.value.trim();
+        adminVerifyPageState.currentPage = 1;
+        renderVerificationTable();
+      }, 150);
+    });
+  }
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      adminVerifyPageState.search = '';
+      if (searchInput) searchInput.value = '';
+      adminVerifyPageState.currentPage = 1;
+      renderAdminVerificationView();
+    });
+  }
+
   // Event delegation on tbody for actions
   tbody.addEventListener('click', (e) => {
     const viewBtn = e.target.closest('.btn-verify-view');
@@ -4724,6 +4976,7 @@ function renderAdminVerificationView() {
       DB.approveUserDocument(userId, docType);
       DB.notifyEmployeeProfileChange(userId, 'document', `Your ${docType || 'profile'} document has been verified and approved by ${currentUser ? currentUser.name : 'HR'}.`, currentUser);
       requestsPushDBState();
+      updateNavbarVerificationBadge();
       renderAdminVerificationView();
       return;
     }
@@ -4737,6 +4990,7 @@ function renderAdminVerificationView() {
       DB.rejectUserDocument(userId, docType);
       DB.notifyEmployeeProfileChange(userId, 'document', `Your ${docType || 'profile'} document verification was marked with issues by ${currentUser ? currentUser.name : 'HR'}.`, currentUser);
       requestsPushDBState();
+      updateNavbarVerificationBadge();
       renderAdminVerificationView();
       return;
     }
@@ -4746,9 +5000,10 @@ function renderAdminVerificationView() {
       e.preventDefault();
       const userId = downloadBtn.dataset.userid;
       const docType = downloadBtn.dataset.doctype;
+      const docId = downloadBtn.dataset.docid;
       if (docType === 'document') {
         const u = DB.getUser(userId);
-        const doc = u && u.documents && u.documents.length > 0 ? u.documents[0] : null;
+        const doc = (u && u.documents) ? (u.documents.find(d => d.id === docId) || u.documents[0]) : null;
         if (doc) downloadDocumentSimulated(userId, doc.id);
       } else {
         downloadDocumentSimulated(userId, docType);
@@ -4762,7 +5017,7 @@ function renderAdminVerificationView() {
   if (btnPrev) btnPrev.addEventListener('click', () => { if (adminVerifyPageState.currentPage > 1) { adminVerifyPageState.currentPage--; renderVerificationTable(); } });
   if (btnNext) btnNext.addEventListener('click', () => { adminVerifyPageState.currentPage++; renderVerificationTable(); });
   if (btnLast) btnLast.addEventListener('click', () => {
-    const totalCount = employees.length;
+    const totalCount = getFilteredEmployees().length;
     const effectivePageSize = (adminVerifyPageState.pageSize === 'all' || adminVerifyPageState.pageSize >= totalCount) ? totalCount : adminVerifyPageState.pageSize;
     adminVerifyPageState.currentPage = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
     renderVerificationTable();
@@ -4780,6 +5035,9 @@ function renderAdminVerificationView() {
   document.getElementById('btn-admin-open-upload')?.addEventListener('click', () => {
     openUploadDocumentModal();
   });
+
+  // Update navbar badge on view load
+  updateNavbarVerificationBadge();
 
   // Initial render of page
   renderVerificationTable();
