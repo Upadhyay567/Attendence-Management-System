@@ -1133,9 +1133,14 @@ export async function renderAdminDashboard() {
 
         <!-- Multi-Device Fleet Cards Grid -->
         <div style="margin: 18px 0 14px 0;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <span>Connected Branch Hardware (<span id="fleet-count-badge">3</span> Devices)</span>
-            <span id="fleet-last-sync" style="font-size: 11px; font-weight: normal; color: var(--text-secondary);">Central Vault Replication: Auto-Active</span>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>Connected Branch Hardware (<span id="fleet-count-badge">3</span> Devices)</span>
+              <span class="badge badge-on-time" id="fleet-refresh-badge" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25);">
+                ● 15s Auto-Refresh
+              </span>
+            </div>
+            <span id="fleet-last-sync" style="font-size: 11px; font-weight: normal; color: var(--text-secondary);">Replication: Auto-Active (Every 15s)</span>
           </div>
           <div id="biometric-fleet-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
             <div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">
@@ -1181,6 +1186,11 @@ export async function renderAdminDashboard() {
       refreshBtn.addEventListener('click', () => {
         loadBiometricDashboardData();
         loadBiometricFleetData();
+        const lastSyncEl = document.getElementById('fleet-last-sync');
+        if (lastSyncEl) {
+          const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+          lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
+        }
       });
     }
 
@@ -1201,6 +1211,27 @@ export async function renderAdminDashboard() {
 
     loadBiometricFleetData();
     loadBiometricDashboardData();
+
+    // Dedicated 15-second auto-refresh timer for biometric machine connected devices & live feed
+    if (window.biometricFleetRefreshInterval) {
+      clearInterval(window.biometricFleetRefreshInterval);
+      window.biometricFleetRefreshInterval = null;
+    }
+    window.biometricFleetRefreshInterval = setInterval(() => {
+      const grid = document.getElementById('biometric-fleet-grid');
+      if (grid) {
+        loadBiometricFleetData();
+        loadBiometricDashboardData(true);
+        const lastSyncEl = document.getElementById('fleet-last-sync');
+        if (lastSyncEl) {
+          const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+          lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
+        }
+      } else {
+        clearInterval(window.biometricFleetRefreshInterval);
+        window.biometricFleetRefreshInterval = null;
+      }
+    }, 15000);
   }
 
   async function loadBiometricFleetData() {
@@ -1359,6 +1390,12 @@ export async function renderAdminDashboard() {
           }
         });
       });
+
+      const lastSyncEl = document.getElementById('fleet-last-sync');
+      if (lastSyncEl) {
+        const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Updated ${timeNow} (15s auto-refresh)`;
+      }
 
     } catch (err) {
       console.warn('⚠️ Could not load biometric fleet devices:', err.message);

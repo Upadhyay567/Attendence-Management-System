@@ -301,7 +301,17 @@ async function fetchTerminals(cookieStr) {
         }
       });
 
-      fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+          break;
+        } catch (writeErr) {
+          if (attempt === 2) console.warn('⚠️ [WDMS] Failed to save terminals to database after retries:', writeErr.message);
+          const waitMs = 50 * (attempt + 1);
+          const start = Date.now();
+          while (Date.now() - start < waitMs) {}
+        }
+      }
 
       // Update MongoDB if connected
       const online = await connectMongoose();
@@ -311,6 +321,8 @@ async function fetchTerminals(cookieStr) {
           await BiometricDevice.updateOne({ id: dev.id }, { $set: dev }, { upsert: true }).catch(() => {});
         }
       }
+
+      broadcastSSEEvent('db_updated', { type: 'biometric', action: 'devices', timestamp: Date.now() });
     } catch (e) {
       console.warn('⚠️ [WDMS] Failed to save terminals to database:', e.message);
     }
