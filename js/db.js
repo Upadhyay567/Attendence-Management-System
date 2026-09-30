@@ -491,19 +491,41 @@ export const DB = {
       }
     }
 
-    // Connect to Server-Sent Events (SSE) stream for instant real-time DB updates across all tabs
+    // Connect to Server-Sent Events (SSE) stream for instant real-time DB & biometric updates across all tabs
     if (typeof window.EventSource !== 'undefined' && !window.sseSource) {
-      try {
-        const streamUrl = (window.apiBaseUrl || '') + '/api/events';
-        window.sseSource = new EventSource(streamUrl);
-        window.sseSource.addEventListener('db_updated', async () => {
-          console.log('⚡ Real-time SSE DB update signal received from backend.');
-          await DB.init(true);
-          window.dispatchEvent(new CustomEvent('db_updated'));
-        });
-      } catch (e) {
-        console.warn('Failed to establish SSE stream:', e);
-      }
+      const connectSSE = () => {
+        try {
+          const streamUrl = (window.apiBaseUrl || '') + '/api/events';
+          window.sseSource = new EventSource(streamUrl);
+          
+          window.sseSource.addEventListener('db_updated', async (evt) => {
+            console.log('⚡ Real-time SSE DB update signal received from backend.');
+            await DB.init(true);
+            window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
+          });
+
+          window.sseSource.addEventListener('biometric_sync_complete', async (evt) => {
+            console.log('⚡ Real-time Biometric sync signal received from backend.');
+            await DB.init(true);
+            window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
+            window.dispatchEvent(new CustomEvent('biometric_sync_complete', { detail: evt ? evt.data : null }));
+          });
+
+          window.sseSource.onerror = () => {
+            if (window.sseSource) {
+              window.sseSource.close();
+              window.sseSource = null;
+            }
+            // Auto reconnect after 5 seconds
+            setTimeout(connectSSE, 5000);
+          };
+        } catch (e) {
+          console.warn('Failed to establish SSE stream:', e);
+          setTimeout(connectSSE, 5000);
+        }
+      };
+
+      connectSSE();
     }
   },
 
@@ -1481,7 +1503,13 @@ export const DB = {
       this.getOfficeCoordinates();
     }
     this.data.officeCoordinates[name] = { lat: Number(lat), lng: Number(lng) };
-    if (!skipSave) this.save();
+    if (!skipSave) {
+      this.save({
+        type: 'set',
+        key: 'officeCoordinates',
+        payload: this.data.officeCoordinates
+      });
+    }
     return this.data.officeCoordinates;
   },
 
@@ -1489,9 +1517,13 @@ export const DB = {
     if (!this.data.officeCoordinates) {
       this.getOfficeCoordinates();
     }
-    if (this.data.officeCoordinates[name]) {
+    if (this.data.officeCoordinates && this.data.officeCoordinates[name]) {
       delete this.data.officeCoordinates[name];
-      this.save();
+      this.save({
+        type: 'set',
+        key: 'officeCoordinates',
+        payload: this.data.officeCoordinates
+      });
       return true;
     }
     return false;
@@ -1996,6 +2028,34 @@ export const DB = {
     return null;
   },
 
+  deleteLeaveRequest(id) {
+    if (!this.data || !Array.isArray(this.data.leaveRequests)) return false;
+    const initialLen = this.data.leaveRequests.length;
+    this.data.leaveRequests = this.data.leaveRequests.filter(r => r && r.id !== id);
+    if (this.data.leaveRequests.length !== initialLen) {
+      this.save({ type: 'delete', key: 'leaveRequests', query: { id } });
+      return true;
+    }
+    return false;
+  },
+
+  deleteCompletedLeaves(userIds = null) {
+    if (!this.data || !Array.isArray(this.data.leaveRequests)) return 0;
+    const initialLen = this.data.leaveRequests.length;
+    this.data.leaveRequests = this.data.leaveRequests.filter(r => {
+      if (!r) return false;
+      const isCompleted = r.status === 'Approved' || r.status === 'Rejected';
+      if (!isCompleted) return true;
+      if (userIds && userIds.size > 0 && !userIds.has(r.userId)) return true;
+      return false;
+    });
+    const countDeleted = initialLen - this.data.leaveRequests.length;
+    if (countDeleted > 0) {
+      this.save({ type: 'set', key: 'leaveRequests', payload: this.data.leaveRequests });
+    }
+    return countDeleted;
+  },
+
   // Payroll Calculations
   calculateMonthlyPayroll(userId, month, year) {
     const user = this.getUser(userId);
@@ -2346,6 +2406,17 @@ export const DB = {
       return swap;
     }
     return null;
+  },
+
+  deleteShiftSwap(swapId) {
+    if (!this.data || !Array.isArray(this.data.shiftSwaps)) return false;
+    const initialLen = this.data.shiftSwaps.length;
+    this.data.shiftSwaps = this.data.shiftSwaps.filter(s => s && s.id !== swapId);
+    if (this.data.shiftSwaps.length !== initialLen) {
+      this.save({ type: 'delete', key: 'shiftSwaps', query: { id: swapId } });
+      return true;
+    }
+    return false;
   },
 
   // Geofencing excuse APIs

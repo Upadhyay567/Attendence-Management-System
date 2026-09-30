@@ -608,10 +608,13 @@ export async function renderAdminDashboard() {
     const isManager = freshUser.role === 'manager';
     const isHr = freshUser.role === 'hr';
 
-    let users = DB.getUsers().filter(u => u.status !== 'Inactive' && u.role === 'employee');
+    let users = DB.getUsers().filter(u => u && u.status !== 'Inactive');
+    if (isManager) {
+      users = users.filter(u => u.role === 'employee');
+    }
 
-    const activeEmployees = users;
-    const assignedUserIds = activeEmployees.map(u => u.id);
+    const activeEmployees = users.filter(u => u.role === 'employee');
+    const assignedUserIds = users.map(u => u.id);
 
     let logs = DB.getLogs().filter(l => assignedUserIds.includes(l.userId));
     let leaves = DB.getLeaveRequests().filter(lv => assignedUserIds.includes(lv.userId));
@@ -728,7 +731,7 @@ export async function renderAdminDashboard() {
 
     presentNowRecords.forEach(l => {
       if (l.checkIn) {
-        const u = DB.getUser(l.userId);
+        const u = DB.getUser(l.userId) || { id: l.userId, name: l.employeeName || l.userName || 'Employee' };
         if (u) {
           const loc = l.location || 'Kohat Enclave, Pitampura, Delhi';
           if (!locationGroups[loc]) {
@@ -800,8 +803,14 @@ export async function renderAdminDashboard() {
       });
     });
 
-    // Update live feed current logs and render strictly from presentNowRecords
-    currentTodayLogs = presentNowRecords;
+    // Update live feed current logs and render all punches logged today across all branch locations
+    const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
+    allTodayLogs.sort((a, b) => {
+      const timeA = a.checkIn || a.checkOut || a.lastBiometricPunchAt || '';
+      const timeB = b.checkIn || b.checkOut || b.lastBiometricPunchAt || '';
+      return timeB.localeCompare(timeA);
+    });
+    currentTodayLogs = allTodayLogs;
     renderLiveFeedTable();
 
     // Populate Leave request alert inbox
@@ -1911,11 +1920,19 @@ export async function renderAdminDashboard() {
   }
 
 
+  // Expose to window so global real-time event listeners in app.js can trigger instant updates
+  window.updateDashboardViews = updateDashboardViews;
+  window.loadBiometricDashboardData = loadBiometricDashboardData;
+  window.loadBiometricFleetData = loadBiometricFleetData;
+
   const onSseDbUpdate = () => {
     if (window.location.hash === '#admin-dashboard') {
       updateDashboardViews();
       if (typeof loadBiometricDashboardData === 'function') {
         loadBiometricDashboardData(true);
+      }
+      if (typeof loadBiometricFleetData === 'function') {
+        loadBiometricFleetData();
       }
     }
   };
@@ -1928,6 +1945,7 @@ export async function renderAdminDashboard() {
     window.adminDashboardInterval = null;
   }
 
+  // Periodic silent auto-synchronization: keeps live attendance & biometric feed continuously fresh
   window.adminDashboardInterval = setInterval(async () => {
     if (window.location.hash === '#admin-dashboard') {
       try {
@@ -1949,6 +1967,14 @@ export async function renderAdminDashboard() {
         }
 
         updateDashboardViews();
+        
+        // Auto-refresh biometric feed and fleet status silently without any user action
+        if (typeof loadBiometricDashboardData === 'function') {
+          loadBiometricDashboardData(true);
+        }
+        if (typeof loadBiometricFleetData === 'function') {
+          loadBiometricFleetData();
+        }
       } catch (err) {
         console.warn("Auto-refresh DB load failed:", err);
       }
@@ -1956,7 +1982,7 @@ export async function renderAdminDashboard() {
       clearInterval(window.adminDashboardInterval);
       window.adminDashboardInterval = null;
     }
-  }, 30000);
+  }, 15000);
 }
 
 function renderAdminUsers() {

@@ -11,11 +11,6 @@ const {
   LOCAL_DB_FILE
 } = require('../config/db');
 
-const {
-  ingestPunchesAndUsers,
-  parseDeviceTimestamp
-} = require('./biometricSync.service');
-
 const { broadcastSSEEvent } = require('../routes/events.routes');
 
 let activeHost = process.env.WDMS_HOST || '203.115.110.93';
@@ -490,6 +485,7 @@ async function syncFromWDMS(username, password, options = {}) {
   }
 
   // Ingest via centralized punctuality and check-in/check-out anchoring engine
+  const { ingestPunchesAndUsers } = require('./biometricSync.service');
   const result = await ingestPunchesAndUsers(dbUsers, normalizedPunches, {
     name: `ZKTeco WDMS Cloud (${activeHost})`,
     serial: `WDMS_CLOUD_${activeHost}`,
@@ -497,7 +493,7 @@ async function syncFromWDMS(username, password, options = {}) {
     online: true
   });
 
-  // Broadcast real-time SSE event to frontend
+  // Broadcast real-time SSE events to frontend dashboards
   broadcastSSEEvent('biometric_sync_complete', {
     source: 'easywdms',
     host: activeHost,
@@ -507,6 +503,15 @@ async function syncFromWDMS(username, password, options = {}) {
     newUsers: newEmployeesAdded,
     timestamp: new Date().toISOString()
   });
+
+  if (result && (result.created > 0 || result.updated > 0)) {
+    broadcastSSEEvent('db_updated', {
+      type: 'biometric_sync',
+      source: 'easywdms',
+      timestamp: Date.now(),
+      result
+    });
+  }
 
   return {
     success: true,

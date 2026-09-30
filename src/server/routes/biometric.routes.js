@@ -35,24 +35,27 @@ const {
   syncBiometricAttendance
 } = require('../biometric/biometricSync.service');
 
+const {
+  readLocalDbStateCached
+} = require('../controllers/attendance.controller');
+
 
 // =====================================================
 // HELPERS
 // =====================================================
 
 /**
- * Safely read the HRMS users array from seed.json.
+ * Safely read the HRMS users array using high-performance cached state.
  * Returns [] on any error so callers never crash.
  */
 function readHrmsUsers() {
   try {
+    const db = readLocalDbStateCached();
+    if (db && Array.isArray(db.users)) return db.users;
     if (!fs.existsSync(LOCAL_DB_FILE)) return [];
-
     const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
-    const db  = JSON.parse(raw);
-
-    return Array.isArray(db.users) ? db.users : [];
-
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed.users) ? parsed.users : [];
   } catch (err) {
     console.error('❌ HRMS database read error:', err.message);
     return [];
@@ -90,8 +93,11 @@ function findHrmsUser(hrmsUsers, biometricId, biometricName = '') {
     ) return true;
 
     if (targetDigits) {
+      const targetNum = parseInt(targetDigits, 10);
       const empDigits = String(user.employeeId || '').replace(/\D/g, '');
       const bioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
+      if (empDigits && !isNaN(targetNum) && parseInt(empDigits, 10) === targetNum) return true;
+      if (bioDigits && !isNaN(targetNum) && parseInt(bioDigits, 10) === targetNum) return true;
       if ((empDigits && empDigits === targetDigits) || (bioDigits && bioDigits === targetDigits)) return true;
     }
 
@@ -359,18 +365,9 @@ router.get('/biometric/diagnostic', async (req, res) => {
 
 router.get('/biometric/dashboard', async (req, res) => {
   try {
-    const hrmsUsers = readHrmsUsers();
-    let dbState = { users: [], attendanceLogs: [] };
-    
-    if (fs.existsSync(LOCAL_DB_FILE)) {
-      try {
-        const rawDb = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
-        dbState = JSON.parse(rawDb);
-      } catch (err) {}
-    }
-
+    const dbState = readLocalDbStateCached() || { users: [], attendanceLogs: [] };
     const attendanceLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
-    const activeUsers = (Array.isArray(dbState.users) && dbState.users.length > 0) ? dbState.users : hrmsUsers;
+    const activeUsers = (Array.isArray(dbState.users) && dbState.users.length > 0) ? dbState.users : readHrmsUsers();
     const today = new Date().toISOString().split('T')[0];
 
     // High-performance O(1) Map pre-indexing of logs

@@ -42,7 +42,17 @@ describe('Attendance System Core & Security API Tests', () => {
 
   it('Verify multi-device registry & central biometric vault structures', () => {
     const seedPath = path.join(__dirname, '..', 'seed.json');
-    const data = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+    let data;
+    for (let i = 0; i < 5; i++) {
+      try {
+        data = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+        break;
+      } catch (err) {
+        if (i === 4) throw err;
+        const start = Date.now();
+        while (Date.now() - start < 150) {}
+      }
+    }
     expect(data).toHaveProperty('biometricDevices');
     expect(data).toHaveProperty('biometricVault');
     expect(data).toHaveProperty('biometricSyncLogs');

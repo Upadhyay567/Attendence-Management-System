@@ -741,8 +741,9 @@ const startApp = async () => {
 
     const activeHash = window.location.hash || '';
     if (activeHash === '#admin-dashboard') {
-      if (typeof updateDashboardViews === 'function') updateDashboardViews();
-      if (typeof loadBiometricDashboardData === 'function') loadBiometricDashboardData(true);
+      if (typeof window.updateDashboardViews === 'function') window.updateDashboardViews();
+      if (typeof window.loadBiometricDashboardData === 'function') window.loadBiometricDashboardData(true);
+      if (typeof window.loadBiometricFleetData === 'function') window.loadBiometricFleetData();
     } else if (activeHash === '#dashboard') {
       if (typeof renderEmployeeDashboard === 'function') renderEmployeeDashboard();
     } else if (activeHash === '#schedules') {
@@ -5874,14 +5875,26 @@ function renderAdminApprovals() {
   let tabContentHTML = '';
 
   if (activeAdminApprovalsTab === 'leaves') {
+    const completedLeaves = leaves.filter(l => l.status !== 'Pending');
     tabContentHTML = `
+      ${completedLeaves.length > 0 ? `
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:14px; padding:2px 4px">
+          <button class="btn-clear-all-premium" id="btn-clear-completed-leaves" title="Clear all completed leaves">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Clear All</span>
+          </button>
+        </div>
+      ` : ''}
       <div class="table-container">
         <table class="custom-table">
           <thead>
-            <tr><th>Applicant & Approver</th><th>Leave Type</th><th>Duration Range</th><th>Reason Notes</th><th>Request Date</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Applicant & Approver</th><th>Leave Type</th><th>Duration Range</th><th>Reason Notes</th><th>Request Date</th><th>Status</th><th style="min-width:180px">Actions</th></tr>
           </thead>
           <tbody>
-            ${leaves.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No leaves registered.</td></tr>` : ''}
+            ${leaves.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">No leaves registered.</td></tr>` : ''}
             ${leaves.map(lv => {
               const u = DB.getUser(lv.userId);
               let statusClass = 'badge-pending';
@@ -5909,12 +5922,19 @@ function renderAdminApprovals() {
                     <span class="badge ${statusClass}">${lv.status}</span>
                   </td>
                   <td style="font-size: 13px;">
-                    ${lv.status === 'Pending' ? `
-                      <div style="display:flex;gap:6px">
-                        <button class="btn btn-success btn-approve-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px;">Approve</button>
-                        <button class="btn btn-danger btn-reject-leave" data-id="${lv.id}" style="padding:6px 12px;width:auto;font-size:12px;">Reject</button>
-                      </div>
-                    ` : `<span style="font-size:11px;color:var(--text-muted)">Completed</span>`}
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+                      ${lv.status === 'Pending' ? `
+                        <button class="btn btn-success btn-approve-leave" data-id="${lv.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Approve</button>
+                        <button class="btn btn-danger btn-reject-leave" data-id="${lv.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Reject</button>
+                      ` : `<span style="font-size:11.5px; color:var(--text-muted); font-weight:500; margin-right:4px">Completed</span>`}
+                      <button class="btn-delete-row btn-delete-leave" data-id="${lv.id}" title="Delete leave record">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               `;
@@ -5928,10 +5948,10 @@ function renderAdminApprovals() {
       <div class="table-container">
         <table class="custom-table">
           <thead>
-            <tr><th>Requester</th><th>Coworker</th><th>Reason</th><th>Coworker Response</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Requester</th><th>Coworker</th><th>Reason</th><th>Coworker Response</th><th>Status</th><th style="min-width:180px">Actions</th></tr>
           </thead>
           <tbody>
-            ${allSwaps.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">No shift swaps registered.</td></tr>` : ''}
+            ${allSwaps.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px">No shift swaps registered.</td></tr>` : ''}
             ${allSwaps.map(s => {
               const sender = DB.getUser(s.senderId);
               const receiver = DB.getUser(s.receiverId);
@@ -5967,12 +5987,19 @@ function renderAdminApprovals() {
                   <td style="font-size:12px;color:var(--text-secondary)">"${Utils.escape(s.coworkerComment || 'No comment')}"</td>
                   <td><span class="badge ${statusClass}">${s.status}</span></td>
                   <td>
-                    ${s.status === 'Pending Manager' ? `
-                      <div style="display:flex;gap:6px">
-                        <button class="btn btn-success btn-approve-swap" data-id="${s.id}" style="padding:6px 12px;width:auto;font-size:12px">Approve</button>
-                        <button class="btn btn-danger btn-reject-swap" data-id="${s.id}" style="padding:6px 12px;width:auto;font-size:12px">Reject</button>
-                      </div>
-                    ` : `<span style="font-size:11px;color:var(--text-muted)">${s.status === 'Pending Coworker' ? 'Awaiting Coworker' : 'Completed'}</span>`}
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+                      ${s.status === 'Pending Manager' ? `
+                        <button class="btn btn-success btn-approve-swap" data-id="${s.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Approve</button>
+                        <button class="btn btn-danger btn-reject-swap" data-id="${s.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Reject</button>
+                      ` : `<span style="font-size:11.5px; color:var(--text-muted); font-weight:500; margin-right:4px">${s.status === 'Pending Coworker' ? 'Awaiting Coworker' : 'Completed'}</span>`}
+                      <button class="btn-delete-row btn-delete-swap" data-id="${s.id}" title="Delete shift swap">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               `;
@@ -5986,10 +6013,10 @@ function renderAdminApprovals() {
       <div class="table-container">
         <table class="custom-table">
           <thead>
-            <tr><th>Employee</th><th>Date/Time</th><th>Location</th><th>Coordinates (Distance)</th><th>Justification</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Employee</th><th>Date/Time</th><th>Location</th><th>Coordinates (Distance)</th><th>Justification</th><th>Status</th><th style="min-width:180px">Actions</th></tr>
           </thead>
           <tbody>
-            ${allDeviations.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No remote check-ins logged.</td></tr>` : ''}
+            ${allDeviations.length === 0 ? `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">No remote check-ins logged.</td></tr>` : ''}
             ${allDeviations.map(l => {
               const u = DB.getUser(l.userId);
               let statusClass = 'badge-pending';
@@ -6010,12 +6037,19 @@ function renderAdminApprovals() {
                     }
                   </td>
                   <td>
-                    ${l.deviationFlag ? `
-                      <div style="display:flex;gap:6px">
-                        <button class="btn btn-success btn-excuse-deviation" data-id="${l.id}" style="padding:6px 12px;width:auto;font-size:12px">Excuse</button>
-                        <button class="btn btn-danger btn-violation-deviation" data-id="${l.id}" style="padding:6px 12px;width:auto;font-size:12px">Flag Violation</button>
-                      </div>
-                    ` : `<span style="font-size:11px;color:var(--text-muted)">Completed</span>`}
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+                      ${l.deviationFlag ? `
+                        <button class="btn btn-success btn-excuse-deviation" data-id="${l.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Excuse</button>
+                        <button class="btn btn-danger btn-violation-deviation" data-id="${l.id}" style="padding:4px 10px; width:auto; font-size:12px; font-weight:600">Flag Violation</button>
+                      ` : `<span style="font-size:11.5px; color:var(--text-muted); font-weight:500; margin-right:4px">Completed</span>`}
+                      <button class="btn-delete-row btn-delete-deviation" data-id="${l.id}" title="Delete geofence deviation record">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               `;
@@ -6063,16 +6097,97 @@ function renderAdminApprovals() {
   if (activeAdminApprovalsTab === 'leaves') {
     document.querySelectorAll('.btn-approve-leave').forEach(btn => btn.addEventListener('click', (e) => processLeaveRequest(e.target.dataset.id, 'Approved')));
     document.querySelectorAll('.btn-reject-leave').forEach(btn => btn.addEventListener('click', (e) => processLeaveRequest(e.target.dataset.id, 'Rejected')));
+    
+    document.querySelectorAll('.btn-delete-leave').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const leaveId = e.currentTarget.dataset.id;
+        const confirmed = typeof CustomDialog !== 'undefined' && CustomDialog.confirm
+          ? await CustomDialog.confirm('Are you sure you want to permanently delete this leave request? This cannot be undone.')
+          : window.confirm('Are you sure you want to permanently delete this leave request?');
+        if (!confirmed) return;
+        const success = DB.deleteLeaveRequest(leaveId);
+        if (success) {
+          requestsPushDBState();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('🗑️ Leave request deleted successfully.', 'info');
+          }
+          renderAdminApprovals();
+        } else {
+          alert('Could not delete leave request. Record not found.');
+        }
+      });
+    });
+
+    const btnClearCompleted = document.getElementById('btn-clear-completed-leaves');
+    if (btnClearCompleted) {
+      btnClearCompleted.addEventListener('click', async () => {
+        const confirmed = typeof CustomDialog !== 'undefined' && CustomDialog.confirm
+          ? await CustomDialog.confirm('Are you sure you want to delete ALL completed (approved & rejected) leave records?')
+          : window.confirm('Are you sure you want to delete ALL completed (approved & rejected) leave records?');
+        if (!confirmed) return;
+        const deletedCount = DB.deleteCompletedLeaves(isManager ? assignedUserIds : null);
+        if (deletedCount > 0) {
+          requestsPushDBState();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`🗑️ Deleted ${deletedCount} completed leave request(s).`, 'info');
+          }
+          renderAdminApprovals();
+        }
+      });
+    }
   }
 
   if (activeAdminApprovalsTab === 'swaps') {
     document.querySelectorAll('.btn-approve-swap').forEach(btn => btn.addEventListener('click', (e) => processManagerSwap(e.target.dataset.id, true)));
     document.querySelectorAll('.btn-reject-swap').forEach(btn => btn.addEventListener('click', (e) => processManagerSwap(e.target.dataset.id, false)));
+    
+    document.querySelectorAll('.btn-delete-swap').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const swapId = e.currentTarget.dataset.id;
+        const confirmed = typeof CustomDialog !== 'undefined' && CustomDialog.confirm
+          ? await CustomDialog.confirm('Are you sure you want to permanently delete this shift swap request?')
+          : window.confirm('Are you sure you want to permanently delete this shift swap request?');
+        if (!confirmed) return;
+        const success = DB.deleteShiftSwap(swapId);
+        if (success) {
+          requestsPushDBState();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('🗑️ Shift swap request deleted.', 'info');
+          }
+          renderAdminApprovals();
+        } else {
+          alert('Could not delete shift swap.');
+        }
+      });
+    });
   }
 
   if (activeAdminApprovalsTab === 'geofence') {
     document.querySelectorAll('.btn-excuse-deviation').forEach(btn => btn.addEventListener('click', (e) => processGeofenceDeviation(e.target.dataset.id, true)));
     document.querySelectorAll('.btn-violation-deviation').forEach(btn => btn.addEventListener('click', (e) => processGeofenceDeviation(e.target.dataset.id, false)));
+    
+    document.querySelectorAll('.btn-delete-deviation').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const logId = e.currentTarget.dataset.id;
+        const confirmed = typeof CustomDialog !== 'undefined' && CustomDialog.confirm
+          ? await CustomDialog.confirm('Are you sure you want to permanently delete this geofence deviation record?')
+          : window.confirm('Are you sure you want to permanently delete this geofence deviation record?');
+        if (!confirmed) return;
+        const success = DB.deleteAttendanceLog(logId);
+        if (success) {
+          requestsPushDBState();
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('🗑️ Geofence deviation record deleted.', 'info');
+          }
+          renderAdminApprovals();
+        } else {
+          alert('Could not delete record.');
+        }
+      });
+    });
   }
 }
 
@@ -9737,8 +9852,22 @@ function renderAdminLocations() {
                     <td style="font-family:monospace; color:var(--text-secondary)">${coords.lat.toFixed(6)}° N</td>
                     <td style="font-family:monospace; color:var(--text-secondary)">${coords.lng.toFixed(6)}° E</td>
                     <td>
-                      <button class="btn btn-secondary btn-edit-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; margin-right:6px">✏️ Edit</button>
-                      <button class="btn btn-danger btn-delete-loc-coords" data-name="${Utils.escape(name)}" style="padding:4px 8px; font-size:11px; width:auto; background:rgba(239,68,68,0.1); color:var(--error); border-color:rgba(239,68,68,0.2)">🗑️ Delete</button>
+                      <div style="display:flex; align-items:center; gap:8px">
+                        <button class="btn-action-edit btn-edit-loc-coords" data-name="${Utils.escape(name)}" title="Edit coordinates">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          <span>Edit</span>
+                        </button>
+                        <button class="btn-delete-row btn-delete-loc-coords" data-name="${Utils.escape(name)}" title="Delete worksite location">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 `).join('')}
@@ -9786,7 +9915,7 @@ function renderAdminLocations() {
       }
       
       DB.saveOfficeCoordinate(name, lat, lng);
-      
+      requestsPushDBState();
       showToastNotification(`✅ Worksite "${name}" registered successfully!`, "success");
       renderAdminLocations();
     });
@@ -9795,13 +9924,14 @@ function renderAdminLocations() {
   // Edit & Delete button listeners
   document.querySelectorAll('.btn-edit-loc-coords').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const name = btn.getAttribute('data-name');
+      e.stopPropagation();
+      const name = e.currentTarget.getAttribute('data-name');
       const coords = DB.getOfficeCoordinates()[name];
       if (!coords) return;
       
-      const newLatStr = await prompt(`Enter new Latitude for "${name}":`, coords.lat);
+      const newLatStr = window.prompt(`Enter new Latitude for "${name}":`, coords.lat);
       if (newLatStr === null) return;
-      const newLngStr = await prompt(`Enter new Longitude for "${name}":`, coords.lng);
+      const newLngStr = window.prompt(`Enter new Longitude for "${name}":`, coords.lng);
       if (newLngStr === null) return;
       
       const lat = parseFloat(newLatStr);
@@ -9813,6 +9943,7 @@ function renderAdminLocations() {
       }
       
       DB.saveOfficeCoordinate(name, lat, lng);
+      requestsPushDBState();
       showToastNotification(`✅ Coordinates for "${name}" updated successfully!`, "success");
       renderAdminLocations();
     });
@@ -9820,11 +9951,20 @@ function renderAdminLocations() {
 
   document.querySelectorAll('.btn-delete-loc-coords').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const name = btn.getAttribute('data-name');
-      if (await confirm(`Are you sure you want to delete worksite "${name}"?\nThis cannot be undone.`)) {
-        DB.deleteOfficeCoordinate(name);
-        showToastNotification(`🗑️ Worksite "${name}" deleted.`, "success");
+      e.stopPropagation();
+      const name = e.currentTarget.getAttribute('data-name');
+      const confirmed = typeof CustomDialog !== 'undefined' && CustomDialog.confirm
+        ? await CustomDialog.confirm(`Are you sure you want to permanently delete worksite "${name}"?\nThis cannot be undone.`)
+        : window.confirm(`Are you sure you want to permanently delete worksite "${name}"?\nThis cannot be undone.`);
+      if (!confirmed) return;
+      
+      const success = DB.deleteOfficeCoordinate(name);
+      if (success) {
+        requestsPushDBState();
+        showToastNotification(`🗑️ Worksite "${name}" deleted successfully.`, "info");
         renderAdminLocations();
+      } else {
+        alert(`Could not delete worksite "${name}". Record not found.`);
       }
     });
   });

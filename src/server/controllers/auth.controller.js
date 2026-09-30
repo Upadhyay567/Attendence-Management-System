@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User, connectMongoose, getUseLocalFileDB, LOCAL_DB_FILE } = require('../config/db');
 const { JWT_SECRET } = require('../middleware/auth.middleware');
+const { readLocalDbStateCached, invalidateLocalDbCache } = require('./attendance.controller');
 
 function getBaseRole(userRole) {
   if (!userRole) return null;
@@ -124,11 +125,9 @@ async function loginUser(req, res) {
       const allUsers = await User.find({}).lean();
       foundUser = findUserByLoginKey(allUsers, key, role);
     } else {
-      if (fs.existsSync(LOCAL_DB_FILE)) {
-        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-        const parsed = JSON.parse(raw);
-        foundUser = findUserByLoginKey(parsed.users || [], key, role);
-      }
+      const db = readLocalDbStateCached();
+      const users = (db && Array.isArray(db.users)) ? db.users : [];
+      foundUser = findUserByLoginKey(users, key, role);
     }
 
     if (!foundUser) {
@@ -251,12 +250,8 @@ async function getAllUsers() {
   if (online && !useLocal) {
     return await User.find({}).lean();
   } else {
-    if (fs.existsSync(LOCAL_DB_FILE)) {
-      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed.users) ? parsed.users : [];
-    }
-    return [];
+    const db = readLocalDbStateCached();
+    return (db && Array.isArray(db.users)) ? db.users : [];
   }
 }
 
@@ -410,6 +405,7 @@ async function resetPassword(req, res) {
           }
         }
         fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+        invalidateLocalDbCache();
       } catch (fileErr) {
         console.error('⚠️ seed.json password update error:', fileErr.message);
       }

@@ -4583,3 +4583,106 @@ body.light-theme .notification-item-row strong {
 body.light-theme .notification-item-row p {
   color: #475569 !important;
 }
+
+/* ==========================================================================
+   Premium Approvals Desk Actions (Clean, Borderless Delete & Refined Clear All)
+   ========================================================================== */
+.btn-action-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.9));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+  box-shadow: none !important;
+}
+
+.btn-action-edit:hover {
+  background: var(--bg-surface-hover, rgba(255, 255, 255, 0.1));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+body.light-theme .btn-action-edit {
+  background: #ffffff;
+  border-color: rgba(137, 32, 27, 0.2);
+  color: #1f0504;
+}
+
+body.light-theme .btn-action-edit:hover {
+  background: rgba(137, 32, 27, 0.06);
+  border-color: #89201B;
+  color: #89201B;
+}
+
+.btn-delete-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #94a3b8);
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+  box-shadow: none !important;
+}
+
+.btn-delete-row:hover {
+  color: #dc2626 !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+
+.btn-clear-all-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.95));
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.btn-clear-all-premium:hover {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.05);
+}
+
+body.light-theme .btn-delete-row {
+  color: #8c7e7b;
+}
+
+body.light-theme .btn-delete-row:hover {
+  color: #dc2626 !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+}
+
+body.light-theme .btn-clear-all-premium {
+  background: #ffffff;
+  border-color: rgba(137, 32, 27, 0.2);
+  color: #89201B;
+}
+
+body.light-theme .btn-clear-all-premium:hover {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.05);
+}

@@ -200,6 +200,16 @@ async function handleGranularMutation(req, res) {
       invalidateLocalDbCache();
     }
 
+    if (online && !useLocal && type === 'delete' && query) {
+      try {
+        if (key === 'leaveRequests') await LeaveRequest.deleteOne(query);
+        else if (key === 'shiftSwaps') await ShiftSwap.deleteOne(query);
+        else if (key === 'attendanceLogs') await AttendanceLog.deleteOne(query);
+      } catch (mongoDelErr) {
+        console.warn('⚠️ Non-fatal Mongo delete warning:', mongoDelErr.message);
+      }
+    }
+
     broadcastSSEEvent('db_updated', { type, key, timestamp: Date.now() });
     
     await recordAuditLog(AuditLog, useLocal, {
@@ -220,5 +230,6 @@ async function handleGranularMutation(req, res) {
 module.exports = {
   getDbState,
   handleGranularMutation,
-  invalidateLocalDbCache
+  invalidateLocalDbCache,
+  readLocalDbStateCached
 };

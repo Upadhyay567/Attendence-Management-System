@@ -242,8 +242,11 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
 
     // 3. Numeric ID matching (e.g. device "1" <-> HRMS "EMP1", "789" <-> "HR0789", "765" <-> "MGR765")
     if (targetDigits) {
+      const targetNum = parseInt(targetDigits, 10);
       const userEmpDigits = String(user.employeeId || '').replace(/\D/g, '');
       const userBioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
+      if (userEmpDigits && !isNaN(targetNum) && parseInt(userEmpDigits, 10) === targetNum) return true;
+      if (userBioDigits && !isNaN(targetNum) && parseInt(userBioDigits, 10) === targetNum) return true;
       if ((userEmpDigits && userEmpDigits === targetDigits) || (userBioDigits && userBioDigits === targetDigits)) {
         return true;
       }
@@ -1104,21 +1107,31 @@ async function syncBiometricAttendance(options = {}) {
       console.log(`🔄 Starting multi-device biometric synchronization across ${devices.length} registered device(s)...`);
     }
 
-    // Instant parallel reachability probe (400ms) across all devices
+    // Instant parallel reachability probe across all devices
     // Prevents offline machines or different subnets from freezing the sync loop
+    const { resolveDeviceLocation, getActiveHost, WDMS_PORT } = require('./easywdms.service');
+    const cloudHost = getActiveHost() || process.env.WDMS_HOST || '203.115.110.93';
+    const cloudPort = WDMS_PORT || 8081;
+    const isCloudOnline = await isPortReachable(cloudHost, cloudPort, 3000);
+
     const reachabilityResults = await Promise.all(
-      devices.map(async (dev) => ({
-        id: dev.id,
-        reachable: dev.enabled ? await isPortReachable(dev.ip, dev.port, 400) : false
-      }))
+      devices.map(async (dev) => {
+        if (!dev.enabled) return { id: dev.id, reachable: false, isWDMS: false };
+        const meta = dev.serial ? resolveDeviceLocation(dev.serial, dev.name) : null;
+        const isWDMS = dev.source === 'easywdms' || String(dev.id).startsWith('dev_wdms_') || Boolean(meta) || (dev.ip && !dev.ip.startsWith('192.168.1.7'));
+        if (isWDMS) {
+          return { id: dev.id, reachable: isCloudOnline, isWDMS: true };
+        }
+        return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 600), isWDMS: false };
+      })
     );
-    const reachableMap = new Map(reachabilityResults.map(r => [r.id, r.reachable]));
+    const reachableMap = new Map(reachabilityResults.map(r => [r.id, r]));
 
     for (const dev of devices) {
       if (!dev.enabled) continue;
 
-      const isReachable = reachableMap.get(dev.id);
-      if (!isReachable) {
+      const reachInfo = reachableMap.get(dev.id) || { reachable: false, isWDMS: false };
+      if (!reachInfo.reachable) {
         deviceStatuses.push({
           id: dev.id,
           name: dev.name,
@@ -1126,6 +1139,18 @@ async function syncBiometricAttendance(options = {}) {
           online: false,
           usersCount: 0,
           logsCount: 0
+        });
+        continue;
+      }
+
+      if (reachInfo.isWDMS) {
+        deviceStatuses.push({
+          id: dev.id,
+          name: dev.name,
+          ip: dev.ip,
+          online: true,
+          usersCount: dev.enrolledUsersCount || 0,
+          logsCount: dev.totalPunchesCount || 0
         });
         continue;
       }

@@ -27,7 +27,7 @@ function startBiometricScheduler() {
   const interval =
     Number(
       process.env.BIOMETRIC_SYNC_INTERVAL ||
-      60000
+      30000
     );
 
   console.log(
@@ -61,19 +61,20 @@ async function runSync() {
   running = true;
 
   try {
-    // 1. Sync from local K40 / primary device (SURYA OMAXE @ 192.168.1.7:4370)
-    await syncBiometricAttendance().catch(err => {
-      if (!err?.message?.includes('timeout') && !err?.message?.includes('ECONNREFUSED')) {
-        console.warn('⚠️ Local biometric sync notice:', err.message);
-      }
-    });
-
-    // 2. Sync from ZKTeco Easy WDMS Cloud Server (All 11 branch locations)
     const wdmsUser = process.env.WDMS_USER || 'admin';
     const wdmsPass = process.env.WDMS_PASS || 'Hs@20267';
-    await syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 2 }).catch(err => {
-      console.warn('⚠️ WDMS Cloud biometric sync warning:', err.message);
-    });
+
+    // Run local ZKTeco K40 (192.168.1.7) and EasyWDMS cloud sync concurrently
+    await Promise.allSettled([
+      syncBiometricAttendance().catch(err => {
+        if (!err?.message?.includes('timeout') && !err?.message?.includes('ECONNREFUSED')) {
+          console.warn('⚠️ Local biometric sync notice:', err.message);
+        }
+      }),
+      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 2 }).catch(err => {
+        console.warn('⚠️ WDMS Cloud biometric sync warning:', err.message);
+      })
+    ]);
   } catch (error) {
     console.error(
       '❌ Scheduled biometric sync error:',

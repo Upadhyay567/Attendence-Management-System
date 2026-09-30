@@ -22,6 +22,12 @@ const {
   runPythonBridge
 } = require('./zkDevice');
 
+const {
+  resolveDeviceLocation,
+  getActiveHost,
+  WDMS_PORT
+} = require('./easywdms.service');
+
 // =====================================================
 // PER-DEVICE CONNECTION QUEUES & CONFIG
 //
@@ -428,15 +434,17 @@ async function testDeviceConnectivity(deviceConfig) {
   const start = Date.now();
   
   // Check if this is a WDMS cloud-managed terminal
+  const { resolveDeviceLocation, getActiveHost, WDMS_PORT } = require('./easywdms.service');
+  const meta = deviceConfig.serial ? resolveDeviceLocation(deviceConfig.serial, deviceConfig.name) : null;
   const isWDMSDevice = deviceConfig.source === 'easywdms' || 
                        String(deviceConfig.id).startsWith('dev_wdms_') ||
-                       (deviceConfig.ip && !deviceConfig.ip.startsWith('192.168.1.'));
+                       Boolean(meta) ||
+                       (deviceConfig.ip && !deviceConfig.ip.startsWith('192.168.1.7'));
 
   if (isWDMSDevice) {
-    const { getActiveHost, WDMS_PORT } = require('./easywdms.service');
     const host = getActiveHost() || process.env.WDMS_HOST || '203.115.110.93';
     const port = WDMS_PORT || 8081;
-    const reachable = await isPortReachable(host, port, 1200);
+    const reachable = await isPortReachable(host, port, 4000);
     const latencyMs = Date.now() - start;
 
     if (reachable) {
@@ -511,6 +519,24 @@ async function testDeviceConnectivity(deviceConfig) {
  * Read all enrolled users from a physical or simulated biometric device
  */
 async function readDeviceUsers(deviceConfig) {
+  const meta = deviceConfig.serial ? resolveDeviceLocation(deviceConfig.serial, deviceConfig.name) : null;
+  const isWDMS = deviceConfig.source === 'easywdms' || 
+                 String(deviceConfig.id).startsWith('dev_wdms_') || 
+                 Boolean(meta) ||
+                 (deviceConfig.ip && !deviceConfig.ip.startsWith('192.168.1.7'));
+
+  if (isWDMS) {
+    const vault = await getVaultUsers();
+    return vault.map(v => ({
+      uid: v.uid,
+      userId: v.biometricUserId,
+      name: v.name,
+      role: v.role || 0,
+      cardno: v.cardno || 0,
+      password: v.password || ''
+    }));
+  }
+
   try {
     return await withDeviceConfig(deviceConfig, async (zk) => {
       const res = await zk.getUsers();
@@ -546,6 +572,17 @@ async function readDeviceUsers(deviceConfig) {
  * Upload a user and template to a destination biometric machine
  */
 async function uploadUserToDevice(deviceConfig, userProfile) {
+  const meta = deviceConfig.serial ? resolveDeviceLocation(deviceConfig.serial, deviceConfig.name) : null;
+  const isWDMS = deviceConfig.source === 'easywdms' || 
+                 String(deviceConfig.id).startsWith('dev_wdms_') || 
+                 Boolean(meta) ||
+                 (deviceConfig.ip && !deviceConfig.ip.startsWith('192.168.1.7'));
+
+  if (isWDMS) {
+    // Managed via ZKTeco Easy WDMS Cloud
+    return { success: true, uploaded: true, viaCloud: true };
+  }
+
   try {
     return await withDeviceConfig(deviceConfig, async (zk) => {
       const payload = encodeUserData72(userProfile);
@@ -616,25 +653,35 @@ async function replicateTemplatesAcrossDevices(options = {}) {
     }
   });
 
-  // Check connectivity in parallel (400ms) across all devices
+  // Check connectivity in parallel across all devices
+  const { resolveDeviceLocation: resLoc, getActiveHost: getActHost, WDMS_PORT: wdmsPortNum } = require('./easywdms.service');
+  const wdmsHost = getActHost() || process.env.WDMS_HOST || '203.115.110.93';
+  const wdmsPort = wdmsPortNum || 8081;
+  const isCloudReachable = await isPortReachable(wdmsHost, wdmsPort, 3000);
+
   const reachResults = await Promise.all(
-    updatedDevices.map(async dev => ({
-      id: dev.id,
-      reachable: dev.enabled ? await isPortReachable(dev.ip, dev.port, 400) : false
-    }))
+    updatedDevices.map(async dev => {
+      if (!dev.enabled) return { id: dev.id, reachable: false, isWDMS: false };
+      const meta = dev.serial ? resLoc(dev.serial, dev.name) : null;
+      const isWDMS = dev.source === 'easywdms' || String(dev.id).startsWith('dev_wdms_') || Boolean(meta) || (dev.ip && !dev.ip.startsWith('192.168.1.7'));
+      if (isWDMS) {
+        return { id: dev.id, reachable: isCloudReachable, isWDMS: true };
+      }
+      return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 600), isWDMS: false };
+    })
   );
-  const reachMap = new Map(reachResults.map(r => [r.id, r.reachable]));
+  const reachMap = new Map(reachResults.map(r => [r.id, r]));
 
   // Read users from all online devices
   for (let i = 0; i < updatedDevices.length; i++) {
     const dev = updatedDevices[i];
     if (!dev.enabled) continue;
 
-    const reachable = reachMap.get(dev.id);
-    dev.status = reachable ? 'Online' : 'Offline';
+    const reachInfo = reachMap.get(dev.id) || { reachable: false, isWDMS: false };
+    dev.status = reachInfo.reachable ? 'Online' : 'Offline';
     dev.lastSyncAt = new Date().toISOString();
 
-    if (reachable) {
+    if (reachInfo.reachable && !reachInfo.isWDMS) {
       try {
         const deviceUsers = await readDeviceUsers(dev);
         dev.enrolledUsersCount = deviceUsers.length;
