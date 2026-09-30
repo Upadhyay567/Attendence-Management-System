@@ -52,6 +52,12 @@ function resolveDeviceLocation(sn, alias) {
   };
 
   if (map[cleanSn]) return map[cleanSn];
+
+  // Alias aliases for WH-130 / WH-1340
+  if (/^wh-?130$/i.test(cleanAlias) || /^wh-?130$/i.test(cleanSn)) {
+    return { name: 'WH-1340', location: 'WH-1340', branch: 'WH-1340' };
+  }
+
   return {
     name: cleanAlias || `ZKTeco ${cleanSn}`,
     location: cleanAlias || 'Branch Office',

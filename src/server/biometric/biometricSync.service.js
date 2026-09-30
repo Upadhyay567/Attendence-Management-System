@@ -221,7 +221,7 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
   let employee = users.find(user => {
     if (!user) return false;
 
-    // 1. Preferred mapping: biometricUserId / biometricId
+    // 1. Preferred mapping: exact biometricUserId / biometricId
     if (
       user.biometricUserId &&
       String(user.biometricUserId).trim().toLowerCase() === target
@@ -236,7 +236,7 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       return true;
     }
 
-    // 2. Backward-compatible mappings
+    // 2. Direct primary ID mappings
     if (
       user.employeeId &&
       String(user.employeeId).trim().toLowerCase() === target
@@ -246,19 +246,21 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
 
     if (
       user.id &&
-      String(user.id).trim().toLowerCase() === target
+      (String(user.id).trim().toLowerCase() === target ||
+       String(user.id).trim().toLowerCase() === `usr_bio_${target}`)
     ) {
       return true;
     }
 
     if (
       user.username &&
-      String(user.username).trim().toLowerCase() === target
+      (String(user.username).trim().toLowerCase() === target ||
+       String(user.username).trim().toLowerCase() === `bio_${target}`)
     ) {
       return true;
     }
 
-    // 3. Numeric ID matching (e.g. device "1" <-> HRMS "EMP1", "789" <-> "HR0789", "765" <-> "MGR765")
+    // 3. Exact Numeric ID matching (e.g. device "101" <-> HRMS "EMP101")
     if (targetDigits) {
       const targetNum = parseInt(targetDigits, 10);
       const userEmpDigits = String(user.employeeId || '').replace(/\D/g, '');
@@ -270,36 +272,41 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       }
     }
 
-    // 4. Name matching fallback (e.g. K40 "Hemant" <-> HRMS "Hemant" or "Hemant upadhyay")
-    if (targetName && user.name) {
+    // 4. Exact Full Name matching ONLY (NEVER match first-name substring or generic 'employee ...' / 'admin')
+    if (
+      targetName &&
+      targetName !== 'admin' &&
+      !targetName.startsWith('employee ') &&
+      user.name
+    ) {
       const uName = String(user.name).trim().toLowerCase();
       if (uName === targetName) return true;
-
-      const firstUName = uName.split(' ')[0];
-      const firstTargetName = targetName.split(' ')[0];
-      if (firstUName && firstTargetName && firstUName === firstTargetName) return true;
     }
 
     return false;
   });
 
-  // Auto-bind biometricUserId if found and not yet set
+  // Auto-bind biometricUserId ONLY IF the employee does not already have a different biometricUserId!
   if (employee) {
-    if (!employee.biometricUserId || employee.biometricUserId !== String(biometricUserId).trim()) {
+    if (!employee.biometricUserId) {
       employee.biometricUserId = String(biometricUserId).trim();
     }
     return employee;
   }
 
   // Auto-register biometric user if missing from HRMS list
-  if (targetName && targetName !== 'admin') {
+  if (target) {
     const defaultSch = 'sch_q8jji9v';
+    const cleanName = (targetName && targetName !== 'admin' && !targetName.startsWith('employee '))
+      ? deviceUserName
+      : ('Employee ' + biometricUserId);
     const newEmp = {
       _id: 'usr_bio_' + String(biometricUserId).trim(),
       id: 'usr_bio_' + String(biometricUserId).trim(),
       employeeId: String(biometricUserId).trim(),
       biometricUserId: String(biometricUserId).trim(),
-      name: deviceUserName || ('Employee ' + biometricUserId),
+      biometricId: String(biometricUserId).trim(),
+      name: cleanName,
       username: 'bio_' + String(biometricUserId).trim(),
       role: 'employee',
       status: 'Active',
@@ -327,30 +334,33 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
   let employee = await User.findOne({
     $or: [
       { biometricUserId: target },
+      { biometricId: target },
       { employeeId: target },
       { id: target },
+      { id: `usr_bio_${target}` },
+      { username: `bio_${target}` },
       { username: target }
     ]
   }).lean();
 
-  if (!employee && targetName) {
-    const firstName = targetName.split(' ')[0];
+  if (!employee && targetName && targetName.toLowerCase() !== 'admin' && !targetName.toLowerCase().startsWith('employee ')) {
     employee = await User.findOne({
-      $or: [
-        { name: new RegExp('^' + targetName, 'i') },
-        { name: new RegExp('^' + firstName, 'i') }
-      ]
+      name: new RegExp('^' + targetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i')
     }).lean();
   }
 
-  if (!employee && targetName && targetName.toLowerCase() !== 'admin') {
+  if (!employee && target) {
     const defaultSch = 'sch_q8jji9v';
+    const cleanName = (targetName && targetName.toLowerCase() !== 'admin' && !targetName.toLowerCase().startsWith('employee '))
+      ? deviceUserName
+      : ('Employee ' + target);
     try {
       const created = await User.create({
         id: 'usr_bio_' + target,
         employeeId: target,
         biometricUserId: target,
-        name: deviceUserName || ('Employee ' + target),
+        biometricId: target,
+        name: cleanName,
         username: 'bio_' + target,
         role: 'employee',
         status: 'Active',

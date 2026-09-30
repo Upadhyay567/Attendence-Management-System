@@ -218,4 +218,29 @@ describe('Attendance System Core & Security API Tests', () => {
       expect(empCode).toContain('window.openAddLocationDialog = openAddLocationDialog');
     });
   });
+
+  describe('Biometric Multi-Location & Strict Employee Matching Tests', () => {
+    it('Verify WH-1340 and WH-130 resolve to warehouse worksite', () => {
+      const { resolveDeviceLocation } = require('../src/server/biometric/easywdms.service');
+      const wh1340 = resolveDeviceLocation('GED7253700398', 'WH-1340');
+      expect(wh1340.location).toBe('WH-1340');
+      expect(wh1340.name).toBe('WH-1340');
+
+      const wh130 = resolveDeviceLocation('', 'WH-130');
+      expect(wh130.location).toBe('WH-1340');
+
+      const closeDev = resolveDeviceLocation('0056120200363', 'WH-1340-close');
+      expect(closeDev.location).toBe('WH-1340-close');
+    });
+
+    it('Strict employee matching prevents first-name cross-contamination', () => {
+      const bioSyncCode = fs.readFileSync(path.join(__dirname, '..', 'src', 'server', 'biometric', 'biometricSync.service.js'), 'utf8');
+      // Verify first-name substring matching is completely eliminated
+      expect(bioSyncCode).not.toContain('firstUName === firstTargetName');
+      // Verify overwriting existing biometricUserId is prevented
+      expect(bioSyncCode).not.toContain('employee.biometricUserId !== String(biometricUserId).trim()');
+      expect(bioSyncCode).toContain('if (!employee.biometricUserId)');
+    });
+  });
 });
+
