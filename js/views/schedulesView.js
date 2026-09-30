@@ -1294,7 +1294,11 @@ export function renderAdminSchedules(tab) {
   document.querySelectorAll('.btn-add-location-inline').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const schedId = e.target.dataset.id;
-      openAddLocationDialog(schedId);
+      if (typeof window.openAddLocationDialog === 'function') {
+        window.openAddLocationDialog(schedId);
+      } else if (typeof openAddLocationDialog === 'function') {
+        openAddLocationDialog(schedId);
+      }
     });
   });
 }

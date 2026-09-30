@@ -2773,7 +2773,7 @@ function openUserModal(userId = null) {
       const sid = btn.getAttribute('data-shift-id');
       const locSelect = document.getElementById(`editor-shift-loc-${sid}`);
       if (locSelect) {
-        enterCustomLocation(locSelect);
+        (window.enterCustomLocation || enterCustomLocation)(locSelect);
       }
     });
   });

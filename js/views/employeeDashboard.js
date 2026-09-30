@@ -1437,115 +1437,200 @@ export function renderEmployeeDashboard() {
 }
 
 // ============================
+// ============================
 // ADD LOCATION HELPER FUNCTIONS
 // ============================
 
+export function registerNewLocation(name, lat, lng) {
+  if (typeof window.registerNewLocation === 'function' && window.registerNewLocation !== registerNewLocation) {
+    return window.registerNewLocation(name, lat, lng);
+  }
+  if (!name || typeof name !== 'string' || !name.trim()) return null;
+  const cleanName = name.trim();
+  const safeLat = Number(lat) || 28.6978;
+  const safeLng = Number(lng) || 77.1408;
+
+  if (typeof DB !== 'undefined' && typeof DB.saveOfficeCoordinate === 'function') {
+    DB.saveOfficeCoordinate(cleanName, safeLat, safeLng);
+  }
+
+  if (typeof showToastNotification === 'function') {
+    showToastNotification(`📍 Worksite location "${cleanName}" registered successfully!`, 'success');
+  }
+  return cleanName;
+}
+
+export function rebuildLocationDropdown(selectElement, selectedName = '') {
+  if (typeof window.rebuildLocationDropdown === 'function' && window.rebuildLocationDropdown !== rebuildLocationDropdown) {
+    return window.rebuildLocationDropdown(selectElement, selectedName);
+  }
+  if (!selectElement) return;
+  const coords = (typeof DB !== 'undefined' && typeof DB.getOfficeCoordinates === 'function')
+    ? DB.getOfficeCoordinates()
+    : (window.OFFICE_COORDINATES || {});
+  
+  const locNames = Object.keys(coords || {});
+  if (selectedName && !locNames.includes(selectedName)) {
+    locNames.push(selectedName);
+  }
+
+  const prevValue = selectElement.value;
+  const hasEmpty = selectElement.querySelector('option[value=""]');
+  selectElement.innerHTML = '';
+  
+  if (hasEmpty) {
+    const optDefault = document.createElement('option');
+    optDefault.value = '';
+    optDefault.textContent = hasEmpty.textContent || '-- Select Worksite Location --';
+    selectElement.appendChild(optDefault);
+  }
+
+  locNames.forEach(loc => {
+    const opt = document.createElement('option');
+    opt.value = loc;
+    opt.textContent = loc;
+    if ((selectedName && loc === selectedName) || (!selectedName && loc === prevValue)) {
+      opt.selected = true;
+    }
+    selectElement.appendChild(opt);
+  });
+
+  if (selectedName) {
+    selectElement.value = selectedName;
+  }
+  selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 // Dialog for shift schedule cards (inline Add Location button)
-async function openAddLocationDialog(schedId) {
-  const choice = await CustomDialog.prompt(
+export async function openAddLocationDialog(schedId) {
+  if (typeof window.openAddLocationDialog === 'function' && window.openAddLocationDialog !== openAddLocationDialog) {
+    return window.openAddLocationDialog(schedId);
+  }
+  const choice = await (typeof CustomDialog !== 'undefined' && CustomDialog.prompt ? CustomDialog.prompt(
     'Add New Location to Shift Schedule:\n\n' +
     'Type 1 for: 📍 Fetch Nearby Location (uses GPS)\n' +
     'Type 2 for: ✏️ Enter Any Location (manual entry)\n\n' +
-    'Enter 1 or 2:'
-  );
+    'Enter 1 or 2:',
+    '1'
+  ) : prompt('Enter 1 for GPS, 2 for manual entry:'));
   
   if (choice === '1') {
     await fetchNearbyAndRegister((newLocName) => {
       const sel = document.querySelector(`.inline-sched-location[data-id="${schedId}"]`);
       if (sel) {
+        rebuildLocationDropdown(sel, newLocName);
+      }
+      if (typeof DB !== 'undefined' && typeof DB.updateSchedule === 'function') {
         DB.updateSchedule(schedId, { location: newLocName });
       }
-      renderAdminSchedules();
+      if (typeof renderAdminSchedules === 'function') renderAdminSchedules();
     });
   } else if (choice === '2') {
     await enterCustomAndRegister((newLocName) => {
       const sel = document.querySelector(`.inline-sched-location[data-id="${schedId}"]`);
       if (sel) {
+        rebuildLocationDropdown(sel, newLocName);
+      }
+      if (typeof DB !== 'undefined' && typeof DB.updateSchedule === 'function') {
         DB.updateSchedule(schedId, { location: newLocName });
       }
-      renderAdminSchedules();
+      if (typeof renderAdminSchedules === 'function') renderAdminSchedules();
     });
   }
 }
 
 // Fetch Nearby for modal select dropdowns
-async function fetchNearbyAndAddLocation(selectElement) {
+export async function fetchNearbyAndAddLocation(selectElement) {
+  if (typeof window.fetchNearbyAndAddLocation === 'function' && window.fetchNearbyAndAddLocation !== fetchNearbyAndAddLocation) {
+    return window.fetchNearbyAndAddLocation(selectElement);
+  }
   await fetchNearbyAndRegister((newLocName) => {
     rebuildLocationDropdown(selectElement, newLocName);
   });
 }
 
 // Enter Custom for modal select dropdowns
-async function enterCustomLocation(selectElement) {
+export async function enterCustomLocation(selectElement) {
+  if (typeof window.enterCustomLocation === 'function' && window.enterCustomLocation !== enterCustomLocation) {
+    return window.enterCustomLocation(selectElement);
+  }
   await enterCustomAndRegister((newLocName) => {
     rebuildLocationDropdown(selectElement, newLocName);
   });
 }
 
 // Core: Fetch GPS nearby and register
-async function fetchNearbyAndRegister(callback) {
-  if (!navigator.geolocation) {
-    alert("Geolocation is not supported by this browser. Using fallback coordinates.");
-    const lat = 28.6985, lng = 77.1384;
-    const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
-    if (name && name.trim()) {
-      registerNewLocation(name.trim(), lat, lng);
-      if (callback) callback(name.trim());
+export async function fetchNearbyAndRegister(callback) {
+  let lat = 28.6985, lng = 77.1384;
+  if (navigator.geolocation) {
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 7000, enableHighAccuracy: true });
+      });
+      if (position && position.coords) {
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+      }
+    } catch (error) {
+      console.warn("Geolocation failed, using fallback:", error);
     }
-    return;
   }
 
-  alert('📡 Acquiring GPS signal... Please allow location access when prompted.');
-  
-  const position = await new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000, enableHighAccuracy: true });
-  }).catch((error) => {
-    console.warn("Geolocation failed, using fallback:", error);
-    return null;
-  });
-
-  if (position) {
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
-    const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('📍 Nearby Location Detected!\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
-    if (name && name.trim()) {
-      registerNewLocation(name.trim(), lat, lng);
-      if (callback) callback(name.trim());
-    }
+  const defaultName = `Worksite (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+  let name = '';
+  if (typeof CustomDialog !== 'undefined' && typeof CustomDialog.prompt === 'function') {
+    name = await CustomDialog.prompt(
+      `📍 Nearby GPS Coordinates Detected:\n${lat.toFixed(6)}° N, ${lng.toFixed(6)}° E\n\nEnter a name for this location:`,
+      defaultName
+    );
   } else {
-    const lat = 28.6985, lng = 77.1384;
-    const defaultName = `Worksite Delhi (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-    const name = await prompt('⚠️ GPS unavailable — using fallback coordinates.\n\nCoordinates: ' + lat.toFixed(4) + '° N, ' + lng.toFixed(4) + '° E\n\nEnter a name for this location:', defaultName);
-    if (name && name.trim()) {
-      registerNewLocation(name.trim(), lat, lng);
-      if (callback) callback(name.trim());
-    }
+    name = prompt('Enter a name for this location:', defaultName);
+  }
+
+  if (name && name.trim()) {
+    const regName = registerNewLocation(name.trim(), lat, lng);
+    if (callback) callback(regName);
   }
 }
 
 // Core: Enter custom location name + coordinates manually
-async function enterCustomAndRegister(callback) {
-  const name = await prompt('✏️ Enter Location Name:\n\n(e.g. "Sector 62, Noida" or "CP Office, Delhi")');
+export async function enterCustomAndRegister(callback) {
+  let name = '';
+  if (typeof CustomDialog !== 'undefined' && typeof CustomDialog.prompt === 'function') {
+    name = await CustomDialog.prompt('✏️ Enter Location Name:\n\n(e.g. "Sector 62, Noida" or "CP Office, Delhi")');
+  } else {
+    name = prompt('✏️ Enter Location Name:');
+  }
   if (!name || !name.trim()) return;
   
-  const coordStr = await prompt('Enter GPS Coordinates (optional):\n\nFormat: latitude, longitude\n(e.g. 28.6139, 77.2090)\n\nLeave blank to use default Delhi coordinates:');
+  let coordStr = '';
+  if (typeof CustomDialog !== 'undefined' && typeof CustomDialog.prompt === 'function') {
+    coordStr = await CustomDialog.prompt('Enter GPS Coordinates (optional):\n\nFormat: latitude, longitude\n(Leave blank to use default Delhi coordinates):');
+  } else {
+    coordStr = prompt('Enter GPS Coordinates (optional):');
+  }
   
-  let lat = 28.6139, lng = 77.2090; // default Delhi center
+  let lat = 28.6139, lng = 77.2090;
   if (coordStr && coordStr.trim()) {
     const parts = coordStr.split(',').map(s => parseFloat(s.trim()));
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
       lat = parts[0];
       lng = parts[1];
-    } else {
-      alert('Invalid coordinates format. Using default Delhi coordinates.');
     }
   }
   
-  registerNewLocation(name.trim(), lat, lng);
-  if (callback) callback(name.trim());
+  const regName = registerNewLocation(name.trim(), lat, lng);
+  if (callback) callback(regName);
 }
+
+// Guarantee window attachment
+window.registerNewLocation = registerNewLocation;
+window.rebuildLocationDropdown = rebuildLocationDropdown;
+window.openAddLocationDialog = openAddLocationDialog;
+window.fetchNearbyAndAddLocation = fetchNearbyAndAddLocation;
+window.enterCustomLocation = enterCustomLocation;
+window.fetchNearbyAndRegister = fetchNearbyAndRegister;
+window.enterCustomAndRegister = enterCustomAndRegister;
 
 // =========================================================================
 // FORGOT PASSWORD MODAL (HR & MANAGER MOBILE NUMBER AUTHENTICATION)

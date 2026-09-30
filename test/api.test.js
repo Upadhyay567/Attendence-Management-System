@@ -191,4 +191,31 @@ describe('Attendance System Core & Security API Tests', () => {
       expect(payroll.sundayDeduction).toBe(Math.round(1 * expectedDailyRate));
     });
   });
+
+  describe('Worksite Location Management & Helpers Tests', () => {
+    it('Verify location helper functions are exported and globally attached in app.js and views', () => {
+      const appPath = path.join(__dirname, '..', 'js', 'app.js');
+      const appCode = fs.readFileSync(appPath, 'utf8');
+      expect(appCode).toContain('export function registerNewLocation');
+      expect(appCode).toContain('export function rebuildLocationDropdown');
+      expect(appCode).toContain('export async function fetchNearbyAndRegister');
+      expect(appCode).toContain('export async function enterCustomAndRegister');
+      expect(appCode).toContain('export async function openAddLocationDialog');
+      expect(appCode).toContain('export async function fetchNearbyAndAddLocation');
+      expect(appCode).toContain('export async function enterCustomLocation');
+      expect(appCode).toContain('window.openAddLocationDialog = openAddLocationDialog');
+      expect(appCode).toContain('window.fetchNearbyAndAddLocation = fetchNearbyAndAddLocation');
+      expect(appCode).toContain('window.enterCustomLocation = enterCustomLocation');
+
+      const schedPath = path.join(__dirname, '..', 'js', 'views', 'schedulesView.js');
+      const schedCode = fs.readFileSync(schedPath, 'utf8');
+      expect(schedCode).toContain('window.openAddLocationDialog');
+
+      const empPath = path.join(__dirname, '..', 'js', 'views', 'employeeDashboard.js');
+      const empCode = fs.readFileSync(empPath, 'utf8');
+      expect(empCode).toContain('export function registerNewLocation');
+      expect(empCode).toContain('export function rebuildLocationDropdown');
+      expect(empCode).toContain('window.openAddLocationDialog = openAddLocationDialog');
+    });
+  });
 });
