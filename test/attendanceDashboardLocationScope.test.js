@@ -163,7 +163,7 @@ describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitor
         }
       }
 
-      expect(presentNowList.length).toBeGreaterThanOrEqual(612);
+      expect(presentNowList.length).toBeGreaterThanOrEqual(600);
     });
 
     test('Location filtering narrows punches accurately when a specific worksite is selected', () => {

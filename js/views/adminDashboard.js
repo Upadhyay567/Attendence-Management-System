@@ -1,14 +1,17 @@
 // js/views/adminDashboard.js - HR/Manager Live Monitoring & KPI Feed
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html } from '../utils/helpers.js';
+import { Utils, html, formatTimeRange12h } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
 let liveFeedCurrentPage = 1;
 const liveFeedPageSize = 10;
 let liveFeedSelectedLocations = new Set();
+let liveFeedSelectedLocation = '';
 let currentTodayLogs = [];
+
+const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
 export function getUserAssignedLocations(user) {
   if (!user) return [];
@@ -102,24 +105,13 @@ export async function renderAdminDashboard() {
               <span id="live-feed-count-badge" class="badge badge-on-time" style="font-size: 11px; font-weight: 700; padding: 3px 9px;">0 PUNCHES</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; position: relative;">
-              <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Locations:</label>
+              <label for="live-feed-location-select" style="font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Locations:</label>
               <div style="position: relative;" id="live-feed-location-container">
-                <button type="button" id="live-feed-location-btn" class="form-input" style="height: 34px; padding: 0 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 210px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box;">
-                  <span id="live-feed-location-btn-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;">All Locations</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-                <div id="live-feed-location-dropdown" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); z-index: 1050; min-width: 270px; max-height: 380px; overflow-y: auto; padding: 6px 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.02);">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 700; margin: 0; user-select: none;">
-                      <input type="checkbox" id="cb-live-feed-all-locations" style="accent-color: #ef4444; width: 16px; height: 16px; cursor: pointer;">
-                      <span>All Locations</span>
-                    </label>
-                    <button type="button" id="btn-live-feed-clear-locations" style="border: none; background: none; color: #ef4444; font-size: 11.5px; font-weight: 600; cursor: pointer; padding: 0;">Reset</button>
-                  </div>
-                  <div id="live-feed-location-checkbox-list" style="padding: 4px 0;">
-                    <!-- Dynamically rendered location checkboxes -->
-                  </div>
-                </div>
+                <select id="live-feed-location-select" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px; font-size: 13px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 210px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
+                  <option value="">All Locations (620)</option>
+                </select>
+                <button type="button" id="live-feed-location-btn" style="display: none;"><span id="live-feed-location-btn-text">All Locations</span></button>
+                <div id="live-feed-location-dropdown" style="display: none;"></div>
               </div>
             </div>
           </div>
@@ -864,7 +856,11 @@ export async function renderAdminDashboard() {
     document.querySelectorAll('.btn-view-staff-detail').forEach(el => {
       el.addEventListener('click', (e) => {
         const userId = el.getAttribute('data-id');
-        openStaffDetailModal(userId);
+        if (typeof window.openStaffDetailModal === 'function') {
+          window.openStaffDetailModal(userId);
+        } else if (typeof window.openUserModal === 'function') {
+          window.openUserModal(userId);
+        }
       });
     });
 
@@ -912,18 +908,41 @@ export async function renderAdminDashboard() {
     // Birthday Widget render and events bind
     const birthdayWidgetContainer = document.getElementById('hr-birthday-widget-container');
     if (birthdayWidgetContainer && (freshUser.role === 'hr' || freshUser.role === 'manager' || freshUser.role === 'finance_manager')) {
-      birthdayWidgetContainer.innerHTML = getBirthdayWidgetHTML();
-      bindBirthdayWidgetEvents();
+      if (typeof window.getBirthdayWidgetHTML === 'function') {
+        birthdayWidgetContainer.innerHTML = window.getBirthdayWidgetHTML();
+      }
+      if (typeof window.bindBirthdayWidgetEvents === 'function') {
+        window.bindBirthdayWidgetEvents();
+      }
     }
 
     // Announcements setup
-    renderAdminAnnouncementsList();
+    if (typeof window.renderAdminAnnouncementsList === 'function') {
+      window.renderAdminAnnouncementsList();
+    }
 
     // Biometric Device Attendance Feed
     renderBiometricDashboardPanel();
   }
 
   function renderLocationCheckboxDropdown(distinctLocs) {
+    const locSelect = document.getElementById('live-feed-location-select');
+    if (locSelect) {
+      const currentVal = liveFeedSelectedLocation;
+      const opts = `<option value="">All Locations (${currentTodayLogs.length})</option>` +
+        distinctLocs.map(loc => {
+          const targetLoc = loc.toLowerCase().trim();
+          const count = currentTodayLogs.filter(l => {
+            const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+            return logLoc === targetLoc;
+          }).length;
+          return `<option value="${Utils.escape(loc)}" ${currentVal.toLowerCase().trim() === targetLoc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
+        }).join('');
+      if (locSelect.innerHTML !== opts) {
+        locSelect.innerHTML = opts;
+      }
+    }
+
     const btnText = document.getElementById('live-feed-location-btn-text');
     const listContainer = document.getElementById('live-feed-location-checkbox-list');
     const cbAll = document.getElementById('cb-live-feed-all-locations');
@@ -939,18 +958,19 @@ export async function renderAdminDashboard() {
       }
     }
 
-    const isAllSelected = liveFeedSelectedLocations.size === 0;
+    const isAllSelected = liveFeedSelectedLocations.size === 0 && !liveFeedSelectedLocation;
     if (cbAll) cbAll.checked = isAllSelected;
 
     if (isAllSelected) {
       btnText.textContent = `All Locations (${currentTodayLogs.length})`;
-    } else if (liveFeedSelectedLocations.size === 1) {
-      const singleLoc = Array.from(liveFeedSelectedLocations)[0].toLowerCase().trim();
+    } else if (liveFeedSelectedLocation || liveFeedSelectedLocations.size === 1) {
+      const targetLocName = liveFeedSelectedLocation || Array.from(liveFeedSelectedLocations)[0];
+      const singleLoc = targetLocName.toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
         const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
         return logLoc === singleLoc;
       }).length;
-      btnText.textContent = `${Array.from(liveFeedSelectedLocations)[0]} (${count})`;
+      btnText.textContent = `${targetLocName} (${count})`;
     } else {
       let combinedCount = 0;
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
@@ -967,7 +987,7 @@ export async function renderAdminDashboard() {
         const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
         return logLoc === targetLoc;
       }).length;
-      const isChecked = !isAllSelected && liveFeedSelectedLocations.has(loc);
+      const isChecked = !isAllSelected && (liveFeedSelectedLocations.has(loc) || liveFeedSelectedLocation.toLowerCase().trim() === targetLoc);
       return `
         <div class="live-feed-loc-row" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='transparent'">
           <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
@@ -986,15 +1006,21 @@ export async function renderAdminDashboard() {
         const loc = cb.getAttribute('data-location');
         if (isAllSelected) {
           liveFeedSelectedLocations = new Set([loc]);
+          liveFeedSelectedLocation = loc;
         } else {
           if (cb.checked) {
             liveFeedSelectedLocations.add(loc);
+            liveFeedSelectedLocation = loc;
           } else {
             liveFeedSelectedLocations.delete(loc);
+            if (liveFeedSelectedLocation.toLowerCase().trim() === loc.toLowerCase().trim()) {
+              liveFeedSelectedLocation = liveFeedSelectedLocations.size === 1 ? Array.from(liveFeedSelectedLocations)[0] : '';
+            }
           }
         }
         if (liveFeedSelectedLocations.size === distinctLocs.length) {
           liveFeedSelectedLocations.clear();
+          liveFeedSelectedLocation = '';
         }
         liveFeedCurrentPage = 1;
         renderLiveFeedTable();
@@ -1014,7 +1040,13 @@ export async function renderAdminDashboard() {
     renderLocationCheckboxDropdown(distinctLocs);
 
     let filteredLogs = currentTodayLogs;
-    if (liveFeedSelectedLocations.size > 0) {
+    if (liveFeedSelectedLocation) {
+      const singleLoc = liveFeedSelectedLocation.toLowerCase().trim();
+      filteredLogs = currentTodayLogs.filter(l => {
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        return logLoc === singleLoc;
+      });
+    } else if (liveFeedSelectedLocations.size > 0) {
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
       filteredLogs = currentTodayLogs.filter(l => {
         const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
@@ -1822,7 +1854,7 @@ export async function renderAdminDashboard() {
       loadMatrixData();
     });
 
-    const loadMatrixData = async () => {
+    async function loadMatrixData() {
       const content = overlay.querySelector('#matrix-modal-content');
       try {
         const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/template-sync-status');
@@ -2017,22 +2049,27 @@ export async function renderAdminDashboard() {
           annAlert.textContent = 'Announcement published successfully!';
           setTimeout(() => { annAlert.style.display = 'none'; }, 3000);
         }
-        renderAdminAnnouncementsList();
+        if (typeof window.renderAdminAnnouncementsList === 'function') {
+          window.renderAdminAnnouncementsList();
+        }
       }
     });
   }
 
-  // Load database state asynchronously, showing loaders first
-  try {
-    await DB.init();
-  } catch (err) {
-    console.error("Dashboard database initial load failed, loading from cache fallback:", err);
+  // Bind Live Feed Select and Multi-Select Location Listeners
+  const locSelectLiveFeed = document.getElementById('live-feed-location-select');
+  if (locSelectLiveFeed) {
+    locSelectLiveFeed.addEventListener('change', (e) => {
+      liveFeedSelectedLocation = e.target.value.trim();
+      liveFeedSelectedLocations.clear();
+      if (liveFeedSelectedLocation) {
+        liveFeedSelectedLocations.add(liveFeedSelectedLocation);
+      }
+      liveFeedCurrentPage = 1;
+      renderLiveFeedTable();
+    });
   }
 
-  // Populate all views with the loaded state
-  updateDashboardViews();
-
-  // Bind Live Feed Multi-Select Location Dropdown Listeners
   const btnLiveFeedLocation = document.getElementById('live-feed-location-btn');
   const dropdownLiveFeed = document.getElementById('live-feed-location-dropdown');
   if (btnLiveFeedLocation && dropdownLiveFeed) {
@@ -2052,6 +2089,8 @@ export async function renderAdminDashboard() {
   if (cbLiveFeedAll) {
     cbLiveFeedAll.addEventListener('change', () => {
       liveFeedSelectedLocations.clear();
+      liveFeedSelectedLocation = '';
+      if (locSelectLiveFeed) locSelectLiveFeed.value = '';
       liveFeedCurrentPage = 1;
       renderLiveFeedTable();
     });
@@ -2062,10 +2101,22 @@ export async function renderAdminDashboard() {
     btnLiveFeedClear.addEventListener('click', (e) => {
       e.stopPropagation();
       liveFeedSelectedLocations.clear();
+      liveFeedSelectedLocation = '';
+      if (locSelectLiveFeed) locSelectLiveFeed.value = '';
       liveFeedCurrentPage = 1;
       renderLiveFeedTable();
     });
   }
+
+  // Load database state asynchronously, showing loaders first
+  try {
+    await DB.init();
+  } catch (err) {
+    console.error("Dashboard database initial load failed, loading from cache fallback:", err);
+  }
+
+  // Populate all views with the loaded state
+  updateDashboardViews();
 
 
   // Expose to window so global real-time event listeners in app.js can trigger instant updates
