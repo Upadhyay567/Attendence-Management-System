@@ -144,7 +144,7 @@ function getInitialLoginPage(host) {
  * Authenticate against ZKTeco easy WDMS Web Portal using RC4 encryption
  * Automatically fails over between candidate hosts (203.115.110.93 and 203.115.101.226)
  */
-async function authenticate(username, password) {
+async function authenticate(username, password, forceRefresh = false) {
   const user = username || process.env.WDMS_USER || 'admin';
   const pass = password || process.env.WDMS_PASS || 'Hs@20267';
 
@@ -152,7 +152,7 @@ async function authenticate(username, password) {
     throw new Error('Username and password are required to authenticate with ZKTeco WDMS');
   }
 
-  if (cachedCookie && Date.now() < cookieExpiresAt) {
+  if (!forceRefresh && cachedCookie && Date.now() < cookieExpiresAt) {
     return cachedCookie;
   }
 
@@ -202,7 +202,7 @@ async function authenticate(username, password) {
         init.cookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
         setCookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
         cachedCookie = Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
-        cookieExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        cookieExpiresAt = Date.now() + 15 * 60 * 1000;
         activeHost = host;
         console.log(`✅ [WDMS] Authenticated successfully with ZKTeco Cloud Server (${activeHost}:${WDMS_PORT})`);
         return cachedCookie;
@@ -217,14 +217,19 @@ async function authenticate(username, password) {
   throw lastError || new Error('All WDMS candidate hosts failed authentication');
 }
 
-function fetchWithCookie(path, cookieStr) {
-  return new Promise((resolve, reject) => {
+async function fetchWithCookie(path, cookieStr, retryCount = 0) {
+  let currentCookie = cookieStr || cachedCookie;
+  if (!currentCookie) {
+    currentCookie = await authenticate();
+  }
+
+  const result = await new Promise((resolve, reject) => {
     const req = http.get({
       hostname: activeHost,
       port: WDMS_PORT,
       path,
       headers: {
-        'Cookie': cookieStr || cachedCookie,
+        'Cookie': currentCookie,
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'X-Requested-With': 'XMLHttpRequest'
       },
@@ -241,6 +246,19 @@ function fetchWithCookie(path, cookieStr) {
     req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout fetching ${path} from WDMS (${activeHost})`)); });
     req.on('error', reject);
   });
+
+  if ((result.statusCode === 401 || result.statusCode === 403) && retryCount === 0) {
+    cachedCookie = null;
+    cookieExpiresAt = 0;
+    try {
+      const refreshedCookie = await authenticate(undefined, undefined, true);
+      return await fetchWithCookie(path, refreshedCookie, 1);
+    } catch (authErr) {
+      console.warn('⚠️ [WDMS] Re-authentication failed after 401:', authErr.message);
+    }
+  }
+
+  return result;
 }
 
 /**
