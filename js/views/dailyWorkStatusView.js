@@ -9,6 +9,7 @@ import { showToastNotification } from '../components/toast.js';
 let dailyWorkStatusSelectedMonth = new Date().getMonth();
 let dailyWorkStatusSelectedYear = new Date().getFullYear();
 let dailyWorkStatusSearchQuery = '';
+let dailyWorkStatusLocationFilter = '';
 let dailyWorkStatusDepartmentFilter = 'all';
 let dailyWorkStatusCurrentPage = 1;
 let dailyWorkStatusRowsPerPage = 10;
@@ -29,6 +30,15 @@ export function renderDailyWorkStatus() {
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0];
 
+  const allLogs = DB.getLogs() || [];
+  const devs = (DB.getBiometricDevices ? DB.getBiometricDevices() : []);
+  const offices = (DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : {});
+  const distinctLocs = Array.from(new Set([
+    ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
+    ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
+    ...Object.keys(offices)
+  ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
+
   main.innerHTML = html`
     <div id="daily-work-status-page-container" style="padding: 24px 32px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">
       
@@ -37,6 +47,30 @@ export function renderDailyWorkStatus() {
         <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.01em;">Daily Work Status</h2>
 
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <!-- Search Input & Search Button -->
+          <div style="display: inline-flex; align-items: center; gap: 6px; position: relative;">
+            <div style="position: relative; width: 200px;">
+              <input type="text" id="dws-search-input" class="form-input" placeholder="Search employee..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 28px 0 32px; font-size: 13.5px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; width: 100%; box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: #64748b; fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <button type="button" id="btn-dws-clear-search" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; color: #94a3b8; cursor: pointer; padding: 0; display: ${dailyWorkStatusSearchQuery ? 'block' : 'none'}; line-height: 1;" title="Clear search">&times;</button>
+            </div>
+            <button type="button" id="btn-dws-search-trigger" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; height: 34px; padding: 0 13px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span>Search</span>
+            </button>
+          </div>
+
+          <!-- Location Filter Dropdown -->
+          <div style="position: relative;">
+            <select id="dws-location-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 600; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer; min-width: 175px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <option value="">All Locations</option>
+              ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${dailyWorkStatusLocationFilter.toLowerCase().trim() === loc.toLowerCase().trim() ? 'selected' : ''}>${Utils.escape(loc)}</option>`).join('')}
+            </select>
+          </div>
+
           <!-- Month/Year Picker Button -->
           <div style="position: relative;">
             <button type="button" id="btn-dws-month-picker" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
@@ -156,23 +190,64 @@ export function renderDailyWorkStatus() {
       employees = employees.filter(e => e.assignedById === currentUser.id);
     }
 
-    // 2. Apply Search and Department Filters
+    // 2. Fetch real attendance logs and approved leaves
+    const allLogs = DB.getLogs() || [];
+    const allLeaves = DB.getLeaveRequests() || [];
+
+    // Map all employee punch locations efficiently O(N)
+    const userLocationsMap = new Map();
+    allLogs.forEach(l => {
+      const loc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
+      if (!loc) return;
+      if (l.userId) {
+        if (!userLocationsMap.has(l.userId)) userLocationsMap.set(l.userId, new Set());
+        userLocationsMap.get(l.userId).add(loc);
+      }
+      if (l.employeeId) {
+        if (!userLocationsMap.has(l.employeeId)) userLocationsMap.set(l.employeeId, new Set());
+        userLocationsMap.get(l.employeeId).add(loc);
+      }
+      if (l.biometricUserId) {
+        const bk = `bio_${l.biometricUserId}`;
+        if (!userLocationsMap.has(bk)) userLocationsMap.set(bk, new Set());
+        userLocationsMap.get(bk).add(loc);
+      }
+    });
+
+    // 3. Apply Location Filter
+    if (dailyWorkStatusLocationFilter) {
+      const targetLoc = dailyWorkStatusLocationFilter.toLowerCase().trim();
+      employees = employees.filter(e => {
+        const addCheck = (val) => typeof val === 'string' && val.toLowerCase().trim() === targetLoc;
+        if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
+        if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
+        if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
+        if (e.shiftLocations && typeof e.shiftLocations === 'object') {
+          if (Object.values(e.shiftLocations).some(addCheck)) return true;
+        }
+
+        const userLocs = userLocationsMap.get(e.id) || userLocationsMap.get(e.employeeId) || userLocationsMap.get(`bio_${e.biometricUserId}`);
+        if (userLocs && userLocs.has(targetLoc)) return true;
+
+        return false;
+      });
+    }
+
+    // 4. Apply Search and Department Filters
     if (dailyWorkStatusSearchQuery) {
-      const q = dailyWorkStatusSearchQuery.toLowerCase();
+      const q = dailyWorkStatusSearchQuery.toLowerCase().trim();
       employees = employees.filter(e => 
         (e.name && e.name.toLowerCase().includes(q)) ||
         (e.employeeId && e.employeeId.toLowerCase().includes(q)) ||
-        (e.email && e.email.toLowerCase().includes(q))
+        (e.id && e.id.toLowerCase().includes(q)) ||
+        (e.email && e.email.toLowerCase().includes(q)) ||
+        (e.biometricUserId && String(e.biometricUserId).toLowerCase().includes(q))
       );
     }
 
     if (dailyWorkStatusDepartmentFilter && dailyWorkStatusDepartmentFilter !== 'all') {
       employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
     }
-
-    // 3. Fetch real attendance logs and approved leaves
-    const allLogs = DB.getLogs();
-    const allLeaves = DB.getLeaveRequests();
 
     // Map logs by key: `${userId}_${dateStr}`
     const logsMap = new Map();
@@ -313,6 +388,69 @@ export function renderDailyWorkStatus() {
   };
 
   // Event Listeners for Controls
+
+  // Location Filter Dropdown Event
+  const locSelect = document.getElementById('dws-location-filter');
+  if (locSelect) {
+    locSelect.addEventListener('change', (e) => {
+      dailyWorkStatusLocationFilter = e.target.value.trim();
+      dailyWorkStatusCurrentPage = 1;
+      updateMatrixTable();
+    });
+  }
+
+  // Search Input, Search Button & Clear Button Events
+  const searchInput = document.getElementById('dws-search-input');
+  const searchBtn = document.getElementById('btn-dws-search-trigger');
+  const clearSearchBtn = document.getElementById('btn-dws-clear-search');
+
+  const executeSearch = () => {
+    if (searchInput) {
+      dailyWorkStatusSearchQuery = searchInput.value.trim();
+      dailyWorkStatusCurrentPage = 1;
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = dailyWorkStatusSearchQuery ? 'block' : 'none';
+      }
+      updateMatrixTable();
+    }
+  };
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      executeSearch();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      dailyWorkStatusSearchQuery = e.target.value.trim();
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = dailyWorkStatusSearchQuery ? 'block' : 'none';
+      }
+      dailyWorkStatusCurrentPage = 1;
+      updateMatrixTable();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeSearch();
+      }
+    });
+  }
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      dailyWorkStatusSearchQuery = '';
+      clearSearchBtn.style.display = 'none';
+      dailyWorkStatusCurrentPage = 1;
+      updateMatrixTable();
+      if (searchInput) searchInput.focus();
+    });
+  }
+
   const monthPickerBtn = document.getElementById('btn-dws-month-picker');
   const monthInput = document.getElementById('input-dws-month-picker');
   if (monthPickerBtn && monthInput) {
@@ -340,7 +478,7 @@ export function renderDailyWorkStatus() {
   const filterBtn = document.getElementById('btn-dws-filter-trigger');
   if (filterBtn) {
     filterBtn.addEventListener('click', () => {
-      showDailyWorkStatusFilterModal(updateMatrixTable);
+      showDailyWorkStatusFilterModal(updateMatrixTable, distinctLocs);
     });
   }
 
@@ -409,9 +547,68 @@ function exportDailyWorkStatusCSV(year, month) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const allUsers = DB.getUsers();
-  const employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
-  const allLogs = DB.getLogs();
-  const allLeaves = DB.getLeaveRequests();
+  let employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
+  const allLogs = DB.getLogs() || [];
+  const allLeaves = DB.getLeaveRequests() || [];
+
+  const currentUser = Auth.getCurrentUser();
+  if (currentUser) {
+    if (DB.getUserBaseRole(currentUser.role) === 'employee') {
+      employees = employees.filter(e => e.id === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
+      employees = employees.filter(e => e.managerId === currentUser.id);
+    } else if (DB.getUserBaseRole(currentUser.role) === 'hr') {
+      employees = employees.filter(e => e.assignedById === currentUser.id);
+    }
+  }
+
+  // Build location map
+  const userLocationsMap = new Map();
+  allLogs.forEach(l => {
+    const loc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
+    if (!loc) return;
+    if (l.userId) {
+      if (!userLocationsMap.has(l.userId)) userLocationsMap.set(l.userId, new Set());
+      userLocationsMap.get(l.userId).add(loc);
+    }
+    if (l.employeeId) {
+      if (!userLocationsMap.has(l.employeeId)) userLocationsMap.set(l.employeeId, new Set());
+      userLocationsMap.get(l.employeeId).add(loc);
+    }
+    if (l.biometricUserId) {
+      const bk = `bio_${l.biometricUserId}`;
+      if (!userLocationsMap.has(bk)) userLocationsMap.set(bk, new Set());
+      userLocationsMap.get(bk).add(loc);
+    }
+  });
+
+  if (dailyWorkStatusLocationFilter) {
+    const targetLoc = dailyWorkStatusLocationFilter.toLowerCase().trim();
+    employees = employees.filter(e => {
+      const addCheck = (val) => typeof val === 'string' && val.toLowerCase().trim() === targetLoc;
+      if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
+      if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
+      if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
+      if (e.shiftLocations && typeof e.shiftLocations === 'object' && Object.values(e.shiftLocations).some(addCheck)) return true;
+      const userLocs = userLocationsMap.get(e.id) || userLocationsMap.get(e.employeeId) || userLocationsMap.get(`bio_${e.biometricUserId}`);
+      return userLocs && userLocs.has(targetLoc);
+    });
+  }
+
+  if (dailyWorkStatusSearchQuery) {
+    const q = dailyWorkStatusSearchQuery.toLowerCase().trim();
+    employees = employees.filter(e => 
+      (e.name && e.name.toLowerCase().includes(q)) ||
+      (e.employeeId && e.employeeId.toLowerCase().includes(q)) ||
+      (e.id && e.id.toLowerCase().includes(q)) ||
+      (e.email && e.email.toLowerCase().includes(q)) ||
+      (e.biometricUserId && String(e.biometricUserId).toLowerCase().includes(q))
+    );
+  }
+
+  if (dailyWorkStatusDepartmentFilter && dailyWorkStatusDepartmentFilter !== 'all') {
+    employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
+  }
 
   const logsMap = new Map();
   allLogs.forEach(l => {
@@ -491,7 +688,7 @@ function exportDailyWorkStatusCSV(year, month) {
   Utils.exportToCSV(filename, headers, rows);
 }
 
-function showDailyWorkStatusFilterModal(onApply) {
+function showDailyWorkStatusFilterModal(onApply, distinctLocs = []) {
   const allUsers = DB.getUsers().filter(u => DB.getUserBaseRole(u.role) === 'employee');
   const departments = [...new Set(allUsers.map(u => u.department || 'Operations').filter(Boolean))];
 
@@ -500,7 +697,7 @@ function showDailyWorkStatusFilterModal(onApply) {
   modalOverlay.style.zIndex = '9999';
 
   modalOverlay.innerHTML = html`
-    <div class="modal-content" style="max-width: 420px; animation: fadeIn 0.2s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif; padding: 24px;">
+    <div class="modal-content" style="max-width: 440px; animation: fadeIn 0.2s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif; padding: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
         <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">Filter Daily Work Status</h3>
         <button id="btn-close-dws-filter-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
@@ -509,7 +706,17 @@ function showDailyWorkStatusFilterModal(onApply) {
       <div style="display: flex; flex-direction: column; gap: 14px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Search Employee</label>
-          <input type="text" id="input-dws-filter-search" class="form-input" placeholder="Search by name or ID..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 12px;">
+          <input type="text" id="input-dws-filter-search" class="form-input" placeholder="Search by name, ID, email..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 12px;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Location / Worksite</label>
+          <select id="select-dws-filter-loc" class="form-input" style="width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px 12px; cursor: pointer;">
+            <option value="">All Locations</option>
+            ${distinctLocs.map(loc => `
+              <option value="${Utils.escape(loc)}" ${dailyWorkStatusLocationFilter.toLowerCase().trim() === loc.toLowerCase().trim() ? 'selected' : ''}>${Utils.escape(loc)}</option>
+            `).join('')}
+          </select>
         </div>
 
         <div>
@@ -545,16 +752,30 @@ function showDailyWorkStatusFilterModal(onApply) {
 
   modalOverlay.querySelector('#btn-dws-filter-reset').addEventListener('click', () => {
     dailyWorkStatusSearchQuery = '';
+    dailyWorkStatusLocationFilter = '';
     dailyWorkStatusDepartmentFilter = 'all';
     dailyWorkStatusCurrentPage = 1;
+    const topLoc = document.getElementById('dws-location-filter');
+    if (topLoc) topLoc.value = '';
+    const topSearch = document.getElementById('dws-search-input');
+    if (topSearch) topSearch.value = '';
+    const clearBtn = document.getElementById('btn-dws-clear-search');
+    if (clearBtn) clearBtn.style.display = 'none';
     localCloseModal();
     if (onApply) onApply();
   });
 
   modalOverlay.querySelector('#btn-dws-filter-apply').addEventListener('click', () => {
     dailyWorkStatusSearchQuery = modalOverlay.querySelector('#input-dws-filter-search').value.trim();
+    dailyWorkStatusLocationFilter = modalOverlay.querySelector('#select-dws-filter-loc').value.trim();
     dailyWorkStatusDepartmentFilter = modalOverlay.querySelector('#select-dws-filter-dept').value;
     dailyWorkStatusCurrentPage = 1;
+    const topLoc = document.getElementById('dws-location-filter');
+    if (topLoc) topLoc.value = dailyWorkStatusLocationFilter;
+    const topSearch = document.getElementById('dws-search-input');
+    if (topSearch) topSearch.value = dailyWorkStatusSearchQuery;
+    const clearBtn = document.getElementById('btn-dws-clear-search');
+    if (clearBtn) clearBtn.style.display = dailyWorkStatusSearchQuery ? 'block' : 'none';
     localCloseModal();
     if (onApply) onApply();
   });
