@@ -515,7 +515,7 @@ export async function renderAdminDashboard() {
       return [];
     }
 
-    let employees = DB.getUsers().filter(u => u && u.role === 'employee' && u.status !== 'Inactive');
+    let employees = DB.getUsers().filter(u => u && (u.role === 'employee' || u.role === 'hr' || u.role === 'manager' || (DB.getUserBaseRole && (DB.getUserBaseRole(u.role) === 'hr' || DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'employee'))) && u.status !== 'Inactive');
     if (isHrOrManager && hasAssignedLocations) {
       employees = employees.filter(u => {
         const uLocs = getUserAssignedLocations(u).map(l => l.toLowerCase().trim());
@@ -526,6 +526,12 @@ export async function renderAdminDashboard() {
           if (sch && sch.location && allowedLocsLower.includes(sch.location.toLowerCase().trim())) {
             return true;
           }
+        }
+        // Also check if user has logged biometric punches at an allowed location today
+        const uTodayLogs = (DB.getLogs() || []).filter(l => (l.userId === u.id || l.biometricUserId === u.biometricUserId) && l.date === new Date().toISOString().split('T')[0]);
+        for (const ul of uTodayLogs) {
+          const uLoc = (ul.location || ul.biometricUsed || '').toLowerCase().trim();
+          if (uLoc && allowedLocsLower.includes(uLoc)) return true;
         }
         return false;
       });
@@ -551,9 +557,15 @@ export async function renderAdminDashboard() {
     let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
 
     if (isHrOrManager && hasAssignedLocations) {
+      const activeEmployees = getAssignedUserIds();
+      const assignedIds = new Set(activeEmployees.map(u => u.id));
       allTodayLogs = allTodayLogs.filter(l => {
         const loc = (l.location || '').toLowerCase().trim();
-        return loc && allowedLocsLower.includes(loc);
+        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
+        return (loc && allowedLocsLower.includes(loc)) ||
+               (bioLoc && allowedLocsLower.includes(bioLoc)) ||
+               assignedIds.has(l.userId) ||
+               (currentUser && l.userId === currentUser.id);
       });
     }
 
@@ -725,7 +737,8 @@ export async function renderAdminDashboard() {
       if (isHrOrManager && hasAssignedLocations) {
         logs = logs.filter(l => {
           const loc = (l.location || '').toLowerCase().trim();
-          return (loc && allowedLocsLower.includes(loc)) || assignedUserIds.includes(l.userId);
+          const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
+          return (loc && allowedLocsLower.includes(loc)) || (bioLoc && allowedLocsLower.includes(bioLoc)) || assignedUserIds.includes(l.userId) || (currentUser && l.userId === currentUser.id);
         });
       } else {
         logs = logs.filter(l => assignedUserIds.includes(l.userId));
@@ -953,7 +966,8 @@ export async function renderAdminDashboard() {
     } else if (isHrOrManager && hasAssignedLocations) {
       currentTodayLogs = allTodayLogs.filter(l => {
         const loc = (l.location || '').toLowerCase().trim();
-        return loc && allowedLocsLower.includes(loc);
+        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
+        return (loc && allowedLocsLower.includes(loc)) || (bioLoc && allowedLocsLower.includes(bioLoc)) || assignedUserIds.includes(l.userId) || (currentUser && l.userId === currentUser.id);
       });
     } else {
       currentTodayLogs = allTodayLogs;
@@ -1053,20 +1067,31 @@ export async function renderAdminDashboard() {
         btnText.textContent = `All Locations (${currentTodayLogs.length})`;
       }
     } else if (liveFeedSelectedLocations.size === 1) {
-      const singleLoc = Array.from(liveFeedSelectedLocations)[0];
-      const count = currentTodayLogs.filter(l => (l.location || '').toLowerCase().trim() === singleLoc.toLowerCase().trim()).length;
-      btnText.textContent = `${singleLoc} (${count})`;
+      const singleLoc = Array.from(liveFeedSelectedLocations)[0].toLowerCase().trim();
+      const count = currentTodayLogs.filter(l => {
+        const lLoc = (l.location || '').toLowerCase().trim();
+        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
+        return lLoc === singleLoc || bLoc === singleLoc;
+      }).length;
+      btnText.textContent = `${Array.from(liveFeedSelectedLocations)[0]} (${count})`;
     } else {
       let combinedCount = 0;
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
       currentTodayLogs.forEach(l => {
-        if (selLower.has((l.location || '').toLowerCase().trim())) combinedCount++;
+        const lLoc = (l.location || '').toLowerCase().trim();
+        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
+        if (selLower.has(lLoc) || selLower.has(bLoc)) combinedCount++;
       });
       btnText.textContent = `${liveFeedSelectedLocations.size} Locations (${combinedCount} punches)`;
     }
 
     listContainer.innerHTML = distinctLocs.map(loc => {
-      const count = currentTodayLogs.filter(l => (l.location || '').toLowerCase().trim() === loc.toLowerCase().trim()).length;
+      const targetLoc = loc.toLowerCase().trim();
+      const count = currentTodayLogs.filter(l => {
+        const lLoc = (l.location || '').toLowerCase().trim();
+        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
+        return lLoc === targetLoc || bLoc === targetLoc;
+      }).length;
       const isChecked = !isAllSelected && liveFeedSelectedLocations.has(loc);
       return `
         <div class="live-feed-loc-row" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='transparent'">
@@ -1148,7 +1173,8 @@ export async function renderAdminDashboard() {
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
       filteredLogs = currentTodayLogs.filter(l => {
         const loc = (l.location || '').toLowerCase().trim();
-        return selLower.has(loc);
+        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
+        return selLower.has(loc) || selLower.has(bioLoc);
       });
     }
 
@@ -1324,7 +1350,7 @@ export async function renderAdminDashboard() {
           <td>${checkInVal}</td>
           <td>${checkOutVal}</td>
           <td>${gpsCellHTML}</td>
-          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(l.location || '—')}</td>
+          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(l.location || l.biometricUsed || '—')}</td>
           <td><span class="badge ${statusClass}">${displayStatus}</span></td>
         </tr>
       `;

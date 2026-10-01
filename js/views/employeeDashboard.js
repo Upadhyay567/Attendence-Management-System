@@ -16,13 +16,13 @@ export function renderEmployeeDashboard() {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
   let schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
-  const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || schedule.location || user.preferredLocation || '') : (user.preferredLocation || null);
-  const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
+  const todayLog = schedule ? (DB.getTodayLog(user.id, schedule.id) || DB.getTodayLog(user.id)) : DB.getTodayLog(user.id);
+  const officeName = (todayLog && (todayLog.location || todayLog.biometricUsed)) || (schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || schedule.location || user.preferredLocation || '') : (user.preferredLocation || null));
 
   const getCheckInStatusFn = typeof getCheckInTimeStatus === 'function' ? getCheckInTimeStatus : (window.getCheckInTimeStatus || (() => ({ allowed: true, type: 'Normal' })));
   const checkInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
   const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
-  const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
+  const isNoShift = (!checkInStatus.allowed && checkInStatus.type === 'NoShift') && !todayLog;
   sessionStorage.setItem('hs_last_was_early', isEarly ? 'true' : 'false');
 
   // Dynamic GPS Mock Selector options
@@ -359,8 +359,18 @@ export function renderEmployeeDashboard() {
                 </div>
               </div>
             ` : `
-              <div class="shift-card" style="background:transparent;border:none;padding:20px 0;text-align:center;color:var(--text-secondary);font-size:14px;">
-                No shift schedule assigned
+              <div class="shift-card" style="background:transparent;border:none;padding:14px 0;color:var(--text-secondary);font-size:13px;">
+                ${todayLog ? `
+                  <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-weight:700; color:var(--primary); font-size:14px; margin-bottom:4px;">📟 Biometric Punch Session</div>
+                    <div class="shift-meta-row"><span>Check-In Time:</span> <strong style="color:var(--text-primary)">${todayLog.checkIn || '—'}</strong></div>
+                    <div class="shift-meta-row"><span>Check-Out Time:</span> <strong style="color:var(--text-primary)">${todayLog.checkOut || '— (In Session)'}</strong></div>
+                    <div class="shift-meta-row"><span>Worksite / Device:</span> <strong style="color:var(--text-primary)">${Utils.escape(todayLog.location || todayLog.biometricUsed || 'Biometric Device')}</strong></div>
+                    <div class="shift-meta-row"><span>Attendance Status:</span> <span class="badge ${todayLog.status === 'Late' ? 'badge-late' : 'badge-on-time'}">${todayLog.status || 'On Time'}</span></div>
+                  </div>
+                ` : `
+                  <div style="text-align:center; padding:10px 0;">No shift schedule assigned</div>
+                `}
               </div>
             `}
           </div>

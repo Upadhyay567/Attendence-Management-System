@@ -758,7 +758,7 @@ export function renderAdminAttendances() {
             return;
           }
 
-          const employees = DB.getUsers().filter(u => u.role === 'employee' || DB.getUserBaseRole(u.role) === 'employee');
+          const employees = DB.getUsers().filter(u => u && u.status !== 'Inactive');
           const empMap = new Map();
           employees.forEach(u => {
             empMap.set(u.id.toLowerCase(), u);

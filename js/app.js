@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=77';
-import { renderAdminSchedules } from './views/schedulesView.js?v=77';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=77';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=77';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=77';
-import { renderAdminAttendances } from './views/attendancesView.js?v=77';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=77';
-import { renderAdminFinance } from './views/financeView.js?v=77';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=77';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=77';
-import { drawRadarMap } from './components/geofenceMap.js?v=77';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=77';
+import { renderLoginView } from './views/loginView.js?v=78';
+import { renderAdminSchedules } from './views/schedulesView.js?v=78';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=78';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=78';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=78';
+import { renderAdminAttendances } from './views/attendancesView.js?v=78';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=78';
+import { renderAdminFinance } from './views/financeView.js?v=78';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=78';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=78';
+import { drawRadarMap } from './components/geofenceMap.js?v=78';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=78';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=77';
-import { Auth } from './auth.js?v=77';
-import { Utils, html } from './utils.js?v=77';
-import { triggerBirthdayCelebration } from './celebration.js?v=77';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=77';
+import { DB } from './core/db.js?v=78';
+import { Auth } from './auth.js?v=78';
+import { Utils, html } from './utils.js?v=78';
+import { triggerBirthdayCelebration } from './celebration.js?v=78';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=78';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -7286,13 +7286,13 @@ function renderAdminMyAttendances() {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
   let schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
-  const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || schedule.location || 'Kohat Enclave, Pitampura, Delhi') : (user.preferredLocation || null);
-  const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
+  const todayLog = schedule ? (DB.getTodayLog(user.id, schedule.id) || DB.getTodayLog(user.id)) : DB.getTodayLog(user.id);
+  const officeName = (todayLog && (todayLog.location || todayLog.biometricUsed)) || (schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || user.preferredLocation || schedule.location || '') : (user.preferredLocation || null));
 
   const getCheckInStatusFn = typeof getCheckInTimeStatus === 'function' ? getCheckInTimeStatus : (window.getCheckInTimeStatus || (() => ({ allowed: true, type: 'Normal' })));
   const checkInStatus = getCheckInStatusFn(user, schedule ? schedule.id : null);
   const isEarly = !checkInStatus.allowed && checkInStatus.type === 'TooEarly';
-  const isNoShift = !checkInStatus.allowed && checkInStatus.type === 'NoShift';
+  const isNoShift = (!checkInStatus.allowed && checkInStatus.type === 'NoShift') && !todayLog;
 
   // Dynamic GPS Mock Selector options
   let optionsHTML = '';
@@ -7325,7 +7325,7 @@ function renderAdminMyAttendances() {
           ${resolved.allSchedules.map(s => {
             const isSel = String(s.id) === String(schedule.id);
             const sLog = DB.getTodayLog(user.id, s.id);
-            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi';
+            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || '';
             
             let statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 7px; background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08);">⚪ Not Started</span>`;
             if (sLog && sLog.checkIn && !sLog.checkOut) {
@@ -7625,8 +7625,18 @@ function renderAdminMyAttendances() {
                 </div>
               </div>
             ` : `
-              <div class="shift-card" style="background:transparent;border:none;padding:20px 0;text-align:center;color:var(--text-secondary);font-size:14px;">
-                No shift schedule assigned
+              <div class="shift-card" style="background:transparent;border:none;padding:14px 0;color:var(--text-secondary);font-size:13px;">
+                ${todayLog ? `
+                  <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-weight:700; color:var(--primary); font-size:14px; margin-bottom:4px;">📟 Biometric Punch Session</div>
+                    <div class="shift-meta-row"><span>Check-In Time:</span> <strong style="color:var(--text-primary)">${todayLog.checkIn || '—'}</strong></div>
+                    <div class="shift-meta-row"><span>Check-Out Time:</span> <strong style="color:var(--text-primary)">${todayLog.checkOut || '— (In Session)'}</strong></div>
+                    <div class="shift-meta-row"><span>Worksite / Device:</span> <strong style="color:var(--text-primary)">${Utils.escape(todayLog.location || todayLog.biometricUsed || 'Biometric Device')}</strong></div>
+                    <div class="shift-meta-row"><span>Attendance Status:</span> <span class="badge ${todayLog.status === 'Late' ? 'badge-late' : 'badge-on-time'}">${todayLog.status || 'On Time'}</span></div>
+                  </div>
+                ` : `
+                  <div style="text-align:center; padding:10px 0;">No shift schedule assigned</div>
+                `}
               </div>
             `}
           </div>
