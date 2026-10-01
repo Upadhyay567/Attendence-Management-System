@@ -14,6 +14,13 @@ let adminAttendancesSelectedIds = new Set();
 let adminAttendancesSelectedMonth = new Date().getMonth();
 let adminAttendancesSelectedYear = new Date().getFullYear();
 let adminAttendancesLocationFilter = '';
+let adminAttendancesFilterMode = 'month'; // 'month' or 'manual'
+let adminAttendancesSingleDate = ''; // 'YYYY-MM-DD'
+let adminAttendancesFromDate = ''; // 'YYYY-MM-DD'
+let adminAttendancesToDate = ''; // 'YYYY-MM-DD'
+let adminAttendancesDateRangeError = '';
+let adminAttendancesActiveTab = 'month'; // 'month' or 'manual'
+let adminAttendancesPickerYear = new Date().getFullYear();
 
 export function renderAdminAttendances() {
   const main = document.getElementById('main-view');
@@ -24,7 +31,33 @@ export function renderAdminAttendances() {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const currentMonthName = monthNames[adminAttendancesSelectedMonth];
+  const shortMonthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function formatShortDate(dateStr) {
+    if (!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    const mIdx = parseInt(m, 10) - 1;
+    const day = parseInt(d, 10);
+    return `${shortMonthNames[mIdx] || ''} ${day}, ${y}`;
+  }
+
+  function getFilterButtonLabel() {
+    if (adminAttendancesFilterMode === 'manual') {
+      if (adminAttendancesSingleDate) {
+        return `📅 ${formatShortDate(adminAttendancesSingleDate)}`;
+      }
+      if (adminAttendancesFromDate && adminAttendancesToDate) {
+        return `📅 ${formatShortDate(adminAttendancesFromDate)} → ${formatShortDate(adminAttendancesToDate)}`;
+      }
+      if (adminAttendancesFromDate) {
+        return `📅 ${formatShortDate(adminAttendancesFromDate)}`;
+      }
+      if (adminAttendancesToDate) {
+        return `📅 ${formatShortDate(adminAttendancesToDate)}`;
+      }
+    }
+    return `${monthNames[adminAttendancesSelectedMonth]}, ${adminAttendancesSelectedYear}`;
+  }
 
   main.innerHTML = html`
     <div id="admin-attendances-page-container" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: var(--text-primary);">
@@ -43,10 +76,10 @@ export function renderAdminAttendances() {
             </svg>
           </div>
 
-          <!-- Calendar Month Filter Button -->
-          <div style="position: relative; flex-shrink: 0;">
+          <!-- Calendar / Date Filter Button & Popover -->
+          <div style="position: relative; flex-shrink: 0;" id="admin-att-calendar-container">
             <button type="button" id="admin-att-calendar-btn" class="btn btn-secondary" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto !important; height: 34px; padding: 0 14px; font-size: 14px; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
-              <span id="lbl-admin-att-current-month">${currentMonthName}, ${adminAttendancesSelectedYear}</span>
+              <span id="lbl-admin-att-current-month">${getFilterButtonLabel()}</span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; color: var(--text-secondary);">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -55,6 +88,107 @@ export function renderAdminAttendances() {
               </svg>
             </button>
             <input type="month" id="admin-att-month-picker" value="${adminAttendancesSelectedYear}-${String(adminAttendancesSelectedMonth + 1).padStart(2, '0')}" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+
+            <!-- Calendar & Manual Date Filter Popover -->
+            <div id="admin-att-calendar-popover" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; z-index: 1050; width: 330px; background: var(--bg-card, #ffffff); border: 1px solid var(--border, #e2e8f0); border-radius: 10px; box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.18), 0 8px 10px -4px rgba(0, 0, 0, 0.08); padding: 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; box-sizing: border-box; color: var(--text-primary);">
+              
+              <!-- Tab Header Switcher -->
+              <div style="display: flex; background: var(--bg-secondary, #f1f5f9); padding: 3px; border-radius: 8px; margin-bottom: 14px; gap: 4px;">
+                <button type="button" id="tab-att-month-view" style="flex: 1; border: none; background: ${adminAttendancesActiveTab === 'month' ? 'var(--bg-card, #ffffff)' : 'transparent'}; color: ${adminAttendancesActiveTab === 'month' ? 'var(--primary, #2563eb)' : 'var(--text-muted, #64748b)'}; font-weight: ${adminAttendancesActiveTab === 'month' ? '700' : '600'}; font-size: 13px; padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: ${adminAttendancesActiveTab === 'month' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; transition: all 0.15s ease;">
+                  📅 Month View
+                </button>
+                <button type="button" id="tab-att-manual-view" style="flex: 1; border: none; background: ${adminAttendancesActiveTab === 'manual' ? 'var(--bg-card, #ffffff)' : 'transparent'}; color: ${adminAttendancesActiveTab === 'manual' ? 'var(--primary, #2563eb)' : 'var(--text-muted, #64748b)'}; font-weight: ${adminAttendancesActiveTab === 'manual' ? '700' : '600'}; font-size: 13px; padding: 6px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: ${adminAttendancesActiveTab === 'manual' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; transition: all 0.15s ease;">
+                  📆 Manual Date
+                </button>
+              </div>
+
+              <!-- Content Pane 1: Month View -->
+              <div id="pane-att-month-view" style="display: ${adminAttendancesActiveTab === 'month' ? 'block' : 'none'};">
+                <!-- Year Header Stepper -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">
+                  <button type="button" id="btn-att-prev-year" style="width: 28px; height: 28px; border: 1px solid var(--border, #cbd5e1); border-radius: 6px; background: var(--bg-secondary, #f8fafc); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">‹</button>
+                  <span id="lbl-att-picker-year" style="font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em;">${adminAttendancesPickerYear}</span>
+                  <button type="button" id="btn-att-next-year" style="width: 28px; height: 28px; border: 1px solid var(--border, #cbd5e1); border-radius: 6px; background: var(--bg-secondary, #f8fafc); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">›</button>
+                </div>
+
+                <!-- 12-Month Grid -->
+                <div id="grid-att-months" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;"></div>
+
+                <!-- Bottom Helper Row -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border, #f1f5f9); padding-top: 10px; margin-top: 6px;">
+                  <button type="button" id="btn-att-clear-month" style="background: none; border: none; color: var(--primary, #2563eb); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 2px 4px;">
+                    Reset
+                  </button>
+                  <button type="button" id="btn-att-this-month" style="background: none; border: none; color: var(--primary, #2563eb); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 2px 4px;">
+                    This month
+                  </button>
+                </div>
+              </div>
+
+              <!-- Content Pane 2: Manual Date View -->
+              <div id="pane-att-manual-view" style="display: ${adminAttendancesActiveTab === 'manual' ? 'block' : 'none'};">
+                <!-- Section A: Single Selected Date -->
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label for="input-att-single-date" style="font-size: 12px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.03em;">
+                      Single Date
+                    </label>
+                    <button type="button" id="btn-att-quick-today" style="background: none; border: none; color: var(--primary, #2563eb); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline;">
+                      Select Today
+                    </button>
+                  </div>
+                  <input type="date" id="input-att-single-date" value="${adminAttendancesSingleDate || ''}" class="form-input" style="width: 100%; height: 34px; padding: 0 10px; font-size: 13.5px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-sizing: border-box;">
+                  <div style="font-size: 11px; color: var(--text-muted, #64748b); margin-top: 4px;">
+                    Filter for a single day. From/To range is not required.
+                  </div>
+                </div>
+
+                <!-- Divider -->
+                <div style="display: flex; align-items: center; gap: 8px; margin: 12px 0 10px 0;">
+                  <div style="flex: 1; height: 1px; background: var(--border, #e2e8f0);"></div>
+                  <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted, #94a3b8); text-transform: uppercase; letter-spacing: 0.05em;">OR Date Range</span>
+                  <div style="flex: 1; height: 1px; background: var(--border, #e2e8f0);"></div>
+                </div>
+
+                <!-- Section B: Date Range -->
+                <div style="margin-bottom: 10px;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                      <label for="input-att-from-date" style="display: block; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                        From Date <span style="font-size: 10px; color: var(--text-muted);">(Optional)</span>
+                      </label>
+                      <input type="date" id="input-att-from-date" value="${adminAttendancesFromDate || ''}" class="form-input" style="width: 100%; height: 34px; padding: 0 8px; font-size: 12.5px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                    <div>
+                      <label for="input-att-to-date" style="display: block; font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                        To Date <span style="font-size: 10px; color: var(--text-muted);">(Optional)</span>
+                      </label>
+                      <input type="date" id="input-att-to-date" value="${adminAttendancesToDate || ''}" class="form-input" style="width: 100%; height: 34px; padding: 0 8px; font-size: 12.5px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                  </div>
+                  
+                  <!-- Validation Error Container -->
+                  <div id="att-date-range-error" style="display: ${adminAttendancesDateRangeError ? 'flex' : 'none'}; color: #ef4444; font-size: 11.5px; font-weight: 600; margin-top: 6px; align-items: center; gap: 4px; background: #fef2f2; padding: 4px 8px; border-radius: 4px; border: 1px solid #fecaca;">
+                    <span>⚠️ ${adminAttendancesDateRangeError || 'To Date cannot be earlier than From Date'}</span>
+                  </div>
+
+                  <div style="font-size: 11px; color: var(--text-muted, #64748b); margin-top: 5px;">
+                    Fill both for date range, or either one to check that single date.
+                  </div>
+                </div>
+
+                <!-- Footer buttons in Manual Date -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border, #f1f5f9); padding-top: 10px; margin-top: 12px;">
+                  <button type="button" id="btn-att-reset-filter" style="background: none; border: 1px solid var(--border, #cbd5e1); border-radius: 5px; color: var(--text-secondary); font-size: 12px; font-weight: 600; padding: 5px 10px; cursor: pointer;">
+                    Reset to Month
+                  </button>
+                  <button type="button" id="btn-att-close-popover" class="btn btn-primary" style="background: var(--primary, #2563eb); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; padding: 5px 14px; cursor: pointer;">
+                    Done
+                  </button>
+                </div>
+              </div>
+
+            </div>
           </div>
 
           <!-- Location Filter Dropdown -->
@@ -189,29 +323,328 @@ export function renderAdminAttendances() {
     });
   }
 
-  // Calendar Month/Year Picker Button
+  // Calendar / Manual Date Filter Popover Controller
   const calBtn = document.getElementById('admin-att-calendar-btn');
-  const calInput = document.getElementById('admin-att-month-picker');
-  if (calBtn && calInput) {
-    calBtn.addEventListener('click', () => {
-      if (typeof calInput.showPicker === 'function') {
-        calInput.showPicker();
+  const calPopover = document.getElementById('admin-att-calendar-popover');
+  const tabMonth = document.getElementById('tab-att-month-view');
+  const tabManual = document.getElementById('tab-att-manual-view');
+  const paneMonth = document.getElementById('pane-att-month-view');
+  const paneManual = document.getElementById('pane-att-manual-view');
+  const btnPrevYear = document.getElementById('btn-att-prev-year');
+  const btnNextYear = document.getElementById('btn-att-next-year');
+  const lblPickerYear = document.getElementById('lbl-att-picker-year');
+  const btnClearMonth = document.getElementById('btn-att-clear-month');
+  const btnThisMonth = document.getElementById('btn-att-this-month');
+  const singleDateInput = document.getElementById('input-att-single-date');
+  const fromDateInput = document.getElementById('input-att-from-date');
+  const toDateInput = document.getElementById('input-att-to-date');
+  const errContainer = document.getElementById('att-date-range-error');
+  const btnQuickToday = document.getElementById('btn-att-quick-today');
+  const btnResetFilter = document.getElementById('btn-att-reset-filter');
+  const btnClosePopover = document.getElementById('btn-att-close-popover');
+
+  function renderMonthGrid() {
+    const grid = document.getElementById('grid-att-months');
+    if (!grid) return;
+    grid.innerHTML = shortMonthNames.map((m, idx) => {
+      const isSelected = adminAttendancesFilterMode === 'month' &&
+        adminAttendancesSelectedYear === adminAttendancesPickerYear &&
+        adminAttendancesSelectedMonth === idx;
+      
+      const bg = isSelected ? 'var(--primary, #2563eb)' : 'var(--bg-secondary, #f8fafc)';
+      const color = isSelected ? '#ffffff' : 'var(--text-primary)';
+      const border = isSelected ? '1px solid var(--primary, #2563eb)' : '1px solid var(--border, #e2e8f0)';
+      const fw = isSelected ? '700' : '500';
+
+      return `<button type="button" class="btn-att-month-cell" data-month="${idx}" style="height: 32px; font-size: 12.5px; font-weight: ${fw}; background: ${bg}; color: ${color}; border: ${border}; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; outline: none;">${m}</button>`;
+    }).join('');
+
+    grid.querySelectorAll('.btn-att-month-cell').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mIdx = parseInt(btn.getAttribute('data-month'), 10);
+        adminAttendancesFilterMode = 'month';
+        adminAttendancesSelectedYear = adminAttendancesPickerYear;
+        adminAttendancesSelectedMonth = mIdx;
+        adminAttendancesSingleDate = '';
+        adminAttendancesFromDate = '';
+        adminAttendancesToDate = '';
+        adminAttendancesDateRangeError = '';
+        adminAttendancesCurrentPage = 1;
+        if (singleDateInput) singleDateInput.value = '';
+        if (fromDateInput) fromDateInput.value = '';
+        if (toDateInput) toDateInput.value = '';
+        showRangeError('');
+        
+        updateFilterButtonLabel();
+        renderMonthGrid();
+        updateTable();
+        
+        if (calPopover) calPopover.style.display = 'none';
+      });
+    });
+  }
+
+  function switchPickerTab(tab) {
+    adminAttendancesActiveTab = tab;
+    if (tab === 'month') {
+      if (tabMonth) {
+        tabMonth.style.background = 'var(--bg-card, #ffffff)';
+        tabMonth.style.color = 'var(--primary, #2563eb)';
+        tabMonth.style.fontWeight = '700';
+        tabMonth.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      }
+      if (tabManual) {
+        tabManual.style.background = 'transparent';
+        tabManual.style.color = 'var(--text-muted, #64748b)';
+        tabManual.style.fontWeight = '600';
+        tabManual.style.boxShadow = 'none';
+      }
+      if (paneMonth) paneMonth.style.display = 'block';
+      if (paneManual) paneManual.style.display = 'none';
+      renderMonthGrid();
+    } else {
+      if (tabManual) {
+        tabManual.style.background = 'var(--bg-card, #ffffff)';
+        tabManual.style.color = 'var(--primary, #2563eb)';
+        tabManual.style.fontWeight = '700';
+        tabManual.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+      }
+      if (tabMonth) {
+        tabMonth.style.background = 'transparent';
+        tabMonth.style.color = 'var(--text-muted, #64748b)';
+        tabMonth.style.fontWeight = '600';
+        tabMonth.style.boxShadow = 'none';
+      }
+      if (paneMonth) paneMonth.style.display = 'none';
+      if (paneManual) paneManual.style.display = 'block';
+    }
+  }
+
+  function showRangeError(msg) {
+    adminAttendancesDateRangeError = msg;
+    if (errContainer) {
+      if (msg) {
+        errContainer.innerHTML = `<span>⚠️ ${msg}</span>`;
+        errContainer.style.display = 'flex';
       } else {
-        calInput.click();
+        errContainer.style.display = 'none';
+      }
+    }
+  }
+
+  function handleSingleDateChange() {
+    const val = singleDateInput ? singleDateInput.value.trim() : '';
+    if (val) {
+      adminAttendancesFilterMode = 'manual';
+      adminAttendancesSingleDate = val;
+      adminAttendancesFromDate = '';
+      adminAttendancesToDate = '';
+      if (fromDateInput) fromDateInput.value = '';
+      if (toDateInput) toDateInput.value = '';
+      showRangeError('');
+      adminAttendancesCurrentPage = 1;
+      updateFilterButtonLabel();
+      updateTable();
+    } else {
+      if (!adminAttendancesFromDate && !adminAttendancesToDate) {
+        adminAttendancesFilterMode = 'month';
+        adminAttendancesSingleDate = '';
+        showRangeError('');
+        adminAttendancesCurrentPage = 1;
+        updateFilterButtonLabel();
+        updateTable();
+      }
+    }
+  }
+
+  function handleRangeChange() {
+    const fromVal = fromDateInput ? fromDateInput.value.trim() : '';
+    const toVal = toDateInput ? toDateInput.value.trim() : '';
+
+    if (fromVal || toVal) {
+      adminAttendancesSingleDate = '';
+      if (singleDateInput) singleDateInput.value = '';
+    }
+
+    if (fromVal && toVal && toVal < fromVal) {
+      showRangeError('To Date cannot be earlier than From Date');
+      return;
+    }
+
+    showRangeError('');
+
+    if (fromVal || toVal) {
+      adminAttendancesFilterMode = 'manual';
+      adminAttendancesFromDate = fromVal;
+      adminAttendancesToDate = toVal;
+      adminAttendancesCurrentPage = 1;
+      updateFilterButtonLabel();
+      updateTable();
+    } else {
+      if (!adminAttendancesSingleDate) {
+        adminAttendancesFilterMode = 'month';
+        adminAttendancesFromDate = '';
+        adminAttendancesToDate = '';
+        adminAttendancesCurrentPage = 1;
+        updateFilterButtonLabel();
+        updateTable();
+      }
+    }
+  }
+
+  // Bind popover controls
+  if (calBtn && calPopover) {
+    calBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = calPopover.style.display === 'block';
+      if (!isOpen) {
+        calPopover.style.display = 'block';
+        if (adminAttendancesActiveTab === 'month') {
+          renderMonthGrid();
+        }
+      } else {
+        calPopover.style.display = 'none';
       }
     });
 
-    calInput.addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (val) {
-        const [y, m] = val.split('-');
-        adminAttendancesSelectedYear = parseInt(y, 10);
-        adminAttendancesSelectedMonth = parseInt(m, 10) - 1;
-        adminAttendancesCurrentPage = 1;
-        renderAdminAttendances();
+    calPopover.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (calPopover && !calPopover.contains(e.target) && e.target !== calBtn && !calBtn.contains(e.target)) {
+        calPopover.style.display = 'none';
       }
     });
   }
+
+  if (tabMonth) tabMonth.addEventListener('click', () => switchPickerTab('month'));
+  if (tabManual) tabManual.addEventListener('click', () => switchPickerTab('manual'));
+
+  if (btnPrevYear) {
+    btnPrevYear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      adminAttendancesPickerYear--;
+      if (lblPickerYear) lblPickerYear.textContent = adminAttendancesPickerYear;
+      renderMonthGrid();
+    });
+  }
+
+  if (btnNextYear) {
+    btnNextYear.addEventListener('click', (e) => {
+      e.stopPropagation();
+      adminAttendancesPickerYear++;
+      if (lblPickerYear) lblPickerYear.textContent = adminAttendancesPickerYear;
+      renderMonthGrid();
+    });
+  }
+
+  if (btnThisMonth) {
+    btnThisMonth.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = new Date();
+      adminAttendancesPickerYear = now.getFullYear();
+      adminAttendancesSelectedYear = now.getFullYear();
+      adminAttendancesSelectedMonth = now.getMonth();
+      adminAttendancesFilterMode = 'month';
+      adminAttendancesSingleDate = '';
+      adminAttendancesFromDate = '';
+      adminAttendancesToDate = '';
+      adminAttendancesDateRangeError = '';
+      adminAttendancesCurrentPage = 1;
+      if (singleDateInput) singleDateInput.value = '';
+      if (fromDateInput) fromDateInput.value = '';
+      if (toDateInput) toDateInput.value = '';
+      if (lblPickerYear) lblPickerYear.textContent = adminAttendancesPickerYear;
+      showRangeError('');
+      updateFilterButtonLabel();
+      renderMonthGrid();
+      updateTable();
+      if (calPopover) calPopover.style.display = 'none';
+    });
+  }
+
+  if (btnClearMonth) {
+    btnClearMonth.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = new Date();
+      adminAttendancesPickerYear = now.getFullYear();
+      adminAttendancesSelectedYear = now.getFullYear();
+      adminAttendancesSelectedMonth = now.getMonth();
+      adminAttendancesFilterMode = 'month';
+      adminAttendancesSingleDate = '';
+      adminAttendancesFromDate = '';
+      adminAttendancesToDate = '';
+      adminAttendancesDateRangeError = '';
+      adminAttendancesCurrentPage = 1;
+      if (singleDateInput) singleDateInput.value = '';
+      if (fromDateInput) fromDateInput.value = '';
+      if (toDateInput) toDateInput.value = '';
+      if (lblPickerYear) lblPickerYear.textContent = adminAttendancesPickerYear;
+      showRangeError('');
+      updateFilterButtonLabel();
+      renderMonthGrid();
+      updateTable();
+    });
+  }
+
+  if (singleDateInput) {
+    singleDateInput.addEventListener('input', handleSingleDateChange);
+    singleDateInput.addEventListener('change', handleSingleDateChange);
+  }
+
+  if (btnQuickToday) {
+    btnQuickToday.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const today = Utils.getTodayString();
+      if (singleDateInput) singleDateInput.value = today;
+      handleSingleDateChange();
+    });
+  }
+
+  if (fromDateInput) {
+    fromDateInput.addEventListener('input', handleRangeChange);
+    fromDateInput.addEventListener('change', handleRangeChange);
+  }
+
+  if (toDateInput) {
+    toDateInput.addEventListener('input', handleRangeChange);
+    toDateInput.addEventListener('change', handleRangeChange);
+  }
+
+  if (btnResetFilter) {
+    btnResetFilter.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const now = new Date();
+      adminAttendancesFilterMode = 'month';
+      adminAttendancesSelectedYear = now.getFullYear();
+      adminAttendancesSelectedMonth = now.getMonth();
+      adminAttendancesPickerYear = now.getFullYear();
+      adminAttendancesSingleDate = '';
+      adminAttendancesFromDate = '';
+      adminAttendancesToDate = '';
+      adminAttendancesDateRangeError = '';
+      if (singleDateInput) singleDateInput.value = '';
+      if (fromDateInput) fromDateInput.value = '';
+      if (toDateInput) toDateInput.value = '';
+      showRangeError('');
+      switchPickerTab('month');
+      updateFilterButtonLabel();
+      renderMonthGrid();
+      updateTable();
+    });
+  }
+
+  if (btnClosePopover) {
+    btnClosePopover.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (calPopover) calPopover.style.display = 'none';
+    });
+  }
+
+  // Initial render of month grid
+  renderMonthGrid();
 
   // + Create Attendance Button
   const createBtn = document.getElementById('admin-att-create-btn');
@@ -428,13 +861,29 @@ export function renderAdminAttendances() {
 
     const rawLogs = DB.getLogs().filter(log => {
       if (!userMap.has(log.userId)) return false;
-      if (log.date) {
-        const [y, m] = log.date.split('-');
-        const logYear = parseInt(y, 10);
-        const logMonth = parseInt(m, 10) - 1; // 0-indexed
-        return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
+      if (!log.date) return false;
+
+      if (adminAttendancesFilterMode === 'manual') {
+        if (adminAttendancesSingleDate) {
+          return log.date === adminAttendancesSingleDate;
+        }
+        if (adminAttendancesFromDate && adminAttendancesToDate) {
+          if (adminAttendancesToDate < adminAttendancesFromDate) return false;
+          return log.date >= adminAttendancesFromDate && log.date <= adminAttendancesToDate;
+        }
+        if (adminAttendancesFromDate) {
+          return log.date === adminAttendancesFromDate;
+        }
+        if (adminAttendancesToDate) {
+          return log.date === adminAttendancesToDate;
+        }
+        return true;
       }
-      return false;
+
+      const [y, m] = log.date.split('-');
+      const logYear = parseInt(y, 10);
+      const logMonth = parseInt(m, 10) - 1; // 0-indexed
+      return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
     });
 
     // Map logs with rich display values
@@ -1022,13 +1471,29 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
 
   let logs = DB.getLogs().filter(log => {
     if (!userMap.has(log.userId)) return false;
-    if (log.date) {
-      const [y, m] = log.date.split('-');
-      const logYear = parseInt(y, 10);
-      const logMonth = parseInt(m, 10) - 1;
-      return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
+    if (!log.date) return false;
+
+    if (adminAttendancesFilterMode === 'manual') {
+      if (adminAttendancesSingleDate) {
+        return log.date === adminAttendancesSingleDate;
+      }
+      if (adminAttendancesFromDate && adminAttendancesToDate) {
+        if (adminAttendancesToDate < adminAttendancesFromDate) return false;
+        return log.date >= adminAttendancesFromDate && log.date <= adminAttendancesToDate;
+      }
+      if (adminAttendancesFromDate) {
+        return log.date === adminAttendancesFromDate;
+      }
+      if (adminAttendancesToDate) {
+        return log.date === adminAttendancesToDate;
+      }
+      return true;
     }
-    return false;
+
+    const [y, m] = log.date.split('-');
+    const logYear = parseInt(y, 10);
+    const logMonth = parseInt(m, 10) - 1;
+    return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
   });
 
   // Map with rich attributes
@@ -1115,8 +1580,31 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
   }
 
   const locSlug = adminAttendancesLocationFilter ? `_${adminAttendancesLocationFilter.replace(/\s+/g, '_')}` : '';
-  const monthName = monthNames[adminAttendancesSelectedMonth] || 'All';
-  const filename = `Attendances_${monthName}_${adminAttendancesSelectedYear}${locSlug}.xlsx`;
+  let dateSlug = '';
+  let dateLabel = '';
+  if (adminAttendancesFilterMode === 'manual') {
+    if (adminAttendancesSingleDate) {
+      dateSlug = `_${adminAttendancesSingleDate}`;
+      dateLabel = adminAttendancesSingleDate;
+    } else if (adminAttendancesFromDate && adminAttendancesToDate) {
+      dateSlug = `_${adminAttendancesFromDate}_to_${adminAttendancesToDate}`;
+      dateLabel = `${adminAttendancesFromDate} to ${adminAttendancesToDate}`;
+    } else if (adminAttendancesFromDate) {
+      dateSlug = `_${adminAttendancesFromDate}`;
+      dateLabel = adminAttendancesFromDate;
+    } else if (adminAttendancesToDate) {
+      dateSlug = `_${adminAttendancesToDate}`;
+      dateLabel = adminAttendancesToDate;
+    } else {
+      dateSlug = '_custom';
+      dateLabel = 'Custom';
+    }
+  } else {
+    const monthName = monthNames[adminAttendancesSelectedMonth] || 'All';
+    dateSlug = `_${monthName}_${adminAttendancesSelectedYear}`;
+    dateLabel = `${monthName} ${adminAttendancesSelectedYear}`;
+  }
+  const filename = `Attendances${dateSlug}${locSlug}.xlsx`;
   const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
   
   const rows = mappedLogs.map(l => [
@@ -1134,7 +1622,7 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
   Utils.exportToExcel(filename, headers, rows);
 
   if (typeof showToastNotification === 'function') {
-    showToastNotification(`📥 Exported ${rows.length} attendance records (${monthName} ${adminAttendancesSelectedYear}) successfully.`, 'success');
+    showToastNotification(`📥 Exported ${rows.length} attendance records (${dateLabel}) successfully.`, 'success');
   }
 }
 
