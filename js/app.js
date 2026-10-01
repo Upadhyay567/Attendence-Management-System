@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=71';
-import { renderAdminSchedules } from './views/schedulesView.js?v=71';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=71';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=71';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=71';
-import { renderAdminAttendances } from './views/attendancesView.js?v=71';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=71';
-import { renderAdminFinance } from './views/financeView.js?v=71';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=71';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=71';
-import { drawRadarMap } from './components/geofenceMap.js?v=71';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=71';
+import { renderLoginView } from './views/loginView.js?v=73';
+import { renderAdminSchedules } from './views/schedulesView.js?v=73';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=73';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=73';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=73';
+import { renderAdminAttendances } from './views/attendancesView.js?v=73';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=73';
+import { renderAdminFinance } from './views/financeView.js?v=73';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=73';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=73';
+import { drawRadarMap } from './components/geofenceMap.js?v=73';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=73';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=71';
-import { Auth } from './auth.js?v=71';
-import { Utils, html } from './utils.js?v=71';
-import { triggerBirthdayCelebration } from './celebration.js?v=71';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=71';
+import { DB } from './core/db.js?v=73';
+import { Auth } from './auth.js?v=73';
+import { Utils, html } from './utils.js?v=73';
+import { triggerBirthdayCelebration } from './celebration.js?v=73';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=73';
 
 if (typeof window !== 'undefined') {
   window.html = html;

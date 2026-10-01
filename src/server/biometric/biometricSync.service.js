@@ -218,32 +218,25 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
   const targetDigits = target.replace(/\D/g, '');
   const targetName = String(deviceUserName || '').trim().toLowerCase();
 
+  // 1. Tier 1: Preferred mapping - exact biometricUserId / biometricId across all users
   let employee = users.find(user => {
     if (!user) return false;
-
-    // 1. Preferred mapping: exact biometricUserId / biometricId
-    if (
-      user.biometricUserId &&
-      String(user.biometricUserId).trim().toLowerCase() === target
-    ) {
+    if (user.biometricUserId && String(user.biometricUserId).trim().toLowerCase() === target) {
       return true;
     }
-
-    if (
-      user.biometricId &&
-      String(user.biometricId).trim().toLowerCase() === target
-    ) {
+    if (user.biometricId && String(user.biometricId).trim().toLowerCase() === target) {
       return true;
     }
+    return false;
+  });
+  if (employee) return employee;
 
-    // 2. Direct primary ID mappings
-    if (
-      user.employeeId &&
-      String(user.employeeId).trim().toLowerCase() === target
-    ) {
+  // 2. Tier 2: Direct primary ID mappings (employeeId, id, username)
+  employee = users.find(user => {
+    if (!user) return false;
+    if (user.employeeId && String(user.employeeId).trim().toLowerCase() === target) {
       return true;
     }
-
     if (
       user.id &&
       (String(user.id).trim().toLowerCase() === target ||
@@ -251,7 +244,6 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
     ) {
       return true;
     }
-
     if (
       user.username &&
       (String(user.username).trim().toLowerCase() === target ||
@@ -259,10 +251,20 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
     ) {
       return true;
     }
+    return false;
+  });
+  if (employee) {
+    if (!employee.biometricUserId) {
+      employee.biometricUserId = String(biometricUserId).trim();
+    }
+    return employee;
+  }
 
-    // 3. Exact Numeric ID matching (e.g. device "101" <-> HRMS "EMP101")
-    if (targetDigits) {
-      const targetNum = parseInt(targetDigits, 10);
+  // 3. Tier 3: Exact Numeric ID matching (e.g. device "101" <-> HRMS "EMP101")
+  if (targetDigits) {
+    const targetNum = parseInt(targetDigits, 10);
+    employee = users.find(user => {
+      if (!user) return false;
       const userEmpDigits = String(user.employeeId || '').replace(/\D/g, '');
       const userBioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
       if (userEmpDigits && !isNaN(targetNum) && parseInt(userEmpDigits, 10) === targetNum) return true;
@@ -270,28 +272,43 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       if ((userEmpDigits && userEmpDigits === targetDigits) || (userBioDigits && userBioDigits === targetDigits)) {
         return true;
       }
+      return false;
+    });
+    if (employee) {
+      if (!employee.biometricUserId) {
+        employee.biometricUserId = String(biometricUserId).trim();
+      }
+      return employee;
     }
+  }
 
-    // 4. Exact Full Name matching ONLY (NEVER match first-name substring or generic 'employee ...' / 'admin')
-    if (
-      targetName &&
-      targetName !== 'admin' &&
-      !targetName.startsWith('employee ') &&
-      user.name
-    ) {
+  // 4. Tier 4: Fallback Full Name match ONLY IF unambiguous AND candidate does NOT have a conflicting biometric ID
+  if (
+    targetName &&
+    targetName !== 'admin' &&
+    !targetName.startsWith('employee ')
+  ) {
+    const matchingUsers = users.filter(user => {
+      if (!user || !user.name) return false;
       const uName = String(user.name).trim().toLowerCase();
-      if (uName === targetName) return true;
-    }
+      if (uName !== targetName) return false;
 
-    return false;
-  });
+      // CRITICAL GUARD: If this user already has an assigned biometric ID different from targetDigits,
+      // DO NOT match! They are an established different person.
+      const userBioDigits = String(user.biometricUserId || user.biometricId || '').replace(/\D/g, '');
+      if (userBioDigits && targetDigits && userBioDigits !== targetDigits) {
+        return false;
+      }
+      return true;
+    });
 
-  // Auto-bind biometricUserId ONLY IF the employee does not already have a different biometricUserId!
-  if (employee) {
-    if (!employee.biometricUserId) {
-      employee.biometricUserId = String(biometricUserId).trim();
+    if (matchingUsers.length === 1) {
+      employee = matchingUsers[0];
+      if (!employee.biometricUserId) {
+        employee.biometricUserId = String(biometricUserId).trim();
+      }
+      return employee;
     }
-    return employee;
   }
 
   // Auto-register biometric user if missing from HRMS list
@@ -1393,6 +1410,8 @@ async function ingestPunchesAndUsers(users = [], punches = [], deviceMeta = {}) 
 module.exports = {
   syncBiometricAttendance,
   computeAttendanceStatus,
+  findLocalEmployee,
+  processLocalPunch,
   ingestPunchesAndUsers,
   syncLocalDatabase,
   syncMongoDatabase,
