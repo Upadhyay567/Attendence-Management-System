@@ -385417,7 +385417,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 242,
       "totalPunchesCount": 12408,
       "source": "easywdms"
@@ -385433,7 +385433,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.987Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 1219,
       "totalPunchesCount": 48,
       "source": "easywdms"
@@ -385449,7 +385449,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 56,
       "totalPunchesCount": 2123,
       "source": "easywdms"
@@ -385465,7 +385465,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.987Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 161,
       "totalPunchesCount": 14393,
       "source": "easywdms"
@@ -385481,7 +385481,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.987Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 210,
       "totalPunchesCount": 10691,
       "source": "easywdms"
@@ -385497,7 +385497,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 538,
       "totalPunchesCount": 11112,
       "source": "easywdms"
@@ -385513,7 +385513,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 159,
       "totalPunchesCount": 11313,
       "source": "easywdms"
@@ -385529,7 +385529,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 179,
       "totalPunchesCount": 6828,
       "source": "easywdms"
@@ -385545,7 +385545,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 779,
       "totalPunchesCount": 14959,
       "source": "easywdms"
@@ -385561,7 +385561,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 762,
       "totalPunchesCount": 14602,
       "source": "easywdms"
@@ -385577,7 +385577,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 161,
       "totalPunchesCount": 9199,
       "source": "easywdms"
@@ -385593,7 +385593,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 41,
       "totalPunchesCount": 371,
       "source": "easywdms"
@@ -385609,7 +385609,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "enrolledUsersCount": 108,
       "totalPunchesCount": 7694,
       "source": "easywdms"
@@ -385640,7 +385640,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:07:14.988Z",
+      "lastSyncAt": "2026-10-01T08:17:35.613Z",
       "source": "easywdms",
       "enrolledUsersCount": 217,
       "totalPunchesCount": 13685

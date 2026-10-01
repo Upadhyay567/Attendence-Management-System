@@ -963,22 +963,29 @@ export async function renderAdminDashboard() {
     // Populate Leave request alert inbox
     const pendingInbox = document.getElementById('admin-pending-leaves-box');
     if (pendingInbox) {
+      let leaves = DB.getLeaveRequests() || [];
+      if (isHrOrManager && !hasAssignedLocations) {
+        leaves = [];
+      } else if (isHrOrManager && hasAssignedLocations) {
+        leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
+      }
       const pendingLeaves = leaves.filter(lv => lv.status === 'Pending');
       if (pendingLeaves.length === 0) {
         pendingInbox.innerHTML = html`<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
       } else {
         pendingInbox.innerHTML = pendingLeaves.map(lv => {
           const u = DB.getUser(lv.userId);
+          const userName = u ? u.name : (lv.employeeName || 'Unknown Employee');
           return `
             <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;display:flex;flex-direction:column;gap:8px">
               <div style="display:flex;justify-content:space-between">
-                <strong style="font-size:14px">${Utils.escape(u.name)}</strong>
+                <strong style="font-size:14px">${Utils.escape(userName)}</strong>
                 <span class="badge badge-pending">${lv.type}</span>
               </div>
               <div style="font-size:12px;color:var(--text-secondary)">
                 Dates: ${Utils.formatDate(lv.startDate)} to ${Utils.formatDate(lv.endDate)}
               </div>
-              <div style="font-size:12px;color:var(--text-muted);line-height:1.4">"${Utils.escape(lv.reason)}"</div>
+              <div style="font-size:12px;color:var(--text-muted);line-height:1.4">"${Utils.escape(lv.reason || '')}"</div>
               <div style="display:flex;gap:8px;margin-top:4px">
                 <a href="#admin-approvals" class="btn" style="padding:6px 12px;font-size:12px;width:auto">Process Request</a>
               </div>
