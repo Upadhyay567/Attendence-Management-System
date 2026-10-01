@@ -47,20 +47,14 @@ export function renderDailyWorkStatus() {
         <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #1e293b; letter-spacing: -0.01em;">Daily Work Status</h2>
 
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <!-- Search Input & Search Button -->
-          <div style="display: inline-flex; align-items: center; gap: 6px; position: relative;">
-            <div style="position: relative; width: 200px;">
-              <input type="text" id="dws-search-input" class="form-input" placeholder="Search employee..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 28px 0 32px; font-size: 13.5px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; width: 100%; box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-              <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: #64748b; fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <button type="button" id="btn-dws-clear-search" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; color: #94a3b8; cursor: pointer; padding: 0; display: ${dailyWorkStatusSearchQuery ? 'block' : 'none'}; line-height: 1;" title="Clear search">&times;</button>
-            </div>
-            <button type="button" id="btn-dws-search-trigger" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; height: 34px; padding: 0 13px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <span>Search</span>
-            </button>
+          <!-- Search Input -->
+          <div style="position: relative; width: 220px;">
+            <input type="text" id="dws-search-input" class="form-input" placeholder="Search employee..." value="${Utils.escape(dailyWorkStatusSearchQuery)}" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 28px 0 32px; font-size: 13.5px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #1e293b; width: 100%; box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+            <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: #64748b; fill: none; pointer-events: none;" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <button type="button" id="btn-dws-clear-search" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 14px; color: #94a3b8; cursor: pointer; padding: 0; display: ${dailyWorkStatusSearchQuery ? 'block' : 'none'}; line-height: 1;" title="Clear search">&times;</button>
           </div>
 
           <!-- Location Filter Dropdown -->
@@ -399,9 +393,8 @@ export function renderDailyWorkStatus() {
     });
   }
 
-  // Search Input, Search Button & Clear Button Events
+  // Search Input & Clear Button Events
   const searchInput = document.getElementById('dws-search-input');
-  const searchBtn = document.getElementById('btn-dws-search-trigger');
   const clearSearchBtn = document.getElementById('btn-dws-clear-search');
 
   const executeSearch = () => {
@@ -414,13 +407,6 @@ export function renderDailyWorkStatus() {
       updateMatrixTable();
     }
   };
-
-  if (searchBtn) {
-    searchBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      executeSearch();
-    });
-  }
 
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {

@@ -14,9 +14,9 @@ describe('Daily Work Status - Location Filter & Search Button Controls', () => {
   });
 
   test('UI elements for Location Filter & Search are declared in dailyWorkStatusView.js', () => {
-    // 1. Search input and search button
+    // 1. Search input with clear button (no duplicate search button)
     expect(dwsCode).toContain('id="dws-search-input"');
-    expect(dwsCode).toContain('id="btn-dws-search-trigger"');
+    expect(dwsCode).not.toContain('id="btn-dws-search-trigger"');
     expect(dwsCode).toContain('id="btn-dws-clear-search"');
     expect(dwsCode).toContain('Search employee');
 
@@ -37,8 +37,6 @@ describe('Daily Work Status - Location Filter & Search Button Controls', () => {
     expect(dwsCode).toContain("getElementById('dws-location-filter')");
     expect(dwsCode).toContain("locSelect.addEventListener('change'");
     expect(dwsCode).toContain("getElementById('dws-search-input')");
-    expect(dwsCode).toContain("getElementById('btn-dws-search-trigger')");
-    expect(dwsCode).toContain("searchBtn.addEventListener('click'");
     expect(dwsCode).toContain("searchInput.addEventListener('input'");
     expect(dwsCode).toContain("searchInput.addEventListener('keydown'");
   });
