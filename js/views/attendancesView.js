@@ -59,6 +59,13 @@ export function renderAdminAttendances() {
     return `${monthNames[adminAttendancesSelectedMonth]}, ${adminAttendancesSelectedYear}`;
   }
 
+  function updateFilterButtonLabel() {
+    const lbl = document.getElementById('lbl-admin-att-current-month');
+    if (lbl) {
+      lbl.textContent = getFilterButtonLabel();
+    }
+  }
+
   main.innerHTML = html`
     <div id="admin-attendances-page-container" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; color: var(--text-primary);">
       <!-- Header Bar -->

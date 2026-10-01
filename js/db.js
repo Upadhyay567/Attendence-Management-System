@@ -518,17 +518,36 @@ export const DB = {
 
           window.sseSource.onerror = () => {
             if (window.sseSource) {
-              window.sseSource.close();
+              try { window.sseSource.close(); } catch (_) {}
               window.sseSource = null;
             }
-            // Auto reconnect after 5 seconds
-            setTimeout(connectSSE, 5000);
+            if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+            window._sseReconnectTimer = setTimeout(connectSSE, 3000);
           };
         } catch (e) {
           console.warn('Failed to establish SSE stream:', e);
-          setTimeout(connectSSE, 5000);
+          if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+          window._sseReconnectTimer = setTimeout(connectSSE, 3000);
         }
       };
+
+      if (!window._sseListenersAttached && typeof window !== 'undefined') {
+        window._sseListenersAttached = true;
+        window.addEventListener('online', () => {
+          if (!window.sseSource || window.sseSource.readyState === 2) {
+            connectSSE();
+          }
+        });
+        if (typeof document !== 'undefined') {
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              if (!window.sseSource || window.sseSource.readyState === 2) {
+                connectSSE();
+              }
+            }
+          });
+        }
+      }
 
       connectSSE();
     }

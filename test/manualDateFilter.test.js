@@ -200,4 +200,17 @@ describe('Attendance View - Manual Date and Date Range Filter', () => {
     expect(attendancesViewCode).toContain("toDateInput.addEventListener('input', handleRangeChange)");
     expect(attendancesViewCode).toContain("toDateInput.addEventListener('change', handleRangeChange)");
   });
+
+  test('updateFilterButtonLabel is explicitly defined and updates button label element', () => {
+    expect(attendancesViewCode).toContain("function updateFilterButtonLabel()");
+    expect(attendancesViewCode).toContain("document.getElementById('lbl-admin-att-current-month')");
+    expect(attendancesViewCode).toContain("lbl.textContent = getFilterButtonLabel();");
+  });
+
+  test('app.js updateGpsUI safely handles null schedule when retrieving todayLog', () => {
+    const appJsPath = path.join(__dirname, '..', 'js', 'app.js');
+    const appJsCode = fs.readFileSync(appJsPath, 'utf8');
+    expect(appJsCode).toContain("const todayLog = user ? (schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id)) : null;");
+  });
 });
+
