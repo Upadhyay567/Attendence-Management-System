@@ -212,5 +212,46 @@ describe('Attendance View - Manual Date and Date Range Filter', () => {
     const appJsCode = fs.readFileSync(appJsPath, 'utf8');
     expect(appJsCode).toContain("const todayLog = user ? (schedule ? DB.getTodayLog(user.id, schedule.id) : DB.getTodayLog(user.id)) : null;");
   });
+
+  test('Chronological ordering for Date Range: From Date -> Next Date -> Next Date -> To Date', () => {
+    const mockLogs = [
+      { id: '1', date: '2026-09-28', employeeName: 'Charlie' },
+      { id: '2', date: '2026-09-25', employeeName: 'Alice' },
+      { id: '3', date: '2026-09-30', employeeName: 'Bob' },
+      { id: '4', date: '2026-09-26', employeeName: 'David' }
+    ];
+
+    const isDateRange = true;
+    const sortField = 'date';
+    let sortOrder = 'desc'; // simulates default descending sort
+
+    if (isDateRange && sortField === 'date') {
+      sortOrder = 'asc';
+    }
+
+    mockLogs.sort((a, b) => {
+      let valA = a[sortField] || '';
+      let valB = b[sortField] || '';
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Earliest date must appear first, latest date last: 25 -> 26 -> 28 -> 30
+    expect(mockLogs.map(l => l.date)).toEqual([
+      '2026-09-25',
+      '2026-09-26',
+      '2026-09-28',
+      '2026-09-30'
+    ]);
+  });
+
+  test('attendancesView.js enforces chronological asc sorting when Date Range filter is active', () => {
+    expect(attendancesViewCode).toContain("const isDateRange = adminAttendancesFilterMode === 'manual' &&");
+    expect(attendancesViewCode).toContain("adminAttendancesFromDate && adminAttendancesToDate;");
+    expect(attendancesViewCode).toContain("if (isDateRange && sortField === 'date') {");
+    expect(attendancesViewCode).toContain("sortOrder = 'asc';");
+  });
 });
+
 

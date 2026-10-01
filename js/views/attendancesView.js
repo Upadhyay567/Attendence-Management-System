@@ -378,6 +378,8 @@ export function renderAdminAttendances() {
         adminAttendancesToDate = '';
         adminAttendancesDateRangeError = '';
         adminAttendancesCurrentPage = 1;
+        adminAttendancesSortField = 'date';
+        adminAttendancesSortOrder = 'desc';
         if (singleDateInput) singleDateInput.value = '';
         if (fromDateInput) fromDateInput.value = '';
         if (toDateInput) toDateInput.value = '';
@@ -486,6 +488,11 @@ export function renderAdminAttendances() {
       adminAttendancesFromDate = fromVal;
       adminAttendancesToDate = toVal;
       adminAttendancesCurrentPage = 1;
+      // When date range (From Date -> To Date) is selected, sort chronologically: From Date -> Next Date -> To Date (asc)
+      if (fromVal && toVal) {
+        adminAttendancesSortField = 'date';
+        adminAttendancesSortOrder = 'asc';
+      }
       updateFilterButtonLabel();
       updateTable();
     } else {
@@ -494,6 +501,8 @@ export function renderAdminAttendances() {
         adminAttendancesFromDate = '';
         adminAttendancesToDate = '';
         adminAttendancesCurrentPage = 1;
+        adminAttendancesSortField = 'date';
+        adminAttendancesSortOrder = 'desc';
         updateFilterButtonLabel();
         updateTable();
       }
@@ -560,6 +569,8 @@ export function renderAdminAttendances() {
       adminAttendancesToDate = '';
       adminAttendancesDateRangeError = '';
       adminAttendancesCurrentPage = 1;
+      adminAttendancesSortField = 'date';
+      adminAttendancesSortOrder = 'desc';
       if (singleDateInput) singleDateInput.value = '';
       if (fromDateInput) fromDateInput.value = '';
       if (toDateInput) toDateInput.value = '';
@@ -585,6 +596,8 @@ export function renderAdminAttendances() {
       adminAttendancesToDate = '';
       adminAttendancesDateRangeError = '';
       adminAttendancesCurrentPage = 1;
+      adminAttendancesSortField = 'date';
+      adminAttendancesSortOrder = 'desc';
       if (singleDateInput) singleDateInput.value = '';
       if (fromDateInput) fromDateInput.value = '';
       if (toDateInput) toDateInput.value = '';
@@ -632,6 +645,8 @@ export function renderAdminAttendances() {
       adminAttendancesFromDate = '';
       adminAttendancesToDate = '';
       adminAttendancesDateRangeError = '';
+      adminAttendancesSortField = 'date';
+      adminAttendancesSortOrder = 'desc';
       if (singleDateInput) singleDateInput.value = '';
       if (fromDateInput) fromDateInput.value = '';
       if (toDateInput) toDateInput.value = '';
@@ -987,14 +1002,38 @@ export function renderAdminAttendances() {
 
     // 3. Sort
     filtered.sort((a, b) => {
-      let valA = a[adminAttendancesSortField] || '';
-      let valB = b[adminAttendancesSortField] || '';
+      let sortField = adminAttendancesSortField;
+      let sortOrder = adminAttendancesSortOrder;
+
+      // When date range (From Date -> To Date) is active and sorted by date,
+      // strictly display in chronological order: From Date -> Next Date -> Next Date -> To Date (asc)
+      const isDateRange = adminAttendancesFilterMode === 'manual' &&
+        adminAttendancesFromDate && adminAttendancesToDate;
+
+      if (isDateRange && sortField === 'date') {
+        sortOrder = 'asc';
+      }
+
+      let valA = a[sortField] || '';
+      let valB = b[sortField] || '';
 
       if (typeof valA === 'string') valA = valA.toLowerCase();
       if (typeof valB === 'string') valB = valB.toLowerCase();
 
-      if (valA < valB) return adminAttendancesSortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return adminAttendancesSortOrder === 'asc' ? 1 : -1;
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+
+      // Secondary tie-breaker for same date: sort by employee name asc, then checkIn asc
+      if (sortField === 'date') {
+        const nameA = (a.employeeName || '').toLowerCase();
+        const nameB = (b.employeeName || '').toLowerCase();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        const timeA = a.checkIn || '';
+        const timeB = b.checkIn || '';
+        if (timeA < timeB) return -1;
+        if (timeA > timeB) return 1;
+      }
       return 0;
     });
 
@@ -1614,6 +1653,28 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
   const filename = `Attendances${dateSlug}${locSlug}.xlsx`;
   const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
   
+  // Sort mappedLogs to match table sorting and chronological order
+  mappedLogs.sort((a, b) => {
+    let sortField = adminAttendancesSortField;
+    let sortOrder = adminAttendancesSortOrder;
+    if (adminAttendancesFilterMode === 'manual' && adminAttendancesFromDate && adminAttendancesToDate && sortField === 'date') {
+      sortOrder = 'asc';
+    }
+    let valA = a[sortField] || '';
+    let valB = b[sortField] || '';
+    if (typeof valA === 'string') valA = valA.toLowerCase();
+    if (typeof valB === 'string') valB = valB.toLowerCase();
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    if (sortField === 'date') {
+      const nameA = (a.employeeName || '').toLowerCase();
+      const nameB = (b.employeeName || '').toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+    }
+    return 0;
+  });
+
   const rows = mappedLogs.map(l => [
     l.employeeName,
     l.employeeId,
