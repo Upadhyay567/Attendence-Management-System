@@ -15,6 +15,7 @@ describe('Shift Schedule Isolation & Active Shift Sequencing', () => {
     const fn = new Function('module', 'exports', 'require', wrapped);
     fn(mod, mod.exports, require);
     DB = mod.exports.DB;
+    DB.save = () => Promise.resolve();
   });
 
   afterAll(() => {
@@ -67,7 +68,7 @@ describe('Shift Schedule Isolation & Active Shift Sequencing', () => {
     const userId = 'test_multi_shift_user';
 
     // Check in to Afternoon Shift
-    const afternoonLog = DB.checkIn(userId, 'none', 'Kohat Enclave, Pitampura, Delhi', false, '', '', 0, null, '14:02', 'shift_afternoon');
+    const afternoonLog = DB.checkIn(userId, 'none', 'Test Worksite A', false, '', '', 0, null, '14:02', 'shift_afternoon');
     expect(afternoonLog).not.toBeNull();
     expect(afternoonLog.shiftId).toBe('shift_afternoon');
     expect(afternoonLog.checkIn).toBe('14:02');

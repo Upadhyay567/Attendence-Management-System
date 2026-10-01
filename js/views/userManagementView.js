@@ -109,7 +109,7 @@ export function renderAdminUsers() {
                   : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
                 const workLocation = assignedSchedules.length > 0
-                  ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
+                  ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
                   : (u.preferredLocation || 'Not Assigned');
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
@@ -315,7 +315,7 @@ export function renderAdminUsers() {
             : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
           const workLocation = assignedSchedules.length > 0
-            ? [...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi'))].join(', ')
+            ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
             : (u.preferredLocation || 'Not Assigned');
 
           const profileStatus = u.profileVerificationStatus || 'Approved';
@@ -581,7 +581,7 @@ export function openUserModal(userId = null) {
               const isChecked = isEdit
                 ? (Array.isArray(user.scheduleIds) ? user.scheduleIds.includes(s.id) : (user.scheduleId === s.id))
                 : (s.id === schedules[0].id);
-              const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || 'Kohat Enclave, Pitampura, Delhi';
+              const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || '';
               return `
                 <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;transition:all 0.2s ease;">
                   <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -769,13 +769,13 @@ export function openUserModal(userId = null) {
       const sid = cb.value;
       const locSelect = overlay.querySelector(`.editor-shift-location-select[data-shift-id="${sid}"]`);
       if (locSelect) {
-        shiftLocations[sid] = locSelect.value.trim() || 'Kohat Enclave, Pitampura, Delhi';
+        shiftLocations[sid] = locSelect.value.trim() || '';
       } else {
-        shiftLocations[sid] = 'Kohat Enclave, Pitampura, Delhi';
+        shiftLocations[sid] = '';
       }
     });
 
-    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations)[0] || (isEdit && user ? user.preferredLocation : null) || 'Kohat Enclave, Pitampura, Delhi');
+    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations).find(Boolean) || (isEdit && user ? user.preferredLocation : null) || '');
 
     const roleEl = document.getElementById('editor-role');
     const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');

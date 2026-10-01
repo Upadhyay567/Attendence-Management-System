@@ -16,7 +16,7 @@ export function renderEmployeeDashboard() {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, selectedShiftId);
   let schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
-  const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || schedule.location || user.preferredLocation || 'Kohat Enclave, Pitampura, Delhi') : (user.preferredLocation || null);
+  const officeName = schedule ? ((user.shiftLocations && user.shiftLocations[schedule.id]) || schedule.location || user.preferredLocation || '') : (user.preferredLocation || null);
   const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
 
   const getCheckInStatusFn = typeof getCheckInTimeStatus === 'function' ? getCheckInTimeStatus : (window.getCheckInTimeStatus || (() => ({ allowed: true, type: 'Normal' })));
@@ -29,7 +29,6 @@ export function renderEmployeeDashboard() {
   let optionsHTML = '';
   optionsHTML += `<option value="real">🛰️ Use Device GPS (Real-Time Location)</option>`;
   const officeCoordsMap = window.OFFICE_COORDINATES || {
-    'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
     'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
     'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
     'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
@@ -55,7 +54,7 @@ export function renderEmployeeDashboard() {
           ${resolved.allSchedules.map(s => {
             const isSel = String(s.id) === String(schedule.id);
             const sLog = DB.getTodayLog(user.id, s.id);
-            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Kohat Enclave, Pitampura, Delhi';
+            const sLoc = (user.shiftLocations && user.shiftLocations[s.id]) || user.preferredLocation || s.location || 'Not Assigned';
             
             let statusBadge = `<span class="badge" style="font-size:9.5px; padding:2px 7px; background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08);">⚪ Not Started</span>`;
             if (sLog && sLog.checkIn && !sLog.checkOut) {
@@ -581,7 +580,7 @@ export function renderEmployeeDashboard() {
       }
 
       const todayStr = new Date().toISOString().split('T')[0];
-      const targetCoords = window.OFFICE_COORDINATES[officeName] || window.OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]];
+      const targetCoords = (officeName && window.OFFICE_COORDINATES[officeName]) || window.OFFICE_COORDINATES[Object.keys(window.OFFICE_COORDINATES)[0]] || { lat: 28.69515, lng: 77.18604 };
 
       const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
       const inRange = distance <= 100;
@@ -821,8 +820,8 @@ export function renderEmployeeDashboard() {
     const geoCheckOut = document.getElementById('btn-geofence-checkout');
 
     const OFFICE_COORDINATES = window.OFFICE_COORDINATES;
-    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (schedule ? schedule.location : null) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
-    const targetCoords = OFFICE_COORDINATES[officeName] || OFFICE_COORDINATES['Kohat Enclave, Pitampura, Delhi'] || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]];
+    const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (schedule ? schedule.location : null) || (user && user.preferredLocation) || '';
+    const targetCoords = (officeName && OFFICE_COORDINATES[officeName]) || OFFICE_COORDINATES[Object.keys(OFFICE_COORDINATES)[0]] || { lat: 28.69515, lng: 77.18604 };
 
     const todayLog = schedule ? DB.getTodayLog(user.id, schedule.id) : null;
     const isOffline = !!(todayLog && todayLog.checkOut);
@@ -2337,7 +2336,7 @@ export async function handleClockOut(userId, shiftId = null) {
   const todayStr = new Date().toISOString().split('T')[0];
   const resolved = DB.resolveUserShiftForDate(user, todayStr, shiftId);
   const schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
-  const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
+  const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || (schedule ? schedule.location : '') || '';
 
   if (!inRange) {
     alert(`❌ Clock-out Rejected! Your current coordinates are out of range for the office geofence. Under company policy, you must be within 100m of ${officeName} to clock out.`);

@@ -4,7 +4,7 @@ const DB_KEY = 'attendance_system_db';
 
 const defaultSchedules = [
   { id: 'sch_hemant', name: 'Hemant Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Hemant Location' },
-  { id: 'sch_1', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Kohat Enclave, Pitampura, Delhi' },
+  { id: 'sch_1', name: 'Standard Day Shift', startTime: '09:00', endTime: '17:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: '' },
   { id: 'sch_2', name: 'Morning Shift', startTime: '07:00', endTime: '15:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Chandni Chowk' },
   { id: 'sch_3', name: 'Night Shift', startTime: '22:00', endTime: '06:00', gracePeriod: 15, workDays: [1, 2, 3, 4, 5], location: 'Omaxe City, Delhi' }
 ];
@@ -428,7 +428,7 @@ function generateDemoLogs() {
           checkOut: checkOutTime,
           status,
           biometricUsed: 'none',
-          location: 'Kohat Enclave, Pitampura, Delhi'
+          location: ''
         });
       }
     });
@@ -860,7 +860,7 @@ export const DB = {
     // Ensure all schedules have workDays, location, halfDayLimit, gracePeriod
     this.data.schedules.forEach(s => {
       if (!s.workDays) { s.workDays = [1, 2, 3, 4, 5]; modified = true; }
-      if (!s.location) { s.location = 'Kohat Enclave, Pitampura, Delhi'; modified = true; }
+      if (!s.location) { s.location = ''; modified = true; }
       if (s.gracePeriod === undefined) { s.gracePeriod = 15; modified = true; }
       if (s.halfDayLimit === undefined) { s.halfDayLimit = 120; modified = true; }
     });
@@ -1664,11 +1664,8 @@ export const DB = {
 
   // Schedules API
   getOfficeCoordinates() {
-    if (!this.data.officeCoordinates || Object.keys(this.data.officeCoordinates).length === 0) {
-      this.data.officeCoordinates = {
-        'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 }
-      };
-      this.save();
+    if (!this.data.officeCoordinates) {
+      this.data.officeCoordinates = {};
     }
     return this.data.officeCoordinates;
   },
@@ -1964,7 +1961,7 @@ export const DB = {
     return (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr);
   },
 
-  addPendingCheckIn(userId, location = 'Kohat Enclave, Pitampura, Delhi', coords = '', distance = 0) {
+  addPendingCheckIn(userId, location = '', coords = '', distance = 0) {
     return null;
   },
 
@@ -1988,8 +1985,9 @@ export const DB = {
     
     const effectiveLocation = location || 
                               (user && user.shiftLocations && resolvedShiftId && user.shiftLocations[resolvedShiftId]) || 
+                              (schedule && schedule.location) ||
                               (user && user.preferredLocation) || 
-                              'Kohat Enclave, Pitampura, Delhi';
+                              '';
     
     let existing = this.getTodayLog(userId, resolvedShiftId);
     if (existing && existing.checkIn && existing.status !== 'Pending Verification' && !existing.checkOut) {
@@ -2261,7 +2259,7 @@ export const DB = {
       endTime: '17:00',
       gracePeriod: 15,
       workDays: [1, 2, 3, 4, 5],
-      location: 'Kohat Enclave, Pitampura, Delhi'
+      location: ''
     };
     const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays)) ? sched.workDays : [1, 2, 3, 4, 5];
 
@@ -2568,8 +2566,8 @@ export const DB = {
             receiver.scheduleId = tempSched;
           }
           if (type === 'both' || type === 'location') {
-            const loc1 = (sender.shiftLocations && sender.scheduleId && sender.shiftLocations[sender.scheduleId]) || sender.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
-            const loc2 = (receiver.shiftLocations && receiver.scheduleId && receiver.shiftLocations[receiver.scheduleId]) || receiver.preferredLocation || 'Kohat Enclave, Pitampura, Delhi';
+            const loc1 = (sender.shiftLocations && sender.scheduleId && sender.shiftLocations[sender.scheduleId]) || sender.preferredLocation || '';
+            const loc2 = (receiver.shiftLocations && receiver.scheduleId && receiver.shiftLocations[receiver.scheduleId]) || receiver.preferredLocation || '';
             sender.preferredLocation = loc2;
             receiver.preferredLocation = loc1;
             if (sender.shiftLocations && sender.scheduleId) sender.shiftLocations[sender.scheduleId] = loc2;

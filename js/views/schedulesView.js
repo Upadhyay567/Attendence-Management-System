@@ -1238,8 +1238,9 @@ export function renderAdminSchedules(tab) {
                 <button class="btn-add-location-inline" data-id="${s.id}" title="Add New Location" style="padding:2px 8px;font-size:10px;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;white-space:nowrap;width:auto">➕ Add Location</button>
               </div>
               <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:6px 8px;font-size:12px;width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
+                <option value="" ${!s.location ? 'selected' : ''}>-- Select Location --</option>
                 ${Object.keys(window.OFFICE_COORDINATES || {}).map(loc => `
-                  <option value="${loc}" ${s.location === loc || (!s.location && loc === 'Kohat Enclave, Pitampura, Delhi') ? 'selected' : ''}>${loc}</option>
+                  <option value="${loc}" ${s.location === loc ? 'selected' : ''}>${loc}</option>
                 `).join('')}
               </select>
             </div>
