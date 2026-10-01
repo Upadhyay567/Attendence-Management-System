@@ -104,8 +104,8 @@ export async function renderAdminDashboard() {
             <div style="display: flex; align-items: center; gap: 8px; position: relative;">
               <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">Locations:</label>
               <div style="position: relative;" id="live-feed-location-container">
-                <button type="button" id="live-feed-location-btn" class="form-input" style="height: 34px; padding: 0 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: ${isHrOrManager && !hasAssignedLocations ? 'default' : 'pointer'}; min-width: 210px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box;">
-                  <span id="live-feed-location-btn-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;">${isHrOrManager && !hasAssignedLocations ? '' : (assignedLocations.length === 1 ? Utils.escape(assignedLocations[0]) : (hasAssignedLocations ? 'All Assigned Locations' : 'All Locations'))}</span>
+                <button type="button" id="live-feed-location-btn" class="form-input" style="height: 34px; padding: 0 12px; font-size: 13px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 210px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box;">
+                  <span id="live-feed-location-btn-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;">All Locations</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div id="live-feed-location-dropdown" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); z-index: 1050; min-width: 270px; max-height: 380px; overflow-y: auto; padding: 6px 0; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
@@ -504,70 +504,14 @@ export async function renderAdminDashboard() {
   }
 
   const getAssignedUserIds = () => {
-    const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const baseRole = (DB.getUserBaseRole ? DB.getUserBaseRole(freshUser.role) : freshUser.role) || freshUser.role;
-    const isHrOrManager = baseRole === 'hr' || baseRole === 'manager' || freshUser.role === 'hr' || freshUser.role === 'manager';
-    const assignedLocations = getUserAssignedLocations(freshUser);
-    const hasAssignedLocations = assignedLocations.length > 0;
-    const allowedLocsLower = assignedLocations.map(l => l.toLowerCase().trim());
-
-    if (isHrOrManager && !hasAssignedLocations) {
-      return [];
-    }
-
-    let employees = DB.getUsers().filter(u => u && (u.role === 'employee' || u.role === 'hr' || u.role === 'manager' || (DB.getUserBaseRole && (DB.getUserBaseRole(u.role) === 'hr' || DB.getUserBaseRole(u.role) === 'manager' || DB.getUserBaseRole(u.role) === 'employee'))) && u.status !== 'Inactive');
-    if (isHrOrManager && hasAssignedLocations) {
-      employees = employees.filter(u => {
-        const uLocs = getUserAssignedLocations(u).map(l => l.toLowerCase().trim());
-        if (uLocs.some(l => allowedLocsLower.includes(l))) return true;
-        const uSchedIds = Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0 ? u.scheduleIds : (u.scheduleId ? [u.scheduleId] : []);
-        for (const sid of uSchedIds) {
-          const sch = DB.getSchedule(sid);
-          if (sch && sch.location && allowedLocsLower.includes(sch.location.toLowerCase().trim())) {
-            return true;
-          }
-        }
-        // Also check if user has logged biometric punches at an allowed location today
-        const uTodayLogs = (DB.getLogs() || []).filter(l => (l.userId === u.id || l.biometricUserId === u.biometricUserId) && l.date === new Date().toISOString().split('T')[0]);
-        for (const ul of uTodayLogs) {
-          const uLoc = (ul.location || ul.biometricUsed || '').toLowerCase().trim();
-          if (uLoc && allowedLocsLower.includes(uLoc)) return true;
-        }
-        return false;
-      });
-    }
-    return employees;
+    return DB.getUsers().filter(u => u && u.status !== 'Inactive');
   };
 
   // Helper to fetch Present Now records strictly following:
   // Today's actual attendance records -> group by employee -> check latest attendance record -> no checkout -> Present Now
   function getTodayPresentNowRecords() {
-    const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const baseRole = (DB.getUserBaseRole ? DB.getUserBaseRole(freshUser.role) : freshUser.role) || freshUser.role;
-    const isHrOrManager = baseRole === 'hr' || baseRole === 'manager' || freshUser.role === 'hr' || freshUser.role === 'manager';
-    const assignedLocations = getUserAssignedLocations(freshUser);
-    const hasAssignedLocations = assignedLocations.length > 0;
-    const allowedLocsLower = assignedLocations.map(l => l.toLowerCase().trim());
-
-    if (isHrOrManager && !hasAssignedLocations) {
-      return [];
-    }
-
     const todayStr = new Date().toISOString().split('T')[0];
     let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
-
-    if (isHrOrManager && hasAssignedLocations) {
-      const activeEmployees = getAssignedUserIds();
-      const assignedIds = new Set(activeEmployees.map(u => u.id));
-      allTodayLogs = allTodayLogs.filter(l => {
-        const loc = (l.location || '').toLowerCase().trim();
-        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
-        return (loc && allowedLocsLower.includes(loc)) ||
-               (bioLoc && allowedLocsLower.includes(bioLoc)) ||
-               assignedIds.has(l.userId) ||
-               (currentUser && l.userId === currentUser.id);
-      });
-    }
 
     // Group today's actual attendance records strictly by employee (deduplicating multiple device punches)
     const userTodayMap = new Map();
@@ -611,9 +555,9 @@ export async function renderAdminDashboard() {
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;
-      if (!l.location) {
+      if (!l.location && !l.biometricUsed) {
         gpsStatus = '<span style="font-size:11.5px;color:var(--text-muted)">— No GPS</span>';
-      } else if (distKm <= 0.1) {
+      } else if (distKm <= 0.1 || l.biometricUsed) {
         const distLabel = distM > 0 ? (distM + 'm from worksite') : 'At worksite';
         gpsStatus = '<span style="font-size:11.5px;font-weight:700;color:#10b981">IN RANGE (' + distLabel + ')</span>';
       } else {
@@ -622,7 +566,7 @@ export async function renderAdminDashboard() {
       return {
         user: u,
         time: l.checkIn,
-        location: l.location || '—',
+        location: l.location || l.biometricUsed || '—',
         gpsStatus: gpsStatus
       };
     });
@@ -711,54 +655,21 @@ export async function renderAdminDashboard() {
 
     const todayStr = new Date().toISOString().split('T')[0];
 
-    let presentNowRecords = [];
-    let presentCount = 0;
-    let lateCount = 0;
-    let totalEmployees = 0;
-    let absentCount = 0;
-    let leaveCount = 0;
-    let pendingSwapsCount = 0;
+    const presentNowRecords = getTodayPresentNowRecords();
+    const presentCount = presentNowRecords.length;
+    const lateToday = presentNowRecords.filter(l => l.status === 'Late');
+    const lateCount = lateToday.length;
 
-    if (isHrOrManager && !hasAssignedLocations) {
-      totalEmployees = 0;
-      presentCount = 0;
-      absentCount = 0;
-      lateCount = 0;
-      leaveCount = 0;
-      pendingSwapsCount = 0;
-      currentTodayLogs = [];
-    } else {
-      presentNowRecords = getTodayPresentNowRecords();
-      presentCount = presentNowRecords.length;
-      const lateToday = presentNowRecords.filter(l => l.status === 'Late');
-      lateCount = lateToday.length;
+    let logs = DB.getLogs().filter(l => l.date === todayStr);
 
-      let logs = DB.getLogs().filter(l => l.date === todayStr);
-      if (isHrOrManager && hasAssignedLocations) {
-        logs = logs.filter(l => {
-          const loc = (l.location || '').toLowerCase().trim();
-          const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
-          return (loc && allowedLocsLower.includes(loc)) || (bioLoc && allowedLocsLower.includes(bioLoc)) || assignedUserIds.includes(l.userId) || (currentUser && l.userId === currentUser.id);
-        });
-      } else {
-        logs = logs.filter(l => assignedUserIds.includes(l.userId));
-      }
+    const onLeaveToday = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));
+    const leaveCount = onLeaveToday.length;
 
-      const onLeaveToday = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));
-      leaveCount = onLeaveToday.length;
+    const totalEmployees = activeEmployees.length;
+    const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId)).size;
+    const absentCount = Math.max(0, totalEmployees - checkedInAtAllCount - leaveCount);
 
-      totalEmployees = activeEmployees.length;
-      const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId)).size;
-      absentCount = Math.max(0, totalEmployees - checkedInAtAllCount - leaveCount);
-
-      pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => {
-        if (s.status !== 'Pending Manager') return false;
-        if (isHrOrManager && hasAssignedLocations) {
-          return assignedUserIds.includes(s.senderId) || assignedUserIds.includes(s.receiverId);
-        }
-        return true;
-      }).length;
-    }
+    const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager').length;
 
     // Greeting calculations based on local time
     const hour = new Date().getHours();
@@ -867,76 +778,80 @@ export async function renderAdminDashboard() {
 
     // Group Present Now records by worksite location
     let worksitePanelHTML = '';
-    if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager')) {
-      if (isHrOrManager && !hasAssignedLocations) {
-        worksitePanelHTML = '';
-      } else {
-        const worksiteLocs = (isHrOrManager && hasAssignedLocations)
-          ? assignedLocations
-          : Object.keys(DB.getOfficeCoordinates() || {});
+    if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'finance_manager' || (DB.getUserBaseRole && ['hr', 'manager', 'admin', 'finance_manager'].includes(DB.getUserBaseRole(currentUser.role))))) {
+      const officeCoords = DB.getOfficeCoordinates() || {};
+      const worksiteLocs = Array.from(new Set([
+        ...Object.keys(officeCoords).filter(k => !k.includes('(')),
+        ...presentNowRecords.map(l => (l.location || l.biometricUsed || '').trim()).filter(Boolean)
+      ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
 
-        const locationGroups = {};
-        worksiteLocs.forEach(loc => {
-          locationGroups[loc] = [];
-        });
+      const locationGroups = {};
+      worksiteLocs.forEach(loc => {
+        locationGroups[loc] = [];
+      });
 
-        presentNowRecords.forEach(l => {
-          if (l.checkIn && l.location) {
-            const matchedLoc = worksiteLocs.find(wl => wl.toLowerCase().trim() === l.location.toLowerCase().trim()) || l.location;
-            const u = DB.getUser(l.userId) || { id: l.userId, name: l.employeeName || l.userName || 'Employee' };
-            if (!locationGroups[matchedLoc]) {
-              locationGroups[matchedLoc] = [];
-            }
-            locationGroups[matchedLoc].push({ id: u.id, name: u.name, time: l.checkIn });
+      presentNowRecords.forEach(l => {
+        const rawLoc = (l.location || l.biometricUsed || '').trim();
+        if (l.checkIn && rawLoc) {
+          const matchedLoc = worksiteLocs.find(wl => wl.toLowerCase().trim() === rawLoc.toLowerCase().trim()) || rawLoc;
+          const u = DB.getUser(l.userId) || { id: l.userId, name: l.employeeName || l.userName || 'Employee' };
+          if (!locationGroups[matchedLoc]) {
+            locationGroups[matchedLoc] = [];
           }
-        });
-
-        // Ensure staff inside each location group is sorted descending by check-in time
-        Object.values(locationGroups).forEach(group => {
-          group.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
-        });
-
-        if (Object.keys(locationGroups).length > 0) {
-          worksitePanelHTML = `
-            <div class="card-panel" style="margin-top:20px">
-              <div class="card-panel-header">
-                <h3 class="card-panel-title">🏢 Today's Worksite Distribution (Management View)</h3>
-              </div>
-              <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
-                ${Object.entries(locationGroups).map(([locName, staffList]) => {
-                  staffList.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
-                  let locIcon = '📍';
-                  if (locName.includes('HQ')) locIcon = '🏢';
-                  else if (locName.includes('Hub')) locIcon = '🏬';
-                  else if (locName.includes('Home')) locIcon = '🏠';
-
-                  const staffListHTML = staffList.length === 0
-                    ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No staff checked in here today.</div>`
-                    : staffList.map(s => `
-                        <div class="btn-view-staff-detail" data-id="${s.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all 0.2s ease">
-                          <span style="font-weight:600;color:var(--text-primary);text-decoration:underline">${Utils.escape(s.name)}</span>
-                          <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time}</span>
-                        </div>
-                      `).join('');
-
-                  return `
-                    <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:10px">
-                      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px">
-                        <strong style="font-size:14px;color:var(--primary);display:flex;align-items:center;gap:6px">
-                          <span>${locIcon}</span> ${locName}
-                        </strong>
-                        <span class="badge badge-on-time" style="padding:2px 8px;font-size:10px">${staffList.length} Present</span>
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto">
-                        ${staffListHTML}
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          `;
+          locationGroups[matchedLoc].push({ id: u.id, name: u.name, time: l.checkIn });
         }
+      });
+
+      // Ensure staff inside each location group is sorted descending by check-in time
+      Object.values(locationGroups).forEach(group => {
+        group.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
+      });
+
+      const activeLocEntries = Object.entries(locationGroups).filter(([_, staffList]) => staffList.length > 0);
+      const displayGroups = activeLocEntries.length > 0 ? activeLocEntries : Object.entries(locationGroups);
+
+      if (displayGroups.length > 0) {
+        worksitePanelHTML = `
+          <div class="card-panel" style="margin-top:20px">
+            <div class="card-panel-header" style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 class="card-panel-title">🏢 Today's Worksite Distribution (Management View)</h3>
+              <span class="badge badge-on-time" style="padding:4px 10px;font-size:12px;font-weight:700;">${presentCount} Active Staff Across Worksites</span>
+            </div>
+            <div class="worksite-grid" style="display:grid;grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:15px">
+              ${displayGroups.map(([locName, staffList]) => {
+                staffList.sort((a, b) => (b.time || '').localeCompare(a.time || '') || a.name.localeCompare(b.name));
+                let locIcon = '📍';
+                if (locName.includes('HQ') || locName.includes('Head Office')) locIcon = '🏢';
+                else if (locName.includes('Hub') || locName.includes('SITE')) locIcon = '🏬';
+                else if (locName.includes('RETAIL')) locIcon = '🛍️';
+                else if (locName.includes('WH')) locIcon = '🏭';
+
+                const staffListHTML = staffList.length === 0
+                  ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0">No staff checked in here today.</div>`
+                  : staffList.map(s => `
+                      <div class="btn-view-staff-detail" data-id="${s.id}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.01);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:all 0.2s ease">
+                        <span style="font-weight:600;color:var(--text-primary);text-decoration:underline">${Utils.escape(s.name)}</span>
+                        <span style="font-size:11px;color:var(--text-secondary)">In: ${s.time}</span>
+                      </div>
+                    `).join('');
+
+                return `
+                  <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:10px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px">
+                      <strong style="font-size:14px;color:var(--primary);display:flex;align-items:center;gap:6px">
+                        <span>${locIcon}</span> ${locName}
+                      </strong>
+                      <span class="badge badge-on-time" style="padding:2px 8px;font-size:10px">${staffList.length} Present</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto">
+                      ${staffListHTML}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
       }
     }
 
@@ -961,28 +876,13 @@ export async function renderAdminDashboard() {
       return timeB.localeCompare(timeA);
     });
 
-    if (isHrOrManager && !hasAssignedLocations) {
-      currentTodayLogs = [];
-    } else if (isHrOrManager && hasAssignedLocations) {
-      currentTodayLogs = allTodayLogs.filter(l => {
-        const loc = (l.location || '').toLowerCase().trim();
-        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
-        return (loc && allowedLocsLower.includes(loc)) || (bioLoc && allowedLocsLower.includes(bioLoc)) || assignedUserIds.includes(l.userId) || (currentUser && l.userId === currentUser.id);
-      });
-    } else {
-      currentTodayLogs = allTodayLogs;
-    }
+    currentTodayLogs = allTodayLogs;
     renderLiveFeedTable();
 
     // Populate Leave request alert inbox
     const pendingInbox = document.getElementById('admin-pending-leaves-box');
     if (pendingInbox) {
       let leaves = DB.getLeaveRequests() || [];
-      if (isHrOrManager && !hasAssignedLocations) {
-        leaves = [];
-      } else if (isHrOrManager && hasAssignedLocations) {
-        leaves = leaves.filter(lv => assignedUserIds.includes(lv.userId));
-      }
       const pendingLeaves = leaves.filter(lv => lv.status === 'Pending');
       if (pendingLeaves.length === 0) {
         pendingInbox.innerHTML = html`<div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:13px">All leave folders are cleared.</div>`;
@@ -1029,22 +929,6 @@ export async function renderAdminDashboard() {
     const cbAll = document.getElementById('cb-live-feed-all-locations');
     if (!listContainer || !btnText) return;
 
-    const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const baseRole = (DB.getUserBaseRole ? DB.getUserBaseRole(freshUser.role) : freshUser.role) || freshUser.role;
-    const isHrOrManager = baseRole === 'hr' || baseRole === 'manager' || freshUser.role === 'hr' || freshUser.role === 'manager';
-    const assignedLocations = getUserAssignedLocations(freshUser);
-    const hasAssignedLocations = assignedLocations.length > 0;
-
-    if (isHrOrManager && !hasAssignedLocations) {
-      btnText.textContent = '';
-      listContainer.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-muted);text-align:center;">No location assigned</div>';
-      if (cbAll) {
-        cbAll.checked = false;
-        cbAll.disabled = true;
-      }
-      return;
-    }
-
     if (cbAll) cbAll.disabled = false;
 
     // Prune any liveFeedSelectedLocations that are not in distinctLocs
@@ -1059,28 +943,20 @@ export async function renderAdminDashboard() {
     if (cbAll) cbAll.checked = isAllSelected;
 
     if (isAllSelected) {
-      if (isHrOrManager && distinctLocs.length === 1) {
-        btnText.textContent = `${distinctLocs[0]} (${currentTodayLogs.length})`;
-      } else if (isHrOrManager) {
-        btnText.textContent = `All Assigned Locations (${currentTodayLogs.length})`;
-      } else {
-        btnText.textContent = `All Locations (${currentTodayLogs.length})`;
-      }
+      btnText.textContent = `All Locations (${currentTodayLogs.length})`;
     } else if (liveFeedSelectedLocations.size === 1) {
       const singleLoc = Array.from(liveFeedSelectedLocations)[0].toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const lLoc = (l.location || '').toLowerCase().trim();
-        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
-        return lLoc === singleLoc || bLoc === singleLoc;
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        return logLoc === singleLoc;
       }).length;
       btnText.textContent = `${Array.from(liveFeedSelectedLocations)[0]} (${count})`;
     } else {
       let combinedCount = 0;
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
       currentTodayLogs.forEach(l => {
-        const lLoc = (l.location || '').toLowerCase().trim();
-        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
-        if (selLower.has(lLoc) || selLower.has(bLoc)) combinedCount++;
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        if (selLower.has(logLoc)) combinedCount++;
       });
       btnText.textContent = `${liveFeedSelectedLocations.size} Locations (${combinedCount} punches)`;
     }
@@ -1088,9 +964,8 @@ export async function renderAdminDashboard() {
     listContainer.innerHTML = distinctLocs.map(loc => {
       const targetLoc = loc.toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const lLoc = (l.location || '').toLowerCase().trim();
-        const bLoc = (l.biometricUsed || '').toLowerCase().trim();
-        return lLoc === targetLoc || bLoc === targetLoc;
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        return logLoc === targetLoc;
       }).length;
       const isChecked = !isAllSelected && liveFeedSelectedLocations.has(loc);
       return `
@@ -1131,50 +1006,19 @@ export async function renderAdminDashboard() {
     const feedBody = document.getElementById('live-feed-table-body');
     if (!feedBody) return;
 
-    const freshUser = DB.getUser(currentUser.id) || currentUser;
-    const baseRole = (DB.getUserBaseRole ? DB.getUserBaseRole(freshUser.role) : freshUser.role) || freshUser.role;
-    const isHrOrManager = baseRole === 'hr' || baseRole === 'manager' || freshUser.role === 'hr' || freshUser.role === 'manager';
-    const assignedLocations = getUserAssignedLocations(freshUser);
-    const hasAssignedLocations = assignedLocations.length > 0;
-
-    let distinctLocs = [];
-    if (isHrOrManager) {
-      distinctLocs = assignedLocations;
-    } else {
-      distinctLocs = Array.from(new Set([
-        ...currentTodayLogs.map(l => (l.location || '').trim()).filter(Boolean),
-        ...Object.keys(DB.getOfficeCoordinates() || {}).filter(k => !k.includes('('))
-      ])).sort((a, b) => a.localeCompare(b));
-    }
+    let distinctLocs = Array.from(new Set([
+      ...currentTodayLogs.map(l => (l.location || l.biometricUsed || '').trim()).filter(Boolean),
+      ...Object.keys(DB.getOfficeCoordinates() || {})
+    ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
 
     renderLocationCheckboxDropdown(distinctLocs);
-
-    if (isHrOrManager && !hasAssignedLocations) {
-      feedBody.innerHTML = html`
-        <tr>
-          <td colspan="7" style="text-align:center; padding: 36px 0; color:var(--text-muted); font-size:14px;">
-            No location assigned to your account. No attendance records to display.
-          </td>
-        </tr>
-      `;
-      const countBadge = document.getElementById('live-feed-count-badge');
-      if (countBadge) countBadge.textContent = '0 PUNCHES';
-      const pageInfo = document.getElementById('live-feed-page-info');
-      if (pageInfo) pageInfo.textContent = 'Showing 0-0 of 0 punches';
-      const pageNumSpan = document.getElementById('live-feed-current-page-num');
-      const totalPagesSpan = document.getElementById('live-feed-total-pages-num');
-      if (pageNumSpan) pageNumSpan.textContent = '1';
-      if (totalPagesSpan) totalPagesSpan.textContent = '1';
-      return;
-    }
 
     let filteredLogs = currentTodayLogs;
     if (liveFeedSelectedLocations.size > 0) {
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
       filteredLogs = currentTodayLogs.filter(l => {
-        const loc = (l.location || '').toLowerCase().trim();
-        const bioLoc = (l.biometricUsed || '').toLowerCase().trim();
-        return selLower.has(loc) || selLower.has(bioLoc);
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        return selLower.has(logLoc);
       });
     }
 
@@ -2194,13 +2038,6 @@ export async function renderAdminDashboard() {
   if (btnLiveFeedLocation && dropdownLiveFeed) {
     btnLiveFeedLocation.addEventListener('click', (e) => {
       e.stopPropagation();
-      const fresh = DB.getUser(currentUser.id) || currentUser;
-      const baseR = (DB.getUserBaseRole ? DB.getUserBaseRole(fresh.role) : fresh.role) || fresh.role;
-      const isHM = baseR === 'hr' || baseR === 'manager' || fresh.role === 'hr' || fresh.role === 'manager';
-      const assigned = getUserAssignedLocations(fresh);
-      if (isHM && assigned.length === 0) {
-        return;
-      }
       dropdownLiveFeed.style.display = dropdownLiveFeed.style.display === 'block' ? 'none' : 'block';
     });
 

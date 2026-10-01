@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-describe('Attendance Dashboard Location Scoping & Zero-Default Behavior', () => {
+describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitoring', () => {
   let getUserAssignedLocations;
   let DB;
   const originalSeedPath = path.join(__dirname, '..', 'seed.json');
@@ -18,6 +18,7 @@ describe('Attendance Dashboard Location Scoping & Zero-Default Behavior', () => 
     const fnDb = new Function('module', 'exports', 'require', wrappedDb);
     fnDb(dbMod, dbMod.exports, require);
     DB = dbMod.exports.DB;
+    DB.data = JSON.parse(originalSeedData);
     DB.save = () => Promise.resolve();
 
     // Extract getUserAssignedLocations from adminDashboard.js
@@ -87,88 +88,104 @@ describe('Attendance Dashboard Location Scoping & Zero-Default Behavior', () => 
     });
   });
 
-  describe('2. Dashboard Scoping Logic for HR/Manager without assigned locations', () => {
-    test('When HR/Manager has no assigned location, active user list and today records are strictly empty', () => {
-      const unassignedHr = {
-        id: 'usr_unassigned_hr',
-        role: 'hr',
-        name: 'Unassigned HR',
-        preferredLocation: '',
-        preferredLocations: []
-      };
-
-      const assignedLocations = getUserAssignedLocations(unassignedHr);
-      expect(assignedLocations.length).toBe(0);
-
-      // Scoping logic replicated directly from adminDashboard.js: getAssignedUserIds
-      const isHrOrManager = unassignedHr.role === 'hr' || unassignedHr.role === 'manager';
-      const hasAssignedLocations = assignedLocations.length > 0;
-
-      let scopedEmployees = [];
-      if (isHrOrManager && !hasAssignedLocations) {
-        scopedEmployees = [];
-      } else {
-        scopedEmployees = DB.getUsers().filter(u => u && u.role === 'employee');
-      }
-
-      expect(scopedEmployees).toEqual([]);
-
-      // Scoping logic replicated directly from adminDashboard.js: getTodayPresentNowRecords
-      let presentNowRecords = [];
-      if (isHrOrManager && !hasAssignedLocations) {
-        presentNowRecords = [];
-      }
-      expect(presentNowRecords).toEqual([]);
-
-      // Dropdown button text logic: when unassigned, must be blank string ''
-      let btnText = 'Initial';
-      if (isHrOrManager && !hasAssignedLocations) {
-        btnText = '';
-      }
-      expect(btnText).toBe('');
+  describe('2. Dashboard Scoping: Full Organizational Visibility Across All Locations & Punches', () => {
+    test('Active employees and total staff encompass all 1,217 active workforce members across branches', () => {
+      const activeEmployees = DB.getUsers().filter(u => u && u.status !== 'Inactive');
+      expect(activeEmployees.length).toBe(1217);
     });
-  });
 
-  describe('3. Dashboard Scoping Logic for HR/Manager with assigned location', () => {
-    test('When HR/Manager is assigned a specific location, only matching records and distinct locations are exposed', () => {
-      const assignedHr = {
-        id: 'usr_assigned_hr',
-        role: 'hr',
-        name: 'Assigned HR',
-        preferredLocation: 'Noida sector 61'
-      };
+    test('Today logs cover all 620 punches logged across all 12 operational branches', () => {
+      const todayStr = '2026-10-01';
+      const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
+      expect(allTodayLogs.length).toBeGreaterThanOrEqual(620);
 
-      const assignedLocations = getUserAssignedLocations(assignedHr);
-      expect(assignedLocations).toEqual(['Noida sector 61']);
+      // Compute distinct locations from current logs and configured office coordinates
+      const officeCoords = DB.getOfficeCoordinates() || {};
+      const distinctLocs = Array.from(new Set([
+        ...allTodayLogs.map(l => (l.location || l.biometricUsed || '').trim()).filter(Boolean),
+        ...Object.keys(officeCoords)
+      ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
 
-      const allowedLocsLower = assignedLocations.map(l => l.toLowerCase().trim());
-      expect(allowedLocsLower).toEqual(['noida sector 61']);
+      expect(distinctLocs).toContain('ASHOK VIHAR');
+      expect(distinctLocs).toContain('Chattarpur Office');
+      expect(distinctLocs).toContain('Delhi Head Office');
+      expect(distinctLocs).toContain('GT KARNAL SITE');
+      expect(distinctLocs).toContain('HS Office');
+      expect(distinctLocs).toContain('Office HQ');
+      expect(distinctLocs).toContain('PITAM PURA');
+      expect(distinctLocs).toContain('PUNJABI BAGH');
+      expect(distinctLocs).toContain('RETAIL');
+      expect(distinctLocs).toContain('Siyonee');
+      expect(distinctLocs).toContain('Surya Gurugram');
+      expect(distinctLocs).toContain('WH-1340');
 
-      // Distinct locations dropdown in adminDashboard.js uses assignedLocations for HR/Manager
-      const distinctLocs = assignedLocations;
-      expect(distinctLocs).toEqual(['Noida sector 61']);
-      expect(distinctLocs).not.toContain('Kohat Enclave, Pitampura, Delhi');
+      // Verify exact punch counts per location match the Attendances dropdown
+      const getCount = (locName) => allTodayLogs.filter(l => {
+        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        return logLoc === locName.toLowerCase().trim();
+      }).length;
 
-      // Test log filtering
-      const sampleLogs = [
-        { id: 'log_1', userId: 'u1', date: '2026-10-01', location: 'Noida sector 61', checkIn: '09:00' },
-        { id: 'log_2', userId: 'u2', date: '2026-10-01', location: 'Kohat Enclave, Pitampura, Delhi', checkIn: '09:15' },
-        { id: 'log_3', userId: 'u3', date: '2026-10-01', location: 'Mumbai Branch', checkIn: '09:30' },
-        { id: 'log_4', userId: 'u4', date: '2026-10-01', location: 'noida sector 61', checkIn: '09:45' }
-      ];
+      expect(getCount('ASHOK VIHAR')).toBe(9);
+      expect(getCount('Chattarpur Office')).toBe(7);
+      expect(getCount('Delhi Head Office')).toBe(44);
+      expect(getCount('GT KARNAL SITE')).toBe(47);
+      expect(getCount('HS Office')).toBe(269);
+      expect(getCount('Office HQ')).toBe(1);
+      expect(getCount('PITAM PURA')).toBe(33);
+      expect(getCount('PUNJABI BAGH')).toBe(3);
+      expect(getCount('RETAIL')).toBe(108);
+      expect(getCount('Siyonee')).toBe(57);
+      expect(getCount('Surya Gurugram')).toBe(11);
+      expect(getCount('WH-1340')).toBe(31);
+    });
 
-      const filteredLogs = sampleLogs.filter(l => {
-        const loc = (l.location || '').toLowerCase().trim();
-        return loc && allowedLocsLower.includes(loc);
+    test('Present now records identify all 612 staff currently on duty without checkout across all branches', () => {
+      const todayStr = '2026-10-01';
+      const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
+
+      const userTodayMap = new Map();
+      allTodayLogs.forEach(log => {
+        const empKey = log.userId || log.employeeId || log.biometricUserId;
+        if (!empKey) return;
+        if (!userTodayMap.has(empKey)) {
+          userTodayMap.set(empKey, []);
+        }
+        userTodayMap.get(empKey).push(log);
       });
 
-      expect(filteredLogs.length).toBe(2);
-      expect(filteredLogs.map(l => l.id)).toEqual(['log_1', 'log_4']);
-      expect(filteredLogs.some(l => (l.location || '').includes('Kohat'))).toBe(false);
+      const presentNowList = [];
+      for (const [empKey, ulogs] of userTodayMap.entries()) {
+        ulogs.sort((a, b) => (b.checkIn || '').localeCompare(a.checkIn || ''));
+        const latest = ulogs[0];
+        const hasCheckedOut = latest.checkOut && latest.checkOut !== '--' && latest.checkOut !== '--:--';
+        if (!hasCheckedOut) {
+          presentNowList.push(latest);
+        }
+      }
+
+      expect(presentNowList.length).toBeGreaterThanOrEqual(612);
+    });
+
+    test('Location filtering narrows punches accurately when a specific worksite is selected', () => {
+      const todayStr = '2026-10-01';
+      const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
+
+      // Filter by HS Office
+      const hsLogs = allTodayLogs.filter(l => (l.location || l.biometricUsed || '').toLowerCase().trim() === 'hs office');
+      expect(hsLogs.length).toBe(269);
+
+      // Filter by RETAIL
+      const retailLogs = allTodayLogs.filter(l => (l.location || l.biometricUsed || '').toLowerCase().trim() === 'retail');
+      expect(retailLogs.length).toBe(108);
+
+      // Filter by multi-select (e.g. Chattarpur Office + Surya Gurugram)
+      const multiSelect = new Set(['chattarpur office', 'surya gurugram']);
+      const multiLogs = allTodayLogs.filter(l => multiSelect.has((l.location || l.biometricUsed || '').toLowerCase().trim()));
+      expect(multiLogs.length).toBe(7 + 11);
     });
   });
 
-  describe('4. Dynamic Location Updates', () => {
+  describe('3. Dynamic Location Updates', () => {
     test('Updating user assigned location immediately updates resolution without default fallback', () => {
       const managerUser = {
         id: 'usr_manager_dynamic',

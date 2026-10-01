@@ -35668,6 +35668,34 @@
   ],
   "attendanceLogs": [
     {
+      "id": "BIO_usr_bio_1133_2026-10-01",
+      "userId": "usr_bio_1133",
+      "date": "2026-10-01",
+      "shiftId": "",
+      "checkIn": "14:20:20",
+      "checkOut": "",
+      "checkInPunchId": "GED7241900691_1133_2026-10-01T08:50:20.000Z",
+      "biometricPunchId": "GED7241900691_1133_2026-10-01T08:50:20.000Z",
+      "allPunchIds": [
+        "GED7241900691_1133_2026-10-01T08:50:20.000Z"
+      ],
+      "status": "On Time",
+      "biometricUsed": "PITAM PURA",
+      "biometricDeviceId": "GED7241900691",
+      "biometricUserId": "1133",
+      "lastBiometricPunchAt": "2026-10-01T08:50:20.000Z",
+      "location": "PITAM PURA",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-10-01T08:49:38.251Z",
+      "updatedAt": "2026-10-01T08:49:38.251Z"
+    },
+    {
       "id": "BIO_usr_admin_2026-10-01",
       "userId": "usr_admin",
       "date": "2026-10-01",
@@ -39882,20 +39910,21 @@
       "date": "2026-10-01",
       "shiftId": "",
       "checkIn": "09:33:35",
-      "checkOut": "14:17:47",
+      "checkOut": "14:36:37",
       "checkInPunchId": "CEZF192660044_703_2026-10-01T04:03:35.000Z",
       "biometricPunchId": "CEZF192660044_703_2026-10-01T04:03:35.000Z",
       "allPunchIds": [
         "CEZF192660044_703_2026-10-01T04:03:35.000Z",
         "CEZF192660044_703_2026-10-01T07:00:42.000Z",
         "CEZF192660044_703_2026-10-01T07:10:51.000Z",
-        "CEZF192660044_703_2026-10-01T08:47:47.000Z"
+        "CEZF192660044_703_2026-10-01T08:47:47.000Z",
+        "CEZF192660044_703_2026-10-01T09:06:37.000Z"
       ],
       "status": "On Time",
       "biometricUsed": "GT KARNAL SITE",
       "biometricDeviceId": "CEZF192660044",
       "biometricUserId": "703",
-      "lastBiometricPunchAt": "2026-10-01T08:47:47.000Z",
+      "lastBiometricPunchAt": "2026-10-01T09:06:37.000Z",
       "location": "GT KARNAL SITE",
       "deviationFlag": false,
       "justification": "",
@@ -39905,8 +39934,8 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-01T04:27:31.602Z",
-      "updatedAt": "2026-10-01T08:46:58.368Z",
-      "checkOutPunchId": "CEZF192660044_703_2026-10-01T08:47:47.000Z"
+      "updatedAt": "2026-10-01T09:05:43.764Z",
+      "checkOutPunchId": "CEZF192660044_703_2026-10-01T09:06:37.000Z"
     },
     {
       "id": "BIO_usr_bio_5075_2026-10-01",
@@ -372879,10 +372908,25 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-01T08:46:58.378Z",
+    "lastSyncAt": "2026-10-01T09:05:43.772Z",
     "lastLogCount": 2000
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-01T08:49:38.251Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_bio_1133",
+      "userName": "Ajay Kumar Gupta",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_1133_2026-10-01",
+        "shiftId": "",
+        "checkIn": "14:20:20",
+        "status": "On Time",
+        "device": "PITAM PURA"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-01T08:02:06.157Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -380415,26 +380459,9 @@
         "device": "HS Office"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-01T04:27:30.542Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_1204",
-      "userName": "Pradeep Sharma",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_1204_2026-10-01",
-        "shiftId": "",
-        "checkIn": "09:10:01",
-        "status": "On Time",
-        "device": "HS Office"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "GED7241901313_1114_2026-04-17T14:27:02.000Z",
-    "GED7241901313_680_2026-04-17T04:01:03.000Z",
     "GED7241901313_680_2026-04-17T14:05:54.000Z",
     "GED7241901313_961_2026-04-17T03:59:37.000Z",
     "GED7241901313_961_2026-04-17T14:05:19.000Z",
@@ -385432,7 +385459,9 @@
     "CEZF192660044_EMP100_2026-10-01T07:48:11.310Z",
     "CEZF192660044_1134_2026-10-01T08:00:35.000Z",
     "CEZF192660044_1134_2026-10-01T08:20:20.000Z",
-    "CEZF192660044_703_2026-10-01T08:47:47.000Z"
+    "CEZF192660044_703_2026-10-01T08:47:47.000Z",
+    "GED7241900691_1133_2026-10-01T08:50:20.000Z",
+    "CEZF192660044_703_2026-10-01T09:06:37.000Z"
   ],
   "biometricDevices": [
     {
@@ -385446,9 +385475,9 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 242,
-      "totalPunchesCount": 12410,
+      "totalPunchesCount": 12411,
       "source": "easywdms"
     },
     {
@@ -385462,7 +385491,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.641Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 1219,
       "totalPunchesCount": 48,
       "source": "easywdms"
@@ -385478,7 +385507,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 56,
       "totalPunchesCount": 2123,
       "source": "easywdms"
@@ -385494,7 +385523,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.641Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 161,
       "totalPunchesCount": 14393,
       "source": "easywdms"
@@ -385510,7 +385539,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.641Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 210,
       "totalPunchesCount": 10691,
       "source": "easywdms"
@@ -385526,7 +385555,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.641Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 538,
       "totalPunchesCount": 11112,
       "source": "easywdms"
@@ -385542,9 +385571,9 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 159,
-      "totalPunchesCount": 11313,
+      "totalPunchesCount": 11314,
       "source": "easywdms"
     },
     {
@@ -385558,7 +385587,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 179,
       "totalPunchesCount": 6828,
       "source": "easywdms"
@@ -385574,7 +385603,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 779,
       "totalPunchesCount": 14959,
       "source": "easywdms"
@@ -385590,7 +385619,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 762,
       "totalPunchesCount": 14602,
       "source": "easywdms"
@@ -385606,7 +385635,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 161,
       "totalPunchesCount": 9199,
       "source": "easywdms"
@@ -385622,7 +385651,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 41,
       "totalPunchesCount": 371,
       "source": "easywdms"
@@ -385638,7 +385667,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "enrolledUsersCount": 108,
       "totalPunchesCount": 7694,
       "source": "easywdms"
@@ -385669,7 +385698,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-01T08:46:46.642Z",
+      "lastSyncAt": "2026-10-01T09:10:07.544Z",
       "source": "easywdms",
       "enrolledUsersCount": 217,
       "totalPunchesCount": 13685
