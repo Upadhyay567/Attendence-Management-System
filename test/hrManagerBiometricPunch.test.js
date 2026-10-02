@@ -67,13 +67,13 @@ describe('HR & Manager Role Biometric Punch Display & Scoping', () => {
   describe('2. Biometric Log Resolution for Users Without Shift Schedule (HR & Manager)', () => {
     test('DB.getTodayLog(user.id) resolves biometric punch log even when shiftId is empty/null', () => {
       const todayStr = '2026-10-01';
-      const adminLog = DB.getTodayLog('usr_admin');
+      const adminLog = DB.getTodayLog('usr_admin', todayStr);
       expect(adminLog).toBeDefined();
       expect(adminLog.userId).toBe('usr_admin');
       expect(adminLog.checkIn).toBe('13:18:11');
       expect(adminLog.location).toBe('Office HQ');
 
-      const hrLog = DB.getTodayLog('usr_6af1y3c');
+      const hrLog = DB.getTodayLog('usr_6af1y3c', todayStr);
       expect(hrLog).toBeDefined();
       expect(hrLog.userId).toBe('usr_6af1y3c');
       expect(hrLog.checkIn).toBe('09:17:09');

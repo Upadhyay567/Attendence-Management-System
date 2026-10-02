@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { 
-  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog,
+  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, BiometricDevice,
   connectMongoose, getUseLocalFileDB, LOCAL_DB_FILE 
 } = require('../config/db');
 const { broadcastSSEEvent } = require('../routes/events.routes');
@@ -122,14 +122,15 @@ async function getDbState(req, res) {
     const useLocal = getUseLocalFileDB();
 
     if (online && !useLocal) {
-      const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords] = await Promise.all([
+      const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords, biometricDevices] = await Promise.all([
         User.find({}).lean(),
         AttendanceLog.find({}).lean(),
         LeaveRequest.find({}).lean(),
         ShiftSwap.find({}).lean(),
         Schedule.find({}).lean(),
         Notice.find({}).lean(),
-        OfficeCoordinate.find({}).lean()
+        OfficeCoordinate.find({}).lean(),
+        BiometricDevice.find({}).lean()
       ]);
 
       const localData = readLocalDbStateCached();
@@ -160,12 +161,34 @@ async function getDbState(req, res) {
         finalUsers = [...finalUsers, ...missing];
       }
 
-      // Merge in any attendanceLogs from localData that might not have mirrored to Mongo yet
-      let finalLogs = attendanceLogs;
-      if (localData && Array.isArray(localData.attendanceLogs) && localData.attendanceLogs.length > attendanceLogs.length) {
-        const mongoLogIds = new Set(attendanceLogs.map(l => l.id));
-        const missingLogs = localData.attendanceLogs.filter(l => l && !mongoLogIds.has(l.id));
-        finalLogs = [...attendanceLogs, ...missingLogs];
+      // Robust Map-based merge for attendanceLogs: preserve non-empty checkOuts and latest punches
+      const logMap = new Map();
+      (attendanceLogs || []).forEach(l => {
+        if (l && l.id) logMap.set(l.id, l);
+      });
+      (localData?.attendanceLogs || []).forEach(localLog => {
+        if (!localLog || !localLog.id) return;
+        const existing = logMap.get(localLog.id);
+        if (!existing) {
+          logMap.set(localLog.id, localLog);
+        } else {
+          const localTime = new Date(localLog.updatedAt || localLog.lastBiometricPunchAt || localLog.checkOutTime || localLog.checkInTime || 0).getTime();
+          const existingTime = new Date(existing.updatedAt || existing.lastBiometricPunchAt || existing.checkOutTime || existing.checkInTime || 0).getTime();
+          const hasCheckOutLocal = localLog.checkOut && localLog.checkOut !== '--' && localLog.checkOut !== '--:--';
+          const hasCheckOutExisting = existing.checkOut && existing.checkOut !== '--' && existing.checkOut !== '--:--';
+          if ((!hasCheckOutExisting && hasCheckOutLocal) || localTime >= existingTime) {
+            logMap.set(localLog.id, { ...existing, ...localLog });
+          }
+        }
+      });
+      const finalLogs = Array.from(logMap.values());
+
+      // Biometric devices merge
+      let finalDevices = biometricDevices || [];
+      if (localData && Array.isArray(localData.biometricDevices)) {
+        const mongoDevIds = new Set(finalDevices.map(d => d.id));
+        const missingDevs = localData.biometricDevices.filter(d => d && !mongoDevIds.has(d.id));
+        finalDevices = [...finalDevices, ...missingDevs];
       }
 
       const officeCoordinatesObj = {};
@@ -174,14 +197,22 @@ async function getDbState(req, res) {
         Object.assign(officeCoordinatesObj, localData.officeCoordinates);
       }
 
+      // Start with all local metadata (tickets, announcements, customRoles, budgets, etc.)
+      const baseState = localData ? { ...localData } : {};
+      delete baseState.activityLogs;
+      delete baseState.processedPunchIds;
+      delete baseState.biometricVault;
+
       return res.json({
+        ...baseState,
         users: finalUsers,
         attendanceLogs: finalLogs,
         leaveRequests,
         shiftSwaps,
         schedules,
         notices,
-        officeCoordinates: officeCoordinatesObj
+        officeCoordinates: officeCoordinatesObj,
+        biometricDevices: finalDevices
       });
     } else {
       const localData = readLocalDbStateCached();

@@ -388,7 +388,8 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
         scheduleId: '',
         scheduleIds: [],
         shiftLocations: {},
-        preferredLocation: '',
+        preferredLocation: deviceLocation || '',
+        preferredLocations: deviceLocation ? [deviceLocation] : [],
         createdAt: new Date().toISOString()
       };
       db.users.push(newUser);

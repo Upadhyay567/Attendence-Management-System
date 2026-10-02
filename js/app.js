@@ -6784,11 +6784,54 @@ const adminReportPageState = {
   pageSize: 30
 };
 
+function normalizeLocationName(loc) {
+  if (!loc || typeof loc !== 'string') return '';
+  const l = loc.trim();
+  const lower = l.toLowerCase();
+  if (lower === 'chattarpur') return 'Chattarpur Office';
+  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+  if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+  return l;
+}
+
+function getUserPrimaryWorkLocation(u) {
+  if (!u) return '';
+  let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+            (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+            (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+            (u.workLocation && u.workLocation.trim()) ||
+            '';
+  return normalizeLocationName(loc);
+}
+
+function getDistinctWorksiteLocations() {
+  const allRawUsers = (typeof DB !== 'undefined' && DB.getUsers) ? DB.getUsers() : [];
+  return Array.from(new Set(allRawUsers.map(getUserPrimaryWorkLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+function buildUserLocationsMap() {
+  return new Map();
+}
+
+function checkUserMatchesLocation(u, targetLoc) {
+  if (!targetLoc || targetLoc === 'all') return true;
+  const target = normalizeLocationName(targetLoc).toLowerCase().trim();
+  const uLoc = getUserPrimaryWorkLocation(u).toLowerCase().trim();
+  return uLoc === target;
+}
+
 function renderAdminReports() {
   const main = document.getElementById('main-view');
   const today = new Date();
   let selectedMonth = today.getMonth();
   let selectedYear = today.getFullYear();
+  const emps = DB.getUsers().filter(u => u.role === 'employee');
+  const distinctLocs = Array.from(new Set(emps.map(getUserPrimaryWorkLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  const userLocationsMap = buildUserLocationsMap();
+  const empCountsByLoc = {};
+  distinctLocs.forEach(loc => {
+    empCountsByLoc[loc] = emps.filter(u => checkUserMatchesLocation(u, loc)).length;
+  });
 
   main.innerHTML = `
     <div class="content-header" id="employee-payslip-tab-header">
@@ -6820,6 +6863,10 @@ function renderAdminReports() {
             <option value="Operations">Department: Operations</option>
             <option value="Sales">Department: Sales & Marketing</option>
             <option value="Finance">Department: Finance</option>
+          </select>
+          <select class="form-input" id="report-location-select" style="min-width:180px;padding:8px;font-size:13px" title="Filter by Worksite Location">
+            <option value="all">Location: All Locations (${emps.length})</option>
+            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}">Location: ${Utils.escape(loc)} (${empCountsByLoc[loc] || 0})</option>`).join('')}
           </select>
           <label class="form-label" style="margin:0" for="report-month">Period:</label>
           <select class="form-input" id="report-month" style="width:130px;padding:8px">
@@ -6866,7 +6913,10 @@ function renderAdminReports() {
             <div style="display:flex; align-items:center; gap:6px">
               <button class="btn btn-secondary btn-sm" id="btn-report-page-first" style="padding:5px 10px; font-size:12px; width:auto" title="First Page">⏮ First</button>
               <button class="btn btn-secondary btn-sm" id="btn-report-page-prev" style="padding:5px 12px; font-size:12px; width:auto" title="Previous Page">◀ Prev</button>
-              <span id="report-page-indicator" style="font-size:12.5px; font-weight:700; color:var(--text-primary); padding:0 8px">Page 1 of 1</span>
+              <div style="display:flex; align-items:center; gap:4px">
+                <input type="number" id="input-report-current-page" min="1" max="1" value="1" style="width:48px; height:28px; text-align:center; padding:2px; font-size:12.5px; font-weight:700; border:1px solid var(--border); border-radius:6px; background:var(--bg-card, #ffffff); color:var(--text-primary)">
+                <span id="report-page-total" style="font-size:12.5px; color:var(--text-secondary)">/ 1</span>
+              </div>
               <button class="btn btn-secondary btn-sm" id="btn-report-page-next" style="padding:5px 12px; font-size:12px; width:auto" title="Next Page">Next ▶</button>
               <button class="btn btn-secondary btn-sm" id="btn-report-page-last" style="padding:5px 10px; font-size:12px; width:auto" title="Last Page">Last ⏭</button>
             </div>
@@ -6888,6 +6938,8 @@ function renderAdminReports() {
   if (searchInputEl) searchInputEl.addEventListener('input', refreshReports);
   const deptSelectEl = document.getElementById('report-dept-select');
   if (deptSelectEl) deptSelectEl.addEventListener('change', refreshReports);
+  const locSelectEl = document.getElementById('report-location-select');
+  if (locSelectEl) locSelectEl.addEventListener('change', refreshReports);
   document.getElementById('report-month').addEventListener('change', (e) => { selectedMonth = Number(e.target.value); refreshReports(); });
   document.getElementById('report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshReports(); });
   document.getElementById('btn-export-csv').addEventListener('click', () => exportReportCSV(selectedMonth, selectedYear));
@@ -6905,22 +6957,22 @@ function renderAdminReports() {
 }
 
 function compileReports(month, year) {
-  const loggedInUser = Auth.getCurrentUser();
+  const loggedInUser = Auth.getCurrentUser() || {};
   const searchInput = document.getElementById('report-search-input');
   const deptSelect = document.getElementById('report-dept-select');
+  const locSelect = document.getElementById('report-location-select');
   const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
   const dVal = deptSelect ? deptSelect.value : 'all';
+  const locVal = locSelect ? locSelect.value : 'all';
 
   const users = DB.getUsers().filter(u => {
     if (u.role !== 'employee') return false;
-    if (loggedInUser.role === 'manager') {
-      if (u.managerId !== loggedInUser.id) return false;
-    } else if (loggedInUser.role === 'hr') {
-      if (u.assignedById !== loggedInUser.id && loggedInUser.username !== 'admin') return false;
-    }
     if (dVal !== 'all') {
       const uDept = (u.department || '').toLowerCase();
       if (!uDept.includes(dVal.toLowerCase())) return false;
+    }
+    if (locVal !== 'all') {
+      if (!checkUserMatchesLocation(u, locVal)) return false;
     }
     if (q) {
       const name = (u.name || '').toLowerCase();
@@ -7006,8 +7058,14 @@ function compileReports(month, year) {
         ? `Showing ${startIndex + 1} to ${endIndex} of ${totalCount.toLocaleString()} employee(s)`
         : `Showing 0 employees`;
     }
-    if (pageIndicator) {
-      pageIndicator.textContent = `Page ${adminReportPageState.currentPage} of ${totalPages}`;
+    const reportPageInput = document.getElementById('input-report-current-page');
+    const reportPageTotal = document.getElementById('report-page-total');
+    if (reportPageInput) {
+      reportPageInput.value = adminReportPageState.currentPage;
+      reportPageInput.max = totalPages;
+    }
+    if (reportPageTotal) {
+      reportPageTotal.textContent = `/ ${totalPages}`;
     }
     if (btnFirst) btnFirst.disabled = (adminReportPageState.currentPage <= 1);
     if (btnPrev) btnPrev.disabled = (adminReportPageState.currentPage <= 1);
@@ -7187,13 +7245,37 @@ function compileReports(month, year) {
   // Navigation button click handlers
   if (btnFirst) btnFirst.onclick = () => { adminReportPageState.currentPage = 1; renderReportTablePage(); };
   if (btnPrev) btnPrev.onclick = () => { if (adminReportPageState.currentPage > 1) { adminReportPageState.currentPage--; renderReportTablePage(); } };
-  if (btnNext) btnNext.onclick = () => { adminReportPageState.currentPage++; renderReportTablePage(); };
+  if (btnNext) btnNext.onclick = () => {
+    const totalCount = userPayrollData.length;
+    const effectivePageSize = (adminReportPageState.pageSize === 'all' || adminReportPageState.pageSize >= totalCount) ? totalCount : adminReportPageState.pageSize;
+    const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+    if (adminReportPageState.currentPage < totalPages) {
+      adminReportPageState.currentPage++;
+      renderReportTablePage();
+    }
+  };
   if (btnLast) btnLast.onclick = () => {
     const totalCount = userPayrollData.length;
     const effectivePageSize = (adminReportPageState.pageSize === 'all' || adminReportPageState.pageSize >= totalCount) ? totalCount : adminReportPageState.pageSize;
     adminReportPageState.currentPage = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
     renderReportTablePage();
   };
+
+  const reportPageInput = document.getElementById('input-report-current-page');
+  if (reportPageInput) {
+    reportPageInput.onchange = (e) => {
+      const totalCount = userPayrollData.length;
+      const effectivePageSize = (adminReportPageState.pageSize === 'all' || adminReportPageState.pageSize >= totalCount) ? totalCount : adminReportPageState.pageSize;
+      const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+      const val = parseInt(e.target.value, 10);
+      if (!isNaN(val) && val >= 1 && val <= totalPages) {
+        adminReportPageState.currentPage = val;
+        renderReportTablePage();
+      } else {
+        e.target.value = adminReportPageState.currentPage;
+      }
+    };
+  }
 
   if (pageSizeSelect) {
     pageSizeSelect.onchange = (e) => {
@@ -7234,9 +7316,38 @@ function renderReportChart(present, late) {
 }
 
 function exportReportCSV(month, year) {
-  const users = DB.getUsers().filter(u => u.role !== 'hr' && u.role !== 'manager');
+  const loggedInUser = Auth.getCurrentUser();
+  const deptSelect = document.getElementById('report-dept-select');
+  const locSelect = document.getElementById('report-location-select');
+  const searchInput = document.getElementById('report-search-input');
+  const dVal = deptSelect ? deptSelect.value : 'all';
+  const locVal = locSelect ? locSelect.value : 'all';
+  const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const userLocationsMap = buildUserLocationsMap();
+
+  const users = DB.getUsers().filter(u => {
+    if (u.role !== 'employee') return false;
+    if (loggedInUser && loggedInUser.role === 'manager') {
+      if (u.managerId && u.managerId !== loggedInUser.id && loggedInUser.id !== 'usr_manager') return false;
+    }
+    if (dVal !== 'all') {
+      const uDept = (u.department || '').toLowerCase();
+      if (!uDept.includes(dVal.toLowerCase())) return false;
+    }
+    if (locVal !== 'all') {
+      if (!checkUserMatchesLocation(u, locVal, userLocationsMap)) return false;
+    }
+    if (q) {
+      const name = (u.name || '').toLowerCase();
+      const empId = (u.employeeId || '').toLowerCase();
+      const uid = (u.id || '').toLowerCase();
+      if (!name.includes(q) && !empId.includes(q) && !uid.includes(q)) return false;
+    }
+    return true;
+  });
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const filename = `HS_Group_Payroll_Report_${monthNames[month]}_${year}.csv`;
+  const locSuffix = (locVal && locVal !== 'all') ? `_${locVal.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+  const filename = `HS_Group_Payroll_Report_${monthNames[month]}_${year}${locSuffix}.csv`;
   const headers = ['Employee Name', 'Base Salary', 'HRA', 'Travel Allowance', 'Working Days', 'Days Present', 'Absent Days', 'Half Days', 'Absent/Half-Day Deductions', 'PF Deduction', 'PT Deduction', 'TDS Deduction', 'Net Disbursed Payout'];
   const rows = users.map(u => {
     const p = DB.calculateMonthlyPayroll(u.id, month, year);

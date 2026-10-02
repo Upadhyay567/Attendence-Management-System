@@ -242,5 +242,61 @@ describe('Attendance System Core & Security API Tests', () => {
       expect(bioSyncCode).toContain('if (!employee.biometricUserId)');
     });
   });
+
+  describe('Location Filter on Employee and Payroll Pages (HR and Manager)', () => {
+    it('Verify Employee page (userManagementView & adminDashboard) contains location filter select and listener', () => {
+      const userMgmtPath = path.join(__dirname, '..', 'js', 'views', 'userManagementView.js');
+      const userMgmtCode = fs.readFileSync(userMgmtPath, 'utf8');
+      expect(userMgmtCode).toContain('id="filter-location-select"');
+      expect(userMgmtCode).toContain('Location: All Locations');
+      expect(userMgmtCode).toContain('distinctLocs');
+      expect(userMgmtCode).toContain('userMatchesLocation');
+      expect(userMgmtCode).toContain('locVal');
+      expect(userMgmtCode).toMatch(/\[.*locSel.*\]\.forEach/);
+
+      const adminDashPath = path.join(__dirname, '..', 'js', 'views', 'adminDashboard.js');
+      const adminDashCode = fs.readFileSync(adminDashPath, 'utf8');
+      expect(adminDashCode).toContain('id="filter-location-select"');
+      expect(adminDashCode).toContain('Location: All Locations');
+      expect(adminDashCode).toContain('distinctLocs');
+      expect(adminDashCode).toContain('userMatchesLocation');
+      expect(adminDashCode).toContain('locVal');
+      expect(adminDashCode).toMatch(/\[.*locSel.*\]\.forEach/);
+    });
+
+    it('Verify Payroll page (renderAdminReports in app.js) contains location filter select, listeners, and CSV export support', () => {
+      const appPath = path.join(__dirname, '..', 'js', 'app.js');
+      const appCode = fs.readFileSync(appPath, 'utf8');
+      expect(appCode).toContain('id="report-location-select"');
+      expect(appCode).toContain('Location: All Locations');
+      expect(appCode).toContain('getDistinctWorksiteLocations');
+      expect(appCode).toContain('checkUserMatchesLocation');
+      expect(appCode).toContain("locSelectEl.addEventListener('change', refreshReports)");
+      expect(appCode).toContain('const locVal = locSelect ? locSelect.value : \'all\';');
+    });
+
+    it('Verify location filter matching logic matches preferred, assigned, and punch locations', () => {
+      const user1 = { id: 'u1', employeeId: 'E1', preferredLocation: 'GT KARNAL SITE' };
+      const user2 = { id: 'u2', employeeId: 'E2', preferredLocation: 'Cyber City, Gurugram' };
+      const user3 = { id: 'u3', employeeId: 'E3', assignedLocations: ['Noida sector 61'] };
+
+      const checkLoc = (u, target) => {
+        if (!target || target === 'all') return true;
+        const t = target.toLowerCase().trim();
+        const c = val => typeof val === 'string' && val.toLowerCase().trim() === t;
+        if (c(u.preferredLocation) || c(u.workLocation)) return true;
+        if (Array.isArray(u.preferredLocations) && u.preferredLocations.some(c)) return true;
+        if (Array.isArray(u.assignedLocations) && u.assignedLocations.some(c)) return true;
+        return false;
+      };
+
+      expect(checkLoc(user1, 'all')).toBe(true);
+      expect(checkLoc(user1, 'GT KARNAL SITE')).toBe(true);
+      expect(checkLoc(user1, 'Cyber City, Gurugram')).toBe(false);
+      expect(checkLoc(user2, 'Cyber City, Gurugram')).toBe(true);
+      expect(checkLoc(user3, 'Noida sector 61')).toBe(true);
+      expect(checkLoc(user3, 'GT KARNAL SITE')).toBe(false);
+    });
+  });
 });
 

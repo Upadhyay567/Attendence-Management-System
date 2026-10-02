@@ -499,10 +499,12 @@ export async function renderAdminDashboard() {
     return DB.getUsers().filter(u => u && u.status !== 'Inactive');
   };
 
+  const getLocalTodayDateStr = () => new Date().toLocaleDateString('en-CA');
+
   // Helper to fetch Present Now records strictly following:
   // Today's actual attendance records -> group by employee -> check latest attendance record -> no checkout -> Present Now
   function getTodayPresentNowRecords() {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalTodayDateStr();
     let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
 
     // Group today's actual attendance records strictly by employee (deduplicating multiple device punches)
@@ -570,10 +572,20 @@ export async function renderAdminDashboard() {
   function showAbsentTodayModal() {
     const activeEmployees = getAssignedUserIds();
     const activeUserIds = activeEmployees.map(u => u.id);
-    const todayStr = new Date().toISOString().split('T')[0];
-    const checkedInUserIds = new Set(DB.getLogs().filter(l => l.date === todayStr && l.checkIn).map(l => l.userId));
+    const todayStr = getLocalTodayDateStr();
+    const checkedInUserKeys = new Set();
+    DB.getLogs().filter(l => l.date === todayStr && l.checkIn).forEach(l => {
+      if (l.userId) checkedInUserKeys.add(l.userId);
+      if (l.employeeId) checkedInUserKeys.add(l.employeeId);
+      if (l.biometricUserId) checkedInUserKeys.add(l.biometricUserId);
+    });
     const onLeaveUserIds = new Set(DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate).map(lv => lv.userId));
-    const absentUsers = activeEmployees.filter(u => !checkedInUserIds.has(u.id) && !onLeaveUserIds.has(u.id));
+    const absentUsers = activeEmployees.filter(u => 
+      !checkedInUserKeys.has(u.id) && 
+      !checkedInUserKeys.has(u.employeeId) && 
+      !checkedInUserKeys.has(u.biometricUserId) && 
+      !onLeaveUserIds.has(u.id)
+    );
     // Sort absent users alphabetically
     absentUsers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     showDashboardDetailModal('Absent Today - Active Staff Missing Logs', absentUsers, 'absent');
@@ -645,7 +657,7 @@ export async function renderAdminDashboard() {
     const activeEmployees = getAssignedUserIds();
     const assignedUserIds = activeEmployees.map(u => u.id);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalTodayDateStr();
 
     const presentNowRecords = getTodayPresentNowRecords();
     const presentCount = presentNowRecords.length;
@@ -658,7 +670,7 @@ export async function renderAdminDashboard() {
     const leaveCount = onLeaveToday.length;
 
     const totalEmployees = activeEmployees.length;
-    const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId)).size;
+    const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId || l.employeeId || l.biometricUserId).filter(Boolean)).size;
     const absentCount = Math.max(0, totalEmployees - checkedInAtAllCount - leaveCount);
 
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager').length;
@@ -1035,7 +1047,11 @@ export async function renderAdminDashboard() {
     let distinctLocs = Array.from(new Set([
       ...currentTodayLogs.map(l => (l.location || l.biometricUsed || '').trim()).filter(Boolean),
       ...Object.keys(DB.getOfficeCoordinates() || {})
-    ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
+    ])).filter(loc => {
+      if (!loc) return false;
+      const l = loc.toLowerCase();
+      return !l.includes('kohat') && !l.includes('not assigned') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close');
+    }).sort((a, b) => a.localeCompare(b));
 
     renderLocationCheckboxDropdown(distinctLocs);
 
@@ -2138,6 +2154,12 @@ export async function renderAdminDashboard() {
       if (typeof loadBiometricDashboardData === 'function') {
         loadBiometricDashboardData(true);
       }
+      if (typeof loadBiometricFleetData === 'function') {
+        loadBiometricFleetData();
+      }
+      if (typeof updateDashboardViews === 'function') {
+        updateDashboardViews();
+      }
       const lastSyncEl = document.getElementById('fleet-last-sync');
       if (lastSyncEl) {
         const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
@@ -2148,6 +2170,23 @@ export async function renderAdminDashboard() {
   window.removeEventListener('biometric_sync_complete', window._adminBiometricSyncHandler);
   window._adminBiometricSyncHandler = onBiometricSyncComplete;
   window.addEventListener('biometric_sync_complete', window._adminBiometricSyncHandler);
+
+  const onDbUpdated = () => {
+    if (window.location.hash === '#admin-dashboard') {
+      if (typeof updateDashboardViews === 'function') {
+        updateDashboardViews();
+      }
+      if (typeof loadBiometricDashboardData === 'function') {
+        loadBiometricDashboardData(true);
+      }
+      if (typeof loadBiometricFleetData === 'function') {
+        loadBiometricFleetData();
+      }
+    }
+  };
+  window.removeEventListener('db_updated', window._adminDbUpdatedHandler);
+  window._adminDbUpdatedHandler = onDbUpdated;
+  window.addEventListener('db_updated', window._adminDbUpdatedHandler);
 
   if (window.adminDashboardInterval) {
     clearInterval(window.adminDashboardInterval);
@@ -2198,6 +2237,9 @@ export async function renderAdminDashboard() {
 }
 
 function renderAdminUsers() {
+  if (typeof window.renderAdminUsers === 'function') {
+    return window.renderAdminUsers();
+  }
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
   const rawUsers = DB.getUsers();
@@ -2216,6 +2258,42 @@ function renderAdminUsers() {
       return false;
     }
   });
+
+  const normalizeLocationName = (loc) => {
+    if (!loc || typeof loc !== 'string') return '';
+    const l = loc.trim();
+    const lower = l.toLowerCase();
+    if (lower === 'chattarpur') return 'Chattarpur Office';
+    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+    if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+    return l;
+  };
+
+  const getUserPrimaryLocation = (u) => {
+    if (!u) return '';
+    let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+              (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+              (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+              (u.workLocation && u.workLocation.trim()) ||
+              '';
+    return normalizeLocationName(loc);
+  };
+
+  const userMatchesLocation = (u, targetLoc) => {
+    if (!targetLoc || targetLoc === 'all') return true;
+    const target = normalizeLocationName(targetLoc).toLowerCase().trim();
+    const uLoc = getUserPrimaryLocation(u).toLowerCase().trim();
+    return uLoc === target;
+  };
+
+  // Derive distinct canonical worksite locations from users
+  const distinctLocs = Array.from(new Set(users.map(getUserPrimaryLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+
+  const userCountsByLoc = {};
+  distinctLocs.forEach(loc => {
+    userCountsByLoc[loc] = users.filter(u => userMatchesLocation(u, loc)).length;
+  });
+
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
     <div style="display:flex; gap:10px; align-items:center;">
       <button class="btn-outline-equify" id="btn-download-profile-users">&#8681; Download Profile</button>
@@ -2241,6 +2319,10 @@ function renderAdminUsers() {
             <option value="Operations">Department: Operations</option>
             <option value="Sales">Department: Sales & Marketing</option>
             <option value="Finance">Department: Finance</option>
+          </select>
+          <select class="equify-filter-select" id="filter-location-select" title="Filter by Worksite Location">
+            <option value="all">Location: All Locations (${users.length})</option>
+            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}">Location: ${Utils.escape(loc)} (${userCountsByLoc[loc] || 0})</option>`).join('')}
           </select>
           <select class="equify-filter-select" id="filter-role-select">
             <option value="all">Role: All Roles</option>
@@ -2289,9 +2371,7 @@ function renderAdminUsers() {
                   ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
                   : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-                const workLocation = assignedSchedules.length > 0
-                  ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
-                  : (u.preferredLocation || 'Not Assigned');
+                const workLocation = getUserPrimaryLocation(u) || 'Not Assigned';
                 
                 const profileStatus = u.profileVerificationStatus || 'Approved';
                 let profileBadgeHTML = '';
@@ -2440,25 +2520,29 @@ function renderAdminUsers() {
   // Setup real-time dynamic filter listeners on dropdowns
   const setupFilterListeners = () => {
     const dSel = document.getElementById('filter-dept-select');
+    const locSel = document.getElementById('filter-location-select');
     const rSel = document.getElementById('filter-role-select');
     const sSel = document.getElementById('filter-status-select');
     const tSel = document.getElementById('filter-time-select');
     const tbody = document.querySelector('.card-panel .custom-table tbody');
     const pInfo = document.querySelector('.equify-pagination-info');
 
-    if (!dSel || !tbody) return;
+    if (!tbody) return;
 
     const applyFilters = () => {
       const dVal = dSel ? dSel.value : 'all';
+      const locVal = locSel ? locSel.value : 'all';
       const rVal = rSel ? rSel.value : 'all';
       const sVal = sSel ? sSel.value : 'all';
 
-      const allUsers = DB.getUsers() || [];
-      const filtered = allUsers.filter(u => {
+      const filtered = users.filter(u => {
         if (dVal !== 'all') {
           const uDept = (u.department || '').toLowerCase();
           const targetDept = dVal.toLowerCase();
           if (!uDept.includes(targetDept) && !targetDept.includes(uDept)) return false;
+        }
+        if (locVal !== 'all') {
+          if (!userMatchesLocation(u, locVal)) return false;
         }
         if (rVal !== 'all') {
           if ((u.role || '').toLowerCase() !== rVal.toLowerCase()) return false;
@@ -2487,9 +2571,7 @@ function renderAdminUsers() {
             ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
             : '<span style="color:var(--text-muted)">Not Assigned</span>';
 
-          const workLocation = assignedSchedules.length > 0
-            ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
-            : (u.preferredLocation || 'Not Assigned');
+          const workLocation = getUserPrimaryLocation(u) || 'Not Assigned';
 
           const profileStatus = u.profileVerificationStatus || 'Approved';
           let profileBadgeHTML = '';
@@ -2545,7 +2627,7 @@ function renderAdminUsers() {
       }
     };
 
-    [dSel, rSel, sSel, tSel].forEach(sel => {
+    [dSel, locSel, rSel, sSel, tSel].forEach(sel => {
       if (sel) sel.addEventListener('change', applyFilters);
     });
   };
@@ -2648,25 +2730,25 @@ function openUserModal(userId = null) {
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-hra" style="font-size:11px">HRA (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}">
+            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-travel" style="font-size:11px">Travel (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}">
+            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}">
+            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}" placeholder="e.g. 0">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-pt" style="font-size:11px">Professional Tax (PT)</label>
-            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}">
+            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-tds" style="font-size:11px">TDS Tax Rate (%)</label>
-            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : '') : ''}" min="0" max="100">
+            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : '') : ''}" min="0" max="100" placeholder="e.g. 0">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
@@ -2921,7 +3003,7 @@ function openUserModal(userId = null) {
     const city = document.getElementById('editor-city') ? document.getElementById('editor-city').value.trim() : (isEdit ? user.city || '' : '');
     const state = document.getElementById('editor-state') ? document.getElementById('editor-state').value.trim() : (isEdit ? user.state || '' : '');
     const baseSalaryVal = document.getElementById('editor-salary') ? document.getElementById('editor-salary').value.trim() : '';
-    const baseSalary = baseSalaryVal === '' ? (isEdit ? user.baseSalary : null) : Number(baseSalaryVal);
+    const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
     
     // Multiple shift schedules & their separate locations
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
@@ -2957,15 +3039,15 @@ function openUserModal(userId = null) {
     const emergencyContact = emergencyEl ? emergencyEl.value.trim() : (isEdit ? user.emergencyContact || '' : '');
 
     const hraVal = document.getElementById('editor-hra') ? document.getElementById('editor-hra').value.trim() : '';
-    const allowanceHRA = hraVal === '' ? (isEdit ? user.allowanceHRA : null) : Number(hraVal);
+    const allowanceHRA = hraVal === '' ? null : Number(hraVal);
     const travelVal = document.getElementById('editor-travel') ? document.getElementById('editor-travel').value.trim() : '';
-    const allowanceTravel = travelVal === '' ? (isEdit ? user.allowanceTravel : null) : Number(travelVal);
+    const allowanceTravel = travelVal === '' ? null : Number(travelVal);
     const pfVal = document.getElementById('editor-pf') ? document.getElementById('editor-pf').value.trim() : '';
-    const deductionPF = pfVal === '' ? (isEdit ? user.deductionPF : null) : Number(pfVal);
+    const deductionPF = pfVal === '' ? null : Number(pfVal);
     const ptVal = document.getElementById('editor-pt') ? document.getElementById('editor-pt').value.trim() : '';
-    const deductionPT = ptVal === '' ? (isEdit ? user.deductionPT : null) : Number(ptVal);
+    const deductionPT = ptVal === '' ? null : Number(ptVal);
     const tdsVal = document.getElementById('editor-tds') ? document.getElementById('editor-tds').value.trim() : '';
-    const deductionTDS = tdsVal === '' ? (isEdit ? user.deductionTDS : null) : Number(tdsVal);
+    const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
     if (password) {
       const rules = Auth.validatePassword(password);

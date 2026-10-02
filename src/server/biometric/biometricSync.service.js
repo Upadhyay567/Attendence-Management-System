@@ -213,7 +213,7 @@ function writeLocalDatabase(state) {
    FIND HRMS USER
 ========================================================= */
 
-function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
+function findLocalEmployee(users, biometricUserId, deviceUserName = '', location = '') {
   const target = String(biometricUserId || '').trim().toLowerCase();
   const targetDigits = target.replace(/\D/g, '');
   const targetName = String(deviceUserName || '').trim().toLowerCase();
@@ -329,11 +329,12 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '') {
       scheduleId: '',
       scheduleIds: [],
       shiftLocations: {},
-      preferredLocation: '',
+      preferredLocation: location || '',
+      preferredLocations: location ? [location] : [],
       createdAt: new Date().toISOString()
     };
     users.push(newEmp);
-    console.log(`✨ Auto-registered biometric user in HRMS: ${newEmp.name} (ID: ${newEmp.biometricUserId})`);
+    console.log(`✨ Auto-registered biometric user in HRMS: ${newEmp.name} (ID: ${newEmp.biometricUserId}, Location: ${location || 'Default'})`);
     return newEmp;
   }
 
@@ -596,7 +597,7 @@ function processLocalPunch(
     );
 
   if (!biometricUser) {
-    const existingEmp = findLocalEmployee(users, punch.biometricUserId);
+    const existingEmp = findLocalEmployee(users, punch.biometricUserId, '', punch.location || punch.biometricUsed || '');
     if (existingEmp) {
       biometricUser = {
         userId: String(punch.biometricUserId),
@@ -629,7 +630,8 @@ function processLocalPunch(
     findLocalEmployee(
       users,
       punch.biometricUserId,
-      biometricUser ? biometricUser.name : ''
+      biometricUser ? biometricUser.name : '',
+      punch.location || punch.biometricUsed || ''
     );
 
   if (!employee) {

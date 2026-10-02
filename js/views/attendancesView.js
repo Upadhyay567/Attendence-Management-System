@@ -961,7 +961,11 @@ export function renderAdminAttendances() {
       const distinctLocs = Array.from(new Set([
         ...mappedLogs.map(l => (l.location || '').trim()).filter(Boolean),
         ...Object.keys(DB.getOfficeCoordinates() || {})
-      ])).sort((a, b) => a.localeCompare(b));
+      ])).filter(loc => {
+        if (!loc) return false;
+        const l = loc.toLowerCase();
+        return !l.includes('kohat') && !l.includes('not assigned') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close');
+      }).sort((a, b) => a.localeCompare(b));
 
       const currentVal = adminAttendancesLocationFilter;
       const opts = `<option value="">All Locations (${mappedLogs.length})</option>` +
@@ -1299,6 +1303,20 @@ export function renderAdminAttendances() {
   }
 
   updateTable();
+
+  // Real-time synchronization listeners for live biometric punches
+  const onAttSync = () => {
+    if (document.getElementById('admin-attendances-tbody')) {
+      updateTable();
+    }
+  };
+  window.removeEventListener('db_updated', window._adminAttDbUpdateHandler);
+  window._adminAttDbUpdateHandler = onAttSync;
+  window.addEventListener('db_updated', window._adminAttDbUpdateHandler);
+
+  window.removeEventListener('biometric_sync_complete', window._adminAttBioSyncHandler);
+  window._adminAttBioSyncHandler = onAttSync;
+  window.addEventListener('biometric_sync_complete', window._adminAttBioSyncHandler);
 }
 
 // Modal for Creating New Attendance Record

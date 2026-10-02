@@ -368,7 +368,7 @@ router.get('/biometric/dashboard', async (req, res) => {
     const dbState = readLocalDbStateCached() || { users: [], attendanceLogs: [] };
     const attendanceLogs = Array.isArray(dbState.attendanceLogs) ? dbState.attendanceLogs : [];
     const activeUsers = (Array.isArray(dbState.users) && dbState.users.length > 0) ? dbState.users : readHrmsUsers();
-    const today = new Date().toISOString().split('T')[0];
+    const today = req.query.date || new Date().toLocaleDateString('en-CA');
 
     // High-performance O(1) Map pre-indexing of logs
     const logsByUserId = new Map();

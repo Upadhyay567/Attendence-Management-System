@@ -505,7 +505,8 @@ async function syncFromWDMS(username, password, options = {}) {
         scheduleId: '',
         scheduleIds: [],
         shiftLocations: {},
-        preferredLocation: '',
+        preferredLocation: emp.area?.area_name || emp.location || '',
+        preferredLocations: (emp.area?.area_name || emp.location) ? [emp.area?.area_name || emp.location] : [],
         department: emp.department?.dept_name || 'Operations'
       });
       newEmployeesAdded++;

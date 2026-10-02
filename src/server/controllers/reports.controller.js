@@ -69,14 +69,14 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       return res.status(404).send('<h2>Employee record not found for payslip generation.</h2>');
     }
 
-    const baseSalary = targetUser.baseSalary || 50000;
-    const hra = targetUser.allowanceHRA || Math.round(baseSalary * 0.15);
-    const travel = targetUser.allowanceTravel || 3000;
+    const baseSalary = targetUser.baseSalary !== undefined && targetUser.baseSalary !== null ? Number(targetUser.baseSalary) : 0;
+    const hra = targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? Number(targetUser.allowanceHRA) : 0;
+    const travel = targetUser.allowanceTravel !== undefined && targetUser.allowanceTravel !== null ? Number(targetUser.allowanceTravel) : 0;
     const grossSalary = baseSalary + hra + travel;
 
-    const pf = targetUser.deductionPF || Math.round(baseSalary * 0.08);
-    const pt = targetUser.deductionPT || 200;
-    const tds = targetUser.deductionTDS || 500;
+    const pf = targetUser.deductionPF !== undefined && targetUser.deductionPF !== null ? Number(targetUser.deductionPF) : 0;
+    const pt = targetUser.deductionPT !== undefined && targetUser.deductionPT !== null ? Number(targetUser.deductionPT) : 0;
+    const tds = targetUser.deductionTDS !== undefined && targetUser.deductionTDS !== null ? Number(targetUser.deductionTDS) : 0;
     const totalDeductions = pf + pt + tds;
 
     const netSalary = grossSalary - totalDeductions;

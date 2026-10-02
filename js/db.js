@@ -22,11 +22,11 @@ const defaultUsers = [
     "status": "Active",
     "scheduleId": "sch_mfl8wvv",
     "baseSalary": 50000,
-    "allowanceHRA": 7500,
-    "allowanceTravel": 3000,
-    "deductionPF": 4000,
-    "deductionPT": 200,
-    "deductionTDS": 5,
+    "allowanceHRA": null,
+    "allowanceTravel": null,
+    "deductionPF": null,
+    "deductionPT": null,
+    "deductionTDS": null,
     "phone": "8967459032",
     "email": "abhishek879@gmail.com",
     "dob": "1995-08-07",
@@ -270,11 +270,11 @@ const defaultUsers = [
     "employeeId": "EMP-190",
     "scheduleId": "sch_q8jji9v",
     "baseSalary": 50000,
-    "allowanceHRA": 7500,
-    "allowanceTravel": 3000,
-    "deductionPF": 4000,
-    "deductionPT": 200,
-    "deductionTDS": 5,
+    "allowanceHRA": null,
+    "allowanceTravel": null,
+    "deductionPF": null,
+    "deductionPT": null,
+    "deductionTDS": null,
     "phone": "+918533920083",
     "email": "rahulsharma090@gmail.com",
     "dob": "1990-06-19",
@@ -302,11 +302,11 @@ const defaultUsers = [
     "employeeId": "HR123",
     "scheduleId": "sch_1",
     "baseSalary": 50000,
-    "allowanceHRA": 7500,
-    "allowanceTravel": 3000,
-    "deductionPF": 4000,
-    "deductionPT": 200,
-    "deductionTDS": 5,
+    "allowanceHRA": null,
+    "allowanceTravel": null,
+    "deductionPF": null,
+    "deductionPT": null,
+    "deductionTDS": null,
     "phone": "9536885675",
     "email": "hemantupadhyay900@gmail.com",
     "dob": "",
@@ -667,7 +667,7 @@ export const DB = {
     if (!isRecentLocalWrite) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
         
         const headers = {};
         if (token) {
@@ -835,11 +835,11 @@ export const DB = {
         u.emergencyContact = '+91 98765 4320' + (index + 1);
         modified = true;
       }
-      if (u.allowanceHRA === undefined) { u.allowanceHRA = Math.round((u.baseSalary || 50000) * 0.15); modified = true; }
-      if (u.allowanceTravel === undefined) { u.allowanceTravel = 3000; modified = true; }
-      if (u.deductionPF === undefined) { u.deductionPF = Math.round((u.baseSalary || 50000) * 0.08); modified = true; }
-      if (u.deductionPT === undefined) { u.deductionPT = 200; modified = true; }
-      if (u.deductionTDS === undefined) { u.deductionTDS = (u.baseSalary || 50000) > 60000 ? 10 : 5; modified = true; }
+      if (u.allowanceHRA === undefined) { u.allowanceHRA = null; modified = true; }
+      if (u.allowanceTravel === undefined) { u.allowanceTravel = null; modified = true; }
+      if (u.deductionPF === undefined) { u.deductionPF = null; modified = true; }
+      if (u.deductionPT === undefined) { u.deductionPT = null; modified = true; }
+      if (u.deductionTDS === undefined) { u.deductionTDS = null; modified = true; }
       if (u.assignedById === undefined && u.role === 'employee') {
         const hrIds = ['usr_hr', 'usr_7kek2wc', 'usr_6af1y3c'];
         u.assignedById = hrIds[index % hrIds.length];
@@ -1406,7 +1406,7 @@ export const DB = {
 
   getUserBaseRole(roleId) {
     if (!roleId) return 'employee';
-    if (roleId === 'hr' || roleId === 'manager' || roleId === 'finance_manager' || roleId === 'employee') {
+    if (roleId === 'admin' || roleId === 'superadmin' || roleId === 'hr' || roleId === 'manager' || roleId === 'finance_manager' || roleId === 'employee') {
       return roleId;
     }
     const customRoles = this.getCustomRoles();
@@ -1918,8 +1918,14 @@ export const DB = {
     return (this.data.attendanceLogs || []).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   },
 
-  getTodayLog(userId, shiftId = null) {
-    const todayStr = new Date().toISOString().split('T')[0];
+  getTodayLog(userId, shiftId = null, dateOverride = null) {
+    let resolvedDate = dateOverride;
+    let resolvedShiftId = shiftId;
+    if (typeof shiftId === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(shiftId)) {
+      resolvedDate = shiftId;
+      resolvedShiftId = null;
+    }
+    const todayStr = resolvedDate || new Date().toLocaleDateString('en-CA');
     const user = this.getUser(userId);
     const userDigits = user ? String(user.employeeId || user.biometricUserId || '').replace(/\D/g, '') : '';
     const matchesUser = (l) => {
@@ -1932,11 +1938,11 @@ export const DB = {
       return false;
     };
 
-    if (shiftId) {
-      const exactMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(shiftId));
+    if (resolvedShiftId) {
+      const exactMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && String(l.shiftId) === String(resolvedShiftId));
       if (exactMatch) return exactMatch;
       
-      const isPrimarySchedule = user && String(user.scheduleId) === String(shiftId);
+      const isPrimarySchedule = user && String(user.scheduleId) === String(resolvedShiftId);
       if (isPrimarySchedule) {
         const unassignedMatch = (this.data.attendanceLogs || []).find(l => matchesUser(l) && l.date === todayStr && (!l.shiftId || l.shiftId === ''));
         if (unassignedMatch) return unassignedMatch;

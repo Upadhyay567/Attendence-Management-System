@@ -37,7 +37,20 @@ export function renderDailyWorkStatus() {
     ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
     ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
     ...Object.keys(offices)
-  ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
+  ])).filter(loc => {
+    if (!loc) return false;
+    const l = loc.toLowerCase();
+    return !l.includes('kohat') && !l.includes('not assigned') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close');
+  }).sort((a, b) => a.localeCompare(b));
+
+  const logCountsByLoc = {};
+  distinctLocs.forEach(loc => {
+    const tLoc = loc.toLowerCase().trim();
+    logCountsByLoc[loc] = allLogs.filter(l => {
+      const lLoc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
+      return lLoc === tLoc;
+    }).length;
+  });
 
   main.innerHTML = html`
     <div id="daily-work-status-page-container" style="padding: 24px 32px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">
@@ -60,8 +73,8 @@ export function renderDailyWorkStatus() {
           <!-- Location Filter Dropdown -->
           <div style="position: relative;">
             <select id="dws-location-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 600; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer; min-width: 175px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-              <option value="">All Locations</option>
-              ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${dailyWorkStatusLocationFilter.toLowerCase().trim() === loc.toLowerCase().trim() ? 'selected' : ''}>${Utils.escape(loc)}</option>`).join('')}
+              <option value="">All Locations (${allLogs.length})</option>
+              ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${dailyWorkStatusLocationFilter.toLowerCase().trim() === loc.toLowerCase().trim() ? 'selected' : ''}>${Utils.escape(loc)} (${logCountsByLoc[loc] || 0})</option>`).join('')}
             </select>
           </div>
 
@@ -176,13 +189,13 @@ export function renderDailyWorkStatus() {
     const allUsers = DB.getUsers();
     let employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
 
-    if (DB.getUserBaseRole(currentUser.role) === 'employee') {
+    const currentUserRole = DB.getUserBaseRole(currentUser.role);
+    if (currentUserRole === 'employee') {
       employees = employees.filter(e => e.id === currentUser.id);
-    } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
-      employees = employees.filter(e => e.managerId === currentUser.id);
-    } else if (DB.getUserBaseRole(currentUser.role) === 'hr') {
-      employees = employees.filter(e => e.assignedById === currentUser.id);
+    } else if (currentUserRole === 'manager') {
+      employees = employees.filter(e => e.managerId === currentUser.id || e.id === currentUser.id);
     }
+    // HR and Admin roles retain full visibility across all active employees
 
     // 2. Fetch real attendance logs and approved leaves
     const allLogs = DB.getLogs() || [];
@@ -243,13 +256,21 @@ export function renderDailyWorkStatus() {
       employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
     }
 
-    // Map logs by key: `${userId}_${dateStr}`
+    // Map logs by keys: `${userId}_${dateStr}`, `${employeeId}_${dateStr}`, `${biometricUserId}_${dateStr}`
     const logsMap = new Map();
     allLogs.forEach(l => {
-      if (!l.date) return;
-      const key = `${l.userId || l.employeeId}_${l.date}`;
-      if (!logsMap.has(key)) logsMap.set(key, []);
-      logsMap.get(key).push(l);
+      if (!l || !l.date) return;
+      const keys = new Set();
+      if (l.userId) keys.add(`${l.userId}_${l.date}`);
+      if (l.employeeId) keys.add(`${l.employeeId}_${l.date}`);
+      if (l.biometricUserId) {
+        keys.add(`${l.biometricUserId}_${l.date}`);
+        keys.add(`bio_${l.biometricUserId}_${l.date}`);
+      }
+      keys.forEach(k => {
+        if (!logsMap.has(k)) logsMap.set(k, []);
+        logsMap.get(k).push(l);
+      });
     });
 
     // Map approved leaves by userId
@@ -327,7 +348,10 @@ export function renderDailyWorkStatus() {
         const dayOfWeek = new Date(dailyWorkStatusSelectedYear, dailyWorkStatusSelectedMonth, dayNum).getDay();
         const isSunday = dayOfWeek === 0;
 
-        const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || logsMap.get(`${emp.employeeId}_${dateStr}`) || [];
+        const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
+                        logsMap.get(`${emp.employeeId}_${dateStr}`) || 
+                        (emp.biometricUserId ? logsMap.get(`${emp.biometricUserId}_${dateStr}`) : null) || 
+                        (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || [];
         const empLeaves = leavesMap.get(emp.id) || [];
         const hasApprovedLeave = empLeaves.some(lv => dateStr >= lv.startDate && dateStr <= (lv.endDate || lv.startDate));
 
@@ -521,6 +545,20 @@ export function renderDailyWorkStatus() {
 
   // Initial table render
   updateMatrixTable();
+
+  // Real-time synchronization listeners for live biometric punches
+  const onDwsSync = () => {
+    if (document.getElementById('dws-matrix-tbody')) {
+      updateMatrixTable();
+    }
+  };
+  window.removeEventListener('db_updated', window._dwsUpdateHandler);
+  window._dwsUpdateHandler = onDwsSync;
+  window.addEventListener('db_updated', window._dwsUpdateHandler);
+
+  window.removeEventListener('biometric_sync_complete', window._dwsBioSyncHandler);
+  window._dwsBioSyncHandler = onDwsSync;
+  window.addEventListener('biometric_sync_complete', window._dwsBioSyncHandler);
 }
 
 function exportDailyWorkStatusCSV(year, month) {
@@ -539,13 +577,13 @@ function exportDailyWorkStatusCSV(year, month) {
 
   const currentUser = Auth.getCurrentUser();
   if (currentUser) {
-    if (DB.getUserBaseRole(currentUser.role) === 'employee') {
+    const currentUserRole = DB.getUserBaseRole(currentUser.role);
+    if (currentUserRole === 'employee') {
       employees = employees.filter(e => e.id === currentUser.id);
-    } else if (DB.getUserBaseRole(currentUser.role) === 'manager') {
-      employees = employees.filter(e => e.managerId === currentUser.id);
-    } else if (DB.getUserBaseRole(currentUser.role) === 'hr') {
-      employees = employees.filter(e => e.assignedById === currentUser.id);
+    } else if (currentUserRole === 'manager') {
+      employees = employees.filter(e => e.managerId === currentUser.id || e.id === currentUser.id);
     }
+    // HR and Admin roles retain full visibility across all active employees
   }
 
   // Build location map
@@ -596,12 +634,21 @@ function exportDailyWorkStatusCSV(year, month) {
     employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
   }
 
+  // Map logs by keys: `${userId}_${dateStr}`, `${employeeId}_${dateStr}`, `${biometricUserId}_${dateStr}`
   const logsMap = new Map();
   allLogs.forEach(l => {
-    if (!l.date) return;
-    const key = `${l.userId || l.employeeId}_${l.date}`;
-    if (!logsMap.has(key)) logsMap.set(key, []);
-    logsMap.get(key).push(l);
+    if (!l || !l.date) return;
+    const keys = new Set();
+    if (l.userId) keys.add(`${l.userId}_${l.date}`);
+    if (l.employeeId) keys.add(`${l.employeeId}_${l.date}`);
+    if (l.biometricUserId) {
+      keys.add(`${l.biometricUserId}_${l.date}`);
+      keys.add(`bio_${l.biometricUserId}_${l.date}`);
+    }
+    keys.forEach(k => {
+      if (!logsMap.has(k)) logsMap.set(k, []);
+      logsMap.get(k).push(l);
+    });
   });
 
   const leavesMap = new Map();
@@ -625,7 +672,10 @@ function exportDailyWorkStatusCSV(year, month) {
       const dayOfWeek = new Date(year, month, dayNum).getDay();
       const isSunday = dayOfWeek === 0;
 
-      const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || logsMap.get(`${emp.employeeId}_${dateStr}`) || [];
+      const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
+                      logsMap.get(`${emp.employeeId}_${dateStr}`) || 
+                      (emp.biometricUserId ? logsMap.get(`${emp.biometricUserId}_${dateStr}`) : null) || 
+                      (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || [];
       const empLeaves = leavesMap.get(emp.id) || [];
       const hasApprovedLeave = empLeaves.some(lv => dateStr >= lv.startDate && dateStr <= (lv.endDate || lv.startDate));
 

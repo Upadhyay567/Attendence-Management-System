@@ -6,6 +6,8 @@ import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 import { openProfileDownloadModal } from '../downloads.js';
 
+const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
+
 export function renderAdminUsers() {
   const main = document.getElementById('main-view');
   const user = Auth.getCurrentUser();
@@ -25,12 +27,110 @@ export function renderAdminUsers() {
       return user && u.id === user.id;
     }
   });
-  const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
+
+  const normalizeLocationName = (loc) => {
+    if (!loc || typeof loc !== 'string') return '';
+    const l = loc.trim();
+    const lower = l.toLowerCase();
+    if (lower === 'chattarpur') return 'Chattarpur Office';
+    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+    if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+    return l;
+  };
+
+  const getUserPrimaryLocation = (u) => {
+    if (!u) return '';
+    let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+              (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+              (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+              (u.workLocation && u.workLocation.trim()) ||
+              '';
+    return normalizeLocationName(loc);
+  };
+
+  const userMatchesLocation = (u, targetLoc) => {
+    if (!targetLoc || targetLoc === 'all') return true;
+    const target = normalizeLocationName(targetLoc).toLowerCase().trim();
+    const uLoc = getUserPrimaryLocation(u).toLowerCase().trim();
+    return uLoc === target;
+  };
+
+  // Derive distinct canonical worksite locations from users
+  const distinctLocs = Array.from(new Set(users.map(getUserPrimaryLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+
+  const userCountsByLoc = {};
+  distinctLocs.forEach(loc => {
+    userCountsByLoc[loc] = users.filter(u => userMatchesLocation(u, loc)).length;
+  });
+
+  const addBtnHTML = (user.role === 'hr' || user.role === 'manager' || user.role === 'admin') ? `
     <div style="display:flex; gap:10px; align-items:center;">
       <button class="btn-outline-equify" id="btn-download-profile-users">&#8681; Download Profile</button>
       <button class="btn-primary-equify" id="btn-add-user-modal">+ Add Employee</button>
     </div>
   ` : '';
+
+  const renderEmployeeRow = (u) => {
+    const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+      ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+      : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+
+    const shiftNames = assignedSchedules.length > 0 
+      ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
+      : '<span style="color:var(--text-muted)">Not Assigned</span>';
+
+    const workLocation = getUserPrimaryLocation(u) || 'Not Assigned';
+    
+    const profileStatus = u.profileVerificationStatus || 'Approved';
+    let profileBadgeHTML = '';
+    if (profileStatus === 'Pending Approval') {
+      profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
+    } else if (profileStatus === 'Rejected') {
+      profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
+    } else {
+      profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
+    }
+
+    const actionsHTML = (user.role === 'hr' || user.role === 'manager' || user.role === 'admin')
+      ? `
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${u.profileVerificationStatus === 'Pending Approval' ? `
+            <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
+            <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
+          ` : ''}
+          <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
+          <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
+        </div>
+      `
+      : `
+        <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
+      `;
+    
+    return `
+      <tr>
+        <td style="font-weight:600; display:flex; align-items:center; gap:12px">
+          <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
+            ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+          </div>
+          <div>
+            ${Utils.escape(u.name)}
+            ${profileBadgeHTML}
+          </div>
+        </td>
+        <td>
+          ${Utils.escape(u.employeeId)}
+          ${u.biometricUserId || u.biometricId ? `<br><span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:2px;" title="Biometric Machine ID">🪪 ${Utils.escape(u.biometricUserId || u.biometricId)}</span>` : ''}
+        </td>
+        <td><code>••••••••</code></td>
+        <td>${shiftNames}</td>
+        <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
+        <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
+        <td>
+          ${actionsHTML}
+        </td>
+      </tr>
+    `;
+  };
 
   main.innerHTML = html`
     <div class="equify-page-header">
@@ -60,6 +160,10 @@ export function renderAdminUsers() {
             <option value="Operations">Department: Operations</option>
             <option value="Sales">Department: Sales & Marketing</option>
             <option value="Finance">Department: Finance</option>
+          </select>
+          <select class="equify-filter-select" id="filter-location-select" title="Filter by Worksite Location">
+            <option value="all">Location: All Locations (${users.length})</option>
+            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}">Location: ${Utils.escape(loc)} (${userCountsByLoc[loc] || 0})</option>`).join('')}
           </select>
           <select class="equify-filter-select" id="filter-role-select">
             <option value="all">Role: All Roles</option>
@@ -98,69 +202,37 @@ export function renderAdminUsers() {
                 <th>Profile Controls</th>
               </tr>
             </thead>
-            <tbody>
-              ${users.map(u => {
-                const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
-                  ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
-                  : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
-
-                const shiftNames = assignedSchedules.length > 0 
-                  ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
-                  : '<span style="color:var(--text-muted)">Not Assigned</span>';
-
-                const workLocation = assignedSchedules.length > 0
-                  ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
-                  : (u.preferredLocation || 'Not Assigned');
-                
-                const profileStatus = u.profileVerificationStatus || 'Approved';
-                let profileBadgeHTML = '';
-                if (profileStatus === 'Pending Approval') {
-                  profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
-                } else if (profileStatus === 'Rejected') {
-                  profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
-                } else {
-                  profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
-                }
-
-                 const actionsHTML = (user.role === 'hr' || user.role === 'manager')
-                   ? `
-                     <div style="display:flex;gap:6px;flex-wrap:wrap">
-                       ${u.profileVerificationStatus === 'Pending Approval' ? `
-                         <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
-                         <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
-                       ` : ''}
-                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
-                     </div>
-                   `
-                   : `
-                     <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
-                   `;
-                
-                return `
-                  <tr>
-                    <td style="font-weight:600; display:flex; align-items:center; gap:12px">
-                      <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
-                        ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
-                      </div>
-                      <div>
-                        ${Utils.escape(u.name)}
-                        ${profileBadgeHTML}
-                      </div>
-                    </td>
-                    <td>${Utils.escape(u.employeeId)}</td>
-                    <td><code>••••••••</code></td>
-                    <td>${shiftNames}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
-                    <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
-                    <td>
-                      ${actionsHTML}
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
+            <tbody></tbody>
           </table>
+        </div>
+
+        <!-- Employee Registers Pagination Bar -->
+        <div class="employee-pagination-bar" id="employee-pagination-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding:12px 16px; background:var(--bg-card, #ffffff); border:1px solid var(--border); border-radius:8px">
+          <div style="display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap">
+            <span id="employee-pagination-range" style="font-weight:600">Showing 1 to 25 of ${users.length.toLocaleString()} employee(s)</span>
+            <span style="color:var(--border)">|</span>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px">
+              Rows per page:
+              <select id="employee-page-size-select" class="form-input" style="padding:4px 8px; font-size:12px; width:auto; border-radius:6px">
+                <option value="15">15</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="all">All</option>
+              </select>
+            </label>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px">
+            <button class="btn btn-secondary btn-sm" id="btn-employee-page-first" style="padding:5px 10px; font-size:12px; width:auto" title="First Page">⏮ First</button>
+            <button class="btn btn-secondary btn-sm" id="btn-employee-page-prev" style="padding:5px 12px; font-size:12px; width:auto" title="Previous Page">◀ Prev</button>
+            <div style="display:flex; align-items:center; gap:4px">
+              <input type="number" id="input-employee-current-page" min="1" max="1" value="1" style="width:48px; height:28px; text-align:center; padding:2px; font-size:12.5px; font-weight:700; border:1px solid var(--border); border-radius:6px; background:var(--bg-card, #ffffff); color:var(--text-primary)">
+              <span id="employee-page-total" style="font-size:12.5px; color:var(--text-secondary)">/ 1</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-employee-page-next" style="padding:5px 12px; font-size:12px; width:auto" title="Next Page">Next ▶</button>
+            <button class="btn btn-secondary btn-sm" id="btn-employee-page-last" style="padding:5px 10px; font-size:12px; width:auto" title="Last Page">Last ⏭</button>
+          </div>
         </div>
       </div>
     </div>
@@ -252,6 +324,15 @@ export function renderAdminUsers() {
     container.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
     container.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleApproveProfile(e.target.closest('.btn-approve-profile-direct').dataset.id)));
     container.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleRejectProfile(e.target.closest('.btn-reject-profile-direct').dataset.id)));
+    container.querySelectorAll('.clickable-list-avatar').forEach(av => {
+      av.addEventListener('click', (e) => {
+        const photo = av.dataset.photo;
+        if (photo && typeof openFullScreenImageModal === 'function') {
+          e.stopPropagation();
+          openFullScreenImageModal(photo);
+        }
+      });
+    });
   };
 
   bindUserRowEvents();
@@ -260,6 +341,7 @@ export function renderAdminUsers() {
   const setupFilterListeners = () => {
     const sInput = document.getElementById('employee-search-input');
     const dSel = document.getElementById('filter-dept-select');
+    const locSel = document.getElementById('filter-location-select');
     const rSel = document.getElementById('filter-role-select');
     const sSel = document.getElementById('filter-status-select');
     const tSel = document.getElementById('filter-time-select');
@@ -268,13 +350,110 @@ export function renderAdminUsers() {
 
     if (!tbody) return;
 
+    let currentFilteredUsers = users;
+    let employeeCurrentPage = 1;
+    let employeePageSize = 25;
+
+    const renderEmployeePage = () => {
+      const totalCount = currentFilteredUsers.length;
+      const effectivePageSize = (employeePageSize === 'all' || employeePageSize >= totalCount) ? totalCount : employeePageSize;
+      const totalPages = effectivePageSize > 0 ? Math.ceil(totalCount / effectivePageSize) : 1;
+
+      if (employeeCurrentPage > totalPages) employeeCurrentPage = Math.max(1, totalPages);
+      if (employeeCurrentPage < 1) employeeCurrentPage = 1;
+
+      const startIndex = effectivePageSize > 0 ? (employeeCurrentPage - 1) * effectivePageSize : 0;
+      const endIndex = effectivePageSize > 0 ? Math.min(startIndex + effectivePageSize, totalCount) : totalCount;
+      const pageUsers = currentFilteredUsers.slice(startIndex, endIndex);
+
+      if (pageUsers.length === 0) {
+        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageUsers.map(renderEmployeeRow).join('');
+        bindUserRowEvents(tbody);
+      }
+
+      if (pInfo) {
+        pInfo.textContent = `Total: ${totalCount.toLocaleString()} showing ${totalCount === users.length ? 'all employees' : 'matching employees'} (Page ${employeeCurrentPage} of ${totalPages})`;
+      }
+
+      const rangeEl = document.getElementById('employee-pagination-range');
+      if (rangeEl) {
+        rangeEl.textContent = totalCount > 0
+          ? `Showing ${startIndex + 1} to ${endIndex} of ${totalCount.toLocaleString()} employee(s)`
+          : `Showing 0 employees`;
+      }
+
+      const pageInput = document.getElementById('input-employee-current-page');
+      const totalSpan = document.getElementById('employee-page-total');
+      if (pageInput) {
+        pageInput.value = employeeCurrentPage;
+        pageInput.max = totalPages;
+      }
+      if (totalSpan) {
+        totalSpan.textContent = `/ ${totalPages}`;
+      }
+
+      const btnFirst = document.getElementById('btn-employee-page-first');
+      const btnPrev = document.getElementById('btn-employee-page-prev');
+      const btnNext = document.getElementById('btn-employee-page-next');
+      const btnLast = document.getElementById('btn-employee-page-last');
+
+      if (btnFirst) btnFirst.disabled = (employeeCurrentPage <= 1);
+      if (btnPrev) btnPrev.disabled = (employeeCurrentPage <= 1);
+      if (btnNext) btnNext.disabled = (employeeCurrentPage >= totalPages);
+      if (btnLast) btnLast.disabled = (employeeCurrentPage >= totalPages);
+    };
+
+    const btnFirst = document.getElementById('btn-employee-page-first');
+    const btnPrev = document.getElementById('btn-employee-page-prev');
+    const btnNext = document.getElementById('btn-employee-page-next');
+    const btnLast = document.getElementById('btn-employee-page-last');
+    const pageSizeSel = document.getElementById('employee-page-size-select');
+    const pageInput = document.getElementById('input-employee-current-page');
+
+    if (btnFirst) btnFirst.onclick = () => { employeeCurrentPage = 1; renderEmployeePage(); };
+    if (btnPrev) btnPrev.onclick = () => { if (employeeCurrentPage > 1) { employeeCurrentPage--; renderEmployeePage(); } };
+    if (btnNext) btnNext.onclick = () => {
+      const effectivePageSize = (employeePageSize === 'all' || employeePageSize >= currentFilteredUsers.length) ? currentFilteredUsers.length : employeePageSize;
+      const totalPages = effectivePageSize > 0 ? Math.ceil(currentFilteredUsers.length / effectivePageSize) : 1;
+      if (employeeCurrentPage < totalPages) { employeeCurrentPage++; renderEmployeePage(); }
+    };
+    if (btnLast) btnLast.onclick = () => {
+      const effectivePageSize = (employeePageSize === 'all' || employeePageSize >= currentFilteredUsers.length) ? currentFilteredUsers.length : employeePageSize;
+      employeeCurrentPage = effectivePageSize > 0 ? Math.ceil(currentFilteredUsers.length / effectivePageSize) : 1;
+      renderEmployeePage();
+    };
+    if (pageSizeSel) {
+      pageSizeSel.onchange = (e) => {
+        const val = e.target.value;
+        employeePageSize = val === 'all' ? 'all' : parseInt(val, 10);
+        employeeCurrentPage = 1;
+        renderEmployeePage();
+      };
+    }
+    if (pageInput) {
+      pageInput.onchange = (e) => {
+        const effectivePageSize = (employeePageSize === 'all' || employeePageSize >= currentFilteredUsers.length) ? currentFilteredUsers.length : employeePageSize;
+        const totalPages = effectivePageSize > 0 ? Math.ceil(currentFilteredUsers.length / effectivePageSize) : 1;
+        const val = parseInt(e.target.value, 10);
+        if (!isNaN(val) && val >= 1 && val <= totalPages) {
+          employeeCurrentPage = val;
+          renderEmployeePage();
+        } else {
+          e.target.value = employeeCurrentPage;
+        }
+      };
+    }
+
     const applyFilters = () => {
       const q = sInput ? sInput.value.toLowerCase().trim() : '';
       const dVal = dSel ? dSel.value : 'all';
+      const locVal = locSel ? locSel.value : 'all';
       const rVal = rSel ? rSel.value : 'all';
       const sVal = sSel ? sSel.value : 'all';
 
-      const filtered = users.filter(u => {
+      currentFilteredUsers = users.filter(u => {
         if (q) {
           const name = (u.name || '').toLowerCase();
           const empId = (u.employeeId || '').toLowerCase();
@@ -286,6 +465,9 @@ export function renderAdminUsers() {
           const uDept = (u.department || '').toLowerCase();
           const targetDept = dVal.toLowerCase();
           if (!uDept.includes(targetDept) && !targetDept.includes(uDept)) return false;
+        }
+        if (locVal !== 'all') {
+          if (!userMatchesLocation(u, locVal)) return false;
         }
         if (rVal !== 'all') {
           if ((u.role || '').toLowerCase() !== rVal.toLowerCase()) return false;
@@ -302,86 +484,20 @@ export function renderAdminUsers() {
         return true;
       });
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for "${Utils.escape(q || 'selected filters')}".</td></tr>`;
-      } else {
-        tbody.innerHTML = filtered.map(u => {
-          const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
-            ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
-            : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
-
-          const shiftNames = assignedSchedules.length > 0 
-            ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
-            : '<span style="color:var(--text-muted)">Not Assigned</span>';
-
-          const workLocation = assignedSchedules.length > 0
-            ? ([...new Set(assignedSchedules.map(s => (u.shiftLocations && u.shiftLocations[s.id]) || u.preferredLocation || s.location || ''))].filter(Boolean).join(', ') || 'Not Assigned')
-            : (u.preferredLocation || 'Not Assigned');
-
-          const profileStatus = u.profileVerificationStatus || 'Approved';
-          let profileBadgeHTML = '';
-          if (profileStatus === 'Pending Approval') {
-            profileBadgeHTML = `<br><span class="badge badge-pending" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">⏳ Profile Pending</span>`;
-          } else if (profileStatus === 'Rejected') {
-            profileBadgeHTML = `<br><span class="badge badge-rejected" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block">❌ Profile Issue</span>`;
-          } else {
-            profileBadgeHTML = `<br><span class="badge badge-approved" style="font-size:10px; padding:1px 6px; margin-top:4px; display:inline-block; background:rgba(16,185,129,0.1); color:var(--success)">✅ Profile Approved</span>`;
-          }
-
-          const actionsHTML = (user.role === 'hr' || user.role === 'manager')
-            ? `
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                ${u.profileVerificationStatus === 'Pending Approval' ? `
-                  <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
-                  <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
-                ` : ''}
-                <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
-              </div>
-            `
-            : `<div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>`;
-          
-          return `
-            <tr>
-              <td style="font-weight:600; display:flex; align-items:center; gap:12px">
-                <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
-                  ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
-                </div>
-                <div>
-                  ${Utils.escape(u.name)}
-                  ${profileBadgeHTML}
-                </div>
-              </td>
-              <td>
-                ${Utils.escape(u.employeeId)}
-                ${u.biometricUserId || u.biometricId ? `<br><span style="font-size:10.5px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;display:inline-block;margin-top:2px;" title="Biometric Machine ID">🪪 ${Utils.escape(u.biometricUserId || u.biometricId)}</span>` : ''}
-              </td>
-              <td><code>••••••••</code></td>
-              <td>${shiftNames}</td>
-              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
-              <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
-              <td>
-                ${actionsHTML}
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-        bindUserRowEvents(tbody);
-      }
-
-      if (pInfo) {
-        pInfo.textContent = `Total: ${filtered.length} showing ${filtered.length === users.length ? 'all employees' : 'matching employees'}`;
-      }
+      employeeCurrentPage = 1;
+      renderEmployeePage();
     };
 
     if (sInput) {
       sInput.addEventListener('input', applyFilters);
     }
 
-    [dSel, rSel, sSel, tSel].forEach(sel => {
+    [dSel, locSel, rSel, sSel, tSel].forEach(sel => {
       if (sel) sel.addEventListener('change', applyFilters);
     });
+
+    // Initial page render
+    renderEmployeePage();
   };
 
   setupFilterListeners();
@@ -484,25 +600,25 @@ export function openUserModal(userId = null) {
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-hra" style="font-size:11px">HRA (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}">
+            <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-travel" style="font-size:11px">Travel (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}">
+            <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}">
+            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}" placeholder="e.g. 0">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
             <label class="form-label" for="editor-pt" style="font-size:11px">Professional Tax (PT)</label>
-            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}">
+            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-tds" style="font-size:11px">TDS Tax Rate (%)</label>
-            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : '') : ''}" min="0" max="100">
+            <input class="form-input" type="number" id="editor-tds" value="${isEdit ? (user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : '') : ''}" min="0" max="100" placeholder="e.g. 0">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
@@ -757,7 +873,7 @@ export function openUserModal(userId = null) {
     const city = document.getElementById('editor-city') ? document.getElementById('editor-city').value.trim() : (isEdit ? user.city || '' : '');
     const state = document.getElementById('editor-state') ? document.getElementById('editor-state').value.trim() : (isEdit ? user.state || '' : '');
     const baseSalaryVal = document.getElementById('editor-salary') ? document.getElementById('editor-salary').value.trim() : '';
-    const baseSalary = baseSalaryVal === '' ? (isEdit ? user.baseSalary : null) : Number(baseSalaryVal);
+    const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
     
     // Multiple shift schedules & their separate locations
     const selectedShiftCheckboxes = Array.from(overlay.querySelectorAll('input[name="editor_shift_select"]:checked'));
@@ -793,15 +909,15 @@ export function openUserModal(userId = null) {
     const emergencyContact = emergencyEl ? emergencyEl.value.trim() : (isEdit ? user.emergencyContact || '' : '');
 
     const hraVal = document.getElementById('editor-hra') ? document.getElementById('editor-hra').value.trim() : '';
-    const allowanceHRA = hraVal === '' ? (isEdit ? user.allowanceHRA : null) : Number(hraVal);
+    const allowanceHRA = hraVal === '' ? null : Number(hraVal);
     const travelVal = document.getElementById('editor-travel') ? document.getElementById('editor-travel').value.trim() : '';
-    const allowanceTravel = travelVal === '' ? (isEdit ? user.allowanceTravel : null) : Number(travelVal);
+    const allowanceTravel = travelVal === '' ? null : Number(travelVal);
     const pfVal = document.getElementById('editor-pf') ? document.getElementById('editor-pf').value.trim() : '';
-    const deductionPF = pfVal === '' ? (isEdit ? user.deductionPF : null) : Number(pfVal);
+    const deductionPF = pfVal === '' ? null : Number(pfVal);
     const ptVal = document.getElementById('editor-pt') ? document.getElementById('editor-pt').value.trim() : '';
-    const deductionPT = ptVal === '' ? (isEdit ? user.deductionPT : null) : Number(ptVal);
+    const deductionPT = ptVal === '' ? null : Number(ptVal);
     const tdsVal = document.getElementById('editor-tds') ? document.getElementById('editor-tds').value.trim() : '';
-    const deductionTDS = tdsVal === '' ? (isEdit ? user.deductionTDS : null) : Number(tdsVal);
+    const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
     if (password) {
       const rules = Auth.validatePassword(password);
