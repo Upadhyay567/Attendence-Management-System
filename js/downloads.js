@@ -17,12 +17,47 @@ export function getActiveAuth() {
   return Auth;
 }
 
+// Canonical worksite normalization helpers
+export const normalizeLocationName = (loc) => {
+  if (!loc || typeof loc !== 'string') return '';
+  const l = loc.trim();
+  const lower = l.toLowerCase();
+  if (lower === 'chattarpur') return 'Chattarpur Office';
+  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+  if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+  return l;
+};
+
+export const getUserPrimaryLocation = (u) => {
+  if (!u) return 'Head Office';
+  let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+            (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+            (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+            (u.workLocation && u.workLocation.trim()) ||
+            '';
+  return loc ? normalizeLocationName(loc) : 'Head Office';
+};
+
+export const userMatchesLocation = (u, targetLoc) => {
+  if (!targetLoc || targetLoc === 'all') return true;
+  const target = normalizeLocationName(targetLoc).toLowerCase().trim();
+  const uLoc = getUserPrimaryLocation(u).toLowerCase().trim();
+  return uLoc === target;
+};
+
 // Extend DB with custom query logic for Profile and Report downloads
 export function registerCustomQueries(targetDb) {
   if (!targetDb) return;
-  targetDb.queryEmployeeProfiles = function(userIds) {
+  targetDb.queryEmployeeProfiles = function(userIds, options = {}) {
     const list = (targetDb.getUsers ? targetDb.getUsers() : (targetDb.data ? targetDb.data.users : [])) || [];
-    return list.filter(u => userIds.includes(u.id) || (u.employeeId && userIds.includes(u.employeeId)));
+    let result = list.filter(u => u && u.status !== 'Inactive');
+    if (Array.isArray(userIds) && userIds.length > 0 && !userIds.includes('all')) {
+      result = result.filter(u => userIds.includes(u.id) || (u.employeeId && userIds.includes(u.employeeId)));
+    }
+    if (options && options.location && options.location !== 'all') {
+      result = result.filter(u => userMatchesLocation(u, options.location));
+    }
+    return result;
   };
 
   targetDb.queryAttendanceReport = function(userIds, month, year) {
@@ -173,61 +208,12 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
     }
   }
 
-  // Pre-calculate user locations map from attendance punch logs
-  const allLogs = (activeDB.getLogs ? activeDB.getLogs() : (activeDB.data ? activeDB.data.attendanceLogs : [])) || [];
-  const devs = (activeDB.getBiometricDevices ? activeDB.getBiometricDevices() : (activeDB.data ? activeDB.data.biometricDevices : [])) || [];
-  const offices = (activeDB.getOfficeCoordinates ? activeDB.getOfficeCoordinates() : (activeDB.data ? activeDB.data.officeCoordinates : {})) || {};
+  const distinctLocs = Array.from(new Set(rawUsers.map(getUserPrimaryLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
 
-  const userLocationsMap = new Map();
-  allLogs.forEach(l => {
-    const loc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
-    if (!loc) return;
-    if (l.userId) {
-      if (!userLocationsMap.has(l.userId)) userLocationsMap.set(l.userId, new Set());
-      userLocationsMap.get(l.userId).add(loc);
-    }
-    if (l.employeeId) {
-      if (!userLocationsMap.has(l.employeeId)) userLocationsMap.set(l.employeeId, new Set());
-      userLocationsMap.get(l.employeeId).add(loc);
-    }
-    if (l.biometricUserId) {
-      const bk = 'bio_' + l.biometricUserId;
-      if (!userLocationsMap.has(bk)) userLocationsMap.set(bk, new Set());
-      userLocationsMap.get(bk).add(loc);
-    }
-  });
-
-  const getUserLocations = (u) => {
-    const set = new Set();
-    const add = (v) => { if (typeof v === 'string' && v.trim()) set.add(v.toLowerCase().trim()); };
-    add(u.workLocation);
-    add(u.preferredLocation);
-    if (Array.isArray(u.preferredLocations)) u.preferredLocations.forEach(add);
-    if (Array.isArray(u.assignedLocations)) u.assignedLocations.forEach(add);
-    if (u.shiftLocations && typeof u.shiftLocations === 'object') Object.values(u.shiftLocations).forEach(add);
-    const fromLogs = userLocationsMap.get(u.id) || userLocationsMap.get(u.employeeId) || userLocationsMap.get('bio_' + u.biometricUserId);
-    if (fromLogs) fromLogs.forEach(l => set.add(l));
-    return set;
-  };
-
-  const getUserPrimaryLocation = (u) => {
-    if (u.workLocation && u.workLocation.trim()) return u.workLocation.trim();
-    if (u.preferredLocation && u.preferredLocation.trim()) return u.preferredLocation.trim();
-    if (Array.isArray(u.preferredLocations) && u.preferredLocations[0] && u.preferredLocations[0].trim()) return u.preferredLocations[0].trim();
-    const uLocs = getUserLocations(u);
-    if (uLocs.size > 0) return Array.from(uLocs)[0];
-    return 'Head Office';
-  };
-
-  const distinctLocs = Array.from(new Set([
-    ...rawUsers.map(u => (u.workLocation || u.preferredLocation || '').trim()).filter(Boolean),
-    ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
-    ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
-    ...Object.keys(offices)
-  ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
-
-  const isChecked = (uId) => {
-    if (preSelectedUserId) return uId === preSelectedUserId;
+  const initialSelectedLoc = preSelectedLocation ? normalizeLocationName(preSelectedLocation) : '';
+  const isChecked = (u) => {
+    if (preSelectedUserId) return u.id === preSelectedUserId;
+    if (initialSelectedLoc) return userMatchesLocation(u, initialSelectedLoc);
     return true;
   };
 
@@ -250,7 +236,7 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
           <input type="text" id="profile-search-input" class="form-input" placeholder="🔍 Search employee name or ID..." style="flex:1; min-width:0; padding:8px 12px; font-size:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); border-radius:8px">
           <select id="profile-location-filter" class="form-input" style="width:145px; height:34px; padding:0 8px; font-size:11.5px; font-weight:600; background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); border-radius:8px; cursor:pointer;" title="Filter by Worksite Location">
             <option value="">📍 All Locations</option>
-            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${(preSelectedLocation && preSelectedLocation.toLowerCase().trim() === loc.toLowerCase().trim()) ? 'selected' : ''}>${Utils.escape(loc)}</option>`).join('')}
+            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${(initialSelectedLoc && initialSelectedLoc.toLowerCase().trim() === loc.toLowerCase().trim()) ? 'selected' : ''}>${Utils.escape(loc)}</option>`).join('')}
           </select>
         </div>
         
@@ -265,16 +251,15 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
           ${users.map(u => {
             const uName = u.name || u.username || 'Employee';
             const uEmpId = u.employeeId || u.id || '';
-            const checked = isChecked(u.id);
-            const userLocs = getUserLocations(u);
             const primaryLoc = getUserPrimaryLocation(u);
-            const initialMatchesLoc = !preSelectedLocation || userLocs.has(preSelectedLocation.toLowerCase().trim());
+            const initialMatchesLoc = !initialSelectedLoc || userMatchesLocation(u, initialSelectedLoc);
+            const checked = isChecked(u) && initialMatchesLoc;
             return `
-            <label class="profile-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" data-locations="${Array.from(userLocs).join('|')}" style="display:${initialMatchesLoc ? 'flex' : 'none'}; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
-              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked && initialMatchesLoc ? 'checked' : ''}>
+            <label class="profile-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" data-location="${normalizeLocationName(primaryLoc).toLowerCase().trim()}" style="display:${initialMatchesLoc ? 'flex' : 'none'}; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
+              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked ? 'checked' : ''}>
               <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(uName)}</span>
               <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(uEmpId)})</span>
-              <span style="margin-left:auto; font-size:10px; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${Utils.escape(primaryLoc)}">📍 ${Utils.escape(primaryLoc)}</span>
+              <span style="margin-left:auto; font-size:10px; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${Utils.escape(primaryLoc)}">📍 ${Utils.escape(primaryLoc)}</span>
             </label>
             `;
           }).join('')}
@@ -308,13 +293,30 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
   const downloadBtn = overlay.querySelector('#btn-profile-export-action');
 
   const getCheckedUserIds = () => {
-    return Array.from(checkboxList.querySelectorAll('.profile-user-checkbox:checked')).map(el => el.value);
+    const visibleItems = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+      .filter(el => el.style.display !== 'none');
+    const checked = [];
+    visibleItems.forEach(item => {
+      const cb = item.querySelector('.profile-user-checkbox');
+      if (cb && cb.checked) {
+        checked.push(cb.value);
+      }
+    });
+    return checked;
   };
 
   const checkValidation = () => {
     const checkedIds = getCheckedUserIds();
+    const visibleItems = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+      .filter(el => el.style.display !== 'none');
+
     if (users.length === 0) {
       warningBox.textContent = '⚠️ No employee records found in the database.';
+      warningBox.style.display = 'block';
+      downloadBtn.setAttribute('disabled', 'true');
+      downloadBtn.style.opacity = '0.5';
+    } else if (visibleItems.length === 0) {
+      warningBox.textContent = '⚠️ No employees match the selected location or search filter.';
       warningBox.style.display = 'block';
       downloadBtn.setAttribute('disabled', 'true');
       downloadBtn.style.opacity = '0.5';
@@ -328,33 +330,44 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
       downloadBtn.removeAttribute('disabled');
       downloadBtn.style.opacity = '1';
     }
-    selectionCount.textContent = `${checkedIds.length} selected`;
+
+    const locLabel = locationFilterSelect && locationFilterSelect.value ? ` (${locationFilterSelect.value})` : '';
+    selectionCount.textContent = `${checkedIds.length} selected${locLabel}`;
   };
 
-  const filterEmployeeItems = () => {
+  const filterEmployeeItems = (isLocationChange = false) => {
     const query = searchInput.value.toLowerCase().trim();
-    const selectedLoc = locationFilterSelect ? locationFilterSelect.value.toLowerCase().trim() : '';
+    const rawSelectedLoc = locationFilterSelect ? locationFilterSelect.value.trim() : '';
+    const selectedLoc = normalizeLocationName(rawSelectedLoc).toLowerCase().trim();
     const items = checkboxList.querySelectorAll('.profile-chk-item');
 
     items.forEach(item => {
       const name = item.dataset.name || '';
       const empid = item.dataset.empid || '';
-      const locs = (item.dataset.locations || '').split('|');
+      const uLoc = item.dataset.location || '';
       const matchesSearch = !query || name.includes(query) || empid.includes(query);
-      const matchesLocation = !selectedLoc || locs.includes(selectedLoc);
+      const matchesLocation = !selectedLoc || selectedLoc === 'all' || uLoc === selectedLoc;
+      const cb = item.querySelector('.profile-user-checkbox');
 
       if (matchesSearch && matchesLocation) {
         item.style.display = 'flex';
+        if (isLocationChange && cb) {
+          cb.checked = true;
+        }
       } else {
         item.style.display = 'none';
+        if (cb) {
+          cb.checked = false;
+        }
       }
     });
 
-    const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
-      .filter(el => el.style.display !== 'none')
-      .map(el => el.querySelector('.profile-user-checkbox'));
-    const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+    const visibleItems = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+      .filter(el => el.style.display !== 'none');
+    const visibleCheckboxes = visibleItems.map(el => el.querySelector('.profile-user-checkbox'));
+    const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb && cb.checked);
     selectAllChk.checked = allVisibleChecked;
+
     checkValidation();
   };
 
@@ -363,15 +376,15 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
       const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
         .filter(el => el.style.display !== 'none')
         .map(el => el.querySelector('.profile-user-checkbox'));
-      const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+      const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb && cb.checked);
       selectAllChk.checked = allVisibleChecked;
       checkValidation();
     }
   });
 
-  searchInput.addEventListener('input', filterEmployeeItems);
+  searchInput.addEventListener('input', () => filterEmployeeItems(false));
   if (locationFilterSelect) {
-    locationFilterSelect.addEventListener('change', filterEmployeeItems);
+    locationFilterSelect.addEventListener('change', () => filterEmployeeItems(true));
   }
 
   selectAllChk.addEventListener('change', () => {
@@ -399,9 +412,13 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
 
   downloadBtn.addEventListener('click', async () => {
     const checkedIds = getCheckedUserIds();
-    if (checkedIds.length === 0) return;
+    if (checkedIds.length === 0) {
+      alert('⚠️ Please select at least one employee to download.');
+      return;
+    }
     const formatSelect = overlay.querySelector('#profile-format-select');
     const format = formatSelect ? formatSelect.value : 'xlsx';
+    const selectedLoc = locationFilterSelect ? locationFilterSelect.value.trim() : '';
 
     downloadBtn.setAttribute('disabled', 'true');
     downloadBtn.textContent = 'Generating...';
@@ -410,15 +427,29 @@ export async function openProfileDownloadModal(preSelectedUserId, preSelectedLoc
       registerCustomQueries(activeDB);
       if (typeof window !== 'undefined' && window.DB) registerCustomQueries(window.DB);
 
-      // Call API Route
-      const profiles = await AppAPI.fetchProfileDownload(checkedIds);
-      const targetProfiles = (profiles && profiles.length > 0)
+      // Call API Route with checked IDs and location
+      const profiles = await AppAPI.fetchProfileDownload(checkedIds, { location: selectedLoc });
+      let targetProfiles = (profiles && profiles.length > 0)
         ? profiles
         : users.filter(u => checkedIds.includes(u.id) || (u.employeeId && checkedIds.includes(u.employeeId)));
 
+      // Strict client-side filter guarantee:
+      // 1. Must be in checkedIds
+      targetProfiles = targetProfiles.filter(u => checkedIds.includes(u.id) || (u.employeeId && checkedIds.includes(u.employeeId)));
+      // 2. If location filter is selected, must match location
+      if (selectedLoc && selectedLoc !== 'all') {
+        targetProfiles = targetProfiles.filter(u => userMatchesLocation(u, selectedLoc));
+      }
+
+      if (targetProfiles.length === 0) {
+        alert('⚠️ No employee profiles found matching the selected filters.');
+        return;
+      }
+
       const timestamp = new Date().toISOString().split('T')[0];
+      const locSuffix = selectedLoc && selectedLoc !== 'all' ? `_${selectedLoc.replace(/[^a-zA-Z0-9_-]/g, '_')}` : '';
       if (format === 'xlsx') {
-        const filename = `Employee_Profiles_${timestamp}.xlsx`;
+        const filename = `Employee_Profiles${locSuffix}_${timestamp}.xlsx`;
         downloadProfileExcel(targetProfiles, filename);
       } else {
         downloadProfilePDF(targetProfiles, activeDB);

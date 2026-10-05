@@ -201,4 +201,140 @@ describe('Download Profile Modal and Dossier Generation', () => {
     expect(downloadsCode).toContain('export function downloadProfilePDF');
     expect(downloadsCode).toContain('export async function openProfileDownloadModal');
   });
+
+  test('Canonical location isolation strictly prevents cross-location employees from appearing in filtered location', () => {
+    const rawUsers = seedData.users || [];
+    const normalizeLocationName = (loc) => {
+      if (!loc || typeof loc !== 'string') return '';
+      const l = loc.trim();
+      const lower = l.toLowerCase();
+      if (lower === 'chattarpur') return 'Chattarpur Office';
+      if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+      if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+      return l;
+    };
+    const getUserPrimaryLocation = (u) => {
+      if (!u) return 'Head Office';
+      let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+                (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+                (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+                (u.workLocation && u.workLocation.trim()) ||
+                '';
+      return loc ? normalizeLocationName(loc) : 'Head Office';
+    };
+
+    const rakesh = rawUsers.find(u => u.name === 'Rakesh Raj' && u.employeeId === '1397');
+    expect(rakesh).toBeDefined();
+    expect(getUserPrimaryLocation(rakesh)).toBe('RETAIL');
+    expect(getUserPrimaryLocation(rakesh)).not.toBe('Chattarpur Office');
+
+    const chattarpurUsers = rawUsers.filter(u => getUserPrimaryLocation(u) === 'Chattarpur Office');
+    expect(chattarpurUsers.length).toBeGreaterThan(0);
+    expect(chattarpurUsers.length).toBeLessThan(rawUsers.length);
+    expect(chattarpurUsers.find(u => u.employeeId === '1397')).toBeUndefined();
+  });
+
+  test('Selection scoping ensures only matching selected users are downloaded when location and/or users are selected', () => {
+    const rawUsers = seedData.users || [];
+    const normalizeLocationName = (loc) => {
+      if (!loc || typeof loc !== 'string') return '';
+      const l = loc.trim();
+      const lower = l.toLowerCase();
+      if (lower === 'chattarpur') return 'Chattarpur Office';
+      if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+      if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
+      return l;
+    };
+    const getUserPrimaryLocation = (u) => {
+      if (!u) return 'Head Office';
+      let loc = (u.preferredLocation && u.preferredLocation.trim()) ||
+                (Array.isArray(u.preferredLocations) && u.preferredLocations.find(l => l && l.trim())) ||
+                (Array.isArray(u.assignedLocations) && u.assignedLocations.find(l => l && l.trim())) ||
+                (u.workLocation && u.workLocation.trim()) ||
+                '';
+      return loc ? normalizeLocationName(loc) : 'Head Office';
+    };
+    const userMatchesLocation = (u, targetLoc) => {
+      if (!targetLoc || targetLoc === 'all') return true;
+      const target = normalizeLocationName(targetLoc).toLowerCase().trim();
+      const uLoc = getUserPrimaryLocation(u).toLowerCase().trim();
+      return uLoc === target;
+    };
+
+    const chattarpurUsers = rawUsers.filter(u => userMatchesLocation(u, 'Chattarpur Office'));
+    expect(chattarpurUsers.length).toBeGreaterThan(0);
+
+    // Scenario 1: One location selected -> only users from that location
+    const locOnlyDownload = rawUsers.filter(u => userMatchesLocation(u, 'Chattarpur Office'));
+    expect(locOnlyDownload.length).toBe(chattarpurUsers.length);
+    expect(locOnlyDownload.length).toBeLessThan(rawUsers.length);
+
+    // Scenario 2: Specific users selected -> only those users
+    const selectedTwoIds = [rawUsers[0].id, rawUsers[1].id];
+    const specificUsersDownload = rawUsers.filter(u => selectedTwoIds.includes(u.id));
+    expect(specificUsersDownload.length).toBe(2);
+
+    // Scenario 3: Location + specific users selected -> only matching selected users
+    const sampleChattarpurUser = chattarpurUsers[0];
+    const nonChattarpurUser = rawUsers.find(u => !userMatchesLocation(u, 'Chattarpur Office'));
+    const mixedIds = [sampleChattarpurUser.id, nonChattarpurUser.id];
+
+    let combinedDownload = rawUsers.filter(u => mixedIds.includes(u.id));
+    combinedDownload = combinedDownload.filter(u => userMatchesLocation(u, 'Chattarpur Office'));
+    expect(combinedDownload.length).toBe(1);
+    expect(combinedDownload[0].id).toBe(sampleChattarpurUser.id);
+
+    // Scenario 4: Never download all users when filters are active
+    expect(combinedDownload.length).not.toBe(rawUsers.length);
+  });
+
+  test('Backend route POST /api/reports/profiles correctly applies location and userIds filters', async () => {
+    const express = require('express');
+    const request = require('supertest');
+    const { createReportsRouter } = require('../src/server/routes/reports.routes');
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api', createReportsRouter(null, null, () => true));
+
+    // 1. Filter by single location (Chattarpur Office)
+    const resLoc = await request(app)
+      .post('/api/reports/profiles')
+      .send({ location: 'Chattarpur Office' });
+    expect(resLoc.status).toBe(200);
+    expect(resLoc.body.success).toBe(true);
+    expect(resLoc.body.profiles.length).toBeGreaterThan(0);
+    expect(resLoc.body.profiles.length).toBeLessThan(seedData.users.length);
+
+    // Verify all returned profiles belong to Chattarpur Office
+    resLoc.body.profiles.forEach(u => {
+      const loc = (u.preferredLocation || u.workLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations[0] : '')).toLowerCase();
+      expect(loc).toContain('chattarpur');
+    });
+
+    // 2. Filter by specific userIds only
+    const sampleIds = [seedData.users[0].id, seedData.users[1].id];
+    const resUsers = await request(app)
+      .post('/api/reports/profiles')
+      .send({ userIds: sampleIds });
+    expect(resUsers.status).toBe(200);
+    expect(resUsers.body.profiles.length).toBe(2);
+
+    // 3. Filter by location + specific userIds
+    const firstChattarpur = resLoc.body.profiles[0];
+    const nonChattarpur = seedData.users.find(u => u.preferredLocation && !u.preferredLocation.toLowerCase().includes('chattarpur'));
+    const resCombined = await request(app)
+      .post('/api/reports/profiles')
+      .send({ userIds: [firstChattarpur.id, nonChattarpur.id], location: 'Chattarpur Office' });
+    expect(resCombined.status).toBe(200);
+    expect(resCombined.body.profiles.length).toBe(1);
+    expect(resCombined.body.profiles[0].id).toBe(firstChattarpur.id);
+
+    // 4. Download all users only when All Locations and no specific user restriction
+    const resAll = await request(app)
+      .post('/api/reports/profiles')
+      .send({ location: 'all' });
+    expect(resAll.status).toBe(200);
+    expect(resAll.body.profiles.length).toBe(seedData.users.filter(u => u.status !== 'Inactive').length);
+  });
 });

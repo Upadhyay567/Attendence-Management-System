@@ -642,6 +642,45 @@ describe('HS Group Attendance System API Integration Tests', () => {
       }
     });
   });
+
+  describe('POST /api/reports/profiles', () => {
+    it('should filter profiles strictly by location and specific user IDs', async () => {
+      // 1. Filter by location
+      const locRes = await request(app)
+        .post('/api/reports/profiles')
+        .send({ location: 'Chattarpur Office' });
+
+      expect(locRes.status).toBe(200);
+      expect(locRes.body.success).toBe(true);
+      expect(Array.isArray(locRes.body.profiles)).toBe(true);
+      expect(locRes.body.profiles.length).toBeGreaterThan(0);
+
+      // Verify no user outside Chattarpur is returned
+      locRes.body.profiles.forEach(p => {
+        const pLoc = (p.preferredLocation || p.workLocation || '').toLowerCase();
+        expect(pLoc).toContain('chattarpur');
+      });
+
+      // 2. Filter by specific user ID
+      const targetUser = locRes.body.profiles[0];
+      const userRes = await request(app)
+        .post('/api/reports/profiles')
+        .send({ userIds: [targetUser.id] });
+
+      expect(userRes.status).toBe(200);
+      expect(userRes.body.profiles.length).toBe(1);
+      expect(userRes.body.profiles[0].id).toBe(targetUser.id);
+
+      // 3. Filter by location + user IDs (isolated intersection)
+      const combinedRes = await request(app)
+        .post('/api/reports/profiles')
+        .send({ userIds: [targetUser.id, 'nonexistent_id'], location: 'Chattarpur Office' });
+
+      expect(combinedRes.status).toBe(200);
+      expect(combinedRes.body.profiles.length).toBe(1);
+      expect(combinedRes.body.profiles[0].id).toBe(targetUser.id);
+    });
+  });
 });
 
 
