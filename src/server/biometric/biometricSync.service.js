@@ -160,17 +160,22 @@ function createPunchId(punch) {
 
 function readLocalDatabase() {
   if (!fs.existsSync(LOCAL_DB_FILE)) {
-    throw new Error(
-      `Local database file not found: ${LOCAL_DB_FILE}`
-    );
+    throw new Error(`Local database file not found: ${LOCAL_DB_FILE}`);
   }
 
-  const raw = fs.readFileSync(
-    LOCAL_DB_FILE,
-    'utf8'
-  );
-
-  return JSON.parse(raw);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf8');
+      if (raw && raw.trim()) {
+        return JSON.parse(raw);
+      }
+    } catch (readErr) {
+      if (attempt === 2) throw readErr;
+      const waitMs = 50 * (attempt + 1);
+      const start = Date.now();
+      while (Date.now() - start < waitMs) {}
+    }
+  }
 }
 
 
@@ -580,7 +585,8 @@ function processLocalPunch(
   state,
   punch,
   deviceUserMap,
-  result
+  result,
+  processedPunchSet = null
 ) {
   const users = state.users || [];
 
@@ -663,18 +669,21 @@ function processLocalPunch(
     createPunchId(punch);
 
   /*
-   * Duplicate protection:
+   * High-Performance Duplicate protection (O(1) Set lookup):
    * A punch is already processed if recorded in global ledger or on any log.
    */
-  const isAlreadyProcessed =
-    state.processedPunchIds.includes(punchId) ||
-    state.attendanceLogs.some(
-      log =>
-        log.biometricPunchId === punchId ||
-        log.checkInPunchId === punchId ||
-        log.checkOutPunchId === punchId ||
-        (Array.isArray(log.allPunchIds) && log.allPunchIds.includes(punchId))
-    );
+  const isAlreadyProcessed = processedPunchSet
+    ? processedPunchSet.has(punchId)
+    : (
+        state.processedPunchIds.includes(punchId) ||
+        state.attendanceLogs.some(
+          log =>
+            log.biometricPunchId === punchId ||
+            log.checkInPunchId === punchId ||
+            log.checkOutPunchId === punchId ||
+            (Array.isArray(log.allPunchIds) && log.allPunchIds.includes(punchId))
+        )
+      );
 
   if (isAlreadyProcessed) {
     result.duplicates++;
@@ -709,6 +718,7 @@ function processLocalPunch(
       if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
       openLog.allPunchIds.push(punchId);
       state.processedPunchIds.push(punchId);
+      if (processedPunchSet) processedPunchSet.add(punchId);
       result.duplicates++;
       return;
     }
@@ -728,6 +738,7 @@ function processLocalPunch(
     if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
     openLog.allPunchIds.push(punchId);
     state.processedPunchIds.push(punchId);
+    if (processedPunchSet) processedPunchSet.add(punchId);
 
     if (!Array.isArray(state.activityLogs)) state.activityLogs = [];
     state.activityLogs.unshift({
@@ -781,6 +792,7 @@ function processLocalPunch(
         existingForShift.allPunchIds.push(punchId);
       }
       state.processedPunchIds.push(punchId);
+      if (processedPunchSet) processedPunchSet.add(punchId);
       result.updated++;
       return;
     } else if (punchMins > outMins) {
@@ -796,6 +808,7 @@ function processLocalPunch(
         existingForShift.allPunchIds.push(punchId);
       }
       state.processedPunchIds.push(punchId);
+      if (processedPunchSet) processedPunchSet.add(punchId);
       result.updated++;
       return;
     } else {
@@ -804,6 +817,7 @@ function processLocalPunch(
         existingForShift.allPunchIds.push(punchId);
       }
       state.processedPunchIds.push(punchId);
+      if (processedPunchSet) processedPunchSet.add(punchId);
       result.duplicates++;
       return;
     }
@@ -881,6 +895,7 @@ function processLocalPunch(
     newLog
   );
   state.processedPunchIds.push(punchId);
+  if (processedPunchSet) processedPunchSet.add(punchId);
 
   if (!Array.isArray(state.activityLogs)) {
     state.activityLogs = [];
@@ -923,6 +938,39 @@ async function syncLocalDatabase(
 
   if (!Array.isArray(state.attendanceLogs)) {
     state.attendanceLogs = [];
+  }
+
+  if (!Array.isArray(state.processedPunchIds)) {
+    state.processedPunchIds = [];
+  }
+
+  // Pre-index known punches in a Set for O(1) duplicate checks
+  const processedPunchSet = new Set(state.processedPunchIds);
+  for (let i = 0; i < state.attendanceLogs.length; i++) {
+    const log = state.attendanceLogs[i];
+    if (log.biometricPunchId) processedPunchSet.add(log.biometricPunchId);
+    if (log.checkInPunchId) processedPunchSet.add(log.checkInPunchId);
+    if (log.checkOutPunchId) processedPunchSet.add(log.checkOutPunchId);
+    if (Array.isArray(log.allPunchIds)) {
+      for (let j = 0; j < log.allPunchIds.length; j++) {
+        processedPunchSet.add(log.allPunchIds[j]);
+      }
+    }
+  }
+
+  // Merge any newly registered users into state.users
+  if (Array.isArray(users) && users.length > 0) {
+    const existingUserIds = new Set(state.users.map(u => String(u.id || u.employeeId || u.biometricUserId || '')));
+    let usersAdded = false;
+    users.forEach(u => {
+      const key = String(u.id || u.employeeId || u.biometricUserId || '');
+      if (key && !existingUserIds.has(key)) {
+        state.users.push(u);
+        existingUserIds.add(key);
+        usersAdded = true;
+      }
+    });
+    if (usersAdded) state.__changed = true;
   }
 
   const deviceUserMap =
@@ -976,26 +1024,29 @@ async function syncLocalDatabase(
       state,
       punch,
       deviceUserMap,
-      result
+      result,
+      processedPunchSet
     );
   }
 
   /*
-   * Keep attendance sorted newest first.
+   * Keep attendance sorted newest first only if new logs were added
    */
-  state.attendanceLogs.sort(
-    (a, b) => {
-      const aTime =
-        `${a.date || ''} ${a.checkIn || ''}`;
+  if (result.created > 0) {
+    state.attendanceLogs.sort(
+      (a, b) => {
+        const aTime =
+          `${a.date || ''} ${a.checkIn || ''}`;
 
-      const bTime =
-        `${b.date || ''} ${b.checkIn || ''}`;
+        const bTime =
+          `${b.date || ''} ${b.checkIn || ''}`;
 
-      return bTime.localeCompare(
-        aTime
-      );
-    }
-  );
+        return bTime.localeCompare(
+          aTime
+        );
+      }
+    );
+  }
 
   /*
    * Store sync metadata.

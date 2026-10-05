@@ -71,7 +71,7 @@ async function runSync() {
           console.warn('⚠️ Local biometric sync notice:', err.message);
         }
       }),
-      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 2 }).catch(err => {
+      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 1, pageSize: 200 }).catch(err => {
         console.warn('⚠️ WDMS Cloud biometric sync warning:', err.message);
       })
     ]);

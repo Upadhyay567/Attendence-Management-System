@@ -20,13 +20,9 @@ function createReportsRouter(User, AttendanceLog, getUseLocalFileDB) {
       let users = [];
       const useLocal = typeof getUseLocalFileDB === 'function' ? getUseLocalFileDB() : true;
       if (useLocal) {
-        const fs = require('fs');
-        const path = require('path');
-        const LOCAL_DB_FILE = path.join(__dirname, '..', '..', '..', 'seed.json');
-        if (fs.existsSync(LOCAL_DB_FILE)) {
-          const raw = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf8'));
-          users = (raw.users || []).filter(u => u && u.status !== 'Inactive');
-        }
+        const { readLocalDbStateCached } = require('../controllers/attendance.controller');
+        const raw = readLocalDbStateCached();
+        users = ((raw && raw.users) || []).filter(u => u && u.status !== 'Inactive');
       } else {
         users = await User.find({ status: { $ne: 'Inactive' } }).lean().catch(() => []);
       }

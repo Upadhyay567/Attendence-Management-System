@@ -494,12 +494,22 @@ export const DB = {
     // Connect to Server-Sent Events (SSE) stream for instant real-time DB & biometric updates across all tabs
     if (typeof window.EventSource !== 'undefined' && !window.sseSource) {
       const connectSSE = () => {
+        // Avoid connecting if browser is offline or tab is completely hidden/suspended
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
         try {
+          if (window.sseSource) {
+            try { window.sseSource.close(); } catch (_) {}
+            window.sseSource = null;
+          }
+
           const streamUrl = (window.apiBaseUrl || '') + '/api/events';
-          window.sseSource = new EventSource(streamUrl);
+          const es = new EventSource(streamUrl);
+          window.sseSource = es;
           
           let dbUpdateDebounceTimer = null;
-          window.sseSource.addEventListener('db_updated', (evt) => {
+          es.addEventListener('db_updated', (evt) => {
             if (dbUpdateDebounceTimer) clearTimeout(dbUpdateDebounceTimer);
             dbUpdateDebounceTimer = setTimeout(async () => {
               dbUpdateDebounceTimer = null;
@@ -508,42 +518,70 @@ export const DB = {
             }, 300);
           });
 
-          window.sseSource.addEventListener('biometric_devices_updated', (evt) => {
+          es.addEventListener('biometric_devices_updated', (evt) => {
             window.dispatchEvent(new CustomEvent('biometric_devices_updated', { detail: evt ? evt.data : null }));
           });
 
-          window.sseSource.addEventListener('biometric_sync_complete', (evt) => {
+          es.addEventListener('biometric_sync_complete', (evt) => {
             window.dispatchEvent(new CustomEvent('biometric_sync_complete', { detail: evt ? evt.data : null }));
           });
 
-          window.sseSource.onerror = () => {
-            if (window.sseSource) {
-              try { window.sseSource.close(); } catch (_) {}
+          es.onerror = () => {
+            // When browser network is suspended (sleep, offline, tab suspend), close and debounce reconnect
+            if (window.sseSource === es) {
+              try { es.close(); } catch (_) {}
               window.sseSource = null;
             }
             if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
-            window._sseReconnectTimer = setTimeout(connectSSE, 3000);
+            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+              return; // Wait until tab becomes visible
+            }
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+              return; // Wait until online event
+            }
+            window._sseReconnectTimer = setTimeout(connectSSE, 4000);
           };
         } catch (e) {
-          console.warn('Failed to establish SSE stream:', e);
           if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
-          window._sseReconnectTimer = setTimeout(connectSSE, 3000);
+          window._sseReconnectTimer = setTimeout(connectSSE, 4000);
         }
       };
 
       if (!window._sseListenersAttached && typeof window !== 'undefined') {
         window._sseListenersAttached = true;
+        
+        // Re-establish cleanly on online event with 500ms grace period
         window.addEventListener('online', () => {
-          if (!window.sseSource || window.sseSource.readyState === 2) {
-            connectSSE();
-          }
+          if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+          window._sseReconnectTimer = setTimeout(() => {
+            if (!window.sseSource || window.sseSource.readyState === 2) connectSSE();
+          }, 500);
         });
+
+        // Re-establish cleanly when returning from background / wake from sleep
         if (typeof document !== 'undefined') {
           document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-              if (!window.sseSource || window.sseSource.readyState === 2) {
-                connectSSE();
-              }
+              if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+              window._sseReconnectTimer = setTimeout(() => {
+                if (!window.sseSource || window.sseSource.readyState === 2) connectSSE();
+              }, 500);
+            }
+          });
+        }
+
+        // Cleanly close stream before page freezes/hides to prevent net::ERR_NETWORK_IO_SUSPENDED
+        window.addEventListener('pagehide', () => {
+          if (window.sseSource) {
+            try { window.sseSource.close(); } catch (_) {}
+            window.sseSource = null;
+          }
+        });
+        if ('onfreeze' in window) {
+          window.addEventListener('freeze', () => {
+            if (window.sseSource) {
+              try { window.sseSource.close(); } catch (_) {}
+              window.sseSource = null;
             }
           });
         }

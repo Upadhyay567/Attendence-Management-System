@@ -433,7 +433,8 @@ const METADATA_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 async function syncFromWDMS(username, password, options = {}) {
   const user = username || process.env.WDMS_USER || 'admin';
   const pass = password || process.env.WDMS_PASS || 'Hs@20267';
-  const maxPages = options.maxPages || 3;
+  const maxPages = options.maxPages || 1;
+  const pageSize = options.pageSize || 200;
 
   const cookie = await authenticate(user, pass);
 
@@ -461,7 +462,7 @@ async function syncFromWDMS(username, password, options = {}) {
     }
   }
 
-  const transactions = await fetchTransactions(cookie, { maxPages }).catch(err => {
+  const transactions = await fetchTransactions(cookie, { maxPages, page_size: pageSize }).catch(err => {
     console.warn('⚠️ [WDMS] Transactions fetch warning:', err.message);
     return [];
   });
@@ -532,14 +533,6 @@ async function syncFromWDMS(username, password, options = {}) {
       newEmployeesAdded++;
     }
   });
-
-  if (newEmployeesAdded > 0 && fs.existsSync(LOCAL_DB_FILE)) {
-    try {
-      const db = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf8'));
-      db.users = dbUsers;
-      fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-    } catch (_) {}
-  }
 
   // Ingest via centralized punctuality and check-in/check-out anchoring engine
   const { ingestPunchesAndUsers } = require('./biometricSync.service');

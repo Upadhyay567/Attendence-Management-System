@@ -98,21 +98,29 @@ function invalidateLocalDbCache() {
 }
 
 function readLocalDbStateCached() {
-  if (!fs.existsSync(LOCAL_DB_FILE)) return null;
+  if (!fs.existsSync(LOCAL_DB_FILE)) return cachedDbState || null;
   try {
     const stat = fs.statSync(LOCAL_DB_FILE);
     if (!cachedDbState || stat.mtimeMs !== cachedMTime) {
       const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      cachedDbState = JSON.parse(raw);
-      cachedMTime = stat.mtimeMs;
+      if (raw && raw.trim()) {
+        cachedDbState = JSON.parse(raw);
+        cachedMTime = stat.mtimeMs;
+      }
     }
     return cachedDbState;
   } catch (err) {
-    if (fs.existsSync(LOCAL_DB_FILE)) {
-      const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-      return JSON.parse(raw);
-    }
-    return null;
+    if (cachedDbState) return cachedDbState;
+    try {
+      if (fs.existsSync(LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+        if (raw && raw.trim()) {
+          cachedDbState = JSON.parse(raw);
+          return cachedDbState;
+        }
+      }
+    } catch (_) {}
+    return cachedDbState || null;
   }
 }
 
