@@ -470,14 +470,19 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
   const activeDB = getActiveDB();
 
   profiles.forEach(u => {
-    const schedule = (activeDB && typeof activeDB.getSchedule === 'function' ? activeDB.getSchedule(u.scheduleId) : null) || {};
+    const userSchedules = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+      ? u.scheduleIds.map(id => (activeDB && activeDB.getSchedule) ? activeDB.getSchedule(id) : null).filter(Boolean)
+      : (u.scheduleId && activeDB && activeDB.getSchedule ? [activeDB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+    const shiftStr = userSchedules.length > 0
+      ? userSchedules.map(s => `${s.name} (${s.startTime || '--:--'} - ${s.endTime || '--:--'})`).join(', ')
+      : 'Not Assigned';
     const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
     const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
     const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
     const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
     const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
     const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
-    const loc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (schedule.location || 'Head Office');
+    const loc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (userSchedules[0]?.location || 'Head Office');
 
     excelData.push({
       'Employee ID': u.employeeId || u.id || 'N/A',
@@ -489,7 +494,7 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
       'Designation': u.designation || 'Staff',
       'Status': u.status || 'Active',
       'Worksite / Location': loc,
-      'Shift / Schedule': schedule.name ? `${schedule.name} (${schedule.startTime || '--:--'} - ${schedule.endTime || '--:--'})` : 'Default Schedule',
+      'Shift / Schedule': shiftStr,
       'Email': u.email || 'N/A',
       'Phone Number': u.phone || 'N/A',
       'Emergency Contact': u.emergencyContact || 'N/A',
@@ -684,14 +689,19 @@ export function downloadProfilePDF(profiles, dbInstance) {
   const cardsHTML = profiles.map(u => {
     const displayName = u.name || u.username || 'Staff';
     const initials = displayName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'EM';
-    const schedule = (activeDB && typeof activeDB.getSchedule === 'function' ? activeDB.getSchedule(u.scheduleId) : null) || {};
+    const userSchedules = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+      ? u.scheduleIds.map(id => (activeDB && activeDB.getSchedule) ? activeDB.getSchedule(id) : null).filter(Boolean)
+      : (u.scheduleId && activeDB && activeDB.getSchedule ? [activeDB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+    const shiftStr = userSchedules.length > 0
+      ? userSchedules.map(s => `${s.name || 'Shift'} (${s.startTime || '--:--'} - ${s.endTime || '--:--'})`).join(', ')
+      : 'Not Assigned';
     const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
     const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
     const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
     const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
     const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
     const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
-    const workLoc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (schedule.location || 'Head Office');
+    const workLoc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (userSchedules[0]?.location || 'Head Office');
 
     return `
       <div class="profile-card">
@@ -738,7 +748,7 @@ export function downloadProfilePDF(profiles, dbInstance) {
 
         <div class="section-title">Assigned Shift & Logistics</div>
         <div class="grid-container">
-          <div class="info-block"><span class="label">Shift Schedule</span><span class="value">${Utils.escape(schedule.name || 'N/A')} (${schedule.startTime || '--:--'} - ${schedule.endTime || '--:--'})</span></div>
+          <div class="info-block"><span class="label">Shift Schedule</span><span class="value">${Utils.escape(shiftStr)}</span></div>
           <div class="info-block"><span class="label">Preferred Worksite Location</span><span class="value">${Utils.escape(workLoc)}</span></div>
           <div class="info-block"><span class="label">Verification Status</span><span class="value">${Utils.escape(u.profileVerificationStatus || 'Approved')}</span></div>
         </div>

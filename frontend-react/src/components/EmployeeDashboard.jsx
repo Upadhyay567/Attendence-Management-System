@@ -36,7 +36,11 @@ function EmployeeDashboard({ user, dbState, onDataUpdated }) {
   const userShift = useMemo(() => {
     const schedules = dbState?.schedules || [];
     if (!user) return null;
-    return schedules.find(s => s.id === user.scheduleId) || schedules[0] || null;
+    const targetId = (Array.isArray(user.scheduleIds) && user.scheduleIds.length > 0)
+      ? user.scheduleIds[0]
+      : user.scheduleId;
+    if (!targetId) return null;
+    return schedules.find(s => String(s.id) === String(targetId)) || null;
   }, [dbState, user]);
 
   // Today's attendance record for current user

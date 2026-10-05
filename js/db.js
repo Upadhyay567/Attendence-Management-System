@@ -1898,8 +1898,8 @@ export const DB = {
   },
 
   getSchedule(id) {
-    if (!id) return this.data.schedules[0] || null;
-    return this.data.schedules.find(s => String(s.id) === String(id)) || this.data.schedules[0] || null;
+    if (!id) return null;
+    return this.data.schedules.find(s => String(s.id) === String(id)) || null;
   },
 
   addSchedule(schedule, skipSave = false) {

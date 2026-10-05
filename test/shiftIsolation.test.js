@@ -136,4 +136,47 @@ describe('Shift Schedule Isolation & Active Shift Sequencing', () => {
     expect(statusAfterShift1Checkout.type).not.toBe('OtherShiftActive');
     expect(statusAfterShift1Checkout.type).not.toBe('PreviousShiftIncomplete');
   });
+
+  test('Unassigned employees must never default to schedules[0] ("new shift")', () => {
+    // 1. DB.getSchedule must return null when ID is falsy or not found
+    expect(DB.getSchedule(null)).toBeNull();
+    expect(DB.getSchedule('')).toBeNull();
+    expect(DB.getSchedule(undefined)).toBeNull();
+    expect(DB.getSchedule('non_existent_id_9999')).toBeNull();
+
+    // 2. An unassigned employee (like Hemant)
+    const unassignedUser = {
+      id: 'usr_unassigned_emp',
+      name: 'Unassigned Staff',
+      role: 'employee',
+      scheduleIds: [],
+      scheduleId: ''
+    };
+    DB.data.users.push(unassignedUser);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const resolved = DB.resolveUserShiftForDate(unassignedUser, todayStr);
+    expect(resolved.scheduleId).toBeNull();
+    expect(resolved.schedule).toBeNull();
+
+    // 3. Extract getAttendanceStatusForDate from js/app.js
+    const appCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
+    const match = appCode.match(/function getAttendanceStatusForDate\([\s\S]*?\n\}/);
+    expect(match).not.toBeNull();
+    const getAttendanceStatusForDate = new Function('DB', 'userId', 'dateStr', `${match[0]}; return getAttendanceStatusForDate(userId, dateStr);`).bind(null, DB);
+
+    // Without logs, status must be 'No Shift' with transparent color (no red Absent dot)
+    const pastDate = '2026-09-01';
+    const statusResult = getAttendanceStatusForDate(unassignedUser.id, pastDate);
+    expect(statusResult.status).toBe('No Shift');
+    expect(statusResult.color).toBe('transparent');
+    expect(statusResult.schedule).toBeNull();
+
+    // 4. In absent modal resolution:
+    const userShifts = (Array.isArray(unassignedUser.scheduleIds) && unassignedUser.scheduleIds.length > 0)
+      ? unassignedUser.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+      : (unassignedUser.scheduleId ? [DB.getSchedule(unassignedUser.scheduleId)].filter(Boolean) : []);
+    const shiftName = userShifts.length > 0 ? userShifts.map(s => s.name).join(', ') : 'Not Assigned';
+    expect(shiftName).toBe('Not Assigned');
+  });
 });

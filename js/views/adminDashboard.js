@@ -379,13 +379,17 @@ export async function renderAdminDashboard() {
           const empid = u.employeeId || 'N/A';
           const dept = u.department || 'N/A';
           const designation = u.designation || 'N/A';
-          const sch = DB.getSchedule(u.scheduleId);
-          const shiftName = sch ? sch.name : 'Not Assigned';
+          const userShifts = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
+            ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+            : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+          const shiftHTML = userShifts.length > 0
+            ? userShifts.map(s => Utils.escape(s.name)).join(', ')
+            : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
           return '<tr>' +
             '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
             '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
             '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(designation) + '</td>' +
-            '<td style="padding:12px 14px;">' + Utils.escape(shiftName) + '</td>' +
+            '<td style="padding:12px 14px;">' + shiftHTML + '</td>' +
             '</tr>';
         }).join('');
       } else if (type === 'late') {
@@ -599,7 +603,10 @@ export async function renderAdminDashboard() {
     
     const items = logs.map(l => {
       const u = DB.getUser(l.userId);
-      const sch = DB.getSchedule(u?.scheduleId);
+      const userShifts = (Array.isArray(u?.scheduleIds) && u.scheduleIds.length > 0)
+        ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
+        : (u?.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
+      const sch = l.shiftId ? DB.getSchedule(l.shiftId) : (userShifts[0] || null);
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;

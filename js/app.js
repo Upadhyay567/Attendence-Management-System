@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=85';
-import { renderAdminSchedules } from './views/schedulesView.js?v=85';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=85';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=85';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=85';
-import { renderAdminAttendances } from './views/attendancesView.js?v=85';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=85';
-import { renderAdminFinance } from './views/financeView.js?v=85';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=85';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=85';
-import { drawRadarMap } from './components/geofenceMap.js?v=85';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=85';
+import { renderLoginView } from './views/loginView.js?v=86';
+import { renderAdminSchedules } from './views/schedulesView.js?v=86';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=86';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=86';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=86';
+import { renderAdminAttendances } from './views/attendancesView.js?v=86';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=86';
+import { renderAdminFinance } from './views/financeView.js?v=86';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=86';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=86';
+import { drawRadarMap } from './components/geofenceMap.js?v=86';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=86';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=85';
-import { Auth } from './auth.js?v=85';
-import { Utils, html } from './utils.js?v=85';
-import { triggerBirthdayCelebration } from './celebration.js?v=85';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=85';
+import { DB } from './core/db.js?v=86';
+import { Auth } from './auth.js?v=86';
+import { Utils, html } from './utils.js?v=86';
+import { triggerBirthdayCelebration } from './celebration.js?v=86';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=86';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -1913,15 +1913,8 @@ function getAttendanceStatusForDate(userId, dateStr) {
   const dayOfWeek = date.getDay();
   const user = DB.getUser(userId);
   const resolved = DB.resolveUserShiftForDate(user, dateStr);
-  const schedule = DB.getSchedule(resolved.scheduleId) || {
-    name: 'Standard Day Shift',
-    startTime: '09:00',
-    endTime: '17:00',
-    gracePeriod: 15,
-    workDays: [1, 2, 3, 4, 5],
-    location: 'Kohat Enclave, Pitampura, Delhi'
-  };
-  const isWorkDay = Array.isArray(schedule.workDays) ? schedule.workDays.includes(dayOfWeek) : true;
+  const schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
+  const isWorkDay = schedule ? (Array.isArray(schedule.workDays) ? schedule.workDays.includes(dayOfWeek) : true) : false;
 
   const leaves = DB.data.leaveRequests || [];
   const hasLeave = leaves.some(lv => 
@@ -1948,15 +1941,17 @@ function getAttendanceStatusForDate(userId, dateStr) {
 
   if (log) {
     let status = log.status;
+    const logShift = log.shiftId ? DB.getSchedule(log.shiftId) : null;
+    const effSchedule = logShift || schedule;
     if (!status || status === 'Present') {
       status = 'On Time';
-      if (schedule && schedule.startTime && log.checkIn) {
-        const [sH, sM] = schedule.startTime.split(':').map(Number);
+      if (effSchedule && effSchedule.startTime && log.checkIn) {
+        const [sH, sM] = effSchedule.startTime.split(':').map(Number);
         const [iH, iM] = log.checkIn.split(':').map(Number);
         const sMins = sH * 60 + (sM || 0);
         const iMins = iH * 60 + (iM || 0);
-        const grace = schedule.gracePeriod !== undefined ? Number(schedule.gracePeriod) : 15;
-        const halfDayLimit = schedule.halfDayLimit !== undefined ? Number(schedule.halfDayLimit) : 120;
+        const grace = effSchedule.gracePeriod !== undefined ? Number(effSchedule.gracePeriod) : 15;
+        const halfDayLimit = effSchedule.halfDayLimit !== undefined ? Number(effSchedule.halfDayLimit) : 120;
         if (iMins > sMins + grace) status = 'Late';
         if (iMins >= sMins + halfDayLimit) status = 'Half Day';
       }
@@ -1965,7 +1960,11 @@ function getAttendanceStatusForDate(userId, dateStr) {
     if (status === 'Late') color = 'var(--warning)';
     if (status === 'Half Day') color = '#3b82f6';
     if (status === 'Absent') color = 'var(--error)';
-    return { status, color, log, schedule };
+    return { status, color, log, schedule: effSchedule };
+  }
+
+  if (!schedule) {
+    return { status: 'No Shift', color: 'transparent', log: null, schedule: null };
   }
 
   if (!isWorkDay) {
@@ -2059,20 +2058,25 @@ function renderCalendarScheduleTab(userId, activeTab) {
   if (activeTab === 'weekly') {
     const user = DB.getUser(userId);
     const resolved = DB.resolveUserShiftForDate(user, dStr);
-    const schedule = DB.getSchedule(resolved.scheduleId) || {
-      name: 'Standard Day Shift',
-      startTime: '09:00',
-      endTime: '17:00',
-      workDays: [1, 2, 3, 4, 5],
-      location: 'Kohat Enclave, Pitampura, Delhi'
-    };
+    const schedule = resolved.schedule || (resolved.scheduleId ? DB.getSchedule(resolved.scheduleId) : null);
+    if (!schedule) {
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:8px">
+          <strong style="color:var(--primary); font-size:13px">Assigned Weekly Schedule</strong>
+          <div style="padding:16px; text-align:center; color:var(--text-muted); font-size:12px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
+            ⚠️ No shift schedule currently assigned. Please contact HR or Operations Manager.
+          </div>
+        </div>
+      `;
+      return;
+    }
 
     container.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:8px">
         <strong style="color:var(--primary); font-size:13px">Assigned Weekly Schedule</strong>
         <div style="display:flex; flex-direction:column; gap:4px">
           ${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((dayName, idx) => {
-            const isWork = schedule.workDays.includes(idx);
+            const isWork = Array.isArray(schedule.workDays) ? schedule.workDays.includes(idx) : true;
             return `
               <div style="display:flex; justify-content:space-between; font-size:12px; padding: 4px 6px; background: ${now.getDay() === idx ? 'rgba(255,255,255,0.04)' : 'transparent'}; border-radius: 4px">
                 <span style="font-weight:600; color: ${now.getDay() === idx ? 'var(--primary)' : 'var(--text-secondary)'}">${dayName}</span>
@@ -2123,7 +2127,7 @@ function renderCalendarScheduleTab(userId, activeTab) {
         shiftStatus = 'On Time';
         if (sch && sch.startTime && l.checkIn) {
           const [sH, sM] = sch.startTime.split(':').map(Number);
-          const [iH, iM] = l.checkIn.split(':').map(Number);
+          const [iH, iM] = log.checkIn.split(':').map(Number);
           const sMins = sH * 60 + (sM || 0);
           const iMins = iH * 60 + (iM || 0);
           const grace = sch.gracePeriod !== undefined ? Number(sch.gracePeriod) : 15;
@@ -2141,7 +2145,7 @@ function renderCalendarScheduleTab(userId, activeTab) {
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
           <div>
             <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
-            <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${Utils.escape(sch ? sch.name : 'Standard Shift')}</div>
+            <div style="font-weight:600; color:var(--text-primary); margin-top:2px">${sch ? Utils.escape(sch.name) : 'No Shift Assigned'}</div>
             <div style="color:var(--text-muted); font-size:11px; margin-top:1px">${sch ? formatTimeRange12h(sch.startTime, sch.endTime) : '--:--'}</div>
           </div>
           <div>
@@ -2155,8 +2159,23 @@ function renderCalendarScheduleTab(userId, activeTab) {
         </div>
       `;
     }).join('');
+  } else if (!schedule) {
+    logsHTML = `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
+        <div>
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🏢 Assigned Shift</span>
+          <div style="font-weight:600; color:var(--text-muted); margin-top:2px">No Shift Assigned</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">Contact HR/Manager to assign a shift schedule</div>
+        </div>
+        <div>
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600">🕒 Clock Activity</span>
+          <div style="font-weight:600; color:var(--text-muted); margin-top:2px">In: --:-- | Out: --:--</div>
+          <div style="color:var(--text-muted); font-size:11px; margin-top:1px">Duration: 00h 00m</div>
+        </div>
+      </div>
+    `;
   } else {
-    const isWorkDay = schedule.workDays.includes(targetDate.getDay());
+    const isWorkDay = Array.isArray(schedule.workDays) ? schedule.workDays.includes(targetDate.getDay()) : true;
     logsHTML = `
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm)">
         <div>
@@ -2173,10 +2192,13 @@ function renderCalendarScheduleTab(userId, activeTab) {
     `;
   }
 
+  const badgeBg = (color && color !== 'transparent') ? `${color}22` : 'rgba(255,255,255,0.06)';
+  const badgeColor = (color && color !== 'transparent') ? color : 'var(--text-muted)';
+
   container.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center">
       <strong style="color:var(--text-primary); font-size:13.5px">${activeTab === 'today' ? 'Today' : (activeTab === 'next' ? 'Tomorrow' : 'Yesterday')} - ${Utils.formatDate(dStr)}</strong>
-      <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:11px">${status}</span>
+      <span class="badge" style="background: ${badgeBg}; color: ${badgeColor}; font-weight:700; font-size:11px">${status}</span>
     </div>
     ${logsHTML}
   `;
@@ -2233,9 +2255,16 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
         </div>
       `;
     }).join('');
+  } else if (!schedule) {
+    sessionsHTML = `
+      <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-top:8px; text-align:center">
+        <h4 style="margin:0 0 6px 0; font-size:13px; font-weight:700; color:var(--text-muted)">📋 No Shift Assigned</h4>
+        <div style="font-size:12px; color:var(--text-muted)">No shift schedule was assigned for this date. Please contact HR or Operations Manager to assign a work shift.</div>
+      </div>
+    `;
   } else {
     const date = new Date(dateStr);
-    const isWorkDay = schedule.workDays.includes(date.getDay());
+    const isWorkDay = Array.isArray(schedule.workDays) ? schedule.workDays.includes(date.getDay()) : true;
     sessionsHTML = `
       <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-top:8px">
         <h4 style="margin:0 0 8px 0; font-size:13px; font-weight:700; color:var(--primary)">📋 Shift Details</h4>
@@ -2248,6 +2277,9 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
     `;
   }
 
+  const modalBadgeBg = (color && color !== 'transparent') ? `${color}22` : 'rgba(255,255,255,0.06)';
+  const modalBadgeColor = (color && color !== 'transparent') ? color : 'var(--text-muted)';
+
   overlay.innerHTML = `
     <div class="modal-content" style="max-width: 440px; padding: 24px; display:flex; flex-direction:column; gap:12px">
       <div class="modal-header" style="margin-bottom: 2px">
@@ -2259,7 +2291,7 @@ function openDateDetailsModal(userId, dateStr, status, color, log, schedule) {
         <div style="font-size: 15px; font-weight: 700; color: var(--text-primary)">
           ${Utils.formatDate(dateStr)}
         </div>
-        <span class="badge" style="background: ${color}22; color: ${color}; font-weight:700; font-size:12px; padding: 4px 10px">${status}</span>
+        <span class="badge" style="background: ${modalBadgeBg}; color: ${modalBadgeColor}; font-weight:700; font-size:12px; padding: 4px 10px">${status}</span>
       </div>
 
       <div style="max-height:360px; overflow-y:auto; padding-right:2px">
