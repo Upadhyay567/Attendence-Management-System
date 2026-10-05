@@ -229,11 +229,20 @@ async function syncLocalToMongo(seedData) {
   if (isSyncing) return;
   isSyncing = true;
   try {
-    const safeInsert = (model, docs) => {
-      if (!docs || !Array.isArray(docs) || docs.length === 0) return Promise.resolve();
-      return model.deleteMany({})
-        .then(() => model.insertMany(docs, { ordered: false }))
-        .catch(err => console.warn(`⚠️ Warning: non-fatal sync issue on ${model.modelName}:`, err.message));
+    const safeInsert = async (model, docs) => {
+      if (!docs || !Array.isArray(docs) || docs.length === 0) return;
+      try {
+        await model.deleteMany({});
+        const batchSize = 1000;
+        for (let i = 0; i < docs.length; i += batchSize) {
+          const chunk = docs.slice(i, i + batchSize);
+          await model.insertMany(chunk, { ordered: false }).catch(err => {
+            console.warn(`⚠️ Warning: non-fatal sync chunk issue on ${model.modelName}:`, err.message);
+          });
+        }
+      } catch (err) {
+        console.warn(`⚠️ Warning: non-fatal sync issue on ${model.modelName}:`, err.message);
+      }
     };
 
     const officeDocs = Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }));

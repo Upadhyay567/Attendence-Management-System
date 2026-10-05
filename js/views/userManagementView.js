@@ -241,8 +241,10 @@ export function renderAdminUsers() {
   if (addBtn) addBtn.addEventListener('click', () => openUserModal());
   const dlProfileBtn = document.getElementById('btn-download-profile-users');
   if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => {
-    if (typeof openProfileDownloadModal === 'function') openProfileDownloadModal();
-    else if (typeof window.openProfileDownloadModal === 'function') window.openProfileDownloadModal();
+    const filterLoc = document.getElementById('filter-location-select');
+    const activeLoc = (filterLoc && filterLoc.value !== 'all') ? filterLoc.value : null;
+    if (typeof openProfileDownloadModal === 'function') openProfileDownloadModal(null, activeLoc);
+    else if (typeof window.openProfileDownloadModal === 'function') window.openProfileDownloadModal(null, activeLoc);
   });
 
   const triggerPushSync = async () => {

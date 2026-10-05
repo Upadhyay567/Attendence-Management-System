@@ -1164,12 +1164,12 @@ async function syncBiometricAttendance(options = {}) {
     const reachabilityResults = await Promise.all(
       devices.map(async (dev) => {
         if (!dev.enabled) return { id: dev.id, reachable: false, isWDMS: false };
-        const meta = dev.serial ? resolveDeviceLocation(dev.serial, dev.name) : null;
-        const isWDMS = dev.source === 'easywdms' || String(dev.id).startsWith('dev_wdms_') || Boolean(meta) || (dev.ip && !dev.ip.startsWith('192.168.1.7'));
+        const isLocalPrimary = (dev.ip === DEVICE.ip) || (dev.id === 'dev_zk_main') || Boolean(dev.isPrimary);
+        const isWDMS = !isLocalPrimary && (dev.source === 'easywdms' || String(dev.id).startsWith('dev_wdms_'));
         if (isWDMS) {
           return { id: dev.id, reachable: isCloudOnline, isWDMS: true };
         }
-        return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 600), isWDMS: false };
+        return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 1000), isWDMS: false };
       })
     );
     const reachableMap = new Map(reachabilityResults.map(r => [r.id, r]));
@@ -1207,7 +1207,7 @@ async function syncBiometricAttendance(options = {}) {
       let isOnline = false;
 
       // Primary K40 connection (or same IP as env)
-      if (dev.ip === DEVICE.ip) {
+      if (dev.ip === DEVICE.ip || dev.id === 'dev_zk_main' || dev.isPrimary) {
         try {
           const snapshot = await getDeviceSnapshot();
           devUsers = snapshot.users || [];
@@ -1295,7 +1295,7 @@ async function syncBiometricAttendance(options = {}) {
     );
 
     if (online && !useLocal) {
-      syncMongoDatabase(combinedUsers, normalizedPunches).catch(err => {
+      await syncMongoDatabase(combinedUsers, normalizedPunches).catch(err => {
         console.warn('⚠️ MongoDB background mirror notice:', err.message);
       });
     }
@@ -1388,7 +1388,7 @@ async function ingestPunchesAndUsers(users = [], punches = [], deviceMeta = {}) 
 
   result = await syncLocalDatabase(users, punches);
   if (online && !useLocal) {
-    syncMongoDatabase(users, punches).catch(err => {
+    await syncMongoDatabase(users, punches).catch(err => {
       console.warn('⚠️ MongoDB background mirror notice:', err.message);
     });
   }

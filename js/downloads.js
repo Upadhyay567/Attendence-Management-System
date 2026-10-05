@@ -102,7 +102,7 @@ export function loadSheetJS(callback, onError) {
 // -------------------------------------------------------------------------
 // COMPONENT 1: DOWNLOAD PROFILE MODAL
 // -------------------------------------------------------------------------
-export async function openProfileDownloadModal(preSelectedUserId) {
+export async function openProfileDownloadModal(preSelectedUserId, preSelectedLocation) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.style.cssText = `
@@ -173,25 +173,86 @@ export async function openProfileDownloadModal(preSelectedUserId) {
     }
   }
 
+  // Pre-calculate user locations map from attendance punch logs
+  const allLogs = (activeDB.getLogs ? activeDB.getLogs() : (activeDB.data ? activeDB.data.attendanceLogs : [])) || [];
+  const devs = (activeDB.getBiometricDevices ? activeDB.getBiometricDevices() : (activeDB.data ? activeDB.data.biometricDevices : [])) || [];
+  const offices = (activeDB.getOfficeCoordinates ? activeDB.getOfficeCoordinates() : (activeDB.data ? activeDB.data.officeCoordinates : {})) || {};
+
+  const userLocationsMap = new Map();
+  allLogs.forEach(l => {
+    const loc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
+    if (!loc) return;
+    if (l.userId) {
+      if (!userLocationsMap.has(l.userId)) userLocationsMap.set(l.userId, new Set());
+      userLocationsMap.get(l.userId).add(loc);
+    }
+    if (l.employeeId) {
+      if (!userLocationsMap.has(l.employeeId)) userLocationsMap.set(l.employeeId, new Set());
+      userLocationsMap.get(l.employeeId).add(loc);
+    }
+    if (l.biometricUserId) {
+      const bk = 'bio_' + l.biometricUserId;
+      if (!userLocationsMap.has(bk)) userLocationsMap.set(bk, new Set());
+      userLocationsMap.get(bk).add(loc);
+    }
+  });
+
+  const getUserLocations = (u) => {
+    const set = new Set();
+    const add = (v) => { if (typeof v === 'string' && v.trim()) set.add(v.toLowerCase().trim()); };
+    add(u.workLocation);
+    add(u.preferredLocation);
+    if (Array.isArray(u.preferredLocations)) u.preferredLocations.forEach(add);
+    if (Array.isArray(u.assignedLocations)) u.assignedLocations.forEach(add);
+    if (u.shiftLocations && typeof u.shiftLocations === 'object') Object.values(u.shiftLocations).forEach(add);
+    const fromLogs = userLocationsMap.get(u.id) || userLocationsMap.get(u.employeeId) || userLocationsMap.get('bio_' + u.biometricUserId);
+    if (fromLogs) fromLogs.forEach(l => set.add(l));
+    return set;
+  };
+
+  const getUserPrimaryLocation = (u) => {
+    if (u.workLocation && u.workLocation.trim()) return u.workLocation.trim();
+    if (u.preferredLocation && u.preferredLocation.trim()) return u.preferredLocation.trim();
+    if (Array.isArray(u.preferredLocations) && u.preferredLocations[0] && u.preferredLocations[0].trim()) return u.preferredLocations[0].trim();
+    const uLocs = getUserLocations(u);
+    if (uLocs.size > 0) return Array.from(uLocs)[0];
+    return 'Head Office';
+  };
+
+  const distinctLocs = Array.from(new Set([
+    ...rawUsers.map(u => (u.workLocation || u.preferredLocation || '').trim()).filter(Boolean),
+    ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
+    ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
+    ...Object.keys(offices)
+  ])).filter(loc => !loc.toLowerCase().includes('kohat')).sort((a, b) => a.localeCompare(b));
+
   const isChecked = (uId) => {
     if (preSelectedUserId) return uId === preSelectedUserId;
     return true;
   };
 
   overlay.innerHTML = `
-    <div class="modal-content card-panel" style="max-width: 460px; padding: 24px; display:flex; flex-direction:column; gap:16px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-lg)">
+    <div class="modal-content card-panel" style="max-width: 480px; padding: 24px; display:flex; flex-direction:column; gap:16px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-lg)">
       <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px">
         <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text-primary)">📥 Download Profile</h3>
         <button class="close-modal-btn" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer">&times;</button>
       </div>
 
       <div style="font-size:12px; color:var(--text-muted)">
-        Select one or more employees to download their profile records as PDF.
+        Select one or more employees to download their profile records as Excel or PDF.
       </div>
 
       <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
         <label class="form-label" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">Select Employees</label>
-        <input type="text" id="profile-search-input" class="form-input" placeholder="🔍 Search employee name or ID..." style="padding:8px 12px; font-size:12px; margin-bottom:4px; background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); border-radius:8px">
+        
+        <!-- Search Input & Location Filter Row -->
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
+          <input type="text" id="profile-search-input" class="form-input" placeholder="🔍 Search employee name or ID..." style="flex:1; min-width:0; padding:8px 12px; font-size:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); border-radius:8px">
+          <select id="profile-location-filter" class="form-input" style="width:145px; height:34px; padding:0 8px; font-size:11.5px; font-weight:600; background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); border-radius:8px; cursor:pointer;" title="Filter by Worksite Location">
+            <option value="">📍 All Locations</option>
+            ${distinctLocs.map(loc => `<option value="${Utils.escape(loc)}" ${(preSelectedLocation && preSelectedLocation.toLowerCase().trim() === loc.toLowerCase().trim()) ? 'selected' : ''}>${Utils.escape(loc)}</option>`).join('')}
+          </select>
+        </div>
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; padding: 2px 4px">
           <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer; color:var(--text-secondary)">
@@ -200,16 +261,20 @@ export async function openProfileDownloadModal(preSelectedUserId) {
           <span id="profile-selection-count" style="font-size:11.5px; font-weight:600; color:var(--cyan)">0 selected</span>
         </div>
 
-        <div id="profile-checkbox-list" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap:8px; background: rgba(0,0,0,0.15)">
+        <div id="profile-checkbox-list" style="max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap:6px; background: rgba(0,0,0,0.15)">
           ${users.map(u => {
             const uName = u.name || u.username || 'Employee';
             const uEmpId = u.employeeId || u.id || '';
             const checked = isChecked(u.id);
+            const userLocs = getUserLocations(u);
+            const primaryLoc = getUserPrimaryLocation(u);
+            const initialMatchesLoc = !preSelectedLocation || userLocs.has(preSelectedLocation.toLowerCase().trim());
             return `
-            <label class="profile-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
-              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked ? 'checked' : ''}>
+            <label class="profile-chk-item" data-name="${String(uName).toLowerCase()}" data-empid="${String(uEmpId).toLowerCase()}" data-id="${u.id}" data-locations="${Array.from(userLocs).join('|')}" style="display:${initialMatchesLoc ? 'flex' : 'none'}; align-items:center; gap:8px; font-size:12px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm);">
+              <input type="checkbox" class="profile-user-checkbox" value="${u.id}" style="cursor:pointer" ${checked && initialMatchesLoc ? 'checked' : ''}>
               <span style="font-weight:600; color:var(--text-primary)">${Utils.escape(uName)}</span>
               <span style="color:var(--text-muted); font-size:11px">(${Utils.escape(uEmpId)})</span>
+              <span style="margin-left:auto; font-size:10px; color:var(--text-muted); background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:4px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${Utils.escape(primaryLoc)}">📍 ${Utils.escape(primaryLoc)}</span>
             </label>
             `;
           }).join('')}
@@ -218,8 +283,9 @@ export async function openProfileDownloadModal(preSelectedUserId) {
 
       <div class="form-group">
         <label class="form-label" style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">File Format</label>
-        <select class="form-input" disabled style="background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-muted); padding:8px; border-radius:8px">
-          <option value="pdf">PDF Document (.pdf) (Only)</option>
+        <select id="profile-format-select" class="form-input" style="background:rgba(0,0,0,0.15); border:1px solid var(--border); color:var(--text-primary); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12.5px; font-weight:600;">
+          <option value="xlsx">📊 Excel Spreadsheet (.xlsx)</option>
+          <option value="pdf">📄 PDF Document (.pdf)</option>
         </select>
       </div>
 
@@ -234,6 +300,7 @@ export async function openProfileDownloadModal(preSelectedUserId) {
   document.body.appendChild(overlay);
 
   const searchInput = overlay.querySelector('#profile-search-input');
+  const locationFilterSelect = overlay.querySelector('#profile-location-filter');
   const selectAllChk = overlay.querySelector('#profile-select-all');
   const checkboxList = overlay.querySelector('#profile-checkbox-list');
   const selectionCount = overlay.querySelector('#profile-selection-count');
@@ -264,24 +331,19 @@ export async function openProfileDownloadModal(preSelectedUserId) {
     selectionCount.textContent = `${checkedIds.length} selected`;
   };
 
-  checkboxList.addEventListener('change', (e) => {
-    if (e.target.classList.contains('profile-user-checkbox')) {
-      const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
-        .filter(el => el.style.display !== 'none')
-        .map(el => el.querySelector('.profile-user-checkbox'));
-      const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
-      selectAllChk.checked = allVisibleChecked;
-      checkValidation();
-    }
-  });
-
-  searchInput.addEventListener('input', () => {
+  const filterEmployeeItems = () => {
     const query = searchInput.value.toLowerCase().trim();
+    const selectedLoc = locationFilterSelect ? locationFilterSelect.value.toLowerCase().trim() : '';
     const items = checkboxList.querySelectorAll('.profile-chk-item');
+
     items.forEach(item => {
-      const name = item.dataset.name;
-      const empid = item.dataset.empid;
-      if (name.includes(query) || empid.includes(query)) {
+      const name = item.dataset.name || '';
+      const empid = item.dataset.empid || '';
+      const locs = (item.dataset.locations || '').split('|');
+      const matchesSearch = !query || name.includes(query) || empid.includes(query);
+      const matchesLocation = !selectedLoc || locs.includes(selectedLoc);
+
+      if (matchesSearch && matchesLocation) {
         item.style.display = 'flex';
       } else {
         item.style.display = 'none';
@@ -293,7 +355,24 @@ export async function openProfileDownloadModal(preSelectedUserId) {
       .map(el => el.querySelector('.profile-user-checkbox'));
     const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
     selectAllChk.checked = allVisibleChecked;
+    checkValidation();
+  };
+
+  checkboxList.addEventListener('change', (e) => {
+    if (e.target.classList.contains('profile-user-checkbox')) {
+      const visibleCheckboxes = Array.from(checkboxList.querySelectorAll('.profile-chk-item'))
+        .filter(el => el.style.display !== 'none')
+        .map(el => el.querySelector('.profile-user-checkbox'));
+      const allVisibleChecked = visibleCheckboxes.length > 0 && visibleCheckboxes.every(cb => cb.checked);
+      selectAllChk.checked = allVisibleChecked;
+      checkValidation();
+    }
   });
+
+  searchInput.addEventListener('input', filterEmployeeItems);
+  if (locationFilterSelect) {
+    locationFilterSelect.addEventListener('change', filterEmployeeItems);
+  }
 
   selectAllChk.addEventListener('change', () => {
     const checked = selectAllChk.checked;
@@ -321,6 +400,9 @@ export async function openProfileDownloadModal(preSelectedUserId) {
   downloadBtn.addEventListener('click', async () => {
     const checkedIds = getCheckedUserIds();
     if (checkedIds.length === 0) return;
+    const formatSelect = overlay.querySelector('#profile-format-select');
+    const format = formatSelect ? formatSelect.value : 'xlsx';
+
     downloadBtn.setAttribute('disabled', 'true');
     downloadBtn.textContent = 'Generating...';
 
@@ -330,11 +412,16 @@ export async function openProfileDownloadModal(preSelectedUserId) {
 
       // Call API Route
       const profiles = await AppAPI.fetchProfileDownload(checkedIds);
-      if (!profiles || profiles.length === 0) {
-        const fallbackProfiles = users.filter(u => checkedIds.includes(u.id) || (u.employeeId && checkedIds.includes(u.employeeId)));
-        downloadProfilePDF(fallbackProfiles, activeDB);
+      const targetProfiles = (profiles && profiles.length > 0)
+        ? profiles
+        : users.filter(u => checkedIds.includes(u.id) || (u.employeeId && checkedIds.includes(u.employeeId)));
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      if (format === 'xlsx') {
+        const filename = `Employee_Profiles_${timestamp}.xlsx`;
+        downloadProfileExcel(targetProfiles, filename);
       } else {
-        downloadProfilePDF(profiles, activeDB);
+        downloadProfilePDF(targetProfiles, activeDB);
       }
     } catch (err) {
       console.error('Error generating profile download:', err);
@@ -347,11 +434,82 @@ export async function openProfileDownloadModal(preSelectedUserId) {
   });
 }
 
-function downloadProfilePDF(profiles, dbInstance) {
+export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xlsx') {
+  const excelData = [];
+  const activeDB = getActiveDB();
+
+  profiles.forEach(u => {
+    const schedule = (activeDB && typeof activeDB.getSchedule === 'function' ? activeDB.getSchedule(u.scheduleId) : null) || {};
+    const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
+    const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
+    const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
+    const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+    const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
+    const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
+    const loc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (schedule.location || 'Head Office');
+
+    excelData.push({
+      'Employee ID': u.employeeId || u.id || 'N/A',
+      'Employee Name': u.name || u.username || 'N/A',
+      'Username': u.username || 'N/A',
+      'Biometric ID': u.biometricUserId || u.biometricId || 'N/A',
+      'Role': u.role || 'employee',
+      'Department': u.department || 'Operations',
+      'Designation': u.designation || 'Staff',
+      'Status': u.status || 'Active',
+      'Worksite / Location': loc,
+      'Shift / Schedule': schedule.name ? `${schedule.name} (${schedule.startTime || '--:--'} - ${schedule.endTime || '--:--'})` : 'Default Schedule',
+      'Email': u.email || 'N/A',
+      'Phone Number': u.phone || 'N/A',
+      'Emergency Contact': u.emergencyContact || 'N/A',
+      'Residential Address': u.address || 'N/A',
+      'City': u.city || 'Delhi',
+      'Date of Birth': u.dob || 'N/A',
+      'Date of Joining': u.dateOfJoining || 'N/A',
+      'Verification Status': u.profileVerificationStatus || 'Approved',
+      'Base Salary (INR)': base,
+      'HRA Allowance (INR)': hra,
+      'Travel Allowance (INR)': travel,
+      'PF Deduction (INR)': pf,
+      'PT Deduction (INR)': pt,
+      'TDS Tax Rate (%)': tds
+    });
+  });
+
+  const doExcelExport = () => {
+    try {
+      const headers = [
+        'Employee ID', 'Employee Name', 'Username', 'Biometric ID', 'Role',
+        'Department', 'Designation', 'Status', 'Worksite / Location', 'Shift / Schedule',
+        'Email', 'Phone Number', 'Emergency Contact', 'Residential Address', 'City',
+        'Date of Birth', 'Date of Joining', 'Verification Status',
+        'Base Salary (INR)', 'HRA Allowance (INR)', 'Travel Allowance (INR)',
+        'PF Deduction (INR)', 'PT Deduction (INR)', 'TDS Tax Rate (%)'
+      ];
+      const worksheet = XLSX.utils.json_to_sheet(excelData, { header: headers });
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Employee Profiles');
+      XLSX.writeFile(workbook, filename);
+    } catch (e) {
+      console.warn('Excel export failed, falling back to CSV:', e);
+      downloadReportCSV(excelData, filename.replace('.xlsx', '.csv'));
+    }
+  };
+
+  if (typeof XLSX !== 'undefined') {
+    doExcelExport();
+  } else {
+    loadSheetJS(doExcelExport, () => {
+      downloadReportCSV(excelData, filename.replace('.xlsx', '.csv'));
+    });
+  }
+}
+
+export function downloadProfilePDF(profiles, dbInstance) {
   const activeDB = dbInstance || getActiveDB();
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Popup blocker blocked the download window. Please allow popups for this site.');
+    alert('Popup blocker blocked the download window. Please allow popups for this site or select Excel (.xlsx) format.');
     return;
   }
 
@@ -493,14 +651,16 @@ function downloadProfilePDF(profiles, dbInstance) {
   `;
 
   const cardsHTML = profiles.map(u => {
-    const initials = (u.name || 'Staff').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const displayName = u.name || u.username || 'Staff';
+    const initials = displayName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'EM';
     const schedule = (activeDB && typeof activeDB.getSchedule === 'function' ? activeDB.getSchedule(u.scheduleId) : null) || {};
-    const base = u.baseSalary || 50000;
-    const hra = u.allowanceHRA !== undefined ? u.allowanceHRA : Math.round(base * 0.15);
-    const travel = u.allowanceTravel !== undefined ? u.allowanceTravel : 3000;
-    const pf = u.deductionPF !== undefined ? u.deductionPF : Math.round(base * 0.08);
-    const pt = u.deductionPT !== undefined ? u.deductionPT : 200;
-    const tds = u.deductionTDS !== undefined ? u.deductionTDS : (base > 60000 ? 10 : 5);
+    const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
+    const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
+    const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
+    const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+    const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
+    const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
+    const workLoc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (schedule.location || 'Head Office');
 
     return `
       <div class="profile-card">
@@ -548,7 +708,7 @@ function downloadProfilePDF(profiles, dbInstance) {
         <div class="section-title">Assigned Shift & Logistics</div>
         <div class="grid-container">
           <div class="info-block"><span class="label">Shift Schedule</span><span class="value">${Utils.escape(schedule.name || 'N/A')} (${schedule.startTime || '--:--'} - ${schedule.endTime || '--:--'})</span></div>
-          <div class="info-block"><span class="label">Preferred Worksite Location</span><span class="value">${Utils.escape(u.preferredLocation || schedule.location || 'N/A')}</span></div>
+          <div class="info-block"><span class="label">Preferred Worksite Location</span><span class="value">${Utils.escape(workLoc)}</span></div>
           <div class="info-block"><span class="label">Verification Status</span><span class="value">${Utils.escape(u.profileVerificationStatus || 'Approved')}</span></div>
         </div>
 

@@ -420,6 +420,12 @@ async function fetchTransactions(cookieStr, query = {}) {
  * Comprehensive Sync: Pulls terminals, employees, and attendance logs from 203.115.110.93:8081
  * and ingests them into the HRMS database
  */
+let cachedTerminals = [];
+let lastTerminalsFetch = 0;
+let cachedEmployees = [];
+let lastEmployeesFetch = 0;
+const METADATA_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Comprehensive Sync: Pulls terminals, employees, and attendance logs from ZKTeco easy WDMS Cloud Server
  * and ingests them into the HRMS database
@@ -431,15 +437,29 @@ async function syncFromWDMS(username, password, options = {}) {
 
   const cookie = await authenticate(user, pass);
 
-  const terminals = await fetchTerminals(cookie).catch(err => {
-    console.warn('⚠️ [WDMS] Terminals fetch warning:', err.message);
-    return [];
-  });
+  let terminals = cachedTerminals;
+  if (!cachedTerminals.length || (Date.now() - lastTerminalsFetch > METADATA_CACHE_TTL) || options.forceRefresh) {
+    terminals = await fetchTerminals(cookie).catch(err => {
+      console.warn('⚠️ [WDMS] Terminals fetch warning:', err.message);
+      return cachedTerminals;
+    });
+    if (terminals && terminals.length > 0) {
+      cachedTerminals = terminals;
+      lastTerminalsFetch = Date.now();
+    }
+  }
 
-  const employees = await fetchEmployees(cookie).catch(err => {
-    console.warn('⚠️ [WDMS] Employees fetch warning:', err.message);
-    return [];
-  });
+  let employees = cachedEmployees;
+  if (!cachedEmployees.length || (Date.now() - lastEmployeesFetch > METADATA_CACHE_TTL) || options.forceRefresh) {
+    employees = await fetchEmployees(cookie).catch(err => {
+      console.warn('⚠️ [WDMS] Employees fetch warning:', err.message);
+      return cachedEmployees;
+    });
+    if (employees && employees.length > 0) {
+      cachedEmployees = employees;
+      lastEmployeesFetch = Date.now();
+    }
+  }
 
   const transactions = await fetchTransactions(cookie, { maxPages }).catch(err => {
     console.warn('⚠️ [WDMS] Transactions fetch warning:', err.message);

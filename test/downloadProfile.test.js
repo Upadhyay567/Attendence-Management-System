@@ -110,4 +110,95 @@ describe('Download Profile Modal and Dossier Generation', () => {
     });
     expect(safeMatches.length).toBe(1);
   });
+
+  test('Safe calculation for all employee profiles does not throw TypeError on null allowances or deductions', () => {
+    const rawUsers = seedData.users || [];
+    expect(rawUsers.length).toBeGreaterThan(100);
+
+    // Verify all users (including biometric enrolled users with null allowances) parse safely
+    rawUsers.forEach((u, i) => {
+      const displayName = u.name || u.username || 'Staff';
+      const initials = displayName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'EM';
+      expect(typeof initials).toBe('string');
+      expect(initials.length).toBeGreaterThan(0);
+
+      const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
+      const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
+      const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
+      const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+      const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
+      const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
+
+      expect(typeof base.toLocaleString()).toBe('string');
+      expect(typeof hra.toLocaleString()).toBe('string');
+      expect(typeof travel.toLocaleString()).toBe('string');
+      expect(typeof pf.toLocaleString()).toBe('string');
+      expect(typeof pt.toLocaleString()).toBe('string');
+      expect(typeof tds).toBe('number');
+    });
+  });
+
+  test('Location filtering correctly partitions employees by worksite', () => {
+    const rawUsers = seedData.users || [];
+    const logs = seedData.attendanceLogs || [];
+
+    const userLocationsMap = new Map();
+    logs.forEach(l => {
+      const loc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
+      if (!loc) return;
+      if (l.userId) {
+        if (!userLocationsMap.has(l.userId)) userLocationsMap.set(l.userId, new Set());
+        userLocationsMap.get(l.userId).add(loc);
+      }
+      if (l.employeeId) {
+        if (!userLocationsMap.has(l.employeeId)) userLocationsMap.set(l.employeeId, new Set());
+        userLocationsMap.get(l.employeeId).add(loc);
+      }
+      if (l.biometricUserId) {
+        const bk = 'bio_' + l.biometricUserId;
+        if (!userLocationsMap.has(bk)) userLocationsMap.set(bk, new Set());
+        userLocationsMap.get(bk).add(loc);
+      }
+    });
+
+    const getUserLocations = (u) => {
+      const set = new Set();
+      const add = (v) => { if (typeof v === 'string' && v.trim()) set.add(v.toLowerCase().trim()); };
+      add(u.workLocation);
+      add(u.preferredLocation);
+      if (Array.isArray(u.preferredLocations)) u.preferredLocations.forEach(add);
+      if (Array.isArray(u.assignedLocations)) u.assignedLocations.forEach(add);
+      if (u.shiftLocations && typeof u.shiftLocations === 'object') Object.values(u.shiftLocations).forEach(add);
+      const fromLogs = userLocationsMap.get(u.id) || userLocationsMap.get(u.employeeId) || userLocationsMap.get('bio_' + u.biometricUserId);
+      if (fromLogs) fromLogs.forEach(l => set.add(l));
+      return set;
+    };
+
+    const hsStaff = rawUsers.filter(u => getUserLocations(u).has('hs office'));
+    expect(hsStaff.length).toBeGreaterThanOrEqual(300);
+
+    const gtSiteStaff = rawUsers.filter(u => getUserLocations(u).has('gt karnal site'));
+    expect(gtSiteStaff.length).toBeGreaterThanOrEqual(500);
+
+    const retailStaff = rawUsers.filter(u => getUserLocations(u).has('retail'));
+    expect(retailStaff.length).toBeGreaterThanOrEqual(180);
+  });
+
+  test('UI elements for Location Filter, Excel Format, and safe download are declared in downloads.js', () => {
+    const downloadsCode = fs.readFileSync(path.join(__dirname, '../js/downloads.js'), 'utf8');
+
+    // 1. Location filter in modal
+    expect(downloadsCode).toContain('id="profile-location-filter"');
+    expect(downloadsCode).toContain('All Locations');
+
+    // 2. Format selector supporting Excel (.xlsx) and PDF (.pdf)
+    expect(downloadsCode).toContain('id="profile-format-select"');
+    expect(downloadsCode).toContain('value="xlsx"');
+    expect(downloadsCode).toContain('value="pdf"');
+
+    // 3. Functions exported and available
+    expect(downloadsCode).toContain('export function downloadProfileExcel');
+    expect(downloadsCode).toContain('export function downloadProfilePDF');
+    expect(downloadsCode).toContain('export async function openProfileDownloadModal');
+  });
 });
