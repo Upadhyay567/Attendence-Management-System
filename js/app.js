@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=89';
-import { renderAdminSchedules } from './views/schedulesView.js?v=89';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=89';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=89';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=89';
-import { renderAdminAttendances } from './views/attendancesView.js?v=89';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=89';
-import { renderAdminFinance } from './views/financeView.js?v=89';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=89';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=89';
-import { drawRadarMap } from './components/geofenceMap.js?v=89';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=89';
+import { renderLoginView } from './views/loginView.js?v=90';
+import { renderAdminSchedules } from './views/schedulesView.js?v=90';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=90';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=90';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=90';
+import { renderAdminAttendances } from './views/attendancesView.js?v=90';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=90';
+import { renderAdminFinance } from './views/financeView.js?v=90';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=90';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=90';
+import { drawRadarMap } from './components/geofenceMap.js?v=90';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=90';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=89';
-import { Auth } from './auth.js?v=89';
-import { Utils, html } from './utils.js?v=89';
-import { triggerBirthdayCelebration } from './celebration.js?v=89';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=89';
+import { DB } from './core/db.js?v=90';
+import { Auth } from './auth.js?v=90';
+import { Utils, html } from './utils.js?v=90';
+import { triggerBirthdayCelebration } from './celebration.js?v=90';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=90';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -2985,23 +2985,7 @@ function renderEmployeeProfile() {
 
           <div id="profile-alert" class="alert" style="display:none;"></div>
 
-          <!-- Profile Status Bar -->
-          <div class="prof-section-card" style="padding:14px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(135deg, rgba(137,32,27,0.04) 0%, rgba(255,255,255,0.01) 100%), var(--bg-surface); border-left: 4px solid var(--primary);">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Profile Status:</span>
-              <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; ${
-                status === 'Rejected'
-                  ? 'background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25);'
-                  : 'background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);'
-              }">
-                <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
-                ${status === 'Rejected' ? 'Issue Flagged' : (isSelfAdmin ? 'Verified Admin' : (user.role === 'manager' ? 'Verified Manager' : (user.role === 'hr' ? 'Verified HR' : 'Verified Profile')))}
-              </span>
-            </div>
-            <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:rgba(137,32,27,0.06); border:1px solid rgba(137,32,27,0.18); border-radius:20px; font-size:12px; font-weight:700; color:var(--primary);">
-              Edit Access: Unlimited
-            </div>
-          </div>
+
 
           <!-- ID Card & Upload Section Row -->
           <div class="profile-badge-row" style="display:flex; gap:24px; align-items:center; flex-wrap:wrap; justify-content:center; margin-bottom:8px;">

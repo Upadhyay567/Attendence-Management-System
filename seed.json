@@ -706,7 +706,7 @@
       "scheduleIds": [],
       "shiftLocations": {},
       "createdAt": "2026-09-18T10:48:05.579Z",
-      "gender": "Male",
+      "gender": "Female",
       "department": "Engineering",
       "designation": "Junior Developer",
       "dateOfJoining": "2024-05-10",
@@ -748,7 +748,10 @@
       },
       "_search": "vijay emp949 engineering",
       "_locStr": "gt karnal site",
-      "_dept": "engineering"
+      "_dept": "engineering",
+      "address": "bhadanwara",
+      "verifiedStaffBatch": "Verified Staff",
+      "profileEditCount": 1
     },
     {
       "_id": "usr_bio_1148",
@@ -442514,6 +442517,41 @@
   "customRoles": [],
   "auditLogs": [
     {
+      "timestamp": "2026-10-06T12:37:07.073Z",
+      "action": "UPDATE_users",
+      "userId": "usr_bio_949",
+      "userName": "Vijay",
+      "userRole": "employee",
+      "details": {
+        "name": "Vijay",
+        "employeeId": "EMP949",
+        "username": "bio_949",
+        "password": "$hash$2c7c47e3",
+        "email": "vijay678@gmail.com",
+        "phone": "9807569178",
+        "dob": "1991-02-19",
+        "gender": "Female",
+        "emergencyContact": "+91 98765 432017",
+        "address": "bhadanwara",
+        "city": "Mathura",
+        "department": "Engineering",
+        "designation": "Junior Developer",
+        "dateOfJoining": "2024-05-10",
+        "verifiedStaffBatch": "Verified Staff",
+        "baseSalary": 100000,
+        "allowanceHRA": 0,
+        "allowanceTravel": 0,
+        "deductionPF": 0,
+        "deductionPT": 0,
+        "deductionTDS": 0,
+        "profileVerificationStatus": "Approved",
+        "profileVerificationComment": "",
+        "pendingProfileEdits": null,
+        "profileEditCount": 1
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
       "timestamp": "2026-10-05T12:09:30.253Z",
       "action": "DELETE_users",
       "userId": "usr_admin",
@@ -450634,18 +450672,6 @@
     },
     {
       "timestamp": "2026-09-22T07:53:31.886Z",
-      "action": "UPDATE_users",
-      "userId": "usr_6af1y3c",
-      "userName": "Abhishek Sharma",
-      "userRole": "hr",
-      "details": {
-        "preferredLocations": [],
-        "preferredLocation": ""
-      },
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-09-22T07:53:21.483Z",
       "action": "UPDATE_users",
       "userId": "usr_6af1y3c",
       "userName": "Abhishek Sharma",
@@ -463243,9 +463269,9 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": true,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 237,
-      "totalPunchesCount": 12811,
+      "totalPunchesCount": 12812,
       "source": "easywdms"
     },
     {
@@ -463259,7 +463285,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 1234,
       "totalPunchesCount": 48,
       "source": "easywdms"
@@ -463275,7 +463301,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 58,
       "totalPunchesCount": 2185,
       "source": "easywdms"
@@ -463291,7 +463317,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 208,
       "totalPunchesCount": 11177,
       "source": "easywdms"
@@ -463307,7 +463333,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 549,
       "totalPunchesCount": 12334,
       "source": "easywdms"
@@ -463323,7 +463349,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 159,
       "totalPunchesCount": 11690,
       "source": "easywdms"
@@ -463339,7 +463365,7 @@
       "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 173,
       "totalPunchesCount": 6925,
       "source": "easywdms"
@@ -463355,7 +463381,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 781,
       "totalPunchesCount": 15990,
       "source": "easywdms"
@@ -463371,7 +463397,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 766,
       "totalPunchesCount": 15986,
       "source": "easywdms"
@@ -463387,7 +463413,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 163,
       "totalPunchesCount": 9632,
       "source": "easywdms"
@@ -463403,7 +463429,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 55,
       "totalPunchesCount": 619,
       "source": "easywdms"
@@ -463419,7 +463445,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "enrolledUsersCount": 108,
       "totalPunchesCount": 7724,
       "source": "easywdms"
@@ -463450,7 +463476,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "source": "easywdms",
       "enrolledUsersCount": 219,
       "totalPunchesCount": 14179
@@ -463496,7 +463522,7 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-06T12:29:08.693Z",
+      "lastSyncAt": "2026-10-06T12:39:28.323Z",
       "source": "easywdms",
       "enrolledUsersCount": 161,
       "totalPunchesCount": 14393
