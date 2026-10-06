@@ -769,7 +769,11 @@ export function renderAdminAttendances() {
       const data = await res.json();
       if (data && data.success) {
         await DB.init('immediate');
-        renderTable();
+        if (typeof updateTable === 'function') {
+          updateTable();
+        } else if (typeof renderAdminAttendances === 'function') {
+          renderAdminAttendances();
+        }
         const punchCount = (data.wdms?.transactionsCount || 0) + (data.local?.syncedLogs || 0);
         if (typeof Utils !== 'undefined' && Utils.showToast) {
           Utils.showToast(`Biometric sync complete! Fetched latest data across terminals (${punchCount} punches checked).`, 'success');

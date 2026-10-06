@@ -1,3 +1,3 @@
 // js/core/auth.js - Core Auth Bridge
-import { Auth } from '../auth.js?v=90';
+import { Auth } from '../auth.js?v=91';
 export { Auth };
