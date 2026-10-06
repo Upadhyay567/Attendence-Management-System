@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=86';
-import { renderAdminSchedules } from './views/schedulesView.js?v=86';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=86';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=86';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=86';
-import { renderAdminAttendances } from './views/attendancesView.js?v=86';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=86';
-import { renderAdminFinance } from './views/financeView.js?v=86';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=86';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=86';
-import { drawRadarMap } from './components/geofenceMap.js?v=86';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=86';
+import { renderLoginView } from './views/loginView.js?v=87';
+import { renderAdminSchedules } from './views/schedulesView.js?v=87';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=87';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=87';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=87';
+import { renderAdminAttendances } from './views/attendancesView.js?v=87';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=87';
+import { renderAdminFinance } from './views/financeView.js?v=87';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=87';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=87';
+import { drawRadarMap } from './components/geofenceMap.js?v=87';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=87';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=86';
-import { Auth } from './auth.js?v=86';
-import { Utils, html } from './utils.js?v=86';
-import { triggerBirthdayCelebration } from './celebration.js?v=86';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=86';
+import { DB } from './core/db.js?v=87';
+import { Auth } from './auth.js?v=87';
+import { Utils, html } from './utils.js?v=87';
+import { triggerBirthdayCelebration } from './celebration.js?v=87';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=87';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -6858,12 +6858,17 @@ function renderAdminReports() {
   let selectedMonth = today.getMonth();
   let selectedYear = today.getFullYear();
   const emps = DB.getUsers().filter(u => u.role === 'employee');
-  const distinctLocs = Array.from(new Set(emps.map(getUserPrimaryWorkLocation).filter(Boolean))).sort((a, b) => a.localeCompare(b));
   const userLocationsMap = buildUserLocationsMap();
   const empCountsByLoc = {};
-  distinctLocs.forEach(loc => {
-    empCountsByLoc[loc] = emps.filter(u => checkUserMatchesLocation(u, loc)).length;
+  const distinctLocsSet = new Set();
+  emps.forEach(u => {
+    const loc = getUserPrimaryWorkLocation(u, userLocationsMap);
+    if (loc) {
+      distinctLocsSet.add(loc);
+      empCountsByLoc[loc] = (empCountsByLoc[loc] || 0) + 1;
+    }
   });
+  const distinctLocs = Array.from(distinctLocsSet).sort((a, b) => a.localeCompare(b));
 
   main.innerHTML = `
     <div class="content-header" id="employee-payslip-tab-header">
@@ -7020,15 +7025,15 @@ function compileReports(month, year) {
   let totalPresentDays = 0;
   let totalLateDays = 0;
 
-  const userPayrollData = users.map(u => {
-    const p = DB.calculateMonthlyPayroll(u.id, month, year);
+  const userPayrollData = DB.calculateAllMonthlyPayrolls(users, month, year);
+  for (let i = 0; i < userPayrollData.length; i++) {
+    const p = userPayrollData[i];
     grandGrossSalary += p.grossEarnings;
     grandDeductions += p.totalDeductions;
     grandNetPayout += p.netSalary;
     totalPresentDays += p.presentDays;
     totalLateDays += p.lateDays;
-    return p;
-  });
+  }
 
   document.getElementById('report-stats-box').innerHTML = `
     <div class="stat-card">
@@ -7381,8 +7386,8 @@ function exportReportCSV(month, year) {
   const locSuffix = (locVal && locVal !== 'all') ? `_${locVal.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
   const filename = `HS_Group_Payroll_Report_${monthNames[month]}_${year}${locSuffix}.csv`;
   const headers = ['Employee Name', 'Base Salary', 'HRA', 'Travel Allowance', 'Working Days', 'Days Present', 'Absent Days', 'Half Days', 'Absent/Half-Day Deductions', 'PF Deduction', 'PT Deduction', 'TDS Deduction', 'Net Disbursed Payout'];
-  const rows = users.map(u => {
-    const p = DB.calculateMonthlyPayroll(u.id, month, year);
+  const userPayrollData = DB.calculateAllMonthlyPayrolls(users, month, year);
+  const rows = userPayrollData.map(p => {
     return [p.employeeName, p.baseSalary, p.allowanceHRA, p.allowanceTravel, p.workingDays, p.presentDays, p.absentDays, p.halfDays, p.attendanceDeductions, p.deductionPF, p.deductionPT, p.deductionTDSVal, p.netSalary];
   });
   Utils.exportToCSV(filename, headers, rows);

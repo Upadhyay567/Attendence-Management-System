@@ -515,7 +515,7 @@ export const DB = {
               dbUpdateDebounceTimer = null;
               await DB.init(true);
               window.dispatchEvent(new CustomEvent('db_updated', { detail: evt ? evt.data : null }));
-            }, 300);
+            }, 1500);
           });
 
           es.addEventListener('biometric_devices_updated', (evt) => {
@@ -674,7 +674,8 @@ export const DB = {
   },
 
   async init(forceRefresh = false) {
-    if (!forceRefresh && this.data && Array.isArray(this.data.users) && this.data.users.length > 0 && this.lastFetchSuccess && (Date.now() - this.lastFetchSuccess < 15000)) {
+    const minCooldown = (forceRefresh === 'immediate') ? 0 : (forceRefresh ? 6000 : 15000);
+    if (this.data && Array.isArray(this.data.users) && this.data.users.length > 0 && this.lastFetchSuccess && (Date.now() - this.lastFetchSuccess < minCooldown)) {
       return;
     }
     if (this._inFlightInit) {
@@ -723,6 +724,7 @@ export const DB = {
           const fetchedData = await res.json();
           if (fetchedData && typeof fetchedData === 'object') {
             this.data = fetchedData;
+            this.invalidatePayrollCache();
             if (typeof window !== 'undefined') window.__ATTENDANCE_DB_DATA__ = this.data;
             this.lastFetchSuccess = Date.now();
             this._safeSaveLocalStorage();
@@ -919,6 +921,7 @@ export const DB = {
 
   save(mutationMeta = null, options = {}) {
     this.lastLocalWrite = Date.now();
+    this.invalidatePayrollCache();
     this._safeSaveLocalStorage(options.immediate || false);
     if (typeof window !== 'undefined') {
       window.__ATTENDANCE_DB_DATA__ = this.data;
@@ -994,6 +997,7 @@ export const DB = {
   },
 
   resetToHardcodedDefaults() {
+    this.invalidatePayrollCache();
     this.data.schedules = [...defaultSchedules];
     this.data.users = JSON.parse(JSON.stringify(defaultUsers));
     this.data.attendanceLogs = generateDemoLogs();
@@ -2273,9 +2277,158 @@ export const DB = {
     return countDeleted;
   },
 
-  // Payroll Calculations
-  calculateMonthlyPayroll(userId, month, year) {
-    const user = this.getUser(userId);
+  // Cache for precomputed payroll index
+  _payrollIndexCache: null,
+
+  invalidatePayrollCache() {
+    this._payrollIndexCache = null;
+  },
+
+  getPayrollIndex(month, year) {
+    if (this._payrollIndexCache && 
+        this._payrollIndexCache.month === month && 
+        this._payrollIndexCache.year === year && 
+        this._payrollIndexCache.dataRef === this.data) {
+      return this._payrollIndexCache.index;
+    }
+
+    const index = this.buildPayrollIndex(month, year);
+    this._payrollIndexCache = {
+      month,
+      year,
+      dataRef: this.data,
+      index
+    };
+    return index;
+  },
+
+  buildPayrollIndex(month, year) {
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const dayOfWeekMap = new Int8Array(totalDays + 1);
+    const dateStrMap = new Array(totalDays + 1);
+    const sundays = [];
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dt = new Date(year, month, d);
+      const dow = dt.getDay();
+      dayOfWeekMap[d] = dow;
+      const ds = `${monthPrefix}-${String(d).padStart(2, '0')}`;
+      dateStrMap[d] = ds;
+      if (dow === 0) sundays.push({ day: d, dateStr: ds });
+    }
+
+    const allUsers = (this.data && Array.isArray(this.data.users)) ? this.data.users : [];
+    const byId = new Map();
+    const byEmpId = new Map();
+    const byBioUserId = new Map();
+    const byBioId = new Map();
+    const byDigits = new Map();
+
+    const addToMap = (map, key, user) => {
+      if (!key) return;
+      let s = map.get(key);
+      if (!s) { s = []; map.set(key, s); }
+      s.push(user);
+    };
+
+    for (let i = 0; i < allUsers.length; i++) {
+      const u = allUsers[i];
+      if (u.id) addToMap(byId, u.id, u);
+      if (u.employeeId) addToMap(byEmpId, String(u.employeeId).toLowerCase(), u);
+      if (u.biometricUserId) addToMap(byBioUserId, String(u.biometricUserId), u);
+      if (u.biometricId) addToMap(byBioId, String(u.biometricId), u);
+      const digits = String(u.employeeId || u.biometricUserId || '').replace(/\D/g, '');
+      if (digits) addToMap(byDigits, digits, u);
+    }
+
+    const logsByUser = new Map();
+    const allLogs = (this.data && Array.isArray(this.data.attendanceLogs)) ? this.data.attendanceLogs : [];
+
+    for (let i = 0; i < allLogs.length; i++) {
+      const l = allLogs[i];
+      const matchedUserIds = new Set();
+
+      if (l.userId) {
+        const arr = byId.get(l.userId);
+        if (arr) for (let j = 0; j < arr.length; j++) matchedUserIds.add(arr[j].id);
+      }
+      if (l.employeeId) {
+        const arr = byEmpId.get(String(l.employeeId).toLowerCase());
+        if (arr) for (let j = 0; j < arr.length; j++) matchedUserIds.add(arr[j].id);
+      }
+      if (l.biometricUserId) {
+        const sBio = String(l.biometricUserId);
+        const arr = byBioUserId.get(sBio);
+        if (arr) for (let j = 0; j < arr.length; j++) matchedUserIds.add(arr[j].id);
+        const arrBioId = byBioId.get(sBio);
+        if (arrBioId) for (let j = 0; j < arrBioId.length; j++) matchedUserIds.add(arrBioId[j].id);
+      }
+      if (l.biometricId) {
+        const arr = byBioId.get(String(l.biometricId));
+        if (arr) for (let j = 0; j < arr.length; j++) matchedUserIds.add(arr[j].id);
+      }
+      const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
+      if (logDigits) {
+        const arr = byDigits.get(logDigits);
+        if (arr) for (let j = 0; j < arr.length; j++) matchedUserIds.add(arr[j].id);
+      }
+
+      for (const uid of matchedUserIds) {
+        let arr = logsByUser.get(uid);
+        if (!arr) { arr = []; logsByUser.set(uid, arr); }
+        arr.push(l);
+      }
+    }
+
+    const leavesByUser = new Map();
+    const allLeaves = (this.data && Array.isArray(this.data.leaveRequests)) ? this.data.leaveRequests : [];
+    for (let i = 0; i < allLeaves.length; i++) {
+      const lv = allLeaves[i];
+      if (lv && lv.userId && lv.status === 'Approved') {
+        let arr = leavesByUser.get(lv.userId);
+        if (!arr) { arr = []; leavesByUser.set(lv.userId, arr); }
+        arr.push(lv);
+      }
+    }
+
+    const schedMap = new Map();
+    ((this.data && Array.isArray(this.data.schedules)) ? this.data.schedules : []).forEach(s => schedMap.set(s.id, s));
+
+    const adjMap = new Map();
+    ((this.data && Array.isArray(this.data.payrollAdjustments)) ? this.data.payrollAdjustments : []).forEach(a => {
+      if (a.month === month && a.year === year) adjMap.set(a.userId, a);
+    });
+
+    return {
+      monthMeta: { totalDays, monthPrefix, dayOfWeekMap, dateStrMap, sundays },
+      byId,
+      logsByUser,
+      leavesByUser,
+      schedMap,
+      adjMap,
+      defaultSched: {
+        name: 'Standard Day Shift',
+        startTime: '09:00',
+        endTime: '17:00',
+        gracePeriod: 15,
+        workDays: [1, 2, 3, 4, 5],
+        location: ''
+      }
+    };
+  },
+
+  calculateAllMonthlyPayrolls(users, month, year) {
+    if (!users || !Array.isArray(users) || users.length === 0) return [];
+    const index = this.getPayrollIndex(month, year);
+    return users.map(u => this.calculateMonthlyPayroll(u.id || u, month, year, index)).filter(Boolean);
+  },
+
+  // Payroll Calculations (Optimized with precomputed index support)
+  calculateMonthlyPayroll(userId, month, year, precomputedIndex = null) {
+    const rawId = (userId && typeof userId === 'object') ? (userId.id || '') : (userId || '');
+    const index = precomputedIndex || this.getPayrollIndex(month, year);
+    const user = (index.byId.get(rawId) && index.byId.get(rawId)[0]) || this.getUser(rawId);
     if (!user) return null;
 
     const baseSalary = user.baseSalary || 0;
@@ -2286,119 +2439,117 @@ export const DB = {
     const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
     const deductionESI = 0; // ESI criterion removed
 
-    // 1. Actual Number of Days in Selected Month (28, 29, 30, or 31)
-    const totalDays = new Date(year, month + 1, 0).getDate();
-
-    // 2. Saturday and Sunday are included as working days for salary-related calculations
-    const workingDays = totalDays; // Monthly salary divisor basis
-
-    // Daily rate based on actual days in the selected month
+    const totalDays = index.monthMeta.totalDays;
+    const workingDays = totalDays;
     const exactDailyRate = baseSalary / totalDays;
     const dailyRate = Math.round(exactDailyRate);
 
-    // Resolve user's shift schedule to determine scheduled workdays vs weekend
-    const sched = this.getSchedule(user.scheduleId) || {
-      name: 'Standard Day Shift',
-      startTime: '09:00',
-      endTime: '17:00',
-      gracePeriod: 15,
-      workDays: [1, 2, 3, 4, 5],
-      location: ''
-    };
+    const sched = (user.scheduleId && index.schedMap.get(user.scheduleId)) || index.defaultSched;
     const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays)) ? sched.workDays : [1, 2, 3, 4, 5];
 
-    // Collect scheduled work dates and Sundays in the month
-    const scheduledDates = [];
-    const sundaysInMonth = [];
+    const userLogs = index.logsByUser.get(user.id) || [];
+    const monthPrefix = index.monthMeta.monthPrefix;
+    const monthlyLogs = [];
+    const logByDate = new Map();
 
-    for (let day = 1; day <= totalDays; day++) {
-      const dateObj = new Date(year, month, day);
-      const dayOfWeek = dateObj.getDay();
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      if (scheduledWorkDaysList.includes(dayOfWeek)) {
-        scheduledDates.push(dateStr);
-      }
-      if (dayOfWeek === 0) {
-        sundaysInMonth.push(dateStr);
+    for (let i = 0; i < userLogs.length; i++) {
+      const l = userLogs[i];
+      if (l.date && l.date.startsWith(monthPrefix)) {
+        monthlyLogs.push(l);
+        logByDate.set(l.date, l);
       }
     }
 
-    const allLogs = this.getLogs(user.id);
-    const monthlyLogs = allLogs.filter(l => {
-      const [lY, lM] = l.date.split('-').map(Number);
-      return lY === year && (lM - 1) === month;
-    });
-
-    const allLeaves = this.getLeaveRequests(user.id);
+    const approvedLeaves = index.leavesByUser.get(user.id) || [];
     const isDateOnApprovedLeave = (dateStr) => {
-      const dateVal = new Date(dateStr);
-      return allLeaves.some(lv => {
-        if (lv.status !== 'Approved') return false;
-        const start = new Date(lv.startDate);
-        const end = new Date(lv.endDate);
-        start.setHours(0,0,0,0);
-        end.setHours(23,59,59,999);
-        return dateVal >= start && dateVal <= end;
-      });
+      for (let i = 0; i < approvedLeaves.length; i++) {
+        const lv = approvedLeaves[i];
+        const start = (lv.startDate || '').substring(0, 10);
+        const end = (lv.endDate || '').substring(0, 10);
+        if (dateStr >= start && dateStr <= end) return true;
+      }
+      return false;
     };
 
     let approvedLeaveDays = 0;
-    scheduledDates.forEach(dateStr => {
-      if (isDateOnApprovedLeave(dateStr)) approvedLeaveDays++;
-    });
+    let scheduledWorkDays = 0;
+    const scheduledDates = [];
+    const sundaysInMonth = index.monthMeta.sundays;
 
-    const presentDays = monthlyLogs.filter(l => l.checkIn).length;
-    const actualWorkingDays = presentDays; // Employee's actual working days
-    const lateDays = monthlyLogs.filter(l => l.status === 'Late').length;
-    const halfDays = monthlyLogs.filter(l => l.status === 'Half Day').length;
+    for (let d = 1; d <= totalDays; d++) {
+      const dow = index.monthMeta.dayOfWeekMap[d];
+      const dateStr = index.monthMeta.dateStrMap[d];
+      if (scheduledWorkDaysList.includes(dow)) {
+        scheduledWorkDays++;
+        scheduledDates.push(dateStr);
+        if (isDateOnApprovedLeave(dateStr)) approvedLeaveDays++;
+      }
+    }
 
-    // Absent days calculation on scheduled work days
-    const scheduledWorkDays = scheduledDates.length;
+    let presentDays = 0;
+    let lateDays = 0;
+    let halfDays = 0;
+    let totalOvertimeMins = 0;
+    const [sH, sM] = (sched.startTime || '09:00').split(':').map(Number);
+    const [eH, eM] = (sched.endTime || '17:00').split(':').map(Number);
+    const shiftMins = (eH * 60 + eM) - (sH * 60 + sM);
+
+    for (let i = 0; i < monthlyLogs.length; i++) {
+      const l = monthlyLogs[i];
+      if (l.checkIn) presentDays++;
+      if (l.status === 'Late') lateDays++;
+      if (l.status === 'Half Day') halfDays++;
+      if (l.checkIn && l.checkOut) {
+        const [iH, iM] = l.checkIn.split(':').map(Number);
+        const [oH, oM] = l.checkOut.split(':').map(Number);
+        const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
+        if (workedMins > shiftMins) totalOvertimeMins += (workedMins - shiftMins);
+      }
+    }
+
     let absentDays = scheduledWorkDays - presentDays - approvedLeaveDays;
     if (absentDays < 0) absentDays = 0;
 
-    // SUNDAY LEAVE CRITERION:
-    // If an employee takes 2 or more leaves in a week, Sunday should not be treated as a holiday
-    // for salary calculation and should be considered for salary deduction as per applicable leave rules.
     let unpaidSundayDays = 0;
     const penalizedSundays = [];
 
-    sundaysInMonth.forEach(sundayDateStr => {
-      const sundayDate = new Date(sundayDateStr);
+    for (let sIdx = 0; sIdx < sundaysInMonth.length; sIdx++) {
+      const sObj = sundaysInMonth[sIdx];
       let leavesInWeek = 0;
 
-      // Inspect Monday to Saturday (6 days preceding the Sunday)
       for (let offset = 6; offset >= 1; offset--) {
-        const checkDate = new Date(sundayDate);
-        checkDate.setDate(sundayDate.getDate() - offset);
-        const checkDateStr = checkDate.toISOString().split('T')[0];
-        const checkDayOfWeek = checkDate.getDay();
+        let checkDateStr;
+        let checkDow;
+        const prevDay = sObj.day - offset;
+        if (prevDay >= 1) {
+          checkDow = index.monthMeta.dayOfWeekMap[prevDay];
+          checkDateStr = index.monthMeta.dateStrMap[prevDay];
+        } else {
+          const dt = new Date(year, month, prevDay);
+          checkDow = dt.getDay();
+          checkDateStr = dt.toISOString().split('T')[0];
+        }
 
-        if (scheduledWorkDaysList.includes(checkDayOfWeek)) {
-          const onLeave = isDateOnApprovedLeave(checkDateStr);
-          const log = allLogs.find(l => l.userId === user.id && l.date === checkDateStr);
-
-          if (onLeave) {
+        if (scheduledWorkDaysList.includes(checkDow)) {
+          if (isDateOnApprovedLeave(checkDateStr)) {
             leavesInWeek += 1;
-          } else if (log && (log.status === 'Absent' || log.status === 'Leave' || log.status === 'On Leave')) {
-            leavesInWeek += 1;
-          } else if (log && log.status === 'Half Day') {
-            leavesInWeek += 0.5;
+          } else {
+            const log = logByDate.get(checkDateStr) || userLogs.find(l => l.date === checkDateStr);
+            if (log) {
+              if (log.status === 'Absent' || log.status === 'Leave' || log.status === 'On Leave') leavesInWeek += 1;
+              else if (log.status === 'Half Day') leavesInWeek += 0.5;
+            }
           }
         }
       }
 
       if (leavesInWeek >= 2) {
         unpaidSundayDays++;
-        penalizedSundays.push({
-          date: sundayDateStr,
-          leavesInWeek
-        });
+        penalizedSundays.push({ date: sObj.dateStr, leavesInWeek });
       }
-    });
+    }
 
-    // Load custom payroll adjustments
-    const adj = (this.data.payrollAdjustments || []).find(a => a.userId === user.id && a.month === month && a.year === year);
+    const adj = index.adjMap.get(user.id);
     const bonus = adj ? (adj.bonus || 0) : 0;
     const adhocDeduction = adj ? (adj.deduction || 0) : 0;
     const remarks = adj ? (adj.remarks || '') : '';
@@ -2406,22 +2557,6 @@ export const DB = {
     const absentDeduction = Math.round(absentDays * exactDailyRate);
     const sundayDeduction = Math.round(unpaidSundayDays * exactDailyRate);
     const halfDayDeduction = Math.round(halfDays * 0.5 * exactDailyRate);
-
-    // Dynamic Overtime calculation
-    let totalOvertimeMins = 0;
-    monthlyLogs.forEach(log => {
-      if (log.checkIn && log.checkOut) {
-        const [sH, sM] = sched.startTime.split(':').map(Number);
-        const [eH, eM] = sched.endTime.split(':').map(Number);
-        const shiftMins = (eH * 60 + eM) - (sH * 60 + sM);
-        const [iH, iM] = log.checkIn.split(':').map(Number);
-        const [oH, oM] = log.checkOut.split(':').map(Number);
-        const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
-        if (workedMins > shiftMins) {
-          totalOvertimeMins += (workedMins - shiftMins);
-        }
-      }
-    });
 
     const overtimeHours = Math.floor(totalOvertimeMins / 60);
     const overtimeMins = totalOvertimeMins % 60;
@@ -2454,7 +2589,7 @@ export const DB = {
       totalDays,
       totalMonthDays: totalDays,
       workingDays,
-      actualWorkingDays,
+      actualWorkingDays: presentDays,
       presentDays,
       lateDays,
       halfDays,
