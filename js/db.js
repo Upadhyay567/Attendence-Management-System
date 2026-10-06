@@ -612,7 +612,7 @@ export const DB = {
         shiftLocations: u.shiftLocations || {},
         documents: Array.isArray(u.documents) ? u.documents : [],
         verificationStatuses: u.verificationStatuses || {},
-        profileVerificationStatus: u.profileVerificationStatus || 'Approved',
+        profileVerificationStatus: (u.profileVerificationStatus === 'Pending Approval') ? 'Approved' : (u.profileVerificationStatus || 'Approved'),
         profileVerificationComment: u.profileVerificationComment || '',
         resume: u.resume || null,
         aadhar: u.aadhar || null,
@@ -1529,7 +1529,7 @@ export const DB = {
       user.documents.push(newDoc);
       user.verificationStatuses = user.verificationStatuses || {};
       user.verificationStatuses.document = 'Pending';
-      user.profileVerificationStatus = 'Pending Approval';
+      user.profileVerificationStatus = (user.profileVerificationStatus === 'Rejected') ? 'Rejected' : 'Approved';
       this.save({
         type: 'update',
         key: 'users',
@@ -1577,7 +1577,7 @@ export const DB = {
       };
       user.verificationStatuses = user.verificationStatuses || {};
       user.verificationStatuses.resume = 'Pending';
-      user.profileVerificationStatus = 'Pending Approval';
+      user.profileVerificationStatus = (user.profileVerificationStatus === 'Rejected') ? 'Rejected' : 'Approved';
       this.save({
         type: 'update',
         key: 'users',
@@ -1623,7 +1623,7 @@ export const DB = {
       };
       user.verificationStatuses = user.verificationStatuses || {};
       user.verificationStatuses.aadhar = 'Pending';
-      user.profileVerificationStatus = 'Pending Approval';
+      user.profileVerificationStatus = (user.profileVerificationStatus === 'Rejected') ? 'Rejected' : 'Approved';
       this.save({
         type: 'update',
         key: 'users',
@@ -1669,7 +1669,7 @@ export const DB = {
       };
       user.verificationStatuses = user.verificationStatuses || {};
       user.verificationStatuses.bank = 'Pending';
-      user.profileVerificationStatus = 'Pending Approval';
+      user.profileVerificationStatus = (user.profileVerificationStatus === 'Rejected') ? 'Rejected' : 'Approved';
       this.save({
         type: 'update',
         key: 'users',
@@ -2968,8 +2968,6 @@ export const DB = {
     const statuses = Object.values(user.verificationStatuses || {});
     if (statuses.some(s => s === 'Rejected')) {
       user.profileVerificationStatus = 'Rejected';
-    } else if (statuses.some(s => s === 'Pending')) {
-      user.profileVerificationStatus = 'Pending Approval';
     } else {
       user.profileVerificationStatus = 'Approved';
     }

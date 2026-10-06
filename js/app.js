@@ -1,23 +1,23 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=88';
-import { renderAdminSchedules } from './views/schedulesView.js?v=88';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=88';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=88';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=88';
-import { renderAdminAttendances } from './views/attendancesView.js?v=88';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=88';
-import { renderAdminFinance } from './views/financeView.js?v=88';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=88';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=88';
-import { drawRadarMap } from './components/geofenceMap.js?v=88';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=88';
+import { renderLoginView } from './views/loginView.js?v=89';
+import { renderAdminSchedules } from './views/schedulesView.js?v=89';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=89';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=89';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=89';
+import { renderAdminAttendances } from './views/attendancesView.js?v=89';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=89';
+import { renderAdminFinance } from './views/financeView.js?v=89';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=89';
+import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=89';
+import { drawRadarMap } from './components/geofenceMap.js?v=89';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=89';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=88';
-import { Auth } from './auth.js?v=88';
-import { Utils, html } from './utils.js?v=88';
-import { triggerBirthdayCelebration } from './celebration.js?v=88';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=88';
+import { DB } from './core/db.js?v=89';
+import { Auth } from './auth.js?v=89';
+import { Utils, html } from './utils.js?v=89';
+import { triggerBirthdayCelebration } from './celebration.js?v=89';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=89';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -2807,56 +2807,35 @@ function renderEmployeeProfile() {
   const locationText = user.preferredLocation || 'Not Assigned';
 
   const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
-  const status = user.profileVerificationStatus || 'Approved';
-  const editCount = user.profileEditCount || 0;
+  const status = (user.profileVerificationStatus === 'Pending Approval') ? 'Approved' : (user.profileVerificationStatus || 'Approved');
   const badgeTitle = user.role === 'hr' ? 'HR Badge' : (user.role === 'manager' || user.role === 'finance_manager' ? 'Manager Badge' : 'Employee Badge');
   
-  let verificationStatusHTML = '';
-  if (!isSelfAdmin) {
-    let statusColor = 'var(--success)';
-    let statusText = 'Verified / Approved';
-    let icon = '✅';
-    if (status === 'Pending Approval') {
-      statusColor = 'var(--warning)';
-      statusText = 'Pending Review';
-      icon = '⏳';
-    } else if (status === 'Rejected') {
-      statusColor = 'var(--error)';
-      statusText = 'Issue Flagged';
-      icon = '❌';
-    }
-    
-    verificationStatusHTML = `
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
-          <strong style="color:${statusColor}; font-size:13px">${icon} ${statusText}</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
-          <span style="font-size:11.5px; color:var(--text-muted)">Direct Edits:</span>
-          <span style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">${editCount} / 3 used</span>
-        </div>
-        ${status === 'Rejected' && user.profileVerificationComment ? `
-          <div style="font-size:11.5px; color:var(--error); background:rgba(239,68,68,0.05); border:1.5px dashed rgba(239,68,68,0.2); padding:8px 10px; border-radius:6px; margin-top:4px; line-height:1.45;">
-            <strong>Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
-          </div>
-        ` : ''}
-      </div>
-    `;
-  } else {
-    verificationStatusHTML = `
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
-          <strong style="color:var(--success); font-size:13px">✅ Verified Admin</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
-          <span style="font-size:11.5px; color:var(--text-muted)">Edit Access:</span>
-          <span style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">Unlimited Edits</span>
-        </div>
-      </div>
-    `;
+  let statusColor = 'var(--success)';
+  let statusText = isSelfAdmin ? 'Verified Admin' : (user.role === 'manager' ? 'Verified Manager' : (user.role === 'hr' ? 'Verified HR' : 'Verified Profile'));
+  let icon = '✅';
+  if (status === 'Rejected') {
+    statusColor = 'var(--error)';
+    statusText = 'Issue Flagged';
+    icon = '❌';
   }
+
+  const verificationStatusHTML = `
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:13px; color:var(--text-secondary)">Status:</span>
+        <strong style="color:${statusColor}; font-size:13px">${icon} ${statusText}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px; margin-top:2px;">
+        <span style="font-size:11.5px; color:var(--text-muted)">Edit Access:</span>
+        <span style="font-size:11.5px; color:var(--text-secondary); font-weight:600;">Unlimited Edits</span>
+      </div>
+      ${status === 'Rejected' && user.profileVerificationComment ? `
+        <div style="font-size:11.5px; color:var(--error); background:rgba(239,68,68,0.05); border:1.5px dashed rgba(239,68,68,0.2); padding:8px 10px; border-radius:6px; margin-top:4px; line-height:1.45;">
+          <strong>Comment:</strong> "${Utils.escape(user.profileVerificationComment)}"
+        </div>
+      ` : ''}
+    </div>
+  `;
 
   main.innerHTML = `
     <style>
@@ -3007,39 +2986,22 @@ function renderEmployeeProfile() {
           <div id="profile-alert" class="alert" style="display:none;"></div>
 
           <!-- Profile Status Bar -->
-          ${!isSelfAdmin ? `
           <div class="prof-section-card" style="padding:14px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(135deg, rgba(137,32,27,0.04) 0%, rgba(255,255,255,0.01) 100%), var(--bg-surface); border-left: 4px solid var(--primary);">
             <div style="display:flex; align-items:center; gap:10px;">
               <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Profile Status:</span>
               <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; ${
-                status === 'Approved' 
-                  ? 'background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);'
-                  : status === 'Pending Approval'
-                  ? 'background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.25);'
-                  : 'background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25);'
+                status === 'Rejected'
+                  ? 'background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25);'
+                  : 'background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);'
               }">
                 <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
-                ${status === 'Approved' ? 'Verified / Approved' : status === 'Pending Approval' ? 'Pending Review' : 'Issue Flagged'}
-              </span>
-            </div>
-            <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:rgba(137,32,27,0.06); border:1px solid rgba(137,32,27,0.18); border-radius:20px; font-size:12px; font-weight:700; color:var(--primary);">
-              Direct Edits: ${editCount} / 3 used
-            </div>
-          </div>
-          ` : `
-          <div class="prof-section-card" style="padding:14px 22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(135deg, rgba(137,32,27,0.04) 0%, rgba(255,255,255,0.01) 100%), var(--bg-surface); border-left: 4px solid var(--primary);">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Profile Status:</span>
-              <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25);">
-                <span style="width:7px; height:7px; border-radius:50%; background:currentColor;"></span>
-                Verified Admin
+                ${status === 'Rejected' ? 'Issue Flagged' : (isSelfAdmin ? 'Verified Admin' : (user.role === 'manager' ? 'Verified Manager' : (user.role === 'hr' ? 'Verified HR' : 'Verified Profile')))}
               </span>
             </div>
             <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:rgba(137,32,27,0.06); border:1px solid rgba(137,32,27,0.18); border-radius:20px; font-size:12px; font-weight:700; color:var(--primary);">
               Edit Access: Unlimited
             </div>
           </div>
-          `}
 
           <!-- ID Card & Upload Section Row -->
           <div class="profile-badge-row" style="display:flex; gap:24px; align-items:center; flex-wrap:wrap; justify-content:center; margin-bottom:8px;">
@@ -3533,32 +3495,10 @@ function renderEmployeeProfile() {
   const editFocusBtn = document.getElementById('btn-profile-edit-focus');
   if (editFocusBtn) {
     editFocusBtn.addEventListener('click', () => {
-      const isEmployee = user.role === 'employee';
-      
-      if (isEmployee) {
-        // Employees: only Personal Details and Additional Information sections become editable
-        const personalDetailsCard = editFocusBtn.closest('.prof-section-card');
-        if (personalDetailsCard) {
-          personalDetailsCard.querySelectorAll('input, select, textarea').forEach(input => {
-            input.removeAttribute('disabled');
-          });
-        }
-        
-        const additionalInfoCard = Array.from(document.querySelectorAll('.prof-section-card')).find(card => {
-          const title = card.querySelector('.prof-section-title, h3');
-          return title && title.textContent.trim() === 'Additional Information';
-        });
-        if (additionalInfoCard) {
-          additionalInfoCard.querySelectorAll('input, select, textarea').forEach(input => {
-            input.removeAttribute('disabled');
-          });
-        }
-      } else {
-        // HR and Managers: all profile sections become editable
-        document.querySelectorAll('.prof-input').forEach(input => {
-          input.removeAttribute('disabled');
-        });
-      }
+      // All profile sections become editable with no role limit or criteria
+      document.querySelectorAll('.prof-input').forEach(input => {
+        input.removeAttribute('disabled');
+      });
       
       const firstInput = document.getElementById('prof-name');
       if (firstInput) {
@@ -3625,9 +3565,7 @@ function renderEmployeeProfile() {
       }
     }
 
-    const editCount = user.profileEditCount || 0;
     const alertEl = document.getElementById('profile-alert');
-    const isSelfAdmin = user.role === 'hr' || user.role === 'manager' || user.role === 'finance_manager';
     
     const profileValidation = ValidationUtils.validateProfile({
       name, employeeId, email, phone, dob, dateOfJoining
@@ -3650,27 +3588,16 @@ function renderEmployeeProfile() {
     }
 
     setTimeout(async () => {
-      let updatePromise;
-      if (isSelfAdmin || editCount < 3) {
-        const updates = { 
-          name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining, verifiedStaffBatch,
-          baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
-          profileVerificationStatus: 'Approved',
-          profileVerificationComment: ''
-        };
-        if (!isSelfAdmin) {
-          updates.profileEditCount = editCount + 1;
-        }
-        updatePromise = DB.updateUserProfile(user.id, updates);
-      } else {
-        updatePromise = DB.updateUserProfile(user.id, {
-          profileVerificationStatus: 'Pending Approval',
-          pendingProfileEdits: {
-            name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining,
-            allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS
-          }
-        });
-      }
+      const updates = { 
+        name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining, verifiedStaffBatch,
+        baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        profileVerificationStatus: 'Approved',
+        profileVerificationComment: '',
+        pendingProfileEdits: null
+      };
+      updates.profileEditCount = (user.profileEditCount || 0) + 1;
+      const updatePromise = DB.updateUserProfile(user.id, updates);
+      
       // Await the save so in-memory data is up-to-date before re-rendering
       let result = null;
       let saveError = null;
@@ -3695,10 +3622,8 @@ function renderEmployeeProfile() {
           freshAlert.className = 'alert alert-error';
           freshAlert.textContent = 'Failed to sync changes with the server database.';
         } else if (result) {
-          freshAlert.className = isSelfAdmin || editCount < 3 ? 'alert alert-success' : 'alert alert-warning';
-          freshAlert.textContent = isSelfAdmin || editCount < 3
-            ? (actionType === 'save' ? 'Profile saved successfully.' : (isSelfAdmin ? 'Profile details updated successfully!' : `Profile details updated! (Direct edit ${editCount + 1}/3)`))
-            : 'Direct edit limit reached. Changes submitted to HR/Manager for approval.';
+          freshAlert.className = 'alert alert-success';
+          freshAlert.textContent = actionType === 'save' ? 'Profile saved successfully.' : 'Profile details updated successfully!';
         } else {
           freshAlert.className = 'alert alert-error';
           freshAlert.textContent = 'Failed to update profile details.';
