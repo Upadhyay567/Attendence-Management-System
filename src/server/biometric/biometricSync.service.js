@@ -729,6 +729,8 @@ function processLocalPunch(
 
     openLog.checkOut = time;
     openLog.checkOutPunchId = punchId;
+    if (!openLog.employeeName && employee.name) openLog.employeeName = employee.name;
+    if (!openLog.employeeId && employee.employeeId) openLog.employeeId = employee.employeeId;
     openLog.status = evaluatedStatus;
     openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
     openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
@@ -800,6 +802,8 @@ function processLocalPunch(
       const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
       existingForShift.checkOut = time;
       existingForShift.checkOutPunchId = punchId;
+      if (!existingForShift.employeeName && employee.name) existingForShift.employeeName = employee.name;
+      if (!existingForShift.employeeId && employee.employeeId) existingForShift.employeeId = employee.employeeId;
       existingForShift.status = evaluatedStatus;
       existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
       existingForShift.updatedAt = new Date().toISOString();
@@ -834,6 +838,10 @@ function processLocalPunch(
     ),
 
     userId: String(employee.id),
+
+    employeeName: employee.name || '',
+
+    employeeId: employee.employeeId || '',
 
     date,
 

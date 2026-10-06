@@ -658,10 +658,29 @@ router.get('/biometric/template-sync-status', async (req, res) => {
 // POST /api/biometric/sync - Trigger immediate multi-device attendance sync
 router.post('/biometric/sync', async (req, res) => {
   try {
-    const syncRes = await syncBiometricAttendance();
+    const { syncFromWDMS } = require('../biometric/easywdms.service');
+    const wdmsUser = process.env.WDMS_USER || 'admin';
+    const wdmsPass = process.env.WDMS_PASS || 'Hs@20267';
+
+    const [localRes, wdmsRes] = await Promise.allSettled([
+      syncBiometricAttendance().catch(err => {
+        console.warn('⚠️ Local biometric sync notice:', err.message);
+        return { success: false, error: err.message };
+      }),
+      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 2, pageSize: 200, forceRefresh: true }).catch(err => {
+        console.warn('⚠️ WDMS Cloud sync warning:', err.message);
+        return { success: false, error: err.message };
+      })
+    ]);
+
+    const localData = localRes.status === 'fulfilled' ? localRes.value : { error: localRes.reason?.message };
+    const wdmsData = wdmsRes.status === 'fulfilled' ? wdmsRes.value : { error: wdmsRes.reason?.message };
+
     return res.json({
       success: true,
-      ...syncRes
+      message: 'Biometric sync completed across all local and cloud devices',
+      local: localData,
+      wdms: wdmsData
     });
   } catch (err) {
     return res.status(500).json({

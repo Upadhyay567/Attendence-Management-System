@@ -205,16 +205,25 @@ export function renderAdminAttendances() {
             </select>
           </div>
 
+          <!-- Real-Time Biometric Sync Button -->
+          <button id="btn-admin-att-sync-quick" class="btn btn-secondary" title="Sync Real-Time Biometric Punches" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto !important; height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid #93c5fd; background: #eff6ff; color: #1d4ed8; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
+            <span id="quick-att-sync-icon" style="display: inline-block;">🔄</span>
+            <span>Sync Biometric</span>
+          </button>
+
           <!-- Actions Dropdown Button -->
           <div style="position: relative; flex-shrink: 0;">
             <button id="admin-att-actions-btn" class="btn btn-secondary" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: auto !important; height: 34px; padding: 0 15px; font-size: 14px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; box-sizing: border-box;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
               Actions
             </button>
-            <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 1000; min-width: 140px; padding: 4px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
+            <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 1000; min-width: 150px; padding: 4px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
+              <button id="btn-admin-att-sync-dropdown" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; background: transparent; color: #2563eb; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(37,99,235,0.08)'" onmouseout="this.style.background='transparent'">
+                <span id="att-sync-menu-icon" style="display: inline-block;">🔄</span> Sync Biometric
+              </button>
               <button id="btn-admin-att-import" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: block; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 500; border: none; background: transparent; color: #1e293b; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">
                 Import
               </button>
@@ -733,6 +742,64 @@ export function renderAdminAttendances() {
       });
       if (selectAllCb) selectAllCb.checked = !allSelected;
       updateSelectedCountDisplay();
+    });
+  }
+
+  // Biometric Synchronization Handler
+  const handleBiometricSync = async (clickedBtn) => {
+    const icon = clickedBtn ? clickedBtn.querySelector('span') : null;
+    if (icon) icon.style.animation = 'spin 1s linear infinite';
+    try {
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast('Syncing biometric punches from all devices...', 'info');
+      }
+      let token = '';
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (sess) token = JSON.parse(sess).token || '';
+      } catch (_) {}
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', {
+        method: 'POST',
+        headers
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        await DB.init('immediate');
+        renderTable();
+        const punchCount = (data.wdms?.transactionsCount || 0) + (data.local?.syncedLogs || 0);
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast(`Biometric sync complete! Fetched latest data across terminals (${punchCount} punches checked).`, 'success');
+        }
+      } else {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast(`Biometric sync notice: ${data?.message || 'Sync finished with notices'}`, 'warning');
+        }
+      }
+    } catch (err) {
+      console.error('Biometric sync error:', err);
+      if (typeof Utils !== 'undefined' && Utils.showToast) {
+        Utils.showToast(`Biometric sync failed: ${err.message}`, 'error');
+      }
+    } finally {
+      if (icon) icon.style.animation = '';
+    }
+  };
+
+  const btnSyncQuick = document.getElementById('btn-admin-att-sync-quick');
+  if (btnSyncQuick) {
+    btnSyncQuick.addEventListener('click', () => handleBiometricSync(btnSyncQuick));
+  }
+
+  const btnSyncDropdown = document.getElementById('btn-admin-att-sync-dropdown');
+  if (btnSyncDropdown) {
+    btnSyncDropdown.addEventListener('click', () => {
+      const menu = document.getElementById('admin-att-actions-menu');
+      if (menu) menu.style.display = 'none';
+      handleBiometricSync(btnSyncDropdown);
     });
   }
 

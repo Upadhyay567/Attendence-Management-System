@@ -87,6 +87,12 @@ export function renderDailyWorkStatus() {
             <input type="month" id="input-dws-month-picker" value="${dailyWorkStatusSelectedYear}-${String(dailyWorkStatusSelectedMonth + 1).padStart(2, '0')}" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
           </div>
 
+          <!-- Biometric Sync Button -->
+          <button type="button" id="btn-dws-sync-trigger" title="Sync Real-Time Biometric Punches" style="background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 7px 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: #1d4ed8; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+            <span id="dws-sync-icon" style="display: inline-block;">🔄</span>
+            <span>Sync</span>
+          </button>
+
           <!-- Filter Button -->
           <button type="button" id="btn-dws-filter-trigger" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 14px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s ease;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
@@ -480,6 +486,53 @@ export function renderDailyWorkStatus() {
         dailyWorkStatusSelectedMonth = parseInt(m, 10) - 1;
         dailyWorkStatusCurrentPage = 1;
         renderDailyWorkStatus();
+      }
+    });
+  }
+
+  // Biometric Sync Trigger
+  const syncBtn = document.getElementById('btn-dws-sync-trigger');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', async () => {
+      const icon = document.getElementById('dws-sync-icon');
+      if (icon) icon.style.animation = 'spin 1s linear infinite';
+      try {
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast('Syncing biometric punches from all devices...', 'info');
+        }
+        let token = '';
+        try {
+          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+          if (sess) token = JSON.parse(sess).token || '';
+        } catch (_) {}
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', {
+          method: 'POST',
+          headers
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          await DB.init('immediate');
+          updateMatrixTable();
+          const punchCount = (data.wdms?.transactionsCount || 0) + (data.local?.syncedLogs || 0);
+          if (typeof Utils !== 'undefined' && Utils.showToast) {
+            Utils.showToast(`Biometric sync complete! Checked latest punches across terminals (${punchCount} punches checked).`, 'success');
+          }
+        } else {
+          if (typeof Utils !== 'undefined' && Utils.showToast) {
+            Utils.showToast(`Biometric sync notice: ${data?.message || 'Sync finished with notices'}`, 'warning');
+          }
+        }
+      } catch (err) {
+        console.error('Biometric sync error:', err);
+        if (typeof Utils !== 'undefined' && Utils.showToast) {
+          Utils.showToast(`Biometric sync failed: ${err.message}`, 'error');
+        }
+      } finally {
+        if (icon) icon.style.animation = '';
       }
     });
   }

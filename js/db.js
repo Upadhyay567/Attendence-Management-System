@@ -674,7 +674,7 @@ export const DB = {
   },
 
   async init(forceRefresh = false) {
-    const minCooldown = (forceRefresh === 'immediate') ? 0 : (forceRefresh ? 6000 : 15000);
+    const minCooldown = (forceRefresh === 'immediate') ? 0 : (forceRefresh ? 3000 : 15000);
     if (this.data && Array.isArray(this.data.users) && this.data.users.length > 0 && this.lastFetchSuccess && (Date.now() - this.lastFetchSuccess < minCooldown)) {
       return;
     }
