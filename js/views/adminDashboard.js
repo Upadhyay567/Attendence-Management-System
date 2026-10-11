@@ -1,7 +1,7 @@
 // js/views/adminDashboard.js - HR/Manager Live Monitoring & KPI Feed
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html, formatTimeRange12h } from '../utils/helpers.js';
+import { Utils, html, formatTimeRange12h, formatLocationTag } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -43,6 +43,14 @@ export function getUserAssignedLocations(user) {
     user.assignedLocations.forEach(addValidLoc);
   }
   return Array.from(locs);
+}
+
+export function isDummyUser(u) {
+  if (!u) return true;
+  if (u.isDummy || u.id === 'usr_bio_30191' || u.employeeId === '30191' || u.biometricUserId === '30191') return true;
+  if (u.status === 'Inactive' || u.status === 'Archived' || u.status === 'Deleted') return true;
+  if (u.role === 'employee' && u.name === 'Admin' && (!u.department || u.department === 'Department')) return true;
+  return false;
 }
 
 export async function renderAdminDashboard() {
@@ -361,13 +369,22 @@ export async function renderAdminDashboard() {
           const u = item.user;
           const name = u ? u.name : 'Unknown';
           const empid = u ? u.employeeId : 'N/A';
-          const dept = u ? u.department : 'N/A';
+          const rawDept = u ? u.department : '';
+          const isDeptAssigned = rawDept && 
+            rawDept !== 'Department' && 
+            rawDept !== 'N/A' && 
+            rawDept !== '—' && 
+            rawDept.toLowerCase() !== 'not assigned' && 
+            rawDept.toLowerCase() !== 'none';
+          const deptHTML = isDeptAssigned 
+            ? Utils.escape(rawDept) 
+            : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
           const time = item.time || '--:--';
           const location = item.location || 'Office Headquarters';
           const gpsStatus = item.gpsStatus || '—';
           return '<tr>' +
             '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
-            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + deptHTML + '</td>' +
             '<td style="padding:12px 14px;">' + time + '</td>' +
             '<td style="text-align:left; padding:12px 14px; font-size:12px;">' + Utils.escape(location) + '</td>' +
             '<td style="padding:12px 14px;">' + gpsStatus + '</td>' +
@@ -377,8 +394,29 @@ export async function renderAdminDashboard() {
         tableContentHTML = items.map(u => {
           const name = u.name || 'Unknown';
           const empid = u.employeeId || 'N/A';
-          const dept = u.department || 'N/A';
-          const designation = u.designation || 'N/A';
+          const rawDept = u.department || '';
+          const isDeptAssigned = rawDept && 
+            rawDept !== 'Department' && 
+            rawDept !== 'N/A' && 
+            rawDept !== '—' && 
+            rawDept.toLowerCase() !== 'not assigned' && 
+            rawDept.toLowerCase() !== 'none';
+          const deptHTML = isDeptAssigned 
+            ? Utils.escape(rawDept) 
+            : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
+
+          const rawDesig = u.designation || '';
+          const isDesigAssigned = rawDesig && 
+            rawDesig !== 'Junior Developer' && 
+            rawDesig !== 'Designation' && 
+            rawDesig !== 'N/A' && 
+            rawDesig !== '—' && 
+            rawDesig.toLowerCase() !== 'not assigned' && 
+            rawDesig.toLowerCase() !== 'none';
+          const designationHTML = isDesigAssigned 
+            ? Utils.escape(rawDesig) 
+            : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
+
           const userShifts = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
             ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
             : (u.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
@@ -387,8 +425,8 @@ export async function renderAdminDashboard() {
             : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
           return '<tr>' +
             '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
-            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
-            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(designation) + '</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + deptHTML + '</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + designationHTML + '</td>' +
             '<td style="padding:12px 14px;">' + shiftHTML + '</td>' +
             '</tr>';
         }).join('');
@@ -397,13 +435,22 @@ export async function renderAdminDashboard() {
           const u = item.user;
           const name = u ? u.name : 'Unknown';
           const empid = u ? u.employeeId : 'N/A';
-          const dept = u ? u.department : 'N/A';
+          const rawDept = u ? u.department : '';
+          const isDeptAssigned = rawDept && 
+            rawDept !== 'Department' && 
+            rawDept !== 'N/A' && 
+            rawDept !== '—' && 
+            rawDept.toLowerCase() !== 'not assigned' && 
+            rawDept.toLowerCase() !== 'none';
+          const deptHTML = isDeptAssigned 
+            ? Utils.escape(rawDept) 
+            : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
           const time = item.time || '--:--';
           const shiftStart = item.shiftStart || '--:--';
           const gpsStatus = item.gpsStatus || '—';
           return '<tr>' +
             '<td style="font-weight:600; text-align:left; padding:12px 14px;">' + Utils.escape(name) + ' (' + Utils.escape(empid) + ')</td>' +
-            '<td style="text-align:left; padding:12px 14px;">' + Utils.escape(dept) + '</td>' +
+            '<td style="text-align:left; padding:12px 14px;">' + deptHTML + '</td>' +
             '<td style="padding:12px 14px;">' + shiftStart + '</td>' +
             '<td style="padding:12px 14px; font-weight:700; color:var(--warning)">' + time + '</td>' +
             '<td style="padding:12px 14px;">' + gpsStatus + '</td>' +
@@ -499,19 +546,27 @@ export async function renderAdminDashboard() {
     document.body.appendChild(overlay);
   }
 
+  function isDummyUser(u) {
+    if (!u) return true;
+    if (u.isDummy || u.id === 'usr_bio_30191' || u.employeeId === '30191' || u.biometricUserId === '30191') return true;
+    if (u.status === 'Inactive' || u.status === 'Archived' || u.status === 'Deleted') return true;
+    if (u.role === 'employee' && u.name === 'Admin' && (!u.department || u.department === 'Department')) return true;
+    return false;
+  }
+
   const getAssignedUserIds = () => {
-    return DB.getUsers().filter(u => u && u.status !== 'Inactive');
+    return DB.getUsers().filter(u => !isDummyUser(u));
   };
 
   const getLocalTodayDateStr = () => new Date().toLocaleDateString('en-CA');
 
-  // Helper to fetch Present Now records strictly following:
-  // Today's actual attendance records -> group by employee -> check latest attendance record -> no checkout -> Present Now
-  function getTodayPresentNowRecords() {
+  // Helper to fetch all Checked-In Staff records for today
+  function getTodayCheckedInStaffRecords() {
     const todayStr = getLocalTodayDateStr();
+    const activeEmployees = getAssignedUserIds();
     let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
 
-    // Group today's actual attendance records strictly by employee (deduplicating multiple device punches)
+    // Group today's actual attendance records strictly by employee
     const userTodayMap = new Map();
     allTodayLogs.forEach(log => {
       const empKey = log.userId || log.employeeId || log.biometricUserId;
@@ -522,34 +577,34 @@ export async function renderAdminDashboard() {
       userTodayMap.get(empKey).push(log);
     });
 
-    // Check latest attendance record per employee -> no checkout -> Present Now
-    const presentNowList = [];
+    const checkedInList = [];
     for (const [empKey, ulogs] of userTodayMap.entries()) {
       ulogs.sort((a, b) => (b.checkIn || '').localeCompare(a.checkIn || ''));
       const latest = ulogs[0];
-      const hasCheckedOut = latest.checkOut && latest.checkOut !== '--' && latest.checkOut !== '--:--';
-      if (!hasCheckedOut) {
-        presentNowList.push(latest);
+      const u = activeEmployees.find(e => String(e.id) === String(latest.userId) || (e.employeeId && String(e.employeeId) === String(latest.employeeId)) || (e.biometricUserId && String(e.biometricUserId) === String(latest.biometricUserId))) || DB.getUser(latest.userId);
+      if (u && !isDummyUser(u)) {
+        checkedInList.push({ log: latest, user: u });
       }
     }
 
-    // Sort in proper order: latest check-in first, then name
-    presentNowList.sort((a, b) => {
-      const timeCmp = (b.checkIn || '').localeCompare(a.checkIn || '');
+    checkedInList.sort((a, b) => {
+      const timeCmp = (b.log.checkIn || '').localeCompare(a.log.checkIn || '');
       if (timeCmp !== 0) return timeCmp;
-      const userA = DB.getUser(a.userId)?.name || a.userName || a.employeeName || '';
-      const userB = DB.getUser(b.userId)?.name || b.userName || b.employeeName || '';
-      return userA.localeCompare(userB);
+      return (a.user.name || '').localeCompare(b.user.name || '');
     });
 
-    return presentNowList;
+    return checkedInList;
+  }
+
+  // Alias for backward compatibility
+  function getTodayPresentNowRecords() {
+    return getTodayCheckedInStaffRecords().map(item => item.log);
   }
 
   function showPresentNowModal() {
-    const logs = getTodayPresentNowRecords();
+    const records = getTodayCheckedInStaffRecords();
     
-    const items = logs.map(l => {
-      const u = DB.getUser(l.userId) || { name: l.userName || l.employeeName || 'Employee', employeeId: l.employeeId || '—', department: l.department || '—' };
+    const items = records.map(({ log: l, user: u }) => {
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;
@@ -564,32 +619,34 @@ export async function renderAdminDashboard() {
       return {
         user: u,
         time: l.checkIn,
-        location: l.location || l.biometricUsed || '—',
+        location: formatLocationTag(l.location || l.biometricUsed || '—'),
         gpsStatus: gpsStatus
       };
     });
     // Sort in proper order: latest check-in first, then name
     items.sort((a, b) => (b.time || '').localeCompare(a.time || '') || (a.user?.name || '').localeCompare(b.user?.name || ''));
-    showDashboardDetailModal('Present Now - Currently Checked In', items, 'present');
+    showDashboardDetailModal('Present Today - Checked In Staff', items, 'present');
   }
 
   function showAbsentTodayModal() {
     const activeEmployees = getAssignedUserIds();
-    const activeUserIds = activeEmployees.map(u => u.id);
     const todayStr = getLocalTodayDateStr();
+    const allLogs = DB.getLogs() || [];
+
     const checkedInUserKeys = new Set();
-    DB.getLogs().filter(l => l.date === todayStr && l.checkIn).forEach(l => {
-      if (l.userId) checkedInUserKeys.add(l.userId);
-      if (l.employeeId) checkedInUserKeys.add(l.employeeId);
-      if (l.biometricUserId) checkedInUserKeys.add(l.biometricUserId);
+    allLogs.filter(l => l.date === todayStr && l.checkIn).forEach(l => {
+      if (l.userId) checkedInUserKeys.add(String(l.userId));
+      if (l.employeeId) checkedInUserKeys.add(String(l.employeeId));
+      if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId));
     });
-    const onLeaveUserIds = new Set(DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate).map(lv => lv.userId));
-    const absentUsers = activeEmployees.filter(u => 
-      !checkedInUserKeys.has(u.id) && 
-      !checkedInUserKeys.has(u.employeeId) && 
-      !checkedInUserKeys.has(u.biometricUserId) && 
-      !onLeaveUserIds.has(u.id)
-    );
+
+    const absentUsers = activeEmployees.filter(u => {
+      const isCheckedInToday = checkedInUserKeys.has(String(u.id)) ||
+        (u.employeeId && checkedInUserKeys.has(String(u.employeeId))) ||
+        (u.biometricUserId && checkedInUserKeys.has(String(u.biometricUserId)));
+      return !isCheckedInToday;
+    });
+
     // Sort absent users alphabetically
     absentUsers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     showDashboardDetailModal('Absent Today - Active Staff Missing Logs', absentUsers, 'absent');
@@ -663,22 +720,39 @@ export async function renderAdminDashboard() {
 
     const activeEmployees = getAssignedUserIds();
     const assignedUserIds = activeEmployees.map(u => u.id);
+    const totalEmployees = activeEmployees.length;
 
     const todayStr = getLocalTodayDateStr();
-
-    const presentNowRecords = getTodayPresentNowRecords();
-    const presentCount = presentNowRecords.length;
-    const lateToday = presentNowRecords.filter(l => l.status === 'Late');
-    const lateCount = lateToday.length;
-
     let logs = DB.getLogs().filter(l => l.date === todayStr);
+
+    // Present Today = Checked-In Staff Count (unique active non-dummy employees with check-in today)
+    const checkedInUserKeys = new Set();
+    logs.forEach(l => {
+      if (l.checkIn) {
+        if (l.userId) checkedInUserKeys.add(String(l.userId));
+        if (l.employeeId) checkedInUserKeys.add(String(l.employeeId));
+        if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId));
+      }
+    });
+
+    const presentEmployees = activeEmployees.filter(u => {
+      return checkedInUserKeys.has(String(u.id)) ||
+        (u.employeeId && checkedInUserKeys.has(String(u.employeeId))) ||
+        (u.biometricUserId && checkedInUserKeys.has(String(u.biometricUserId)));
+    });
+    const presentCount = presentEmployees.length;
+
+    // Absent Today = Total Staff - Present Today
+    const absentCount = Math.max(0, totalEmployees - presentCount);
+
+    const lateToday = logs.filter(l => l.status === 'Late' && (
+      (l.userId && assignedUserIds.includes(l.userId)) ||
+      (l.employeeId && activeEmployees.some(e => e.employeeId === l.employeeId))
+    ));
+    const lateCount = lateToday.length;
 
     const onLeaveToday = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));
     const leaveCount = onLeaveToday.length;
-
-    const totalEmployees = activeEmployees.length;
-    const checkedInAtAllCount = new Set(logs.filter(l => l.date === todayStr && l.checkIn).map(l => l.userId || l.employeeId || l.biometricUserId).filter(Boolean)).size;
-    const absentCount = Math.max(0, totalEmployees - checkedInAtAllCount - leaveCount);
 
     const pendingSwapsCount = (DB.data.shiftSwaps || []).filter(s => s.status === 'Pending Manager').length;
 
@@ -762,7 +836,7 @@ export async function renderAdminDashboard() {
         <!-- Present Now -->
         <div class="stat-card" id="card-present-now" style="cursor: pointer;">
           <div class="stat-icon stat-icon-green">✅</div>
-          <div class="stat-info"><span class="stat-value">${presentCount}</span><span class="stat-label">Present Now</span></div>
+          <div class="stat-info"><span class="stat-value">${presentCount}</span><span class="stat-label">Present Today</span></div>
         </div>
         <!-- Absent Today -->
         <div class="stat-card" id="card-absent-today" style="cursor: pointer;">
@@ -790,6 +864,7 @@ export async function renderAdminDashboard() {
     // Group Present Now records by worksite location
     let worksitePanelHTML = '';
     if (currentUser && (currentUser.role === 'hr' || currentUser.role === 'manager' || currentUser.role === 'admin' || currentUser.role === 'finance_manager' || (DB.getUserBaseRole && ['hr', 'manager', 'admin', 'finance_manager'].includes(DB.getUserBaseRole(currentUser.role))))) {
+      const presentNowRecords = getTodayPresentNowRecords();
       const officeCoords = DB.getOfficeCoordinates() || {};
       const worksiteLocs = Array.from(new Set([
         ...Object.keys(officeCoords).filter(k => !k.includes('(')),
@@ -1249,7 +1324,7 @@ export async function renderAdminDashboard() {
           <td>${checkInVal}</td>
           <td>${checkOutVal}</td>
           <td>${gpsCellHTML}</td>
-          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(l.location || l.biometricUsed || '—')}</td>
+          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(formatLocationTag(l.location || l.biometricUsed || '—'))}</td>
           <td><span class="badge ${statusClass}">${displayStatus}</span></td>
         </tr>
       `;
@@ -2302,9 +2377,48 @@ function renderAdminUsers() {
   });
 
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button class="btn-outline-equify" id="btn-download-profile-users">&#8681; Download Profile</button>
-      <button class="btn-primary-equify" id="btn-add-user-modal">+ Add Employee</button>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn-outline-equify" id="btn-download-profile-users" title="Download Staff Profiles">&#8681; Download Profile</button>
+      
+      <!-- Sub-menu Action Area: Employee & Payroll Separate Buttons -->
+      <div class="employee-payroll-menu-container" style="position:relative; display:inline-flex; align-items:center;">
+        <div style="display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--bg-card, #ffffff); box-shadow:0 2px 4px rgba(0,0,0,0.06);">
+          <button class="btn-primary-equify" id="btn-add-employee-action" style="display:inline-flex; align-items:center; gap:6px; border-radius:0; border:none; padding:8px 14px; font-size:12.5px; font-weight:700;" title="Register New Employee">
+            <span>👤</span> Add Employee
+          </button>
+          <button class="btn-primary-equify" id="btn-add-payroll-action" style="display:inline-flex; align-items:center; gap:6px; border-radius:0; border:none; border-left:1px solid rgba(255,255,255,0.25); background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#ffffff; padding:8px 14px; font-size:12.5px; font-weight:700;" title="Payroll, Salary, Allowances, Deductions & Bank Setup">
+            <span>💳</span> Payroll Setup
+          </button>
+          <button id="btn-add-menu-toggle" class="btn-primary-equify" style="border-radius:0; border:none; border-left:1px solid rgba(255,255,255,0.25); padding:8px 10px; font-size:12px; cursor:pointer;" title="Registration Options Sub-Menu">
+            ▾
+          </button>
+        </div>
+
+        <!-- Hidden compat button for tests and legacy callers -->
+        <button id="btn-add-user-modal" style="display:none;"></button>
+
+        <!-- Sub-Menu Below Dropdown -->
+        <div id="add-employee-sub-menu" style="display:none; position:absolute; right:0; top:calc(100% + 6px); background:var(--bg-card, #ffffff); border:1px solid var(--border); border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.18); min-width:240px; z-index:9999; overflow:hidden;">
+          <div style="padding:8px 12px; font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; background:rgba(0,0,0,0.02); border-bottom:1px solid var(--border);">
+            Registration Sub-Menu
+          </div>
+          <button type="button" class="sub-menu-dropdown-item" id="btn-sub-menu-add-employee" style="display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px; background:transparent; border:none; text-align:left; font-size:13px; font-weight:600; color:var(--text-primary); cursor:pointer; transition:background 0.15s ease;">
+            <span style="font-size:16px;">👤</span>
+            <div>
+              <div>Register Employee</div>
+              <div style="font-size:11px; color:var(--text-muted); font-weight:400;">Personal, shifts, branch & ID info</div>
+            </div>
+          </button>
+          <div style="height:1px; background:var(--border);"></div>
+          <button type="button" class="sub-menu-dropdown-item" id="btn-sub-menu-add-payroll" style="display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px; background:transparent; border:none; text-align:left; font-size:13px; font-weight:600; color:var(--text-primary); cursor:pointer; transition:background 0.15s ease;">
+            <span style="font-size:16px;">💳</span>
+            <div>
+              <div>Payroll & Bank Setup</div>
+              <div style="font-size:11px; color:var(--text-muted); font-weight:400;">Salary, allowances, deductions & bank</div>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   ` : '';
 
@@ -2359,13 +2473,25 @@ function renderAdminUsers() {
           <table class="custom-table">
             <thead>
               <tr>
-                <th>Employee Name</th>
-                <th>User ID</th>
-                <th>Security Password</th>
-                <th>Assigned Shift(s)</th>
-                <th>Work Location</th>
-                <th>Base Salary</th>
-                <th>Profile Controls</th>
+                <th style="white-space:nowrap">Employee Name</th>
+                <th style="white-space:nowrap">User ID</th>
+                <th style="white-space:nowrap">Branch</th>
+                <th style="white-space:nowrap">Pincode</th>
+                <th style="white-space:nowrap">Blood Group</th>
+                <th style="white-space:nowrap">Assigned Shift(s)</th>
+                <th style="white-space:nowrap">Work Location</th>
+                <th style="white-space:nowrap">Base Salary</th>
+                <th style="white-space:nowrap">Total Allowances</th>
+                <th style="white-space:nowrap">Total Deduction</th>
+                <th style="white-space:nowrap">Bonus</th>
+                <th style="white-space:nowrap">UAN No.</th>
+                <th style="white-space:nowrap">PF No.</th>
+                <th style="white-space:nowrap">Bank Name</th>
+                <th style="white-space:nowrap">Account Number</th>
+                <th style="white-space:nowrap">IFSC Code</th>
+                <th style="white-space:nowrap">Bank Branch Name</th>
+                <th style="white-space:nowrap">Security Password</th>
+                <th style="white-space:nowrap">Profile Controls</th>
               </tr>
             </thead>
             <tbody>
@@ -2392,22 +2518,33 @@ function renderAdminUsers() {
 
                  const actionsHTML = (user.role === 'hr' || user.role === 'manager')
                    ? `
-                     <div style="display:flex;gap:6px;flex-wrap:wrap">
+                     <div style="display:flex;gap:6px;flex-wrap:nowrap">
                        ${u.profileVerificationStatus === 'Pending Approval' ? `
-                         <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
-                         <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
+                         <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:var(--success)">Approve</button>
+                         <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:var(--error)">Reject</button>
                        ` : ''}
-                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
+                       <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Edit Profile">✏️ Profile</button>
+                       <button class="btn btn-outline-equify btn-edit-payroll" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:rgba(79,70,229,0.1);color:#6366f1;border:1px solid rgba(79,70,229,0.3)" title="Edit Payroll & Banking">💳 Payroll</button>
+                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Delete">🗑️</button>
                      </div>
                    `
                    : `
                      <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
                    `;
                 
+                const totalAllowVal = (u.totalAllowances !== null && u.totalAllowances !== undefined && u.totalAllowances !== '')
+                  ? Number(u.totalAllowances)
+                  : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.bonus || 0));
+
+                const totalDeductVal = (u.totalDeductions !== null && u.totalDeductions !== undefined && u.totalDeductions !== '')
+                  ? Number(u.totalDeductions)
+                  : ((u.totalDeduction !== null && u.totalDeduction !== undefined && u.totalDeduction !== '')
+                    ? Number(u.totalDeduction)
+                    : ((u.deductionPF || 0) + (u.deductionPT || 0)));
+
                 return `
                   <tr>
-                    <td style="font-weight:600; display:flex; align-items:center; gap:12px">
+                    <td style="font-weight:600; display:flex; align-items:center; gap:12px; min-width:180px">
                       <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
                         ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
                       </div>
@@ -2416,12 +2553,24 @@ function renderAdminUsers() {
                         ${profileBadgeHTML}
                       </div>
                     </td>
-                    <td>${Utils.escape(u.employeeId)}</td>
-                    <td><code>••••••••</code></td>
-                    <td>${shiftNames}</td>
-                    <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
-                    <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
-                    <td>
+                    <td style="white-space:nowrap">${Utils.escape(u.employeeId)}</td>
+                    <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.branch || '—')}</td>
+                    <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.pincode || '—')}</td>
+                    <td style="white-space:nowrap">${u.bloodGroup ? `<span class="badge" style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.1); color:#dc2626; font-weight:700; border:1px solid rgba(239,68,68,0.2);">${Utils.escape(u.bloodGroup)}</span>` : '—'}</td>
+                    <td style="white-space:nowrap">${shiftNames}</td>
+                    <td style="font-size:12px;color:var(--text-secondary); white-space:nowrap">${Utils.escape(workLocation)}</td>
+                    <td style="font-weight:700;color:var(--primary); white-space:nowrap">${u.baseSalary ? `₹${Number(u.baseSalary).toLocaleString()}` : '—'}</td>
+                    <td style="font-weight:600;color:var(--success); white-space:nowrap">${totalAllowVal > 0 ? `₹${totalAllowVal.toLocaleString()}` : '—'}</td>
+                    <td style="font-weight:600;color:var(--error); white-space:nowrap">${totalDeductVal > 0 ? `₹${totalDeductVal.toLocaleString()}` : '—'}</td>
+                    <td style="font-weight:600;color:var(--accent, #d97706); white-space:nowrap">${(u.bonus !== undefined && u.bonus !== null && u.bonus !== '') ? `₹${Number(u.bonus).toLocaleString()}` : '—'}</td>
+                    <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.uanNo || u.uanNumber || '—')}</code></td>
+                    <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.pfNo || u.pfNumber || '—')}</code></td>
+                    <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.bankName || '—')}</td>
+                    <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.accountNumber || '—')}</code></td>
+                    <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.ifscCode || '—')}</code></td>
+                    <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.bankBranchName || '—')}</td>
+                    <td style="white-space:nowrap"><code>••••••••</code></td>
+                    <td style="white-space:nowrap">
                       ${actionsHTML}
                     </td>
                   </tr>
@@ -2433,8 +2582,43 @@ function renderAdminUsers() {
       </div>
     </div>
   `;
-  const addBtn = document.getElementById('btn-add-user-modal');
-  if (addBtn) addBtn.addEventListener('click', () => openUserModal());
+
+  const addEmpAction = document.getElementById('btn-add-employee-action');
+  if (addEmpAction) addEmpAction.addEventListener('click', () => openUserModal(null, 'employee'));
+
+  const addPayAction = document.getElementById('btn-add-payroll-action');
+  if (addPayAction) addPayAction.addEventListener('click', () => openUserModal(null, 'payroll'));
+
+  const subMenuEmp = document.getElementById('btn-sub-menu-add-employee');
+  if (subMenuEmp) subMenuEmp.addEventListener('click', () => {
+    const sm = document.getElementById('add-employee-sub-menu');
+    if (sm) sm.style.display = 'none';
+    openUserModal(null, 'employee');
+  });
+
+  const subMenuPay = document.getElementById('btn-sub-menu-add-payroll');
+  if (subMenuPay) subMenuPay.addEventListener('click', () => {
+    const sm = document.getElementById('add-employee-sub-menu');
+    if (sm) sm.style.display = 'none';
+    openUserModal(null, 'payroll');
+  });
+
+  const menuToggle = document.getElementById('btn-add-menu-toggle');
+  if (menuToggle) {
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const sm = document.getElementById('add-employee-sub-menu');
+      if (sm) sm.style.display = (sm.style.display === 'block') ? 'none' : 'block';
+    });
+    document.addEventListener('click', () => {
+      const sm = document.getElementById('add-employee-sub-menu');
+      if (sm) sm.style.display = 'none';
+    });
+  }
+
+  const legacyAddBtn = document.getElementById('btn-add-user-modal');
+  if (legacyAddBtn) legacyAddBtn.addEventListener('click', () => openUserModal(null, 'employee'));
+
   const dlProfileBtn = document.getElementById('btn-download-profile-users');
   if (dlProfileBtn) dlProfileBtn.addEventListener('click', () => {
     const filterLoc = document.getElementById('filter-location-select');
@@ -2518,7 +2702,8 @@ function renderAdminUsers() {
   };
 
   const bindUserRowEvents = (container = document) => {
-    container.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id)));
+    container.querySelectorAll('.btn-edit-user').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-user').dataset.id, 'employee')));
+    container.querySelectorAll('.btn-edit-payroll').forEach(btn => btn.addEventListener('click', (e) => openUserModal(e.target.closest('.btn-edit-payroll').dataset.id, 'payroll')));
     container.querySelectorAll('.btn-delete-user').forEach(btn => btn.addEventListener('click', (e) => handleDeleteUser(e.target.closest('.btn-delete-user').dataset.id)));
     container.querySelectorAll('.btn-approve-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleApproveProfile(e.target.closest('.btn-approve-profile-direct').dataset.id)));
     container.querySelectorAll('.btn-reject-profile-direct').forEach(btn => btn.addEventListener('click', (e) => handleRejectProfile(e.target.closest('.btn-reject-profile-direct').dataset.id)));
@@ -2569,7 +2754,7 @@ function renderAdminUsers() {
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = html`<tr><td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
+        tbody.innerHTML = html`<tr><td colspan="19" style="text-align:center; padding:28px; color:var(--text-muted); font-size:13px">No matching employee records found for selected filter options.</td></tr>`;
       } else {
         tbody.innerHTML = filtered.map(u => {
           const assignedSchedules = (u.scheduleIds && Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0)
@@ -2594,20 +2779,31 @@ function renderAdminUsers() {
 
           const actionsHTML = (user.role === 'hr' || user.role === 'manager')
             ? `
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <div style="display:flex;gap:6px;flex-wrap:nowrap">
                 ${u.profileVerificationStatus === 'Pending Approval' ? `
-                  <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--success)">Approve Edits</button>
-                  <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px;background:var(--error)">Reject Edits</button>
+                  <button class="btn btn-success btn-approve-profile-direct" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:var(--success)">Approve</button>
+                  <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:var(--error)">Reject</button>
                 ` : ''}
-                <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Edit Profile</button>
-                <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:6px 10px;width:auto;font-size:11px">Delete</button>
+                <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Edit Profile">✏️ Profile</button>
+                <button class="btn btn-outline-equify btn-edit-payroll" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:rgba(79,70,229,0.1);color:#6366f1;border:1px solid rgba(79,70,229,0.3)" title="Edit Payroll & Banking">💳 Payroll</button>
+                <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Delete">🗑️</button>
               </div>
             `
             : `<div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>`;
           
+          const totalAllowVal = (u.totalAllowances !== null && u.totalAllowances !== undefined && u.totalAllowances !== '')
+            ? Number(u.totalAllowances)
+            : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.bonus || 0));
+
+          const totalDeductVal = (u.totalDeductions !== null && u.totalDeductions !== undefined && u.totalDeductions !== '')
+            ? Number(u.totalDeductions)
+            : ((u.totalDeduction !== null && u.totalDeduction !== undefined && u.totalDeduction !== '')
+              ? Number(u.totalDeduction)
+              : ((u.deductionPF || 0) + (u.deductionPT || 0)));
+
           return `
             <tr>
-              <td style="font-weight:600; display:flex; align-items:center; gap:12px">
+              <td style="font-weight:600; display:flex; align-items:center; gap:12px; min-width:180px">
                 <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
                   ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
                 </div>
@@ -2616,12 +2812,24 @@ function renderAdminUsers() {
                   ${profileBadgeHTML}
                 </div>
               </td>
-              <td>${Utils.escape(u.employeeId)}</td>
-              <td><code>••••••••</code></td>
-              <td>${shiftNames}</td>
-              <td style="font-size:12px;color:var(--text-secondary)">${Utils.escape(workLocation)}</td>
-              <td style="font-weight:700;color:var(--primary)">${u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : '—'}</td>
-              <td>
+              <td style="white-space:nowrap">${Utils.escape(u.employeeId)}</td>
+              <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.branch || '—')}</td>
+              <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.pincode || '—')}</td>
+              <td style="white-space:nowrap">${u.bloodGroup ? `<span class="badge" style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.1); color:#dc2626; font-weight:700; border:1px solid rgba(239,68,68,0.2);">${Utils.escape(u.bloodGroup)}</span>` : '—'}</td>
+              <td style="white-space:nowrap">${shiftNames}</td>
+              <td style="font-size:12px;color:var(--text-secondary); white-space:nowrap">${Utils.escape(workLocation)}</td>
+              <td style="font-weight:700;color:var(--primary); white-space:nowrap">${u.baseSalary ? `₹${Number(u.baseSalary).toLocaleString()}` : '—'}</td>
+              <td style="font-weight:600;color:var(--success); white-space:nowrap">${totalAllowVal > 0 ? `₹${totalAllowVal.toLocaleString()}` : '—'}</td>
+              <td style="font-weight:600;color:var(--error); white-space:nowrap">${totalDeductVal > 0 ? `₹${totalDeductVal.toLocaleString()}` : '—'}</td>
+              <td style="font-weight:600;color:var(--accent, #d97706); white-space:nowrap">${(u.bonus !== undefined && u.bonus !== null && u.bonus !== '') ? `₹${Number(u.bonus).toLocaleString()}` : '—'}</td>
+              <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.uanNo || u.uanNumber || '—')}</code></td>
+              <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.pfNo || u.pfNumber || '—')}</code></td>
+              <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.bankName || '—')}</td>
+              <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.accountNumber || '—')}</code></td>
+              <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.ifscCode || '—')}</code></td>
+              <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.bankBranchName || '—')}</td>
+              <td style="white-space:nowrap"><code>••••••••</code></td>
+              <td style="white-space:nowrap">
                 ${actionsHTML}
               </td>
             </tr>
@@ -2644,7 +2852,10 @@ function renderAdminUsers() {
   setupFilterListeners();
 }
 
-function openUserModal(userId = null) {
+function openUserModal(userId = null, initialTab = 'employee') {
+  if (typeof window.openUserModal === 'function' && window.openUserModal !== openUserModal) {
+    return window.openUserModal(userId, initialTab);
+  }
   const currentUser = Auth.getCurrentUser();
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;

@@ -368,10 +368,11 @@ async function getVaultUsers() {
 async function saveVaultUsers(vaultUsers) {
   const online = await connectMongoose();
   const useLocal = getUseLocalFileDB();
+  const cleanVault = (vaultUsers || []).filter(u => u.biometricUserId !== '30191' && u.userId !== 'usr_bio_30191' && u.name !== 'Admin');
 
   if (online && !useLocal) {
     try {
-      for (const u of vaultUsers) {
+      for (const u of cleanVault) {
         await BiometricVault.updateOne(
           { biometricUserId: u.biometricUserId },
           { $set: u },
@@ -384,7 +385,7 @@ async function saveVaultUsers(vaultUsers) {
   }
 
   const db = readLocalDB();
-  db.biometricVault = vaultUsers;
+  db.biometricVault = cleanVault;
   writeLocalDB(db);
 }
 

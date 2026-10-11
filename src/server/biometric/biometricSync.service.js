@@ -317,7 +317,7 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '', location
   }
 
   // Auto-register biometric user if missing from HRMS list
-  if (target) {
+  if (target && target !== '30191' && targetName.toLowerCase() !== 'admin') {
     const cleanName = (targetName && targetName !== 'admin' && !targetName.startsWith('employee '))
       ? deviceUserName
       : ('Employee ' + biometricUserId);
@@ -626,7 +626,8 @@ function processLocalPunch(
    */
   if (
     String(biometricUser.role) === '14' ||
-    biometricUser.name.toLowerCase() === 'admin'
+    biometricUser.name.toLowerCase() === 'admin' ||
+    String(punch.biometricUserId) === '30191'
   ) {
     result.ignored++;
     return;
@@ -972,6 +973,7 @@ async function syncLocalDatabase(
     let usersAdded = false;
     users.forEach(u => {
       const key = String(u.id || u.employeeId || u.biometricUserId || '');
+      if (key === 'usr_bio_30191' || key === '30191' || u.name === 'Admin' || u.isDummy) return;
       if (key && !existingUserIds.has(key)) {
         state.users.push(u);
         existingUserIds.add(key);

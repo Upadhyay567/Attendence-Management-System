@@ -667,7 +667,7 @@ router.post('/biometric/sync', async (req, res) => {
         console.warn('⚠️ Local biometric sync notice:', err.message);
         return { success: false, error: err.message };
       }),
-      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 2, pageSize: 200, forceRefresh: true }).catch(err => {
+      syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 5, pageSize: 1000, forceRefresh: true }).catch(err => {
         console.warn('⚠️ WDMS Cloud sync warning:', err.message);
         return { success: false, error: err.message };
       })

@@ -12,6 +12,11 @@ export const Utils = {
       .replace(/'/g, '&#039;');
   },
 
+  // Get today's date formatted as YYYY-MM-DD in local time
+  getTodayString() {
+    return new Date().toLocaleDateString('en-CA');
+  },
+
   // Format date to human readable form, e.g., Jun 25, 2026
   formatDate(dateStr) {
     if (!dateStr) return '-';

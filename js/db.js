@@ -851,19 +851,19 @@ export const DB = {
         u.gender = u.username === 'sarah' || u.username === 'hr' ? 'Female' : (u.username === 'admin' ? 'Other' : 'Male');
         modified = true;
       }
-      if (u.department === undefined) {
+      if (u.department === undefined || u.department === 'Department') {
         if (u.role === 'hr') u.department = 'Human Resources';
         else if (u.role === 'manager') u.department = 'Operations';
-        else u.department = 'Engineering';
+        else u.department = '';
         modified = true;
       }
-      if (u.designation === undefined) {
+      if (u.designation === undefined || u.designation === 'Junior Developer') {
         if (u.username === 'admin') u.designation = 'HR Admin Manager';
         else if (u.username === 'hr') u.designation = 'HR Coordinator';
         else if (u.username === 'manager') u.designation = 'Operations Manager';
         else if (u.username === 'john' || u.username === 'hemant') u.designation = 'Software Engineer';
         else if (u.username === 'sarah') u.designation = 'QA Lead';
-        else u.designation = 'Junior Developer';
+        else u.designation = '';
         modified = true;
       }
       if (u.dateOfJoining === undefined) {

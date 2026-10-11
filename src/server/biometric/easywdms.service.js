@@ -509,6 +509,7 @@ async function syncFromWDMS(username, password, options = {}) {
   let newEmployeesAdded = 0;
   employees.forEach(emp => {
     const pin = String(emp.emp_code || emp.pin || '').trim();
+    if (pin === '30191' || pin.toLowerCase() === 'admin' || (emp.name && emp.name.toLowerCase() === 'admin')) return;
     const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.name || `Employee ${pin}`;
     const exists = dbUsers.find(u => 
       u.biometricUserId === pin || u.employeeId === pin || u.id === `usr_bio_${pin}`

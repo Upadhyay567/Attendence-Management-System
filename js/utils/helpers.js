@@ -12,6 +12,11 @@ export const Utils = {
       .replace(/'/g, '&#039;');
   },
 
+  // Get today's date formatted as YYYY-MM-DD in local time
+  getTodayString() {
+    return new Date().toLocaleDateString('en-CA');
+  },
+
   // Format date to human readable form, e.g., Jun 25, 2026
   formatDate(dateStr) {
     if (!dateStr) return '-';
@@ -217,4 +222,28 @@ export function formatTime12h(timeStr) {
 export function formatTimeRange12h(start, end) {
   return `${formatTime12h(start)} - ${formatTime12h(end)}`;
 }
+
+// Format and localize raw location codes into clean, standard display tags
+export function formatLocationTag(loc) {
+  if (!loc || typeof loc !== 'string') return '-';
+  const clean = loc.trim();
+  if (!clean || clean === '-' || clean === '--' || clean.toLowerCase() === 'none' || clean.toLowerCase() === 'not assigned' || clean.toLowerCase() === 'manual') {
+    return 'Not Assigned';
+  }
+  const upper = clean.toUpperCase();
+  if (upper === 'WH-1340' || upper === 'WH-1340-CLOSE' || upper === 'WH 1340' || upper.startsWith('WH-1340')) return 'Warehouse 1340';
+  if (upper === 'RETAIL') return 'Retail Store';
+  if (upper === 'GT KARNAL SITE' || upper === 'GT KARNAL') return 'GT Karnal Site';
+  if (upper === 'PITAM PURA' || upper === 'PITAMPURA') return 'Pitampura Office';
+  if (upper === 'ASHOK VIHAR' || upper === 'ASHOK VIHAR_EXTRA') return 'Ashok Vihar';
+  if (upper === 'PUNJABI BAGH') return 'Punjabi Bagh';
+  if (upper === 'SURYA OMAXE' || upper === 'OMAXE OFFICE') return 'Surya Omaxe';
+  if (upper === 'SURYA GURUGRAM') return 'Surya Gurugram';
+  if (upper === 'HS OFFICE' || upper === 'OFFICE HQ' || upper === 'DELHI HEAD OFFICE' || upper.includes('HS GROUP HQ')) return 'HS Office HQ';
+  if (upper.includes('NOIDA SECTOR 61') || upper === 'NOIDA') return 'Noida Sector 61';
+  if (upper.includes('CHATTARPUR') || upper.includes('RAAGWAAS')) return 'Chattarpur Office';
+  if (upper === 'SIYONEE') return 'Siyonee';
+  return clean;
+}
+
 

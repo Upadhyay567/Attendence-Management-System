@@ -81,7 +81,7 @@ describe('HR & Manager Role Biometric Punch Display & Scoping', () => {
     });
 
     test('isNoShift evaluation allows active punch session to display when user has todayLog', () => {
-      const todayLog = DB.getTodayLog('usr_admin');
+      const todayLog = DB.getTodayLog('usr_admin', '2026-10-01');
       const checkInStatus = { allowed: false, type: 'NoShift' };
 
       // Previous faulty logic: blocked display if checkInStatus was NoShift

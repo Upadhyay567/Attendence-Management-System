@@ -9,7 +9,8 @@ import { renderAdminDashboard } from '../views/adminDashboard.js';
 import { renderDailyWorkStatus } from '../views/dailyWorkStatusView.js';
 import { renderAdminAttendances } from '../views/attendancesView.js';
 import { renderEmployeeLeaves } from '../views/leavesView.js';
-import { renderAdminUsers } from '../views/userManagementView.js';
+import { renderAdminUsers, renderAdminPayroll } from '../views/userManagementView.js';
+import { renderRegisterEmployeeView } from '../views/registerEmployeeView.js';
 import { renderAdminSchedules } from '../views/schedulesView.js';
 import { renderAdminFinance } from '../views/financeView.js';
 import { renderAppShell } from '../components/appShell.js';
@@ -120,9 +121,25 @@ export async function handleRoute() {
       case '#admin-approvals':
         renderAdminUsers();
         break;
+      case '#admin-register-employee':
+      case '#register-employee':
+        if (typeof renderRegisterEmployeeView === 'function') {
+          renderRegisterEmployeeView();
+        } else if (typeof window.renderRegisterEmployeeView === 'function') {
+          window.renderRegisterEmployeeView();
+        }
+        break;
       case '#admin-schedules':
       case '#admin-locations':
         renderAdminSchedules();
+        break;
+      case '#admin-payroll':
+      case '#payroll':
+        if (typeof renderAdminPayroll === 'function') {
+          renderAdminPayroll();
+        } else if (typeof window.renderAdminPayroll === 'function') {
+          window.renderAdminPayroll();
+        }
         break;
       case '#admin-finance':
         renderAdminFinance();

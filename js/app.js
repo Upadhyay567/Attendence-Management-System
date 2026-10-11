@@ -1,23 +1,24 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=91';
-import { renderAdminSchedules } from './views/schedulesView.js?v=91';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=91';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=91';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=91';
-import { renderAdminAttendances } from './views/attendancesView.js?v=91';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=91';
-import { renderAdminFinance } from './views/financeView.js?v=91';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=91';
-import { renderAdminUsers, openUserModal } from './views/userManagementView.js?v=91';
-import { drawRadarMap } from './components/geofenceMap.js?v=91';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=91';
+import { renderLoginView } from './views/loginView.js?v=94';
+import { renderAdminSchedules } from './views/schedulesView.js?v=94';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=94';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=94';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=94';
+import { renderAdminAttendances } from './views/attendancesView.js?v=94';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=94';
+import { renderAdminFinance } from './views/financeView.js?v=94';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=94';
+import { renderAdminUsers, renderAdminPayroll, openUserModal } from './views/userManagementView.js?v=95';
+import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=96';
+import { drawRadarMap } from './components/geofenceMap.js?v=94';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=94';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=91';
-import { Auth } from './auth.js?v=91';
-import { Utils, html } from './utils.js?v=91';
-import { triggerBirthdayCelebration } from './celebration.js?v=91';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=91';
+import { DB } from './core/db.js?v=94';
+import { Auth } from './auth.js?v=94';
+import { Utils, html } from './utils.js?v=94';
+import { triggerBirthdayCelebration } from './celebration.js?v=94';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=94';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -43,6 +44,8 @@ export function registerWindowGlobals() {
   window.renderAdminAttendances = renderAdminAttendances;
   window.renderAdminSchedules = renderAdminSchedules;
   window.renderAdminUsers = renderAdminUsers;
+  window.renderRegisterEmployeeView = renderRegisterEmployeeView;
+  window.renderAdminPayroll = renderAdminPayroll;
   window.renderAdminFinance = renderAdminFinance;
   window.renderDailyWorkStatus = renderDailyWorkStatus;
   window.renderEmployeeLeaves = renderEmployeeLeaves;
@@ -1242,7 +1245,11 @@ function setupRouter() {
       document.querySelectorAll('.submenu-item').forEach(subLi => {
         subLi.classList.remove('active');
         const href = subLi.querySelector('a')?.getAttribute('href');
-        if (href === hash) {
+        const matches = (href === hash) ||
+          ((hash === '#admin-payroll' || hash === '#payroll') && href === '#admin-payroll') ||
+          ((hash === '#admin-register-employee' || hash === '#register-employee') && (href === '#admin-register-employee' || subLi.id === 'sub-register-employee')) ||
+          ((hash === '#admin-users' || hash === '#users' || hash === '#admin-employees' || hash === '#employees') && href === '#admin-users');
+        if (matches) {
           subLi.classList.add('active');
           const parentMenu = subLi.closest('.menu-item-has-submenu');
           if (parentMenu) {
@@ -1326,7 +1333,17 @@ function setupRouter() {
           break;
         case '#admin-users':
         case '#admin-employees':
+        case '#users':
+        case '#employees':
           renderAdminUsers();
+          break;
+        case '#admin-register-employee':
+        case '#register-employee':
+          renderRegisterEmployeeView();
+          break;
+        case '#admin-payroll':
+        case '#payroll':
+          renderAdminPayroll();
           break;
         case '#admin-accounts':
           renderAccountManagementView();
@@ -1472,9 +1489,40 @@ function renderAppShell() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="20" x2="12" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg> <span class="menu-label">Finance Management</span>
       </a></li>
       ` : ''}
-      <li class="menu-item" id="nav-admin-users"><a href="#admin-users">
-        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> <span class="menu-label">${labels.employees}</span>
-      </a></li>
+      <li class="menu-item menu-item-has-submenu" id="nav-admin-users" style="position: relative;">
+        <a href="javascript:void(0)" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span style="display: flex; align-items: center; gap: 14px;">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span class="menu-label">Employee</span>
+          </span>
+          <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
+        </a>
+        <ul class="submenu-list">
+          <li class="submenu-item" id="sub-admin-users"><a href="#admin-users">Employee Directory</a></li>
+          <li class="submenu-item" id="sub-register-employee">
+            <a href="#admin-register-employee" id="sidebar-sub-register-employee" class="sidebar-action-submenu-btn">
+              <span>👤</span> Register Employee
+            </a>
+          </li>
+        </ul>
+      </li>
+      <li class="menu-item menu-item-has-submenu" id="nav-admin-payroll" style="position: relative;">
+        <a href="javascript:void(0)" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <span style="display: flex; align-items: center; gap: 14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="20" x2="12" y2="4"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+            <span class="menu-label">Payroll</span>
+          </span>
+          <span class="submenu-arrow" style="font-size: 10px; opacity: 0.7; transition: transform 0.2s ease;">▶</span>
+        </a>
+        <ul class="submenu-list">
+          <li class="submenu-item" id="sub-admin-payroll"><a href="#admin-payroll">Payroll Directory</a></li>
+          <li class="submenu-item" id="sub-payroll-setup">
+            <a href="javascript:void(0)" id="sidebar-sub-payroll-setup" class="sidebar-action-submenu-btn">
+              <span>💳</span> Payroll Setup
+            </a>
+          </li>
+        </ul>
+      </li>
       <li class="menu-item" id="nav-admin-schedules"><a href="#admin-schedules">
         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg> <span class="menu-label">${labels.shifts}</span>
       </a></li>
@@ -1684,6 +1732,41 @@ function renderAppShell() {
       }
     });
   });
+
+  // Close mobile sidebar on submenu navigation links
+  root.querySelectorAll('.submenu-list a[href^="#"]').forEach(subLink => {
+    subLink.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    });
+  });
+
+
+  // Sidebar Submenu Action Buttons: Register Employee (opens full-screen registration portal) & Payroll Setup
+  const subRegEmpBtn = root.querySelector('#sidebar-sub-register-employee');
+  if (subRegEmpBtn) {
+    subRegEmpBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.innerWidth <= 768) closeSidebar();
+      window.location.hash = '#admin-register-employee';
+    });
+  }
+
+  const subPaySetupBtn = root.querySelector('#sidebar-sub-payroll-setup');
+  if (subPaySetupBtn) {
+    subPaySetupBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.innerWidth <= 768) closeSidebar();
+      if (typeof openUserModal === 'function') {
+        openUserModal(null, 'payroll');
+      } else if (typeof window.openUserModal === 'function') {
+        window.openUserModal(null, 'payroll');
+      }
+    });
+  }
 
   // Submenu click toggle logic for all menus
   const allSubmenus = root.querySelectorAll('.menu-item-has-submenu');

@@ -81,9 +81,16 @@ if (fs.existsSync(PUBLIC_DIR)) {
   app.use(express.static(PUBLIC_DIR));
 }
 
-// Serve explicit client directories
-app.use('/css', express.static(path.join(ROOT_DIR, 'css')));
-app.use('/js', express.static(path.join(ROOT_DIR, 'js')));
+// Serve explicit client directories with no-cache headers to prevent browser stale script caching
+const noCacheStaticOptions = {
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+};
+app.use('/css', express.static(path.join(ROOT_DIR, 'css'), noCacheStaticOptions));
+app.use('/js', express.static(path.join(ROOT_DIR, 'js'), noCacheStaticOptions));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Serve root public assets (index.html, logos, favicons, server-config) safely

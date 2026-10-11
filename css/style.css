@@ -4186,6 +4186,30 @@ body.light-theme .custom-thankyou-card .custom-dialog-btn-secondary:hover {
   border-left-color: #ffffff !important;
 }
 
+/* Sidebar Submenu Action Buttons (Register Employee & Payroll Setup) */
+.submenu-list .sidebar-action-submenu-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-top: 4px !important;
+  background: rgba(137, 32, 27, 0.32) !important;
+  border: 1px dashed rgba(252, 165, 165, 0.45) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.submenu-list .sidebar-action-submenu-btn:hover {
+  background: rgba(137, 32, 27, 0.65) !important;
+  border-color: #ffffff !important;
+  transform: translateX(3px) !important;
+  box-shadow: 0 2px 8px rgba(137, 32, 27, 0.4) !important;
+}
+
 /* Checkout Banner Card and Badge */
 .custom-thankyou-overlay {
   z-index: 100005 !important;
@@ -4685,4 +4709,11 @@ body.light-theme .btn-clear-all-premium:hover {
   color: #dc2626;
   border-color: rgba(220, 38, 38, 0.4);
   background: rgba(220, 38, 38, 0.05);
+}
+
+/* Full-Screen Employee & Payroll Registration Portal */
+@media (max-width: 1024px) {
+  #reg-two-column-container {
+    grid-template-columns: 1fr !important;
+  }
 }

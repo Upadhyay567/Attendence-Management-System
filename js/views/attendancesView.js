@@ -1,7 +1,7 @@
 // js/views/attendancesView.js - Attendance Registers & Check-in/Out Logs
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html } from '../utils/helpers.js';
+import { Utils, html, formatLocationTag } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -306,12 +306,12 @@ export function renderAdminAttendances() {
                 </th>
                 <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-atwork">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> At Work
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Work Status
                   </span>
                 </th>
                 <th style="cursor: pointer; padding: 12px 14px; user-select: none; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);" id="th-att-status">
                   <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Status
+                    <span style="color: #ef4444; font-weight: 700; font-size: 12px;">↑↓</span> Attendance Status
                   </span>
                 </th>
                 <th style="text-align: right; padding: 12px 16px; width: 100px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: var(--text-primary);">
@@ -626,7 +626,7 @@ export function renderAdminAttendances() {
   if (btnQuickToday) {
     btnQuickToday.addEventListener('click', (e) => {
       e.stopPropagation();
-      const today = Utils.getTodayString();
+      const today = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
       if (singleDateInput) singleDateInput.value = today;
       handleSingleDateChange();
     });
@@ -915,7 +915,7 @@ export function renderAdminAttendances() {
     'th-att-checkin': 'checkIn',
     'th-att-checkout': 'checkOut',
     'th-att-shift': 'shiftName',
-    'th-att-atwork': 'atWorkMins',
+    'th-att-atwork': 'workStatus',
     'th-att-status': 'status'
   };
 
@@ -947,12 +947,20 @@ export function renderAdminAttendances() {
 
   // Core Table Update Function
   function updateTable() {
-    // 1. Fetch user records across all roles (Employees, HR, and Managers)
+    function isDummyUser(u) {
+      if (!u) return true;
+      if (u.isDummy || u.id === 'usr_bio_30191' || u.employeeId === '30191' || u.biometricUserId === '30191') return true;
+      if (u.status === 'Inactive' || u.status === 'Archived' || u.status === 'Deleted') return true;
+      if (u.role === 'employee' && u.name === 'Admin' && (!u.department || u.department === 'Department')) return true;
+      return false;
+    }
+
+    // 1. Fetch user records across all roles (Employees, HR, and Managers), filtering out dummy accounts
     const allUsers = DB.getUsers();
-    const activeUsers = allUsers.filter(u => u && u.status !== 'Inactive');
+    const activeUsers = allUsers.filter(u => !isDummyUser(u));
     const userMap = new Map(activeUsers.map(u => [u.id, u]));
 
-    const rawLogs = DB.getLogs().filter(log => {
+    const existingLogs = DB.getLogs().filter(log => {
       if (!userMap.has(log.userId)) return false;
       if (!log.date) return false;
 
@@ -979,9 +987,71 @@ export function renderAdminAttendances() {
       return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
     });
 
+    // LEFT JOIN: Employees -> Daily Attendance for today (or selected date) so absent staff appear
+    const todayStr = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
+    let targetLeftJoinDates = [];
+
+    if (adminAttendancesFilterMode === 'manual') {
+      if (adminAttendancesSingleDate) {
+        targetLeftJoinDates = [adminAttendancesSingleDate];
+      } else if (adminAttendancesFromDate && adminAttendancesToDate) {
+        if (todayStr >= adminAttendancesFromDate && todayStr <= adminAttendancesToDate) {
+          targetLeftJoinDates = [todayStr];
+        }
+      } else if (adminAttendancesFromDate && adminAttendancesFromDate === todayStr) {
+        targetLeftJoinDates = [todayStr];
+      }
+    } else {
+      // Month mode: if the selected month & year contains today, include today's absent staff
+      const [tY, tM] = todayStr.split('-').map(Number);
+      if (tY === adminAttendancesSelectedYear && (tM - 1) === adminAttendancesSelectedMonth) {
+        targetLeftJoinDates = [todayStr];
+      }
+    }
+
+    const absentLogs = [];
+    targetLeftJoinDates.forEach(targetDate => {
+      const presentUserKeysOnDate = new Set();
+      existingLogs.forEach(l => {
+        if (l.date === targetDate && (l.checkIn || l.checkOut)) {
+          if (l.userId) presentUserKeysOnDate.add(String(l.userId));
+          if (l.employeeId) presentUserKeysOnDate.add(String(l.employeeId));
+          if (l.biometricUserId) presentUserKeysOnDate.add(String(l.biometricUserId));
+        }
+      });
+
+      activeUsers.forEach(emp => {
+        const isPresent = presentUserKeysOnDate.has(String(emp.id)) ||
+          (emp.employeeId && presentUserKeysOnDate.has(String(emp.employeeId))) ||
+          (emp.biometricUserId && presentUserKeysOnDate.has(String(emp.biometricUserId)));
+        if (!isPresent) {
+          const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0
+            ? emp.scheduleIds.filter(Boolean)
+            : (emp?.scheduleId ? [emp.scheduleId] : []);
+          const shiftId = userShiftIds[0] || '';
+          const rawLoc = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
+            (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0]) || '-';
+
+          absentLogs.push({
+            id: `absent_${emp.id}_${targetDate}`,
+            userId: emp.id,
+            date: targetDate,
+            checkIn: null,
+            checkOut: null,
+            shiftId,
+            location: rawLoc,
+            status: 'Absent',
+            isAbsent: true
+          });
+        }
+      });
+    });
+
+    const rawLogs = [...existingLogs, ...absentLogs];
+
     // Map logs with rich display values
     const mappedLogs = rawLogs.map(log => {
-      const emp = userMap.get(log.userId);
+      const emp = userMap.get(log.userId) || DB.getUser(log.userId);
       const empName = emp ? emp.name : 'Unknown User';
       const empId = emp ? (emp.employeeId || emp.id) : '';
       const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0
@@ -995,23 +1065,65 @@ export function renderAdminAttendances() {
         } else {
           shift = DB.getSchedule(userShiftIds[0]);
         }
+      } else if (log.shiftId) {
+        shift = DB.getSchedule(log.shiftId);
       }
       const shiftName = shift ? shift.name : '-';
-      const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
+      const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
+      const location = formatLocationTag(rawLocation);
       
-      let atWorkStr = '--:--';
+      // Standardize Work Status to: 'In Session', 'Checked Out', or 'Absent'
+      let workStatus = 'Absent';
+      let atWorkStr = 'Absent';
       let atWorkMins = 0;
       if (log.checkIn && log.checkOut) {
+        workStatus = 'Checked Out';
+        atWorkStr = 'Checked Out';
         const [inH, inM] = log.checkIn.split(':').map(Number);
         const [outH, outM] = log.checkOut.split(':').map(Number);
         atWorkMins = (outH * 60 + outM) - (inH * 60 + inM);
         if (atWorkMins < 0) atWorkMins += 24 * 60;
-        const hh = String(Math.floor(atWorkMins / 60)).padStart(2, '0');
-        const mm = String(atWorkMins % 60).padStart(2, '0');
-        atWorkStr = `${hh}:${mm}`;
       } else if (log.checkIn && !log.checkOut) {
+        workStatus = 'In Session';
         atWorkStr = 'In Session';
         atWorkMins = 9999;
+      } else {
+        workStatus = 'Absent';
+        atWorkStr = 'Absent';
+        atWorkMins = -1;
+      }
+
+      // Standardize Attendance Status badges to: 'ON TIME', 'LATE', or 'ABSENT'
+      let s = log.status;
+      if (log.isAbsent || (!log.checkIn && !log.checkOut)) {
+        s = 'Absent';
+      } else if (!shift) {
+        s = log.checkIn ? 'On Time' : 'Absent';
+      } else if (!s || s === 'Present') {
+        s = 'On Time';
+        if (shift && shift.startTime && log.checkIn) {
+          const [sH, sM] = shift.startTime.split(':').map(Number);
+          const [iH, iM] = log.checkIn.split(':').map(Number);
+          const sMins = sH * 60 + (sM || 0);
+          const iMins = iH * 60 + (iM || 0);
+          const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
+          const halfDayLimit = shift.halfDayLimit !== undefined ? Number(shift.halfDayLimit) : 120;
+          if (iMins > sMins + grace) s = 'Late';
+          if (iMins >= sMins + halfDayLimit) s = 'Half Day';
+        }
+      }
+
+      let badgeClass = 'badge-on-time';
+      let badgeText = 'ON TIME';
+      if (s === 'Late') {
+        badgeClass = 'badge-late';
+        badgeText = 'LATE';
+      } else if (s === 'Absent') {
+        badgeClass = 'badge-absent';
+        badgeText = 'ABSENT';
+      } else {
+        badgeClass = 'badge-on-time';
+        badgeText = 'ON TIME';
       }
 
       return {
@@ -1021,8 +1133,12 @@ export function renderAdminAttendances() {
         employeeName: empName,
         employeeId: empId,
         shiftName,
+        workStatus,
         atWorkStr,
-        atWorkMins
+        atWorkMins,
+        status: s,
+        badgeClass,
+        badgeText
       };
     });
 
@@ -1231,11 +1347,11 @@ export function renderAdminAttendances() {
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.date}</td>
             <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
               ${checkInDisplay}
-              ${isLateArrival ? `<div style="font-size: 11px; color: #ef4444; font-weight: 600; margin-top: 2px;">Late Arrival</div>` : ''}
+              ${!log.isAbsent && isLateArrival ? `<div style="font-size: 11px; color: #ef4444; font-weight: 600; margin-top: 2px;">Late Arrival</div>` : ''}
             </td>
             <td style="padding: 12px 14px; font-size: 14px; font-weight: 500; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
               ${checkOutDisplay}
-              ${isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
+              ${!log.isAbsent && isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
             </td>
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
               <div style="font-weight: 500;">${Utils.escape(log.shiftName)}</div>
@@ -1243,9 +1359,9 @@ export function renderAdminAttendances() {
                 <span style="opacity: 0.85;">📍</span> <span>${Utils.escape(log.location)}</span>
               </div>
             </td>
-            <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.atWorkStr}</td>
+            <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.workStatus}</td>
             <td style="padding: 12px 14px; font-size: 13px; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
-              <span class="badge ${badgeClass}">${s}</span>
+              <span class="badge ${log.badgeClass}">${log.badgeText}</span>
             </td>
             <td style="padding: 12px 16px; text-align: right;">
               <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
@@ -1297,6 +1413,10 @@ export function renderAdminAttendances() {
     tbody.querySelectorAll('.btn-att-delete').forEach(btn => {
       btn.addEventListener('click', async () => {
         const logId = btn.getAttribute('data-id');
+        if (logId && logId.startsWith('absent_')) {
+          showToastNotification("This employee is marked absent (no record to delete).", 'info');
+          return;
+        }
         const confirmed = await CustomDialog.confirm("Are you sure you want to delete this attendance record?", "Delete Attendance Record");
         if (confirmed) {
           DB.deleteAttendanceLog(logId);
@@ -1496,7 +1616,28 @@ function showCreateAttendanceModal() {
 
 // Modal for Editing Existing Attendance Record
 function showEditAttendanceModal(logId) {
-  const log = DB.data.attendanceLogs.find(l => l.id === logId);
+  let log = DB.data.attendanceLogs.find(l => l.id === logId);
+  let isSynthesizedAbsent = false;
+
+  if (!log && logId && logId.startsWith('absent_')) {
+    const parts = logId.replace('absent_', '').split('_');
+    const date = parts.pop();
+    const userId = parts.join('_');
+    const empUser = DB.getUser(userId);
+    const userShiftIds = Array.isArray(empUser?.scheduleIds) && empUser.scheduleIds.length > 0
+      ? empUser.scheduleIds.filter(Boolean)
+      : (empUser?.scheduleId ? [empUser.scheduleId] : []);
+    log = {
+      id: logId,
+      userId,
+      date,
+      shiftId: userShiftIds[0] || '',
+      checkIn: '09:00',
+      checkOut: '18:00',
+      status: 'On Time'
+    };
+    isSynthesizedAbsent = true;
+  }
   if (!log) return;
 
   const emp = DB.getUser(log.userId);
@@ -1509,7 +1650,7 @@ function showEditAttendanceModal(logId) {
   modalOverlay.innerHTML = html`
     <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
-        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Edit Attendance Record</h3>
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">${isSynthesizedAbsent ? 'Record Attendance' : 'Edit Attendance Record'}</h3>
         <button class="modal-close" id="btn-close-edit-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
       </div>
       <form id="form-edit-attendance">
@@ -1556,7 +1697,7 @@ function showEditAttendanceModal(logId) {
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
           <button type="button" class="btn btn-secondary" id="btn-cancel-edit-att" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
-          <button type="submit" class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">Save Changes</button>
+          <button type="submit" class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">${isSynthesizedAbsent ? 'Save Attendance' : 'Save Changes'}</button>
         </div>
       </form>
     </div>
@@ -1579,17 +1720,28 @@ function showEditAttendanceModal(logId) {
     const checkOut = document.getElementById('modal-edit-att-checkout').value || null;
     const status = document.getElementById('modal-edit-att-status').value;
 
-    DB.updateAttendanceLog(logId, {
-      date,
-      shiftId,
-      checkIn,
-      checkOut,
-      status
-    });
+    if (isSynthesizedAbsent) {
+      DB.createManualAttendanceLog({
+        userId: log.userId,
+        date,
+        shiftId,
+        checkIn,
+        checkOut,
+        status
+      });
+    } else {
+      DB.updateAttendanceLog(logId, {
+        date,
+        shiftId,
+        checkIn,
+        checkOut,
+        status
+      });
+    }
 
     requestsPushDBState();
     closeModal();
-    showToastNotification("Attendance record updated successfully.", 'success');
+    showToastNotification(isSynthesizedAbsent ? "Attendance recorded successfully." : "Attendance record updated successfully.", 'success');
     renderAdminAttendances();
   });
 }
@@ -1740,7 +1892,7 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     dateLabel = `${monthName} ${adminAttendancesSelectedYear}`;
   }
   const filename = `Attendances${dateSlug}${locSlug}.xlsx`;
-  const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'At Work', 'Status', 'Location'];
+  const headers = ['Employee Name', 'Employee ID', 'Date', 'Check-In', 'Check-Out', 'Shift', 'Work Status', 'Attendance Status', 'Location'];
   
   // Sort mappedLogs to match table sorting and chronological order
   mappedLogs.sort((a, b) => {
@@ -1771,8 +1923,8 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     l.checkInDisplay,
     l.checkOutDisplay,
     l.shiftName,
-    l.atWorkStr,
-    l.status || 'On Time',
+    l.workStatus || l.atWorkStr,
+    l.badgeText || l.status || 'ON TIME',
     l.location
   ]);
 
