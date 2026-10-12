@@ -37882,9 +37882,9 @@
       "date": "2026-10-12",
       "shiftId": "",
       "checkIn": "09:33:37",
-      "checkOut": "14:57:25",
+      "checkOut": "17:31:36",
       "checkInPunchId": "PUNCH_703_2026_10_12_09_33_37",
-      "checkOutPunchId": "CEZF192660044_703_2026-10-12T09:27:25.000Z",
+      "checkOutPunchId": "CEZF192660044_703_2026-10-12T12:01:36.000Z",
       "biometricPunchId": "PUNCH_703_2026_10_12_09_33_37",
       "allPunchIds": [
         "CEZF192660044_703_2026-10-12T07:04:07.000Z",
@@ -37892,13 +37892,15 @@
         "CEZF192660044_703_2026-10-12T09:27:25.000Z",
         "PUNCH_703_2026_10_12_09_33_37",
         "CEZF192660044_703_2026-10-12T04:03:37.000Z",
-        "CEZF192660044_703_2026-10-12T06:55:03.000Z"
+        "CEZF192660044_703_2026-10-12T06:55:03.000Z",
+        "CEZF192660044_703_2026-10-12T11:51:00.000Z",
+        "CEZF192660044_703_2026-10-12T12:01:36.000Z"
       ],
       "status": "On Time",
       "biometricUsed": "GT KARNAL SITE",
       "biometricDeviceId": "CEZF192660044",
       "biometricUserId": "703",
-      "lastBiometricPunchAt": "2026-10-12T09:27:25.000Z",
+      "lastBiometricPunchAt": "2026-10-12T12:01:36.000Z",
       "location": "GT KARNAL SITE",
       "departureLocation": "GT KARNAL SITE",
       "departureDevice": "GT KARNAL SITE",
@@ -37910,7 +37912,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-12T07:07:48.992Z",
-      "updatedAt": "2026-10-12T11:19:43.565Z"
+      "updatedAt": "2026-10-12T12:07:45.180Z"
     },
     {
       "id": "BIO_usr_bio_1290_2026-10-12",
@@ -2029759,10 +2029761,42 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-12T11:24:14.263Z",
-    "lastLogCount": 1
+    "lastSyncAt": "2026-10-12T12:07:45.207Z",
+    "lastLogCount": 3849
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-12T12:07:45.180Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_703",
+      "userName": "Ajay Tripathi",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_703_2026-10-12",
+        "shiftId": "",
+        "checkIn": "09:33:37",
+        "checkOut": "17:31:36",
+        "status": "On Time",
+        "device": "GT KARNAL SITE"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-10-12T12:07:45.176Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_703",
+      "userName": "Ajay Tripathi",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_703_2026-10-12",
+        "shiftId": "",
+        "checkIn": "09:33:37",
+        "checkOut": "17:21:00",
+        "status": "On Time",
+        "device": "GT KARNAL SITE"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-12T11:24:14.237Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -2037482,43 +2037516,9 @@
         "device": "GT KARNAL SITE"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-12T06:35:52.566Z",
-      "action": "BIOMETRIC_CHECKOUT",
-      "userId": "usr_bio_747",
-      "userName": "shyam Sunder",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_747_2026-10-03",
-        "shiftId": "",
-        "checkIn": "09:24:41",
-        "checkOut": "19:32:22",
-        "status": "On Time",
-        "device": "GT KARNAL SITE"
-      },
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-12T06:35:52.562Z",
-      "action": "BIOMETRIC_CHECKOUT",
-      "userId": "usr_bio_1157",
-      "userName": "Nitesh Sharma",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_1157_2026-10-03",
-        "shiftId": "",
-        "checkIn": "09:28:31",
-        "checkOut": "19:32:15",
-        "status": "On Time",
-        "device": "GT KARNAL SITE"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "CEZF192660044_1100_2026-09-03T14:03:02.000Z",
-    "CEZF192660044_1252_2026-09-03T14:03:11.000Z",
     "CEZF192660044_836_2026-09-03T14:03:21.000Z",
     "CEZF192660044_1267_2026-09-03T14:03:28.000Z",
     "CEZF192660044_703_2026-09-03T14:03:35.000Z",
@@ -2042516,7 +2042516,9 @@
     "GED7253700398_1225_2026-10-12T10:29:58.000Z",
     "CEZF192660044_614_2026-10-12T11:07:20.000Z",
     "CEZF192660044_EMP100_2026-10-12T11:21:59.767Z",
-    "CEZF192660044_EMP100_2026-10-12T11:24:13.481Z"
+    "CEZF192660044_EMP100_2026-10-12T11:24:13.481Z",
+    "CEZF192660044_703_2026-10-12T11:51:00.000Z",
+    "CEZF192660044_703_2026-10-12T12:01:36.000Z"
   ],
   "biometricDevices": [
     {

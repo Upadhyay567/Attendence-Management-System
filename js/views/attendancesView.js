@@ -960,7 +960,7 @@ export function renderAdminAttendances() {
     const activeUsers = allUsers.filter(u => !isDummyUser(u));
     const userMap = new Map(activeUsers.map(u => [u.id, u]));
 
-    const existingLogs = DB.getLogs().filter(log => {
+    const rawExistingLogs = DB.getLogs().filter(log => {
       if (!userMap.has(log.userId)) return false;
       if (!log.date) return false;
 
@@ -989,7 +989,7 @@ export function renderAdminAttendances() {
 
     // Strict Multiple Punches Algorithm: Strictly ONE attendance row per employee per date
     const dedupedExistingMap = new Map();
-    existingLogs.forEach(l => {
+    rawExistingLogs.forEach(l => {
       if (!l || !l.date) return;
       const key = `${l.userId || l.employeeId || l.biometricUserId}_${l.date}`;
       if (!dedupedExistingMap.has(key)) {
@@ -1007,7 +1007,7 @@ export function renderAdminAttendances() {
         }
       }
     });
-    existingLogs = Array.from(dedupedExistingMap.values());
+    const existingLogs = Array.from(dedupedExistingMap.values());
 
     // LEFT JOIN: Employees -> Daily Attendance for today (or selected date) so absent staff appear
     const todayStr = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
