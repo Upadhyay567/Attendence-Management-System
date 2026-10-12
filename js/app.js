@@ -3092,8 +3092,8 @@ function renderEmployeeProfile() {
                   </div>
                   <div style="overflow:hidden; flex:1;">
                     <div style="font-size:16px; font-weight:800; color:#1e1e1e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name || user.username || 'Employee')}</div>
-                    <div style="font-size:10.5px; color:#89201B; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${Utils.escape(user.designation || 'Associate')}</div>
-                    <div style="font-size:10px; color:#64748b; font-weight:500; margin-top:2px;">${Utils.escape(user.department || 'General')}</div>
+                    <div style="font-size:10.5px; color:#89201B; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${Utils.escape((user.designation && user.designation !== 'Designation' && user.designation !== 'Associate' && user.designation !== 'Junior Developer') ? user.designation : 'Not Assigned')}</div>
+                    <div style="font-size:10px; color:#64748b; font-weight:500; margin-top:2px;">${Utils.escape((user.department && user.department !== 'Department' && user.department !== 'Staff' && user.department !== 'General') ? user.department : 'Not Assigned')}</div>
                   </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -3103,7 +3103,7 @@ function renderEmployeeProfile() {
                   </div>
                   <div style="text-align:right;">
                     <div style="font-size:7.5px; color:#92400e; text-transform:uppercase; letter-spacing:0.6px; margin-bottom:2px; font-weight:700;">JOINED DATE</div>
-                    <div style="font-size:11px; font-weight:700; color:#334155;">${user.dateOfJoining ? Utils.formatDate(user.dateOfJoining) : 'N/A'}</div>
+                    <div style="font-size:11px; font-weight:700; color:#334155;">${(user.dateOfJoining && user.dateOfJoining !== '2024-05-10') ? Utils.formatDate(user.dateOfJoining) : 'Not Assigned'}</div>
                   </div>
                 </div>
               </div>
@@ -3224,7 +3224,7 @@ function renderEmployeeProfile() {
               }
             }
 
-            const joinedDate = user.dateOfJoining ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+            const joinedDate = (user.dateOfJoining && user.dateOfJoining !== '2024-05-10') ? new Date(user.dateOfJoining).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not Assigned';
             const batchText = user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026';
 
             return `
@@ -3363,15 +3363,15 @@ function renderEmployeeProfile() {
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dept">Department</label>
-                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape(user.department || 'General')}" required disabled>
+                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape((user.department && user.department !== 'Department' && user.department !== 'Staff' && user.department !== 'General') ? user.department : '')}" placeholder="Not Assigned" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-designation">Designation</label>
-                <input class="prof-input" type="text" id="prof-designation" value="${Utils.escape(user.designation || 'Associate')}" required disabled>
+                <input class="prof-input" type="text" id="prof-designation" value="${Utils.escape((user.designation && user.designation !== 'Designation' && user.designation !== 'Associate' && user.designation !== 'Junior Developer') ? user.designation : '')}" placeholder="Not Assigned" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-doj">Date of Joining</label>
-                <input class="prof-input" type="date" id="prof-doj" value="${user.dateOfJoining || ''}" required disabled>
+                <input class="prof-input" type="date" id="prof-doj" value="${(user.dateOfJoining && user.dateOfJoining !== '2024-05-10') ? user.dateOfJoining : ''}" disabled>
               </div>
             </div>
             <div class="prof-field-row">
@@ -9158,14 +9158,14 @@ function openStaffDetailModal(userId) {
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Personal Information</h4>
             <div style="display:flex; flex-direction:column; gap:8px; font-size:12px; color:var(--text-secondary)">
-              <div><strong>Department:</strong> ${Utils.escape(user.department || 'N/A')}</div>
-              <div><strong>Designation:</strong> ${Utils.escape(user.designation || 'N/A')}</div>
+              <div><strong>Department:</strong> ${(user.department && user.department !== 'Department' && user.department !== 'Staff' && user.department !== 'General') ? Utils.escape(user.department) : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>'}</div>
+              <div><strong>Designation:</strong> ${(user.designation && user.designation !== 'Designation' && user.designation !== 'Associate' && user.designation !== 'Junior Developer') ? Utils.escape(user.designation) : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>'}</div>
               <div><strong>Email:</strong> ${Utils.escape(user.email || 'N/A')}</div>
               <div><strong>Phone:</strong> ${Utils.escape(user.phone || 'N/A')}</div>
               <div><strong>Date of Birth:</strong> ${user.dob || 'N/A'}</div>
               <div><strong>Gender:</strong> ${user.gender || 'N/A'}</div>
               <div><strong>Verified Staff Batch:</strong> <span style="color:var(--primary);font-weight:700;">${Utils.escape(user.verifiedStaffBatch || user.verifiedBatch || user.batch || 'Batch 2026')}</span></div>
-              <div><strong>Date of Joining:</strong> ${user.dateOfJoining || 'N/A'}</div>
+              <div><strong>Date of Joining:</strong> ${(user.dateOfJoining && user.dateOfJoining !== '2024-05-10') ? Utils.escape(user.dateOfJoining) : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>'}</div>
               <div><strong>Home Address:</strong> ${Utils.escape(user.address || 'N/A')}, ${Utils.escape(user.city || '')}</div>
               <div><strong>Emergency Contact:</strong> ${Utils.escape(user.emergencyContact || 'N/A')}</div>
             </div>
@@ -9173,7 +9173,7 @@ function openStaffDetailModal(userId) {
  
           <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px">
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Work Location & Assigned Shift(s)</h4>
-            ${assignedSchedules.length === 0 ? `<div style="font-size:12px; color:var(--text-muted)">No Shift Assigned</div>` : `
+            ${assignedSchedules.length === 0 ? `<div style="font-size:12px; color:var(--text-muted); font-style:italic">Not Assigned</div>` : `
               <div style="display:flex; flex-direction:column; gap:10px;">
                 ${assignedSchedules.map(sch => {
                   const schWorkDays = sch.workDays && sch.workDays.length > 0 ? sch.workDays.map(d => dayNames[d]).join(', ') : 'All Days';

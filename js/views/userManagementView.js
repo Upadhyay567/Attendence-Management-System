@@ -81,9 +81,9 @@ export function renderAdminUsers() {
 
     const shiftNames = assignedSchedules.length > 0 
       ? assignedSchedules.map(s => Utils.escape(s.name)).join(', ') 
-      : '<span style="color:var(--text-muted)">Not Assigned</span>';
+      : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
 
-    const workLocation = getUserPrimaryLocation(u) || 'Not Assigned';
+    const workLocation = getUserPrimaryLocation(u) || '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
     
     const profileStatus = u.profileVerificationStatus || 'Approved';
     let profileBadgeHTML = '';
@@ -110,6 +110,18 @@ export function renderAdminUsers() {
         <div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>
       `;
 
+    const deptDisplay = (u.department && u.department !== 'Department' && u.department !== 'Staff' && u.department !== 'General')
+      ? Utils.escape(u.department)
+      : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
+
+    const desgDisplay = (u.designation && u.designation !== 'Designation' && u.designation !== 'Associate' && u.designation !== 'Junior Developer')
+      ? Utils.escape(u.designation)
+      : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
+
+    const dojDisplay = (u.dateOfJoining && u.dateOfJoining !== '2024-05-10')
+      ? Utils.escape(u.dateOfJoining)
+      : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>';
+
     return `
       <tr>
         <td style="font-weight:600; display:flex; align-items:center; gap:12px; min-width:180px">
@@ -128,12 +140,12 @@ export function renderAdminUsers() {
         <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.branch || '—')}</td>
         <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.pincode || '—')}</td>
         <td style="white-space:nowrap">${u.bloodGroup ? `<span class="badge" style="font-size:11px; padding:2px 8px; border-radius:12px; background:rgba(239,68,68,0.1); color:#dc2626; font-weight:700; border:1px solid rgba(239,68,68,0.2);">${Utils.escape(u.bloodGroup)}</span>` : '—'}</td>
-        <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.department || '—')}</td>
-        <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.designation || '—')}</td>
+        <td style="font-size:12px; white-space:nowrap">${deptDisplay}</td>
+        <td style="font-size:12px; white-space:nowrap">${desgDisplay}</td>
         <td style="white-space:nowrap">${shiftNames}</td>
-        <td style="font-size:12px;color:var(--text-secondary); white-space:nowrap">${Utils.escape(workLocation)}</td>
+        <td style="font-size:12px;color:var(--text-secondary); white-space:nowrap">${workLocation}</td>
         <td style="white-space:nowrap">${Utils.escape(u.phone || '—')}</td>
-        <td style="white-space:nowrap">${Utils.escape(u.dateOfJoining || '—')}</td>
+        <td style="white-space:nowrap">${dojDisplay}</td>
         <td style="white-space:nowrap">
           ${actionsHTML}
         </td>
@@ -1091,7 +1103,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
           <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
             <div>
               <label class="form-label" for="editor-doj">Date of Joining</label>
-              <input class="form-input" type="date" id="editor-doj" value="${isEdit ? (user.dateOfJoining || '') : new Date().toISOString().split('T')[0]}" required>
+              <input class="form-input" type="date" id="editor-doj" value="${isEdit ? (user.dateOfJoining && user.dateOfJoining !== '2024-05-10' ? user.dateOfJoining : '') : ''}">
             </div>
             <div>
               <label class="form-label" for="editor-emergency">Emergency Contact</label>
@@ -1157,7 +1169,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               ${schedules.map(s => {
                 const isChecked = isEdit
                   ? (Array.isArray(user.scheduleIds) ? user.scheduleIds.includes(s.id) : (user.scheduleId === s.id))
-                  : (s.id === schedules[0].id);
+                  : false;
                 const shiftLoc = (isEdit && user.shiftLocations && user.shiftLocations[s.id]) || (isEdit && user.preferredLocation) || s.location || '';
                 return `
                   <div class="shift-assign-card" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-sm);padding:8px 10px;display:flex;flex-direction:column;gap:6px;">
@@ -1611,11 +1623,11 @@ export function openUserModal(userId = null, initialTab = 'employee') {
     const biometricEl = document.getElementById('editor-biometric-id');
     const biometricUserId = biometricEl ? biometricEl.value.trim() : (isEdit ? (user.biometricUserId || user.biometricId || '') : '');
     const deptEl = document.getElementById('editor-dept');
-    const department = deptEl ? deptEl.value.trim() : (isEdit ? user.department || 'Staff' : 'Staff');
+    const department = deptEl ? deptEl.value.trim() : (isEdit ? user.department || '' : '');
     const desgEl = document.getElementById('editor-desg');
-    const designation = desgEl ? desgEl.value.trim() : (isEdit ? user.designation || 'Employee' : 'Employee');
+    const designation = desgEl ? desgEl.value.trim() : (isEdit ? user.designation || '' : '');
     const dojEl = document.getElementById('editor-doj');
-    const dateOfJoining = dojEl ? dojEl.value : (isEdit ? user.dateOfJoining || '' : '');
+    const dateOfJoining = dojEl ? dojEl.value : (isEdit ? (user.dateOfJoining && user.dateOfJoining !== '2024-05-10' ? user.dateOfJoining : '') : '');
     const emergencyEl = document.getElementById('editor-emergency');
     const emergencyContact = emergencyEl ? emergencyEl.value.trim() : (isEdit ? user.emergencyContact || '' : '');
 

@@ -1065,10 +1065,8 @@ export function renderAdminAttendances() {
         } else {
           shift = DB.getSchedule(userShiftIds[0]);
         }
-      } else if (log.shiftId) {
-        shift = DB.getSchedule(log.shiftId);
       }
-      const shiftName = shift ? shift.name : '-';
+      const shiftName = shift ? shift.name : 'Not Assigned';
       const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       const location = formatLocationTag(rawLocation);
       
@@ -1364,7 +1362,7 @@ export function renderAdminAttendances() {
               ${!log.isAbsent && isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
             </td>
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
-              <div style="font-weight: 500;">${Utils.escape(log.shiftName)}</div>
+              <div style="font-weight: 500;">${log.shiftName && log.shiftName !== '-' && log.shiftName !== 'Not Assigned' ? Utils.escape(log.shiftName) : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>'}</div>
               <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 4px;">
                 <span style="opacity: 0.85;">📍</span> <span>${Utils.escape(log.location)}</span>
               </div>

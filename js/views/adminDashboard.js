@@ -372,6 +372,8 @@ export async function renderAdminDashboard() {
           const rawDept = u ? u.department : '';
           const isDeptAssigned = rawDept && 
             rawDept !== 'Department' && 
+            rawDept !== 'Staff' && 
+            rawDept !== 'General' && 
             rawDept !== 'N/A' && 
             rawDept !== '—' && 
             rawDept.toLowerCase() !== 'not assigned' && 
@@ -397,6 +399,8 @@ export async function renderAdminDashboard() {
           const rawDept = u.department || '';
           const isDeptAssigned = rawDept && 
             rawDept !== 'Department' && 
+            rawDept !== 'Staff' && 
+            rawDept !== 'General' && 
             rawDept !== 'N/A' && 
             rawDept !== '—' && 
             rawDept.toLowerCase() !== 'not assigned' && 
@@ -438,6 +442,8 @@ export async function renderAdminDashboard() {
           const rawDept = u ? u.department : '';
           const isDeptAssigned = rawDept && 
             rawDept !== 'Department' && 
+            rawDept !== 'Staff' && 
+            rawDept !== 'General' && 
             rawDept !== 'N/A' && 
             rawDept !== '—' && 
             rawDept.toLowerCase() !== 'not assigned' && 
@@ -654,16 +660,21 @@ export async function renderAdminDashboard() {
 
   function showLateArrivalsModal() {
     const activeEmployees = getAssignedUserIds();
-    const activeUserIds = activeEmployees.map(u => u.id);
-    const todayStr = new Date().toISOString().split('T')[0];
-    const logs = DB.getLogs().filter(l => l.date === todayStr && l.checkIn && l.status === 'Late' && activeUserIds.includes(l.userId));
+    const todayStr = getLocalTodayDateStr();
+    const logs = DB.getLogs().filter(l => {
+      if (l.date !== todayStr || !l.checkIn || l.status !== 'Late') return false;
+      const u = activeEmployees.find(e => String(e.id) === String(l.userId) || (e.employeeId && String(e.employeeId) === String(l.employeeId)) || (e.biometricUserId && String(e.biometricUserId) === String(l.biometricUserId))) || DB.getUser(l.userId);
+      if (!u) return false;
+      const hasAssignedShift = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0) || !!u.scheduleId;
+      return hasAssignedShift;
+    });
     
     const items = logs.map(l => {
-      const u = DB.getUser(l.userId);
+      const u = activeEmployees.find(e => String(e.id) === String(l.userId) || (e.employeeId && String(e.employeeId) === String(l.employeeId)) || (e.biometricUserId && String(e.biometricUserId) === String(l.biometricUserId))) || DB.getUser(l.userId);
       const userShifts = (Array.isArray(u?.scheduleIds) && u.scheduleIds.length > 0)
         ? u.scheduleIds.map(id => DB.getSchedule(id)).filter(Boolean)
         : (u?.scheduleId ? [DB.getSchedule(u.scheduleId)].filter(Boolean) : []);
-      const sch = l.shiftId ? DB.getSchedule(l.shiftId) : (userShifts[0] || null);
+      const sch = (l.shiftId && userShifts.some(s => s.id === l.shiftId)) ? DB.getSchedule(l.shiftId) : (userShifts[0] || null);
       const distKm = parseFloat(l.distance) || 0;
       const distM = Math.round(distKm * 1000);
       let gpsStatus;
@@ -678,7 +689,7 @@ export async function renderAdminDashboard() {
       return {
         user: u,
         time: l.checkIn,
-        shiftStart: sch ? sch.startTime : '--:--',
+        shiftStart: sch ? sch.startTime : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>',
         gpsStatus: gpsStatus
       };
     });
@@ -748,7 +759,12 @@ export async function renderAdminDashboard() {
     const lateToday = logs.filter(l => l.status === 'Late' && (
       (l.userId && assignedUserIds.includes(l.userId)) ||
       (l.employeeId && activeEmployees.some(e => e.employeeId === l.employeeId))
-    ));
+    )).filter(l => {
+      const u = activeEmployees.find(e => String(e.id) === String(l.userId) || (e.employeeId && String(e.employeeId) === String(l.employeeId)) || (e.biometricUserId && String(e.biometricUserId) === String(l.biometricUserId))) || DB.getUser(l.userId);
+      if (!u) return false;
+      const hasAssignedShift = (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0) || !!u.scheduleId;
+      return hasAssignedShift;
+    });
     const lateCount = lateToday.length;
 
     const onLeaveToday = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && assignedUserIds.includes(lv.userId));

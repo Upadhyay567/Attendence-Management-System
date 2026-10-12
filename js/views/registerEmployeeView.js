@@ -203,8 +203,8 @@ export function renderRegisterEmployeeView() {
           <!-- Date of Joining & Emergency Contact -->
           <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
             <div>
-              <label class="form-label" for="reg-doj" style="font-weight:700;">Date of Joining <span style="color:var(--danger);font-size:11px">*</span></label>
-              <input class="form-input" type="date" id="reg-doj" value="${todayStr}" required>
+              <label class="form-label" for="reg-doj" style="font-weight:700;">Date of Joining</label>
+              <input class="form-input" type="date" id="reg-doj" value="">
             </div>
             <div>
               <label class="form-label" for="reg-emergency" style="font-weight:700;">Emergency Contact <span style="color:var(--danger);font-size:11px">*</span></label>
@@ -247,7 +247,7 @@ export function renderRegisterEmployeeView() {
             <label class="form-label" style="font-weight:700;">Assigned Shift Schedule(s) & Work Location(s)</label>
             <div id="reg-schedule-checkboxes" style="display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; max-height:220px; overflow-y:auto;">
               ${schedules.map((s, idx) => {
-                const isChecked = idx === 0;
+                const isChecked = false;
                 const shiftLoc = s.location || 'Delhi Head Office';
                 return `
                   <div class="shift-assign-card" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-sm); padding:8px 10px; display:flex; flex-direction:column; gap:6px;">
