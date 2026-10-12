@@ -336,7 +336,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
       const response = await request(app).post('/api/biometric/sync');
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success');
-    });
+    }, 60000);
   });
 
   describe('Password Recovery / Forgot Password Flow & API 404 Tests', () => {

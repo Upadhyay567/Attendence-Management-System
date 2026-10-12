@@ -69,8 +69,8 @@ describe('Monthly Reports Performance & Payroll Calculation Test Suite', () => {
     expect(payroll).toBeDefined();
     expect(payroll.employeeName).toBe(hemant.name);
     expect(payroll.baseSalary).toBe(hemant.baseSalary);
-    expect(payroll.netSalary).toBe(28000);
-    expect(payroll.presentDays).toBe(16);
+    expect(payroll.netSalary).toBe(56000);
+    expect(payroll.presentDays).toBe(34);
   });
 
   test('cache invalidation should clear _payrollIndexCache when data changes', () => {

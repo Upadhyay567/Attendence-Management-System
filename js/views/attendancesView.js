@@ -1070,45 +1070,46 @@ export function renderAdminAttendances() {
       const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       const location = formatLocationTag(rawLocation);
       
-      // Standardize Work Status to: 'In Session', 'Checked Out', 'Missing Check-Out', 'Missing Check-In', or 'Absent'
+      // Standardize Work Status under Multiple Punches Algorithm on Workday:
+      let effectiveIn = log.checkIn;
+      let effectiveOut = log.checkOut;
+      if (!effectiveIn && effectiveOut) {
+        effectiveIn = effectiveOut;
+        effectiveOut = '';
+      }
+
       let workStatus = 'Absent';
       let atWorkStr = 'Absent';
       let atWorkMins = 0;
-      if (log.checkIn && log.checkOut) {
+      if (effectiveIn && effectiveOut) {
         workStatus = 'Checked Out';
         atWorkStr = 'Checked Out';
-        const [inH, inM] = log.checkIn.split(':').map(Number);
-        const [outH, outM] = log.checkOut.split(':').map(Number);
+        const [inH, inM] = effectiveIn.split(':').map(Number);
+        const [outH, outM] = effectiveOut.split(':').map(Number);
         atWorkMins = (outH * 60 + outM) - (inH * 60 + inM);
         if (atWorkMins < 0) atWorkMins += 24 * 60;
-      } else if (log.checkIn && !log.checkOut) {
+      } else if (effectiveIn && !effectiveOut) {
         const isToday = log.date === todayStr;
         workStatus = isToday ? 'In Session' : 'Missing Check-Out';
         atWorkStr = isToday ? 'In Session' : 'Missing Check-Out';
         atWorkMins = isToday ? 9999 : 0;
-      } else if (!log.checkIn && log.checkOut) {
-        workStatus = 'Checked Out';
-        atWorkStr = 'Missing Check-In';
-        atWorkMins = 0;
       } else {
         workStatus = 'Absent';
         atWorkStr = 'Absent';
         atWorkMins = -1;
       }
 
-      // Standardize Attendance Status badges to: 'ON TIME', 'LATE', 'HALF DAY', or 'ABSENT'
+      // Standardize Attendance Status badges under Multiple Punches Algorithm:
       let s = log.status;
-      if (log.isAbsent || (!log.checkIn && !log.checkOut)) {
+      if (log.isAbsent || (!effectiveIn && !effectiveOut)) {
         s = 'Absent';
-      } else if (!log.checkIn && log.checkOut) {
-        s = 'Half Day';
       } else if (!shift) {
-        s = log.checkIn ? 'On Time' : 'Absent';
-      } else if (!s || s === 'Present') {
+        s = effectiveIn ? 'On Time' : 'Absent';
+      } else if (!s || s === 'Present' || s === 'Absent') {
         s = 'On Time';
-        if (shift && shift.startTime && log.checkIn) {
+        if (shift && shift.startTime && effectiveIn) {
           const [sH, sM] = shift.startTime.split(':').map(Number);
-          const [iH, iM] = log.checkIn.split(':').map(Number);
+          const [iH, iM] = effectiveIn.split(':').map(Number);
           const sMins = sH * 60 + (sM || 0);
           const iMins = iH * 60 + (iM || 0);
           const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
@@ -1274,11 +1275,18 @@ export function renderAdminAttendances() {
         const initials = log.employeeName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const avatarBg = getInitialsColor(log.userId || log.employeeName);
         
+        let effectiveIn = log.checkIn;
+        let effectiveOut = log.checkOut;
+        if (!effectiveIn && effectiveOut) {
+          effectiveIn = effectiveOut;
+          effectiveOut = '';
+        }
+
         // Format checkIn & checkOut to show full seconds if available or hh:mm:ss
-        let checkInDisplay = log.checkIn || '--:--';
+        let checkInDisplay = effectiveIn || '--:--';
         if (checkInDisplay !== '--:--' && checkInDisplay.length === 5) checkInDisplay += ':00';
         
-        let checkOutDisplay = log.checkOut || '--:--';
+        let checkOutDisplay = effectiveOut || '--:--';
         if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
 
         const userShiftIds = Array.isArray(log.emp?.scheduleIds) && log.emp.scheduleIds.length > 0
@@ -1294,8 +1302,8 @@ export function renderAdminAttendances() {
         }
         
         let isLateArrival = false;
-        if (log.checkIn && shift) {
-          const [inH, inM] = log.checkIn.split(':').map(Number);
+        if (effectiveIn && shift) {
+          const [inH, inM] = effectiveIn.split(':').map(Number);
           const [startH, startM] = shift.startTime.split(':').map(Number);
           const checkInMins = inH * 60 + inM;
           const startMins = startH * 60 + startM;
@@ -1306,8 +1314,8 @@ export function renderAdminAttendances() {
         }
         
         let isEarlyDeparture = false;
-        if (log.checkOut && shift) {
-          const [outH, outM] = log.checkOut.split(':').map(Number);
+        if (effectiveOut && shift) {
+          const [outH, outM] = effectiveOut.split(':').map(Number);
           const [endH, endM] = shift.endTime.split(':').map(Number);
           const checkOutMins = outH * 60 + outM;
           const endMins = endH * 60 + endM;
@@ -1318,12 +1326,12 @@ export function renderAdminAttendances() {
 
         let s = log.status;
         if (!shift) {
-          s = log.checkIn ? 'On Time' : 'Absent';
-        } else if (!s || s === 'Present') {
+          s = effectiveIn ? 'On Time' : 'Absent';
+        } else if (!s || s === 'Present' || s === 'Absent') {
           s = 'On Time';
-          if (shift && shift.startTime && log.checkIn) {
+          if (shift && shift.startTime && effectiveIn) {
             const [sH, sM] = shift.startTime.split(':').map(Number);
-            const [iH, iM] = log.checkIn.split(':').map(Number);
+            const [iH, iM] = effectiveIn.split(':').map(Number);
             const sMins = sH * 60 + (sM || 0);
             const iMins = iH * 60 + (iM || 0);
             const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
