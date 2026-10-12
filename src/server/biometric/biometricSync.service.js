@@ -136,7 +136,8 @@ function normalizePunch(log, deviceConfig = null) {
     ip: log.ip || deviceConfig?.ip || DEVICE.ip,
     deviceName: log.deviceName || deviceConfig?.name || DEVICE_NAME,
     deviceSerial: log.deviceSerial || deviceConfig?.serial || DEVICE.serial,
-    location: log.location || deviceConfig?.location || LOCATION
+    location: log.location || deviceConfig?.location || LOCATION,
+    punchState: log.punchState ?? log.punch_state ?? '0'
   };
 }
 
@@ -779,13 +780,36 @@ function processLocalPunch(
 
   const existingForShift = userLogsToday.find(l => String(l.shiftId) === String(targetShiftId));
   if (existingForShift) {
+    const hasIn = Boolean(existingForShift.checkIn);
+    const hasOut = Boolean(existingForShift.checkOut);
+    const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
+
+    if (!hasIn && hasOut) {
+      const [outH, outM] = existingForShift.checkOut.split(':').map(Number);
+      const outMins = (outH || 0) * 60 + (outM || 0);
+      if (punchMins < outMins) {
+        existingForShift.checkIn = time;
+        existingForShift.checkInPunchId = punchId;
+      } else {
+        existingForShift.checkOut = time;
+        existingForShift.checkOutPunchId = punchId;
+      }
+      existingForShift.status = computeAttendanceStatus(existingForShift.checkIn, existingForShift.checkOut, shiftObj);
+      existingForShift.updatedAt = new Date().toISOString();
+      if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
+      if (!existingForShift.allPunchIds.includes(punchId)) existingForShift.allPunchIds.push(punchId);
+      state.processedPunchIds.push(punchId);
+      if (processedPunchSet) processedPunchSet.add(punchId);
+      result.updated++;
+      return;
+    }
+
     const [inH, inM] = (existingForShift.checkIn || '23:59').split(':').map(Number);
     const inMins = (inH || 0) * 60 + (inM || 0);
     const [outH, outM] = (existingForShift.checkOut || existingForShift.checkIn).split(':').map(Number);
     const outMins = (outH || 0) * 60 + (outM || 0);
 
     if (punchMins < inMins) {
-      const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
       existingForShift.checkIn = time;
       existingForShift.checkInPunchId = punchId;
       existingForShift.status = computeAttendanceStatus(time, existingForShift.checkOut || '', shiftObj);
@@ -799,7 +823,6 @@ function processLocalPunch(
       result.updated++;
       return;
     } else if (punchMins > outMins) {
-      const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
       const evaluatedStatus = computeAttendanceStatus(existingForShift.checkIn, time, shiftObj);
       existingForShift.checkOut = time;
       existingForShift.checkOutPunchId = punchId;
@@ -829,7 +852,10 @@ function processLocalPunch(
   }
 
   const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
-  const status = computeAttendanceStatus(time, '', shiftObj);
+  const isEveningDeparture = punch.punchState === '1' || (punchMins >= 15 * 60 && punch.punchState !== '0');
+  const initialCheckIn = isEveningDeparture ? '' : time;
+  const initialCheckOut = isEveningDeparture ? time : '';
+  const status = computeAttendanceStatus(initialCheckIn, initialCheckOut, shiftObj);
 
   const newLog = {
     id: createAttendanceId(
@@ -849,11 +875,13 @@ function processLocalPunch(
     shiftId:
       targetShiftId,
 
-    checkIn: time,
+    checkIn: initialCheckIn,
 
-    checkOut: '',
+    checkOut: initialCheckOut,
 
-    checkInPunchId: punchId,
+    checkInPunchId: isEveningDeparture ? '' : punchId,
+
+    checkOutPunchId: isEveningDeparture ? punchId : '',
 
     biometricPunchId: punchId,
 

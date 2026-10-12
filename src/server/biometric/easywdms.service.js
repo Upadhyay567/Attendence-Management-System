@@ -489,6 +489,7 @@ async function syncFromWDMS(username, password, options = {}) {
       normalizedPunches.push({
         biometricUserId: pin,
         recordTime: new Date(punchTime),
+        punchState: String(tx.punch_state || '0'),
         deviceName: termInfo.name,
         deviceSerial: sn,
         location: termInfo.location

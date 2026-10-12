@@ -1072,7 +1072,7 @@ export function renderAdminAttendances() {
       const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       const location = formatLocationTag(rawLocation);
       
-      // Standardize Work Status to: 'In Session', 'Checked Out', or 'Absent'
+      // Standardize Work Status to: 'In Session', 'Checked Out', 'Missing Check-Out', 'Missing Check-In', or 'Absent'
       let workStatus = 'Absent';
       let atWorkStr = 'Absent';
       let atWorkMins = 0;
@@ -1084,19 +1084,26 @@ export function renderAdminAttendances() {
         atWorkMins = (outH * 60 + outM) - (inH * 60 + inM);
         if (atWorkMins < 0) atWorkMins += 24 * 60;
       } else if (log.checkIn && !log.checkOut) {
-        workStatus = 'In Session';
-        atWorkStr = 'In Session';
-        atWorkMins = 9999;
+        const isToday = log.date === todayStr;
+        workStatus = isToday ? 'In Session' : 'Missing Check-Out';
+        atWorkStr = isToday ? 'In Session' : 'Missing Check-Out';
+        atWorkMins = isToday ? 9999 : 0;
+      } else if (!log.checkIn && log.checkOut) {
+        workStatus = 'Checked Out';
+        atWorkStr = 'Missing Check-In';
+        atWorkMins = 0;
       } else {
         workStatus = 'Absent';
         atWorkStr = 'Absent';
         atWorkMins = -1;
       }
 
-      // Standardize Attendance Status badges to: 'ON TIME', 'LATE', or 'ABSENT'
+      // Standardize Attendance Status badges to: 'ON TIME', 'LATE', 'HALF DAY', or 'ABSENT'
       let s = log.status;
       if (log.isAbsent || (!log.checkIn && !log.checkOut)) {
         s = 'Absent';
+      } else if (!log.checkIn && log.checkOut) {
+        s = 'Half Day';
       } else if (!shift) {
         s = log.checkIn ? 'On Time' : 'Absent';
       } else if (!s || s === 'Present') {
@@ -1118,6 +1125,9 @@ export function renderAdminAttendances() {
       if (s === 'Late') {
         badgeClass = 'badge-late';
         badgeText = 'LATE';
+      } else if (s === 'Half Day') {
+        badgeClass = 'badge-half-day';
+        badgeText = 'HALF DAY';
       } else if (s === 'Absent') {
         badgeClass = 'badge-absent';
         badgeText = 'ABSENT';
