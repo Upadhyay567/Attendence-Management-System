@@ -190,19 +190,22 @@ function writeLocalDatabase(state) {
         state.processedPunchIds = state.processedPunchIds.slice(-5000);
       }
     }
+    const tmpFile = `${LOCAL_DB_FILE}.tmp.${Date.now()}`;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        fs.writeFileSync(
-          LOCAL_DB_FILE,
-          JSON.stringify(state, null, 2),
-          'utf8'
-        );
+        fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+        fs.renameSync(tmpFile, LOCAL_DB_FILE);
         break;
       } catch (writeErr) {
-        if (attempt === 2) throw writeErr;
-        const waitMs = 50 * (attempt + 1);
-        const start = Date.now();
-        while (Date.now() - start < waitMs) {}
+        try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+        if (attempt === 2) {
+          // Direct fallback
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(state, null, 2), 'utf8');
+        } else {
+          const waitMs = 50 * (attempt + 1);
+          const start = Date.now();
+          while (Date.now() - start < waitMs) {}
+        }
       }
     }
     try {
@@ -701,72 +704,131 @@ function processLocalPunch(
         { id: 'sch_mfl8wvv', name: 'General Shift', startTime: '09:00', endTime: '17:00' }
       ];
 
-  const userLogsToday = state.attendanceLogs.filter(log =>
-    String(log.userId) === String(employee.id) && String(log.date) === String(date)
-  );
+  const empIdStr = String(employee.id);
+  const empCodeStr = employee.employeeId ? String(employee.employeeId) : '';
+  const bioPinStr = punch.biometricUserId ? String(punch.biometricUserId) : '';
+
+  // Strict Multiple Punches Algorithm: An employee has strictly ONE attendance session per workday.
+  // Find ANY existing attendance log for this employee on this date (across all user/employee/bio identifiers).
+  const userLogsToday = state.attendanceLogs.filter(log => {
+    if (String(log.date) !== String(date)) return false;
+    const logUid = String(log.userId || '');
+    const logEid = String(log.employeeId || '');
+    const logBio = String(log.biometricUserId || '');
+    return logUid === empIdStr ||
+           (empCodeStr && (logEid === empCodeStr || logBio === empCodeStr)) ||
+           (bioPinStr && (logBio === bioPinStr || logEid === bioPinStr || logUid === `usr_bio_${bioPinStr}`));
+  });
 
   const [punchH, punchM] = time.split(':').map(Number);
   const punchMins = (punchH || 0) * 60 + (punchM || 0);
 
-  // Check if there is an active OPEN shift session today (checkIn present, no checkOut)
-  const openLog = userLogsToday.find(log => log.checkIn && !log.checkOut);
+  if (userLogsToday.length > 0) {
+    const primaryLog = userLogsToday[0];
 
-  if (openLog) {
-    const [inH, inM] = openLog.checkIn.split(':').map(Number);
+    // Merge & eliminate any other duplicate logs for this user on this date
+    if (userLogsToday.length > 1) {
+      if (!Array.isArray(primaryLog.allPunchIds)) primaryLog.allPunchIds = [];
+      for (let i = 1; i < userLogsToday.length; i++) {
+        const extraLog = userLogsToday[i];
+        if (Array.isArray(extraLog.allPunchIds)) {
+          extraLog.allPunchIds.forEach(pid => {
+            if (!primaryLog.allPunchIds.includes(pid)) primaryLog.allPunchIds.push(pid);
+          });
+        }
+        if (extraLog.checkIn && (!primaryLog.checkIn || extraLog.checkIn < primaryLog.checkIn)) {
+          primaryLog.checkIn = extraLog.checkIn;
+          primaryLog.checkInPunchId = extraLog.checkInPunchId || primaryLog.checkInPunchId;
+          primaryLog.location = extraLog.location || primaryLog.location;
+          primaryLog.biometricUsed = extraLog.biometricUsed || primaryLog.biometricUsed;
+          primaryLog.biometricDeviceId = extraLog.biometricDeviceId || primaryLog.biometricDeviceId;
+        }
+        if (extraLog.checkOut && (!primaryLog.checkOut || extraLog.checkOut > primaryLog.checkOut)) {
+          primaryLog.checkOut = extraLog.checkOut;
+          primaryLog.checkOutPunchId = extraLog.checkOutPunchId || primaryLog.checkOutPunchId;
+          primaryLog.departureLocation = extraLog.departureLocation || extraLog.location || primaryLog.departureLocation;
+          primaryLog.departureDevice = extraLog.departureDevice || extraLog.biometricUsed || primaryLog.departureDevice;
+        }
+        const idx = state.attendanceLogs.indexOf(extraLog);
+        if (idx !== -1) state.attendanceLogs.splice(idx, 1);
+      }
+    }
+
+    // Normalize legacy records where checkOut exists without checkIn
+    if (!primaryLog.checkIn && primaryLog.checkOut) {
+      primaryLog.checkIn = primaryLog.checkOut;
+      primaryLog.checkInPunchId = primaryLog.checkOutPunchId || punchId;
+      primaryLog.checkOut = '';
+      primaryLog.checkOutPunchId = '';
+    }
+
+    const [inH, inM] = (primaryLog.checkIn || '23:59').split(':').map(Number);
     const inMins = (inH || 0) * 60 + (inM || 0);
 
-    // If tap is within 1 minute of check-in, treat as accidental double-tap
-    if (Math.abs(punchMins - inMins) <= 1) {
-      if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-      openLog.allPunchIds.push(punchId);
+    const outStr = primaryLog.checkOut || '';
+    const [outH, outM] = outStr ? outStr.split(':').map(Number) : [null, null];
+    const outMins = outStr ? (outH * 60 + outM) : null;
+
+    // Accidental double-tap within 1 minute of Check-In or Check-Out
+    if (Math.abs(punchMins - inMins) <= 1 || (outMins !== null && Math.abs(punchMins - outMins) <= 1)) {
+      if (!Array.isArray(primaryLog.allPunchIds)) primaryLog.allPunchIds = [];
+      if (!primaryLog.allPunchIds.includes(punchId)) primaryLog.allPunchIds.push(punchId);
       state.processedPunchIds.push(punchId);
       if (processedPunchSet) processedPunchSet.add(punchId);
       result.duplicates++;
       return;
     }
 
-    // Multiple Punches Algorithm on Workday:
-    // Earliest punch is assigned to Check-In, latest punch is assigned to Check-Out
-    const shiftObj = schedules.find(s => String(s.id) === String(openLog.shiftId));
+    // Strict Multiple Punches Algorithm on Workday:
+    // Earliest punch is assigned to Check-In with arrival terminal location.
+    // Latest punch is assigned to Check-Out with departure terminal location.
     if (punchMins < inMins) {
-      openLog.checkOut = openLog.checkIn;
-      openLog.checkOutPunchId = openLog.checkInPunchId;
-      openLog.checkIn = time;
-      openLog.checkInPunchId = punchId;
-      openLog.location = punch.location || punch.deviceName || openLog.location;
-      openLog.biometricUsed = punch.deviceName || DEVICE_NAME;
-      openLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
+      if (!primaryLog.checkOut) {
+        primaryLog.checkOut = primaryLog.checkIn;
+        primaryLog.checkOutPunchId = primaryLog.checkInPunchId;
+        primaryLog.departureLocation = primaryLog.location;
+        primaryLog.departureDevice = primaryLog.biometricUsed;
+      }
+      primaryLog.checkIn = time;
+      primaryLog.checkInPunchId = punchId;
+      primaryLog.location = punch.location || punch.deviceName || primaryLog.location;
+      primaryLog.biometricUsed = punch.deviceName || DEVICE_NAME;
+      primaryLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
     } else {
-      openLog.checkOut = time;
-      openLog.checkOutPunchId = punchId;
-      openLog.departureLocation = punch.location || punch.deviceName || openLog.location;
-      openLog.departureDevice = punch.deviceName || DEVICE_NAME;
+      if (outMins === null || punchMins >= outMins) {
+        primaryLog.checkOut = time;
+        primaryLog.checkOutPunchId = punchId;
+        primaryLog.departureLocation = punch.location || punch.deviceName || primaryLog.location;
+        primaryLog.departureDevice = punch.deviceName || DEVICE_NAME;
+      }
     }
-    const evaluatedStatus = computeAttendanceStatus(openLog.checkIn, openLog.checkOut, shiftObj);
 
-    if (!openLog.employeeName && employee.name) openLog.employeeName = employee.name;
-    if (!openLog.employeeId && employee.employeeId) openLog.employeeId = employee.employeeId;
-    openLog.status = evaluatedStatus;
-    openLog.lastBiometricPunchAt = punch.recordTime.toISOString();
-    openLog.updatedAt = new Date().toISOString();
+    const shiftObj = schedules.find(s => String(s.id) === String(primaryLog.shiftId));
+    const evaluatedStatus = computeAttendanceStatus(primaryLog.checkIn, primaryLog.checkOut, shiftObj);
 
-    if (!Array.isArray(openLog.allPunchIds)) openLog.allPunchIds = [];
-    openLog.allPunchIds.push(punchId);
+    if (!primaryLog.employeeName && employee.name) primaryLog.employeeName = employee.name;
+    if (!primaryLog.employeeId && employee.employeeId) primaryLog.employeeId = employee.employeeId;
+    primaryLog.status = evaluatedStatus;
+    primaryLog.lastBiometricPunchAt = punch.recordTime.toISOString();
+    primaryLog.updatedAt = new Date().toISOString();
+
+    if (!Array.isArray(primaryLog.allPunchIds)) primaryLog.allPunchIds = [];
+    if (!primaryLog.allPunchIds.includes(punchId)) primaryLog.allPunchIds.push(punchId);
     state.processedPunchIds.push(punchId);
     if (processedPunchSet) processedPunchSet.add(punchId);
 
     if (!Array.isArray(state.activityLogs)) state.activityLogs = [];
     state.activityLogs.unshift({
       timestamp: new Date().toISOString(),
-      action: 'BIOMETRIC_CHECKOUT',
+      action: primaryLog.checkOut ? 'BIOMETRIC_CHECKOUT' : 'BIOMETRIC_PUNCH',
       userId: String(employee.id),
       userName: employee.name,
       userRole: employee.role || 'employee',
       details: {
-        attendanceId: openLog.id,
-        shiftId: openLog.shiftId,
-        checkIn: openLog.checkIn,
-        checkOut: openLog.checkOut,
+        attendanceId: primaryLog.id,
+        shiftId: primaryLog.shiftId,
+        checkIn: primaryLog.checkIn,
+        checkOut: primaryLog.checkOut,
         status: evaluatedStatus,
         device: punch.deviceName || DEVICE_NAME
       },
@@ -775,12 +837,11 @@ function processLocalPunch(
 
     result.updated++;
     console.log(
-      `🔵 BIOMETRIC CHECK-OUT | ${employee.name} | Shift: ${openLog.shiftId} | In: ${openLog.checkIn} -> Out: ${openLog.checkOut} | Status: ${evaluatedStatus}`
+      `🔵 BIOMETRIC PUNCH | ${employee.name} | Shift: ${primaryLog.shiftId || 'Default'} | In: ${primaryLog.checkIn} -> Out: ${primaryLog.checkOut || '--:--'} | Status: ${evaluatedStatus}`
     );
     return;
   }
 
-  // NO open session. Check if target shift already has attendance today
   const targetShiftId = resolveShiftForPunch(
     employee,
     punch.recordTime,
@@ -788,74 +849,6 @@ function processLocalPunch(
     schedules,
     state.attendanceLogs
   );
-
-  const existingForShift = userLogsToday.find(l => String(l.shiftId) === String(targetShiftId)) || userLogsToday[0];
-  if (existingForShift) {
-    const shiftObj = schedules.find(s => String(s.id) === String(existingForShift.shiftId || targetShiftId));
-
-    // Multiple Punches Algorithm:
-    // If legacy record had checkOut without checkIn, normalize checkOut to checkIn
-    if (!existingForShift.checkIn && existingForShift.checkOut) {
-      existingForShift.checkIn = existingForShift.checkOut;
-      existingForShift.checkInPunchId = existingForShift.checkOutPunchId || punchId;
-      existingForShift.checkOut = '';
-      existingForShift.checkOutPunchId = '';
-    }
-
-    const [inH, inM] = (existingForShift.checkIn || '23:59').split(':').map(Number);
-    const inMins = (inH || 0) * 60 + (inM || 0);
-
-    const outStr = existingForShift.checkOut || '';
-    const [outH, outM] = outStr ? outStr.split(':').map(Number) : [null, null];
-    const outMins = outStr ? (outH * 60 + outM) : null;
-
-    // Check accidental double-tap within 1 minute
-    if (Math.abs(punchMins - inMins) <= 1 || (outMins !== null && Math.abs(punchMins - outMins) <= 1)) {
-      if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
-      if (!existingForShift.allPunchIds.includes(punchId)) existingForShift.allPunchIds.push(punchId);
-      state.processedPunchIds.push(punchId);
-      if (processedPunchSet) processedPunchSet.add(punchId);
-      result.duplicates++;
-      return;
-    }
-
-    // Earliest punch is assigned to Check-In, Latest punch is assigned to Check-Out
-    if (punchMins < inMins) {
-      if (!existingForShift.checkOut) {
-        existingForShift.checkOut = existingForShift.checkIn;
-        existingForShift.checkOutPunchId = existingForShift.checkInPunchId;
-        existingForShift.departureLocation = existingForShift.location;
-        existingForShift.departureDevice = existingForShift.biometricUsed;
-      }
-      existingForShift.checkIn = time;
-      existingForShift.checkInPunchId = punchId;
-      existingForShift.location = punch.location || punch.deviceName || existingForShift.location;
-      existingForShift.biometricUsed = punch.deviceName || DEVICE_NAME;
-      existingForShift.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
-    } else {
-      if (outMins === null || punchMins >= outMins) {
-        existingForShift.checkOut = time;
-        existingForShift.checkOutPunchId = punchId;
-        existingForShift.departureLocation = punch.location || punch.deviceName || existingForShift.location;
-        existingForShift.departureDevice = punch.deviceName || DEVICE_NAME;
-      }
-    }
-
-    existingForShift.status = computeAttendanceStatus(existingForShift.checkIn, existingForShift.checkOut, shiftObj);
-    if (!existingForShift.employeeName && employee.name) existingForShift.employeeName = employee.name;
-    if (!existingForShift.employeeId && employee.employeeId) existingForShift.employeeId = employee.employeeId;
-    existingForShift.lastBiometricPunchAt = punch.recordTime.toISOString();
-    existingForShift.updatedAt = new Date().toISOString();
-
-    if (!Array.isArray(existingForShift.allPunchIds)) existingForShift.allPunchIds = [];
-    if (!existingForShift.allPunchIds.includes(punchId)) existingForShift.allPunchIds.push(punchId);
-    state.processedPunchIds.push(punchId);
-    if (processedPunchSet) processedPunchSet.add(punchId);
-
-    result.updated++;
-    return;
-  }
-
   const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
   // Multiple Punches Algorithm: First punch of the workday is ALWAYS Check-In
   const initialCheckIn = time;
@@ -1071,10 +1064,44 @@ async function syncLocalDatabase(
     );
   }
 
+  // Guarantee strictly ONE attendance log per employee per workday (Zero duplicates)
+  const uniqueLogMap = new Map();
+  const dedupedLogs = [];
+  for (let i = 0; i < state.attendanceLogs.length; i++) {
+    const l = state.attendanceLogs[i];
+    if (!l || !l.date) continue;
+    const key = (l.userId || l.employeeId || l.id) + '_' + l.date;
+    if (!uniqueLogMap.has(key)) {
+      uniqueLogMap.set(key, l);
+      dedupedLogs.push(l);
+    } else {
+      const existing = uniqueLogMap.get(key);
+      if (Array.isArray(l.allPunchIds)) {
+        if (!Array.isArray(existing.allPunchIds)) existing.allPunchIds = [];
+        l.allPunchIds.forEach(pid => {
+          if (!existing.allPunchIds.includes(pid)) existing.allPunchIds.push(pid);
+        });
+      }
+      if (l.checkIn && (!existing.checkIn || l.checkIn < existing.checkIn)) {
+        existing.checkIn = l.checkIn;
+        existing.checkInPunchId = l.checkInPunchId || existing.checkInPunchId;
+        existing.location = l.location || existing.location;
+        existing.biometricUsed = l.biometricUsed || existing.biometricUsed;
+      }
+      if (l.checkOut && (!existing.checkOut || l.checkOut > existing.checkOut)) {
+        existing.checkOut = l.checkOut;
+        existing.checkOutPunchId = l.checkOutPunchId || existing.checkOutPunchId;
+        existing.departureLocation = l.departureLocation || l.location || existing.departureLocation;
+        existing.departureDevice = l.departureDevice || l.biometricUsed || existing.departureDevice;
+      }
+    }
+  }
+  state.attendanceLogs = dedupedLogs;
+
   /*
-   * Keep attendance sorted newest first only if new logs were added
+   * Keep attendance sorted newest first
    */
-  if (result.created > 0) {
+  if (result.created > 0 || dedupedLogs.length !== state.attendanceLogs.length) {
     state.attendanceLogs.sort(
       (a, b) => {
         const aTime =

@@ -975,7 +975,28 @@ export async function renderAdminDashboard() {
     });
 
     // Update live feed current logs and render all punches logged today across all branch locations
-    const allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
+    // Strict Multiple Punches Algorithm: Strictly ONE entry per employee with earliest check-in and latest check-out
+    const rawTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
+    const todayUserMap = new Map();
+    rawTodayLogs.forEach(l => {
+      const uKey = String(l.userId || l.employeeId || l.biometricUserId || l.id);
+      if (!todayUserMap.has(uKey)) {
+        todayUserMap.set(uKey, { ...l });
+      } else {
+        const ex = todayUserMap.get(uKey);
+        if (l.checkIn && (!ex.checkIn || l.checkIn < ex.checkIn)) {
+          ex.checkIn = l.checkIn;
+          ex.location = l.location || ex.location;
+          ex.biometricUsed = l.biometricUsed || ex.biometricUsed;
+        }
+        if (l.checkOut && (!ex.checkOut || l.checkOut > ex.checkOut)) {
+          ex.checkOut = l.checkOut;
+          ex.departureLocation = l.departureLocation || l.location || ex.departureLocation;
+        }
+      }
+    });
+
+    const allTodayLogs = Array.from(todayUserMap.values());
     allTodayLogs.sort((a, b) => {
       const timeA = a.checkIn || a.checkOut || a.lastBiometricPunchAt || '';
       const timeB = b.checkIn || b.checkOut || b.lastBiometricPunchAt || '';

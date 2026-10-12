@@ -987,6 +987,28 @@ export function renderAdminAttendances() {
       return logYear === adminAttendancesSelectedYear && logMonth === adminAttendancesSelectedMonth;
     });
 
+    // Strict Multiple Punches Algorithm: Strictly ONE attendance row per employee per date
+    const dedupedExistingMap = new Map();
+    existingLogs.forEach(l => {
+      if (!l || !l.date) return;
+      const key = `${l.userId || l.employeeId || l.biometricUserId}_${l.date}`;
+      if (!dedupedExistingMap.has(key)) {
+        dedupedExistingMap.set(key, { ...l });
+      } else {
+        const ex = dedupedExistingMap.get(key);
+        if (l.checkIn && (!ex.checkIn || l.checkIn < ex.checkIn)) {
+          ex.checkIn = l.checkIn;
+          ex.location = l.location || ex.location;
+          ex.biometricUsed = l.biometricUsed || ex.biometricUsed;
+        }
+        if (l.checkOut && (!ex.checkOut || l.checkOut > ex.checkOut)) {
+          ex.checkOut = l.checkOut;
+          ex.departureLocation = l.departureLocation || l.location || ex.departureLocation;
+        }
+      }
+    });
+    existingLogs = Array.from(dedupedExistingMap.values());
+
     // LEFT JOIN: Employees -> Daily Attendance for today (or selected date) so absent staff appear
     const todayStr = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
     let targetLeftJoinDates = [];
