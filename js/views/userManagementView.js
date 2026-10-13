@@ -4,7 +4,7 @@ import { Auth } from '../core/auth.js';
 import { Utils, html } from '../utils/helpers.js';
 import { closeModal, openFullScreenImageModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
-import { openProfileDownloadModal } from '../downloads.js';
+import { openProfileDownloadModal, loadSheetJS } from '../downloads.js';
 
 const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
@@ -66,6 +66,9 @@ export function renderAdminUsers() {
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager' || user.role === 'admin') ? `
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="btn-outline-equify" id="btn-download-profile-users" title="Download Staff Profiles">&#8681; Download Profile</button>
+      <button class="btn-outline-equify" id="btn-bulk-upload-users" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; font-size:13px; font-weight:700;" title="Bulk Upload Employee Data via Excel / CSV">
+        <span>📤</span> Bulk Upload Data
+      </button>
       <button class="btn-primary-equify" id="btn-add-employee-action" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px; font-weight:700;" title="Register New Employee">
         <span>👤</span> Add Employee
       </button>
@@ -280,6 +283,13 @@ export function renderAdminUsers() {
     if (typeof openProfileDownloadModal === 'function') openProfileDownloadModal(null, activeLoc);
     else if (typeof window.openProfileDownloadModal === 'function') window.openProfileDownloadModal(null, activeLoc);
   });
+
+  const bulkUploadBtn = document.getElementById('btn-bulk-upload-users');
+  if (bulkUploadBtn) {
+    bulkUploadBtn.addEventListener('click', () => {
+      openBulkUploadModal();
+    });
+  }
 
   const triggerPushSync = async () => {
     try {
@@ -1833,4 +1843,892 @@ export function openUserModal(userId = null, initialTab = 'employee') {
       renderAdminUsers();
     }
   });
+}
+
+// ============================================================================
+// BULK EMPLOYEE DATA IMPORT ENGINE (EXCEL & CSV UPSERT)
+// ============================================================================
+
+export function parseUploadDate(val) {
+  if (!val) return '';
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return '';
+    return val.toISOString().split('T')[0];
+  }
+  // Check if Excel numeric serial date (e.g. 45427)
+  if (typeof val === 'number' || (!isNaN(val) && !isNaN(parseFloat(val)) && isFinite(val) && Number(val) > 20000 && Number(val) < 80000)) {
+    const d = new Date(Math.round((Number(val) - 25569) * 86400 * 1000));
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().split('T')[0];
+    }
+  }
+  const str = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(str)) return str.replace(/\//g, '-');
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+  return str;
+}
+
+export function parseUploadNumber(val) {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const cleaned = String(val).replace(/[₹$,\s]/g, '').trim();
+  if (cleaned === '') return null;
+  const num = Number(cleaned);
+  return isNaN(num) ? null : num;
+}
+
+export function normalizeBulkRow(raw) {
+  const norm = {
+    name: '',
+    employeeId: '',
+    department: '',
+    designation: '',
+    branch: '',
+    pincode: '',
+    bloodGroup: '',
+    phone: '',
+    email: '',
+    dob: '',
+    gender: '',
+    dateOfJoining: '',
+    preferredLocation: '',
+    shift: '',
+    biometricUserId: '',
+    city: '',
+    state: '',
+    address: '',
+    emergencyContact: '',
+    role: '',
+    status: '',
+    baseSalary: null,
+    allowanceHRA: null,
+    allowanceTravel: null,
+    bonus: null,
+    totalAllowances: null,
+    deductionPF: null,
+    deductionPT: null,
+    deductionTDS: null,
+    totalDeductions: null,
+    uanNo: '',
+    pfNo: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankBranchName: ''
+  };
+
+  for (const [k, v] of Object.entries(raw || {})) {
+    if (v === undefined || v === null || String(v).trim() === '') continue;
+    const cleanKey = k.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanVal = typeof v === 'string' ? v.trim() : v;
+
+    if (/^(name|fullname|employeename|empname|staffname)$/.test(cleanKey)) {
+      norm.name = String(cleanVal).trim();
+    } else if (/^(employeeid|empid|id|userid|employeecode|empcode)$/.test(cleanKey)) {
+      norm.employeeId = String(cleanVal).trim();
+    } else if (/^(department|dept|departmentname)$/.test(cleanKey)) {
+      norm.department = String(cleanVal).trim();
+    } else if (/^(designation|jobtitle|post|title)$/.test(cleanKey)) {
+      norm.designation = String(cleanVal).trim();
+    } else if (/^(branch|branchname)$/.test(cleanKey)) {
+      norm.branch = String(cleanVal).trim();
+    } else if (/^(pincode|pincodeno|postalcode|zip|zipcode)$/.test(cleanKey)) {
+      norm.pincode = String(cleanVal).trim();
+    } else if (/^(bloodgroup|bloodgrp|bg)$/.test(cleanKey)) {
+      norm.bloodGroup = String(cleanVal).trim();
+    } else if (/^(phone|phonenumber|mobile|mobilenumber|contact|contactnumber)$/.test(cleanKey)) {
+      norm.phone = String(cleanVal).trim();
+    } else if (/^(email|emailaddress|emailid)$/.test(cleanKey)) {
+      norm.email = String(cleanVal).trim();
+    } else if (/^(dateofjoining|doj|joiningdate|joindate)$/.test(cleanKey)) {
+      norm.dateOfJoining = parseUploadDate(cleanVal);
+    } else if (/^(dateofbirth|dob|birthdate)$/.test(cleanKey)) {
+      norm.dob = parseUploadDate(cleanVal);
+    } else if (/^(gender|sex)$/.test(cleanKey)) {
+      norm.gender = String(cleanVal).trim();
+    } else if (/^(preferredlocation|worklocation|worksite|worklocationname|location)$/.test(cleanKey)) {
+      norm.preferredLocation = String(cleanVal).trim();
+    } else if (/^(assignedshift|shift|shifts|schedule|shiftname)$/.test(cleanKey)) {
+      norm.shift = String(cleanVal).trim();
+    } else if (/^(biometricuserid|biometricid|machineid|deviceid|deviceuserid)$/.test(cleanKey)) {
+      norm.biometricUserId = String(cleanVal).trim();
+    } else if (/^city$/.test(cleanKey)) {
+      norm.city = String(cleanVal).trim();
+    } else if (/^state$/.test(cleanKey)) {
+      norm.state = String(cleanVal).trim();
+    } else if (/^(address|residentialaddress)$/.test(cleanKey)) {
+      norm.address = String(cleanVal).trim();
+    } else if (/^(emergencycontact|emergencyphone|emergencyno)$/.test(cleanKey)) {
+      norm.emergencyContact = String(cleanVal).trim();
+    } else if (/^(role|systemrole|userrole)$/.test(cleanKey)) {
+      norm.role = String(cleanVal).trim().toLowerCase();
+    } else if (/^(status|userstatus|activestatus)$/.test(cleanKey)) {
+      norm.status = String(cleanVal).trim();
+    } else if (/^(basesalary|basicsalary|salary|grosssalary)$/.test(cleanKey)) {
+      norm.baseSalary = parseUploadNumber(cleanVal);
+    } else if (/^(allowancehra|hra)$/.test(cleanKey)) {
+      norm.allowanceHRA = parseUploadNumber(cleanVal);
+    } else if (/^(allowancetravel|travel|travelallowance)$/.test(cleanKey)) {
+      norm.allowanceTravel = parseUploadNumber(cleanVal);
+    } else if (/^bonus$/.test(cleanKey)) {
+      norm.bonus = parseUploadNumber(cleanVal);
+    } else if (/^(totalallowances|allowances)$/.test(cleanKey)) {
+      norm.totalAllowances = parseUploadNumber(cleanVal);
+    } else if (/^(deductionpf|pf)$/.test(cleanKey)) {
+      norm.deductionPF = parseUploadNumber(cleanVal);
+    } else if (/^(deductionpt|pt)$/.test(cleanKey)) {
+      norm.deductionPT = parseUploadNumber(cleanVal);
+    } else if (/^(deductiontds|tds)$/.test(cleanKey)) {
+      norm.deductionTDS = parseUploadNumber(cleanVal);
+    } else if (/^(totaldeductions|deductions)$/.test(cleanKey)) {
+      norm.totalDeductions = parseUploadNumber(cleanVal);
+    } else if (/^(uanno|uan|uannumber)$/.test(cleanKey)) {
+      norm.uanNo = String(cleanVal).trim();
+    } else if (/^(pfno|pfnumber)$/.test(cleanKey)) {
+      norm.pfNo = String(cleanVal).trim();
+    } else if (/^bankname$/.test(cleanKey)) {
+      norm.bankName = String(cleanVal).trim();
+    } else if (/^(accountnumber|bankaccountnumber|accno)$/.test(cleanKey)) {
+      norm.accountNumber = String(cleanVal).trim();
+    } else if (/^(ifsccode|ifsc)$/.test(cleanKey)) {
+      norm.ifscCode = String(cleanVal).trim();
+    } else if (/^(bankbranchname|bankbranch)$/.test(cleanKey)) {
+      norm.bankBranchName = String(cleanVal).trim();
+    }
+  }
+
+  return norm;
+}
+
+export function downloadBulkUploadTemplate(format = 'xlsx') {
+  const sampleData = [
+    {
+      "Employee ID": "EMP101",
+      "Employee Name": "Rahul Sharma",
+      "Department": "Engineering",
+      "Designation": "Software Developer",
+      "Branch": "Delhi Head Office",
+      "Work Location": "Delhi Head Office",
+      "Mobile Number": "+91 9876543210",
+      "Email": "rahul.sharma@example.com",
+      "Date of Joining": "2024-05-15",
+      "Date of Birth": "1995-08-20",
+      "Gender": "Male",
+      "Blood Group": "B+",
+      "Pincode": "110001",
+      "City": "New Delhi",
+      "State": "Delhi",
+      "Biometric User ID": "101",
+      "Assigned Shift": "General Shift",
+      "Base Salary": 45000,
+      "HRA": 6750,
+      "Travel Allowance": 2000,
+      "PF": 1800,
+      "PT": 200,
+      "Bank Name": "State Bank of India",
+      "Account Number": "987654321012",
+      "IFSC Code": "SBIN0001234",
+      "UAN Number": "100987654321"
+    },
+    {
+      "Employee ID": "EMP102",
+      "Employee Name": "Priya Verma",
+      "Department": "Human Resources",
+      "Designation": "HR Executive",
+      "Branch": "Noida Branch",
+      "Work Location": "Noida sector 61",
+      "Mobile Number": "+91 9812345678",
+      "Email": "priya.verma@example.com",
+      "Date of Joining": "2024-06-01",
+      "Date of Birth": "1998-03-12",
+      "Gender": "Female",
+      "Blood Group": "O+",
+      "Pincode": "201301",
+      "City": "Noida",
+      "State": "Uttar Pradesh",
+      "Biometric User ID": "102",
+      "Assigned Shift": "General Shift",
+      "Base Salary": 38000,
+      "HRA": 5700,
+      "Travel Allowance": 1500,
+      "PF": 1800,
+      "PT": 200,
+      "Bank Name": "HDFC Bank",
+      "Account Number": "50100234567891",
+      "IFSC Code": "HDFC0000123",
+      "UAN Number": "100987654322"
+    }
+  ];
+
+  if (format === 'csv') {
+    const headers = Object.keys(sampleData[0]);
+    const csvRows = [
+      headers.join(','),
+      ...sampleData.map(row => headers.map(h => `"${String(row[h] || '').replace(/"/g, '""')}"`).join(','))
+    ];
+    const blob = new Blob([csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Employee_Bulk_Upload_Template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+
+  const exportExcel = () => {
+    if (!window.XLSX) {
+      alert('Excel library not ready. Downloading CSV template instead.');
+      downloadBulkUploadTemplate('csv');
+      return;
+    }
+    const ws = window.XLSX.utils.json_to_sheet(sampleData);
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, 'Employees Template');
+    window.XLSX.writeFile(wb, 'Employee_Bulk_Upload_Template.xlsx');
+  };
+
+  if (window.XLSX) {
+    exportExcel();
+  } else if (typeof loadSheetJS === 'function') {
+    loadSheetJS(exportExcel, () => {
+      downloadBulkUploadTemplate('csv');
+    });
+  } else {
+    downloadBulkUploadTemplate('csv');
+  }
+}
+
+/**
+ * Process parsed rows from uploaded file.
+ * Core Upsert Logic:
+ * If Name and Emp ID both match an existing employee, updates that employee's profile.
+ * Otherwise, creates and adds a new employee to the Employee Directory.
+ */
+export async function processBulkEmployeeData(rawRows) {
+  if (!Array.isArray(rawRows) || rawRows.length === 0) {
+    return {
+      success: false,
+      message: 'No data records found in the uploaded file.',
+      total: 0,
+      updated: 0,
+      added: 0,
+      skipped: 0,
+      details: []
+    };
+  }
+
+  const allUsers = DB.getUsers();
+  const allSchedules = (DB.getSchedules ? DB.getSchedules() : []) || [];
+  const updatedRecords = [];
+  const addedRecords = [];
+  let skippedCount = 0;
+
+  for (const raw of rawRows) {
+    if (!raw || typeof raw !== 'object') {
+      skippedCount++;
+      continue;
+    }
+
+    const norm = normalizeBulkRow(raw);
+    const rowName = (norm.name || '').toString().trim();
+    const rowEmpId = (norm.employeeId || '').toString().trim();
+
+    // Skip blank rows where both name and employee ID are absent
+    if (!rowName && !rowEmpId) {
+      skippedCount++;
+      continue;
+    }
+
+    // STRICT MATCHING RULE: Check if BOTH Name AND Employee ID match an existing user
+    const matchedUser = allUsers.find(u => {
+      if (!u) return false;
+      const uName = (u.name || '').toString().trim().toLowerCase();
+      const uEmpId = (u.employeeId || u.id || '').toString().trim().toUpperCase();
+      const matchName = rowName && uName === rowName.toLowerCase();
+      const matchEmpId = rowEmpId && (uEmpId === rowEmpId.toUpperCase() || String(u.id || '').trim().toUpperCase() === rowEmpId.toUpperCase());
+      return matchName && matchEmpId;
+    });
+
+    if (matchedUser) {
+      // 1. UPDATE EXISTING EMPLOYEE BASED ON FILE UPLOAD
+      if (norm.department) matchedUser.department = norm.department;
+      if (norm.designation) matchedUser.designation = norm.designation;
+      if (norm.branch) matchedUser.branch = norm.branch;
+      if (norm.pincode) matchedUser.pincode = norm.pincode;
+      if (norm.bloodGroup) matchedUser.bloodGroup = norm.bloodGroup;
+      if (norm.phone) matchedUser.phone = norm.phone;
+      if (norm.email) matchedUser.email = norm.email;
+      if (norm.dob) matchedUser.dob = norm.dob;
+      if (norm.gender) matchedUser.gender = norm.gender;
+      if (norm.dateOfJoining) matchedUser.dateOfJoining = norm.dateOfJoining;
+      if (norm.preferredLocation) {
+        matchedUser.preferredLocation = norm.preferredLocation;
+        if (!Array.isArray(matchedUser.preferredLocations)) matchedUser.preferredLocations = [];
+        if (!matchedUser.preferredLocations.includes(norm.preferredLocation)) {
+          matchedUser.preferredLocations.push(norm.preferredLocation);
+        }
+      }
+      if (norm.biometricUserId) {
+        matchedUser.biometricUserId = norm.biometricUserId;
+        matchedUser.biometricId = norm.biometricUserId;
+      }
+      if (norm.shift) {
+        const matchedShift = allSchedules.find(s =>
+          (s.name && s.name.toLowerCase() === norm.shift.toLowerCase()) ||
+          s.id === norm.shift
+        );
+        if (matchedShift) {
+          matchedUser.scheduleId = matchedShift.id;
+          if (!Array.isArray(matchedUser.scheduleIds)) matchedUser.scheduleIds = [];
+          if (!matchedUser.scheduleIds.includes(matchedShift.id)) {
+            matchedUser.scheduleIds.push(matchedShift.id);
+          }
+          if (norm.preferredLocation) {
+            if (!matchedUser.shiftLocations) matchedUser.shiftLocations = {};
+            matchedUser.shiftLocations[matchedShift.id] = norm.preferredLocation;
+          }
+        }
+      }
+      if (norm.city) matchedUser.city = norm.city;
+      if (norm.state) matchedUser.state = norm.state;
+      if (norm.address) matchedUser.address = norm.address;
+      if (norm.emergencyContact) matchedUser.emergencyContact = norm.emergencyContact;
+      if (norm.baseSalary !== null && !isNaN(norm.baseSalary)) matchedUser.baseSalary = Number(norm.baseSalary);
+      if (norm.allowanceHRA !== null && !isNaN(norm.allowanceHRA)) matchedUser.allowanceHRA = Number(norm.allowanceHRA);
+      if (norm.allowanceTravel !== null && !isNaN(norm.allowanceTravel)) matchedUser.allowanceTravel = Number(norm.allowanceTravel);
+      if (norm.bonus !== null && !isNaN(norm.bonus)) matchedUser.bonus = Number(norm.bonus);
+      if (norm.totalAllowances !== null && !isNaN(norm.totalAllowances)) matchedUser.totalAllowances = Number(norm.totalAllowances);
+      if (norm.deductionPF !== null && !isNaN(norm.deductionPF)) matchedUser.deductionPF = Number(norm.deductionPF);
+      if (norm.deductionPT !== null && !isNaN(norm.deductionPT)) matchedUser.deductionPT = Number(norm.deductionPT);
+      if (norm.deductionTDS !== null && !isNaN(norm.deductionTDS)) matchedUser.deductionTDS = Number(norm.deductionTDS);
+      if (norm.totalDeductions !== null && !isNaN(norm.totalDeductions)) {
+        matchedUser.totalDeductions = Number(norm.totalDeductions);
+        matchedUser.totalDeduction = Number(norm.totalDeductions);
+      }
+      if (norm.uanNo) { matchedUser.uanNo = norm.uanNo; matchedUser.uanNumber = norm.uanNo; }
+      if (norm.pfNo) { matchedUser.pfNo = norm.pfNo; matchedUser.pfNumber = norm.pfNo; }
+      if (norm.bankName) matchedUser.bankName = norm.bankName;
+      if (norm.accountNumber) matchedUser.accountNumber = norm.accountNumber;
+      if (norm.ifscCode) matchedUser.ifscCode = norm.ifscCode.toUpperCase();
+      if (norm.bankBranchName) matchedUser.bankBranchName = norm.bankBranchName;
+      if (norm.status) matchedUser.status = norm.status;
+      if (norm.role) matchedUser.role = norm.role;
+
+      DB.updateUser(matchedUser.id, matchedUser);
+      updatedRecords.push({
+        id: matchedUser.id,
+        name: matchedUser.name,
+        employeeId: matchedUser.employeeId,
+        department: matchedUser.department || '—',
+        designation: matchedUser.designation || '—',
+        action: 'Updated'
+      });
+    } else {
+      // 2. ADD NEW EMPLOYEE TO DIRECTORY
+      let empIdToUse = rowEmpId;
+      // If empId is not provided OR it is already assigned to another employee, assign a unique employeeId
+      const isTakenByOther = empIdToUse && allUsers.some(u => u && u.employeeId && String(u.employeeId).trim().toUpperCase() === empIdToUse.toUpperCase());
+      if (!empIdToUse || isTakenByOther) {
+        let maxId = 99;
+        allUsers.forEach(u => {
+          if (u && u.employeeId) {
+            const numMatch = String(u.employeeId).match(/\d+/);
+            if (numMatch) {
+              const num = parseInt(numMatch[0], 10);
+              if (!isNaN(num) && num > maxId) maxId = num;
+            }
+          }
+        });
+        empIdToUse = 'EMP' + (maxId + 1);
+      }
+
+      const newId = 'usr_' + Math.random().toString(36).substring(2, 9);
+      let baseUsername = rowName ? rowName.toLowerCase().replace(/[^a-z0-9]/g, '') : empIdToUse.toLowerCase();
+      if (!baseUsername) baseUsername = 'emp' + Math.floor(Math.random() * 10000);
+      let finalUsername = baseUsername;
+      let counter = 1;
+      while (allUsers.some(u => u && u.username && u.username.toLowerCase() === finalUsername.toLowerCase())) {
+        finalUsername = `${baseUsername}${counter++}`;
+      }
+
+      let scheduleId = null;
+      let scheduleIds = [];
+      let shiftLocations = {};
+      if (norm.shift) {
+        const matchedShift = allSchedules.find(s =>
+          (s.name && s.name.toLowerCase() === norm.shift.toLowerCase()) ||
+          s.id === norm.shift
+        );
+        if (matchedShift) {
+          scheduleId = matchedShift.id;
+          scheduleIds = [matchedShift.id];
+          if (norm.preferredLocation) {
+            shiftLocations[matchedShift.id] = norm.preferredLocation;
+          }
+        }
+      }
+
+      const defaultPass = 'Surya@123';
+      const finalPassword = (Utils && typeof Utils.hashPassword === 'function') ? Utils.hashPassword(defaultPass) : defaultPass;
+
+      const newUser = {
+        id: newId,
+        name: rowName || `Employee ${empIdToUse}`,
+        employeeId: empIdToUse,
+        username: finalUsername,
+        password: finalPassword,
+        role: norm.role || 'employee',
+        status: norm.status || 'Active',
+        department: norm.department || 'Operations',
+        designation: norm.designation || 'Staff',
+        branch: norm.branch || '',
+        pincode: norm.pincode || '',
+        bloodGroup: norm.bloodGroup || '',
+        phone: norm.phone || '',
+        email: norm.email || '',
+        dob: norm.dob || '',
+        gender: norm.gender || 'Male',
+        dateOfJoining: norm.dateOfJoining || new Date().toISOString().split('T')[0],
+        preferredLocation: norm.preferredLocation || '',
+        preferredLocations: norm.preferredLocation ? [norm.preferredLocation] : [],
+        scheduleId,
+        scheduleIds,
+        shiftLocations,
+        biometricUserId: norm.biometricUserId || '',
+        biometricId: norm.biometricUserId || '',
+        city: norm.city || '',
+        state: norm.state || '',
+        address: norm.address || '',
+        emergencyContact: norm.emergencyContact || '',
+        baseSalary: norm.baseSalary !== null && !isNaN(norm.baseSalary) ? Number(norm.baseSalary) : null,
+        allowanceHRA: norm.allowanceHRA !== null && !isNaN(norm.allowanceHRA) ? Number(norm.allowanceHRA) : null,
+        allowanceTravel: norm.allowanceTravel !== null && !isNaN(norm.allowanceTravel) ? Number(norm.allowanceTravel) : null,
+        bonus: norm.bonus !== null && !isNaN(norm.bonus) ? Number(norm.bonus) : null,
+        totalAllowances: norm.totalAllowances !== null && !isNaN(norm.totalAllowances) ? Number(norm.totalAllowances) : null,
+        deductionPF: norm.deductionPF !== null && !isNaN(norm.deductionPF) ? Number(norm.deductionPF) : null,
+        deductionPT: norm.deductionPT !== null && !isNaN(norm.deductionPT) ? Number(norm.deductionPT) : null,
+        deductionTDS: norm.deductionTDS !== null && !isNaN(norm.deductionTDS) ? Number(norm.deductionTDS) : null,
+        totalDeductions: norm.totalDeductions !== null && !isNaN(norm.totalDeductions) ? Number(norm.totalDeductions) : null,
+        totalDeduction: norm.totalDeductions !== null && !isNaN(norm.totalDeductions) ? Number(norm.totalDeductions) : null,
+        uanNo: norm.uanNo || '',
+        uanNumber: norm.uanNo || '',
+        pfNo: norm.pfNo || '',
+        pfNumber: norm.pfNo || '',
+        bankName: norm.bankName || '',
+        accountNumber: norm.accountNumber || '',
+        ifscCode: (norm.ifscCode || '').toUpperCase(),
+        bankBranchName: norm.bankBranchName || '',
+        profileVerificationStatus: 'Approved',
+        photo: null,
+        documents: [],
+        resume: null,
+        aadhar: null,
+        bankDetails: null
+      };
+
+      if (DB.data && Array.isArray(DB.data.users)) {
+        DB.data.users.push(newUser);
+      }
+      if (allUsers !== (DB.data && DB.data.users) && !allUsers.includes(newUser)) {
+        allUsers.push(newUser);
+      }
+      if (typeof DB.save === 'function') {
+        DB.save({ type: 'push', key: 'users', payload: newUser });
+      }
+      addedRecords.push({
+        id: newUser.id,
+        name: newUser.name,
+        employeeId: newUser.employeeId,
+        department: newUser.department || '—',
+        designation: newUser.designation || '—',
+        action: 'Added New'
+      });
+    }
+  }
+
+  // Persist locally and sync to backend
+  if (typeof DB.save === 'function') {
+    await DB.save();
+  }
+  if (typeof window !== 'undefined' && typeof fetch === 'function') {
+    try {
+      let sessionToken = '';
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          const sess = sessionStorage.getItem('attendance_current_session');
+          if (sess) sessionToken = JSON.parse(sess).token || '';
+        }
+        if (!sessionToken && typeof localStorage !== 'undefined') {
+          const sess = localStorage.getItem('attendance_current_session');
+          if (sess) sessionToken = JSON.parse(sess).token || '';
+        }
+      } catch (e) {}
+      const baseUrl = window.apiBaseUrl || '';
+      await fetch(baseUrl + '/api/mutate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+        },
+        body: JSON.stringify({ action: 'sync', data: DB.data })
+      });
+    } catch (err) {
+      console.warn('Network sync notice during bulk upload:', err);
+    }
+  }
+
+  return {
+    success: true,
+    total: updatedRecords.length + addedRecords.length,
+    updated: updatedRecords.length,
+    added: addedRecords.length,
+    skipped: skippedCount,
+    details: [...updatedRecords, ...addedRecords]
+  };
+}
+
+/**
+ * Open the interactive modal for Bulk Uploading Employee Data
+ */
+export function openBulkUploadModal() {
+  const existingOverlay = document.getElementById('bulk-upload-modal-overlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bulk-upload-modal-overlay';
+  overlay.className = 'modal-overlay';
+  overlay.style.zIndex = '9999';
+
+  overlay.innerHTML = html`
+    <div class="modal-content" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); background: var(--bg-card, #ffffff);">
+      <!-- Header -->
+      <div class="modal-header" style="padding: 18px 24px 14px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card, #ffffff);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(137, 32, 27, 0.1); color: var(--primary, #89201B); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            📤
+          </div>
+          <div>
+            <h3 class="modal-title" style="margin: 0; font-size: 17px; font-weight: 800; color: var(--text-primary);">Bulk Upload Employee Data</h3>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Import and synchronize employee directory files via Excel (.xlsx, .xls) or CSV (.csv)</div>
+          </div>
+        </div>
+        <button class="close-modal-btn" onclick="closeModal(this.closest('.modal-overlay'))" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body" style="padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Matching Rule Banner -->
+        <div style="background: rgba(137, 32, 27, 0.05); border: 1px solid rgba(137, 32, 27, 0.2); border-radius: 8px; padding: 12px 16px;">
+          <div style="font-weight: 800; font-size: 12.5px; color: var(--primary, #89201B); display: flex; align-items: center; gap: 6px;">
+            <span>ℹ️</span> Data Fetching & Matching Rule:
+          </div>
+          <ul style="margin: 6px 0 0 18px; padding: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+            <li><strong>Match Found (Same Name & Emp ID):</strong> If an employee's <strong>Full Name</strong> and <strong>Employee ID</strong> match an existing employee, their profile data will be updated on the basis of the file.</li>
+            <li><strong>No Match:</strong> If either the name or employee ID is different (or record does not exist), a <strong>new employee profile</strong> is automatically added to the directory.</li>
+            <li>Existing passwords, credentials, and unmentioned fields will remain preserved safely.</li>
+          </ul>
+        </div>
+
+        <!-- Download Template Options -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 8px; flex-wrap: wrap; gap: 8px;">
+          <div style="font-size: 12px; color: var(--text-secondary);">
+            <strong>Need the column format?</strong> Download the starter template:
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-download-sample-excel" style="font-size: 11.5px; font-weight: 600; padding: 5px 10px; display: inline-flex; align-items: center; gap: 4px;">
+              <span>📊</span> Excel Template (.xlsx)
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-download-sample-csv" style="font-size: 11.5px; font-weight: 600; padding: 5px 10px; display: inline-flex; align-items: center; gap: 4px;">
+              <span>📄</span> CSV Template (.csv)
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload Zone -->
+        <div id="bulk-upload-dropzone" style="border: 2px dashed var(--border); border-radius: 10px; padding: 26px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(0,0,0,0.01);">
+          <input type="file" id="bulk-upload-file-input" accept=".xlsx, .xls, .csv" style="display: none;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📁</div>
+          <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">
+            Click to Browse or Drag & Drop File Here
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted);">
+            Supported formats: Microsoft Excel (.xlsx, .xls) and Comma-Separated Values (.csv)
+          </div>
+        </div>
+
+        <!-- File Selected Card -->
+        <div id="bulk-upload-selected-card" style="display: none; padding: 12px 16px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 22px;">📄</span>
+            <div>
+              <div id="bulk-upload-filename" style="font-weight: 700; font-size: 13px; color: var(--text-primary);">file.xlsx</div>
+              <div id="bulk-upload-filesize" style="font-size: 11.5px; color: var(--text-muted);">0 KB • 0 records detected</div>
+            </div>
+          </div>
+          <button type="button" id="btn-bulk-upload-remove-file" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 11px;">Remove</button>
+        </div>
+
+        <!-- Processing Progress -->
+        <div id="bulk-upload-spinner" style="display: none; flex-direction: column; align-items: center; gap: 10px; padding: 16px 0;">
+          <div class="spinner" style="width: 28px; height: 28px; border: 3px solid rgba(137,32,27,0.2); border-top-color: var(--primary, #89201B); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <div id="bulk-upload-status-text" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary);">Reading and validating records...</div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="bulk-upload-results-section" style="display: none; flex-direction: column; gap: 12px;"></div>
+
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="modal-actions" style="margin-top: auto; padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card, #ffffff);">
+        <button class="btn btn-secondary" type="button" id="btn-bulk-upload-cancel" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
+        <button class="btn btn-primary-equify" type="button" id="btn-process-bulk-upload" disabled style="padding: 8px 18px; font-size: 13px; font-weight: 700; opacity: 0.6; cursor: not-allowed;">
+          Start Bulk Upload
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Template download event bindings
+  const dlExcelBtn = overlay.querySelector('#btn-download-sample-excel');
+  if (dlExcelBtn) dlExcelBtn.addEventListener('click', () => downloadBulkUploadTemplate('xlsx'));
+
+  const dlCsvBtn = overlay.querySelector('#btn-download-sample-csv');
+  if (dlCsvBtn) dlCsvBtn.addEventListener('click', () => downloadBulkUploadTemplate('csv'));
+
+  // File selection and drag-drop handling
+  const dropzone = overlay.querySelector('#bulk-upload-dropzone');
+  const fileInput = overlay.querySelector('#bulk-upload-file-input');
+  const selectedCard = overlay.querySelector('#bulk-upload-selected-card');
+  const filenameEl = overlay.querySelector('#bulk-upload-filename');
+  const filesizeEl = overlay.querySelector('#bulk-upload-filesize');
+  const removeFileBtn = overlay.querySelector('#btn-bulk-upload-remove-file');
+  const processBtn = overlay.querySelector('#btn-process-bulk-upload');
+  const spinner = overlay.querySelector('#bulk-upload-spinner');
+  const statusText = overlay.querySelector('#bulk-upload-status-text');
+  const resultsSection = overlay.querySelector('#bulk-upload-results-section');
+  const cancelBtn = overlay.querySelector('#btn-bulk-upload-cancel');
+
+  let selectedFile = null;
+  let parsedRows = [];
+
+  const handleSelectedFile = (file) => {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.xlsx') && !name.endsWith('.xls') && !name.endsWith('.csv')) {
+      alert('Please select an Excel (.xlsx, .xls) or CSV (.csv) file.');
+      return;
+    }
+
+    selectedFile = file;
+    dropzone.style.display = 'none';
+    selectedCard.style.display = 'flex';
+    filenameEl.textContent = file.name;
+    filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • Parsing records...`;
+
+    const onLibraryReady = () => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = window.XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const firstSheet = wb.Sheets[wb.SheetNames[0]];
+          parsedRows = window.XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+          if (parsedRows.length === 0) {
+            filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • ⚠️ No data rows detected.`;
+            processBtn.disabled = true;
+            processBtn.style.opacity = '0.6';
+            processBtn.style.cursor = 'not-allowed';
+            return;
+          }
+
+          filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • ${parsedRows.length} employee record(s) detected`;
+          processBtn.disabled = false;
+          processBtn.style.opacity = '1';
+          processBtn.style.cursor = 'pointer';
+        } catch (err) {
+          filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • ❌ Error reading file: ${err.message}`;
+          processBtn.disabled = true;
+          processBtn.style.opacity = '0.6';
+          processBtn.style.cursor = 'not-allowed';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    if (window.XLSX) {
+      onLibraryReady();
+    } else if (typeof loadSheetJS === 'function') {
+      loadSheetJS(onLibraryReady, () => {
+        alert('Could not initialize Excel processing engine. Please check your internet connection.');
+      });
+    } else {
+      alert('SheetJS Excel library not available.');
+    }
+  };
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleSelectedFile(e.target.files[0]);
+    }
+  });
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--primary, #89201B)';
+    dropzone.style.background = 'rgba(137, 32, 27, 0.05)';
+  });
+
+  dropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--border)';
+    dropzone.style.background = 'rgba(0,0,0,0.01)';
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--border)';
+    dropzone.style.background = 'rgba(0,0,0,0.01)';
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleSelectedFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  removeFileBtn.addEventListener('click', () => {
+    selectedFile = null;
+    parsedRows = [];
+    fileInput.value = '';
+    selectedCard.style.display = 'none';
+    dropzone.style.display = 'block';
+    processBtn.disabled = true;
+    processBtn.style.opacity = '0.6';
+    processBtn.style.cursor = 'not-allowed';
+    resultsSection.style.display = 'none';
+    resultsSection.innerHTML = '';
+  });
+
+  // Start processing action
+  processBtn.addEventListener('click', async () => {
+    if (!parsedRows || parsedRows.length === 0) return;
+
+    processBtn.disabled = true;
+    processBtn.style.display = 'none';
+    cancelBtn.disabled = true;
+    removeFileBtn.disabled = true;
+    spinner.style.display = 'flex';
+    statusText.textContent = `Analyzing and matching ${parsedRows.length} employee record(s)...`;
+
+    setTimeout(async () => {
+      try {
+        const result = await processBulkEmployeeData(parsedRows);
+        spinner.style.display = 'none';
+        selectedCard.style.display = 'none';
+        resultsSection.style.display = 'flex';
+
+        resultsSection.innerHTML = `
+          <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 14px 18px; text-align: center;">
+            <div style="font-size: 16px; font-weight: 800; color: var(--success, #16a34a); margin-bottom: 4px;">
+              🎉 Bulk Upload Completed Successfully!
+            </div>
+            <div style="font-size: 12.5px; color: var(--text-secondary);">
+              All records have been synchronized with the live employee database.
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0;">
+            <div style="background: var(--bg-card, #ffffff); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; text-align: center;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Processed</div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-top: 2px;">${result.total}</div>
+            </div>
+            <div style="background: rgba(3,105,161,0.06); border: 1px solid rgba(3,105,161,0.25); border-radius: 8px; padding: 10px 14px; text-align: center;">
+              <div style="font-size: 11px; font-weight: 700; color: #0369a1; text-transform: uppercase;">Updated Existing</div>
+              <div style="font-size: 18px; font-weight: 800; color: #0284c7; margin-top: 2px;">${result.updated}</div>
+            </div>
+            <div style="background: rgba(22,163,74,0.06); border: 1px solid rgba(22,163,74,0.25); border-radius: 8px; padding: 10px 14px; text-align: center;">
+              <div style="font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase;">Added New</div>
+              <div style="font-size: 18px; font-weight: 800; color: #16a34a; margin-top: 2px;">${result.added}</div>
+            </div>
+          </div>
+
+          <div style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card, #ffffff);">
+            <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 8px 12px; text-align: left;">#</th>
+                  <th style="padding: 8px 12px; text-align: left;">Emp ID</th>
+                  <th style="padding: 8px 12px; text-align: left;">Employee Name</th>
+                  <th style="padding: 8px 12px; text-align: left;">Department</th>
+                  <th style="padding: 8px 12px; text-align: left;">Designation</th>
+                  <th style="padding: 8px 12px; text-align: center;">Action Taken</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${result.details.map((d, idx) => `
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 7px 12px; color: var(--text-muted);">${idx + 1}</td>
+                    <td style="padding: 7px 12px; font-weight: 700;">${Utils.escape(d.employeeId)}</td>
+                    <td style="padding: 7px 12px; font-weight: 600;">${Utils.escape(d.name)}</td>
+                    <td style="padding: 7px 12px;">${Utils.escape(d.department)}</td>
+                    <td style="padding: 7px 12px;">${Utils.escape(d.designation)}</td>
+                    <td style="padding: 7px 12px; text-align: center;">
+                      ${d.action === 'Updated'
+                        ? `<span class="badge" style="background: rgba(3,105,161,0.12); color: #0284c7; font-weight: 700; padding: 2px 8px; border-radius: 12px; font-size: 11px;">🔄 Updated</span>`
+                        : `<span class="badge" style="background: rgba(22,163,74,0.12); color: #16a34a; font-weight: 700; padding: 2px 8px; border-radius: 12px; font-size: 11px;">✨ Added New</span>`
+                      }
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        cancelBtn.disabled = false;
+        cancelBtn.textContent = 'Done & View Directory';
+        cancelBtn.className = 'btn btn-primary-equify';
+        cancelBtn.style.padding = '8px 20px';
+
+        // Re-render Employee Directory table in background
+        if (typeof renderAdminUsers === 'function') {
+          renderAdminUsers();
+        }
+
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(`✅ Bulk upload finished: ${result.updated} updated, ${result.added} added.`, 'success');
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        processBtn.style.display = 'block';
+        processBtn.disabled = false;
+        cancelBtn.disabled = false;
+        alert(`An error occurred while processing bulk employee upload: ${err.message}`);
+      }
+    }, 400);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.openBulkUploadModal = openBulkUploadModal;
+  window.processBulkEmployeeData = processBulkEmployeeData;
+  window.downloadBulkUploadTemplate = downloadBulkUploadTemplate;
 }

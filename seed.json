@@ -38136,6 +38136,37 @@
   ],
   "attendanceLogs": [
     {
+      "id": "BIO_usr_bio_1171_2026-10-13",
+      "userId": "usr_bio_1171",
+      "employeeName": "Ramesh",
+      "employeeId": "1171",
+      "date": "2026-10-13",
+      "shiftId": "",
+      "checkIn": "12:53:18",
+      "checkOut": "",
+      "checkInPunchId": "CEZF192660044_1171_2026-10-13T07:23:18.000Z",
+      "checkOutPunchId": "",
+      "biometricPunchId": "CEZF192660044_1171_2026-10-13T07:23:18.000Z",
+      "allPunchIds": [
+        "CEZF192660044_1171_2026-10-13T07:23:18.000Z"
+      ],
+      "status": "On Time",
+      "biometricUsed": "GT KARNAL SITE",
+      "biometricDeviceId": "CEZF192660044",
+      "biometricUserId": "1171",
+      "lastBiometricPunchAt": "2026-10-13T07:23:18.000Z",
+      "location": "GT KARNAL SITE",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-10-13T08:11:55.262Z",
+      "updatedAt": "2026-10-13T08:11:55.262Z"
+    },
+    {
       "id": "BIO_usr_admin_2026-10-13",
       "userId": "usr_admin",
       "employeeName": "HR Admin Manager",
@@ -40564,18 +40595,20 @@
       "date": "2026-10-13",
       "shiftId": "",
       "checkIn": "09:31:12",
-      "checkOut": "",
+      "checkOut": "12:40:41",
       "checkInPunchId": "CEZF192660044_703_2026-10-13T04:01:12.000Z",
-      "checkOutPunchId": "",
+      "checkOutPunchId": "CEZF192660044_703_2026-10-13T07:10:41.000Z",
       "biometricPunchId": "CEZF192660044_703_2026-10-13T04:01:12.000Z",
       "allPunchIds": [
-        "CEZF192660044_703_2026-10-13T04:01:12.000Z"
+        "CEZF192660044_703_2026-10-13T04:01:12.000Z",
+        "CEZF192660044_703_2026-10-13T07:00:02.000Z",
+        "CEZF192660044_703_2026-10-13T07:10:41.000Z"
       ],
       "status": "On Time",
       "biometricUsed": "GT KARNAL SITE",
       "biometricDeviceId": "CEZF192660044",
       "biometricUserId": "703",
-      "lastBiometricPunchAt": "2026-10-13T04:01:12.000Z",
+      "lastBiometricPunchAt": "2026-10-13T07:10:41.000Z",
       "location": "GT KARNAL SITE",
       "deviationFlag": false,
       "justification": "",
@@ -40585,7 +40618,9 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-13T04:28:50.801Z",
-      "updatedAt": "2026-10-13T04:28:50.801Z"
+      "updatedAt": "2026-10-13T08:11:55.257Z",
+      "departureLocation": "GT KARNAL SITE",
+      "departureDevice": "GT KARNAL SITE"
     },
     {
       "id": "BIO_usr_bio_1128_2026-10-13",
@@ -2053115,10 +2053150,57 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-13T06:18:44.916Z",
-    "lastLogCount": 1
+    "lastSyncAt": "2026-10-13T08:11:55.350Z",
+    "lastLogCount": 3879
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-13T08:11:55.262Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_bio_1171",
+      "userName": "Ramesh",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_1171_2026-10-13",
+        "shiftId": "",
+        "checkIn": "12:53:18",
+        "status": "On Time",
+        "device": "GT KARNAL SITE"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-10-13T08:11:55.257Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_703",
+      "userName": "Ajay Tripathi",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_703_2026-10-13",
+        "shiftId": "",
+        "checkIn": "09:31:12",
+        "checkOut": "12:40:41",
+        "status": "On Time",
+        "device": "GT KARNAL SITE"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-10-13T08:11:55.251Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_703",
+      "userName": "Ajay Tripathi",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_703_2026-10-13",
+        "shiftId": "",
+        "checkIn": "09:31:12",
+        "checkOut": "12:30:02",
+        "status": "On Time",
+        "device": "GT KARNAL SITE"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-13T06:18:44.878Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -2060598,57 +2060680,9 @@
         "device": "HS Office"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-13T04:29:13.698Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_1365",
-      "userName": "VIPIN TRIPATHI",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_1365_2026-10-13",
-        "shiftId": "",
-        "checkIn": "09:10:34",
-        "status": "On Time",
-        "device": "RETAIL"
-      },
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-13T04:29:13.695Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_5341",
-      "userName": "Employee 5341",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_5341_2026-10-13",
-        "shiftId": "",
-        "checkIn": "09:10:29",
-        "status": "On Time",
-        "device": "HS Office"
-      },
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-13T04:29:13.693Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_675",
-      "userName": "RAJESH KUMAR",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_675_2026-10-13",
-        "shiftId": "",
-        "checkIn": "09:10:28",
-        "status": "On Time",
-        "device": "RETAIL"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "CEZF192660044_1112_2026-09-21T04:33:23.000Z",
-    "CEZF192660044_703_2026-09-21T07:31:50.000Z",
-    "CEZF192660044_703_2026-09-21T09:21:53.000Z",
     "CEZF192660044_703_2026-09-21T09:30:14.000Z",
     "CEZF192660044_780_2026-09-21T09:53:08.000Z",
     "CEZF192660044_614_2026-09-21T11:05:46.000Z",
@@ -2065645,7 +2065679,10 @@
     "GED7241901313_1290_2026-10-13T04:41:02.000Z",
     "GED7241900691_877_2026-10-13T04:43:50.000Z",
     "CEZF192660044_EMP100_2026-10-13T06:10:57.696Z",
-    "CEZF192660044_EMP100_2026-10-13T06:18:43.048Z"
+    "CEZF192660044_EMP100_2026-10-13T06:18:43.048Z",
+    "CEZF192660044_703_2026-10-13T07:00:02.000Z",
+    "CEZF192660044_703_2026-10-13T07:10:41.000Z",
+    "CEZF192660044_1171_2026-10-13T07:23:18.000Z"
   ],
   "biometricDevices": [
     {

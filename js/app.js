@@ -8,7 +8,7 @@ import { renderAdminAttendances } from './views/attendancesView.js?v=98';
 import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=94';
 import { renderAdminFinance } from './views/financeView.js?v=94';
 import { renderEmployeeLeaves } from './views/leavesView.js?v=94';
-import { renderAdminUsers, renderAdminPayroll, openUserModal } from './views/userManagementView.js?v=95';
+import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=100';
 import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=96';
 import { drawRadarMap } from './components/geofenceMap.js?v=94';
 import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=94';
@@ -52,6 +52,9 @@ export function registerWindowGlobals() {
   window.renderLoginView = renderLoginView;
   if (typeof openUserModal === 'function') {
     window.openUserModal = openUserModal;
+  }
+  if (typeof openBulkUploadModal === 'function') {
+    window.openBulkUploadModal = openBulkUploadModal;
   }
   if (typeof showAccountModal === 'function') {
     window.showAccountModal = showAccountModal;
