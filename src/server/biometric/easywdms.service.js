@@ -21,7 +21,6 @@ function getCandidateHosts() {
   if (process.env.WDMS_HOST) hosts.push(process.env.WDMS_HOST);
   if (process.env.WDMS_HOST_ALT) hosts.push(process.env.WDMS_HOST_ALT);
   hosts.push('203.115.110.93');
-  hosts.push('203.115.101.226');
   return [...new Set(hosts.filter(Boolean))];
 }
 

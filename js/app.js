@@ -6973,19 +6973,12 @@ function renderAdminReports() {
   document.getElementById('report-year').addEventListener('change', (e) => { selectedYear = Number(e.target.value); refreshReports(); });
   document.getElementById('btn-export-csv').addEventListener('click', () => exportReportCSV(selectedMonth, selectedYear));
   document.getElementById('btn-print-report').addEventListener('click', () => {
-    const drawer = document.getElementById('admin-payslip-preview-drawer');
-    if (drawer && drawer.style.display !== 'none' && drawer.dataset.activeUserId) {
-      printSinglePayslipPDF(drawer.dataset.activeUserId, selectedMonth, selectedYear);
-    } else if (typeof users !== 'undefined' && users.length > 0) {
-      printSinglePayslipPDF(users[0].id, selectedMonth, selectedYear);
-    } else {
-      alert('No employee record available to print.');
-    }
+    printMonthlyPayrollSheet(selectedMonth, selectedYear);
   });
   refreshReports();
 }
 
-function compileReports(month, year) {
+function getFilteredReportUsers() {
   const loggedInUser = Auth.getCurrentUser() || {};
   const searchInput = document.getElementById('report-search-input');
   const deptSelect = document.getElementById('report-dept-select');
@@ -6994,8 +6987,11 @@ function compileReports(month, year) {
   const dVal = deptSelect ? deptSelect.value : 'all';
   const locVal = locSelect ? locSelect.value : 'all';
 
-  const users = DB.getUsers().filter(u => {
+  return DB.getUsers().filter(u => {
     if (u.role !== 'employee') return false;
+    if (loggedInUser && loggedInUser.role === 'manager') {
+      if (u.managerId && u.managerId !== loggedInUser.id && loggedInUser.id !== 'usr_manager') return false;
+    }
     if (dVal !== 'all') {
       const uDept = (u.department || '').toLowerCase();
       if (!uDept.includes(dVal.toLowerCase())) return false;
@@ -7011,6 +7007,10 @@ function compileReports(month, year) {
     }
     return true;
   });
+}
+
+function compileReports(month, year) {
+  const users = getFilteredReportUsers();
   let grandGrossSalary = 0;
   let grandDeductions = 0;
   let grandNetPayout = 0;
@@ -7260,7 +7260,13 @@ function compileReports(month, year) {
         </div>
       `;
       document.getElementById('btn-admin-print-single-payslip')?.addEventListener('click', () => {
-        printSinglePayslipPDF(uDetails.id, month, year);
+        const fmtSelect = document.getElementById('admin-payslip-format-select');
+        const fmt = fmtSelect ? fmtSelect.value : 'pdf';
+        if (fmt === 'xlsx') {
+          downloadSinglePayslipExcel(uDetails.id, month, year);
+        } else {
+          printSinglePayslipPDF(uDetails.id, month, year);
+        }
       });
       if (currentLoggedIn && currentLoggedIn.role === 'manager') {
         document.getElementById('btn-admin-edit-single-payslip')?.addEventListener('click', () => {
@@ -7345,35 +7351,13 @@ function renderReportChart(present, late) {
 }
 
 function exportReportCSV(month, year) {
-  const loggedInUser = Auth.getCurrentUser();
-  const deptSelect = document.getElementById('report-dept-select');
+  const users = getFilteredReportUsers();
+  if (!users || users.length === 0) {
+    alert('No employee record available to export.');
+    return;
+  }
   const locSelect = document.getElementById('report-location-select');
-  const searchInput = document.getElementById('report-search-input');
-  const dVal = deptSelect ? deptSelect.value : 'all';
   const locVal = locSelect ? locSelect.value : 'all';
-  const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const userLocationsMap = buildUserLocationsMap();
-
-  const users = DB.getUsers().filter(u => {
-    if (u.role !== 'employee') return false;
-    if (loggedInUser && loggedInUser.role === 'manager') {
-      if (u.managerId && u.managerId !== loggedInUser.id && loggedInUser.id !== 'usr_manager') return false;
-    }
-    if (dVal !== 'all') {
-      const uDept = (u.department || '').toLowerCase();
-      if (!uDept.includes(dVal.toLowerCase())) return false;
-    }
-    if (locVal !== 'all') {
-      if (!checkUserMatchesLocation(u, locVal, userLocationsMap)) return false;
-    }
-    if (q) {
-      const name = (u.name || '').toLowerCase();
-      const empId = (u.employeeId || '').toLowerCase();
-      const uid = (u.id || '').toLowerCase();
-      if (!name.includes(q) && !empId.includes(q) && !uid.includes(q)) return false;
-    }
-    return true;
-  });
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const locSuffix = (locVal && locVal !== 'all') ? `_${locVal.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
   const filename = `HS_Group_Payroll_Report_${monthNames[month]}_${year}${locSuffix}.csv`;
@@ -7383,6 +7367,344 @@ function exportReportCSV(month, year) {
     return [p.employeeName, p.baseSalary, p.allowanceHRA, p.allowanceTravel, p.workingDays, p.presentDays, p.absentDays, p.halfDays, p.attendanceDeductions, p.deductionPF, p.deductionPT, p.deductionTDSVal, p.netSalary];
   });
   Utils.exportToCSV(filename, headers, rows);
+}
+
+function printMonthlyPayrollSheet(month, year) {
+  const users = getFilteredReportUsers();
+  if (!users || users.length === 0) {
+    alert('No employee record available to print.');
+    return;
+  }
+
+  const userPayrollData = DB.calculateAllMonthlyPayrolls(users, month, year);
+  if (!userPayrollData || userPayrollData.length === 0) {
+    alert('No employee record available to print.');
+    return;
+  }
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const period = `${monthNames[month]} ${year}`;
+  const generatedDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const deptSelect = document.getElementById('report-dept-select');
+  const locSelect = document.getElementById('report-location-select');
+  const searchInput = document.getElementById('report-search-input');
+  const deptFilter = (deptSelect && deptSelect.value !== 'all') ? deptSelect.value : 'All Departments';
+  const locFilter = (locSelect && locSelect.value !== 'all') ? locSelect.value : 'All Locations';
+  const queryFilter = (searchInput && searchInput.value.trim()) ? `Search: "${searchInput.value.trim()}"` : '';
+
+  let grandBaseSalary = 0;
+  let grandPresentDays = 0;
+  let grandAbsentDays = 0;
+  let grandHalfDays = 0;
+  let grandGrossSalary = 0;
+  let grandAttendanceDeductions = 0;
+  let grandStatutoryDeductions = 0;
+  let grandTotalDeductions = 0;
+  let grandNetPayout = 0;
+
+  for (let i = 0; i < userPayrollData.length; i++) {
+    const p = userPayrollData[i];
+    grandBaseSalary += (p.baseSalary || 0);
+    grandPresentDays += (p.presentDays || 0);
+    grandAbsentDays += (p.absentDays || 0);
+    grandHalfDays += (p.halfDays || 0);
+    grandGrossSalary += (p.grossEarnings || 0);
+    grandAttendanceDeductions += (p.attendanceDeductions || 0);
+    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0));
+    grandStatutoryDeductions += statutory;
+    grandTotalDeductions += (p.totalDeductions || 0);
+    grandNetPayout += (p.netSalary || 0);
+  }
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Popup blocker active. Please allow popups for this site to generate/print the ledger sheet.');
+    return;
+  }
+
+  const rowsHTML = userPayrollData.map((p, idx) => {
+    const u = DB.getUser(p.userId) || {};
+    const empId = u.employeeId || p.userId || 'N/A';
+    const dept = u.department || 'General';
+    const role = u.designation || u.role || 'Staff';
+    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0));
+
+    return `
+      <tr>
+        <td style="text-align:center; font-weight:600">${idx + 1}</td>
+        <td style="font-weight:700; font-family:monospace; font-size:11.5px">${Utils.escape(empId)}</td>
+        <td style="font-weight:600">${Utils.escape(p.employeeName)}</td>
+        <td style="font-size:11px">${Utils.escape(dept)}<br><span style="color:#64748b">${Utils.escape(role)}</span></td>
+        <td style="text-align:right">₹${(p.baseSalary || 0).toLocaleString()}</td>
+        <td style="text-align:center; font-size:11px">
+          <strong style="color:#16a34a">${p.presentDays || 0}</strong>P / 
+          <span style="color:${(p.absentDays || 0) > 0 ? '#dc2626' : '#64748b'}; font-weight:600">${p.absentDays || 0}</span>A
+          ${(p.halfDays || 0) > 0 ? ` / <span style="color:#d97706">${p.halfDays}H</span>` : ''}
+        </td>
+        <td style="text-align:right; font-weight:600">₹${(p.grossEarnings || 0).toLocaleString()}</td>
+        <td style="text-align:right; color:#dc2626">-₹${(p.attendanceDeductions || 0).toLocaleString()}</td>
+        <td style="text-align:right; color:#dc2626">-₹${statutory.toLocaleString()}</td>
+        <td style="text-align:right; color:#dc2626; font-weight:700">-₹${(p.totalDeductions || 0).toLocaleString()}</td>
+        <td style="text-align:right; font-weight:800; color:#15803d">₹${(p.netSalary || 0).toLocaleString()}</td>
+        <td style="border-bottom:1px solid #cbd5e1; width:70px"></td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payroll & Attendance Ledger Sheet - ${period}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    @page {
+      size: A4 landscape;
+      margin: 8mm 10mm;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      color: #1e293b;
+      margin: 0;
+      padding: 10px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet-wrapper {
+      width: 100%;
+      margin: 0 auto;
+    }
+    .hdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #3d0d0a;
+      padding: 12px 18px;
+      border-radius: 6px;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    .hdr-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hdr-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+    }
+    .hdr-sub {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #fca5a5;
+    }
+    .doc-meta {
+      text-align: right;
+    }
+    .doc-meta-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+    }
+    .summary-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .kpi-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .kpi-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .kpi-val {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .tbl th, .tbl td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      vertical-align: middle;
+    }
+    .tbl th {
+      background: #f1f5f9;
+      font-weight: 800;
+      color: #334155;
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .tbl tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 26px;
+      page-break-inside: avoid;
+    }
+    .sig-col {
+      width: 28%;
+      text-align: center;
+    }
+    .sig-line {
+      border-top: 1.5px solid #64748b;
+      padding-top: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .footer-note {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 9.5px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+    @media print {
+      body { padding: 0; }
+      .tbl tr { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet-wrapper">
+    <div class="hdr">
+      <div class="hdr-brand">
+        <div>
+          <div class="hdr-title">HS GROUP DELHI</div>
+          <div class="hdr-sub">House of Surya</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <div class="doc-meta-title">MONTHLY STAFF SALARY & ATTENDANCE LEDGER SHEET</div>
+        <div style="font-size:12px; margin-top:3px; color:#fca5a5">
+          Statement Period: <strong>${period}</strong>
+        </div>
+        <div style="font-size:11px; color:#f8fafc; margin-top:2px">
+          Scope: ${Utils.escape(deptFilter)} | ${Utils.escape(locFilter)}${queryFilter ? ` | ${Utils.escape(queryFilter)}` : ''}
+        </div>
+        <div style="font-size:10px; color:#cbd5e1; margin-top:2px">
+          Generated: ${generatedDate}
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-kpis">
+      <div class="kpi-box">
+        <span class="kpi-lbl">Total Employees</span>
+        <span class="kpi-val">${userPayrollData.length} Staff</span>
+      </div>
+      <div class="kpi-box">
+        <span class="kpi-lbl">Gross Payroll Budget</span>
+        <span class="kpi-val">₹${grandGrossSalary.toLocaleString()}</span>
+      </div>
+      <div class="kpi-box">
+        <span class="kpi-lbl">Total Deductions</span>
+        <span class="kpi-val" style="color:#dc2626">-₹${grandTotalDeductions.toLocaleString()}</span>
+      </div>
+      <div class="kpi-box">
+        <span class="kpi-lbl">Net Salary Disbursed</span>
+        <span class="kpi-val" style="color:#16a34a">₹${grandNetPayout.toLocaleString()}</span>
+      </div>
+    </div>
+
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:30px; text-align:center">#</th>
+          <th>Emp ID</th>
+          <th>Employee Name</th>
+          <th>Dept & Role</th>
+          <th style="text-align:right">Base Salary</th>
+          <th style="text-align:center">Present / Absent</th>
+          <th style="text-align:right">Gross Pay</th>
+          <th style="text-align:right">Attn Ded.</th>
+          <th style="text-align:right">Statutory Ded.</th>
+          <th style="text-align:right">Total Ded.</th>
+          <th style="text-align:right">Net Payout</th>
+          <th style="text-align:center">Recipient Sign</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHTML}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f1f5f9; font-weight:800; border-top:2px solid #3d0d0a">
+          <td colspan="4" style="text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:0.5px">
+            GRAND TOTAL (${userPayrollData.length} EMPLOYEES)
+          </td>
+          <td style="text-align:right">₹${grandBaseSalary.toLocaleString()}</td>
+          <td style="text-align:center; font-size:11px">
+            <span style="color:#16a34a">${grandPresentDays}P</span> / 
+            <span style="color:#dc2626">${grandAbsentDays}A</span>
+            ${grandHalfDays > 0 ? ` / <span style="color:#d97706">${grandHalfDays}H</span>` : ''}
+          </td>
+          <td style="text-align:right">₹${grandGrossSalary.toLocaleString()}</td>
+          <td style="text-align:right; color:#dc2626">-₹${grandAttendanceDeductions.toLocaleString()}</td>
+          <td style="text-align:right; color:#dc2626">-₹${grandStatutoryDeductions.toLocaleString()}</td>
+          <td style="text-align:right; color:#dc2626">-₹${grandTotalDeductions.toLocaleString()}</td>
+          <td style="text-align:right; color:#15803d; font-size:12.5px">₹${grandNetPayout.toLocaleString()}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="signatures">
+      <div class="sig-col">
+        <div class="sig-line">Prepared By (HR & Operations Dept)</div>
+      </div>
+      <div class="sig-col">
+        <div class="sig-line">Checked & Audited By (Accounts Dept)</div>
+      </div>
+      <div class="sig-col">
+        <div class="sig-line">Authorized Signatory / Director</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      This is an official computer-generated Monthly Payroll & Attendance Ledger Sheet issued by HS Group Delhi (House of Surya).
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.print();
+      }, 350);
+    });
+  </script>
+</body>
+</html>`;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
 }
 
 // State variables for Admin/HR/Manager "Attendances" page pagination, sorting, search, selection
