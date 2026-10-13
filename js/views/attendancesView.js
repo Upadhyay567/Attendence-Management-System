@@ -1296,6 +1296,7 @@ export function renderAdminAttendances() {
         const isChecked = adminAttendancesSelectedIds.has(log.id);
         const initials = log.employeeName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const avatarBg = getInitialsColor(log.userId || log.employeeName);
+        const photoUrl = (log.emp && log.emp.photo) ? Utils.resolvePhotoUrl(log.emp.photo) : '';
         
         let effectiveIn = log.checkIn;
         let effectiveOut = log.checkOut;
@@ -1374,8 +1375,8 @@ export function renderAdminAttendances() {
             </td>
             <td style="padding: 12px 14px;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 28px; height: 28px; border-radius: 50%; background: ${avatarBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.15);">
-                  ${initials}
+                <div class="clickable-list-avatar" data-photo="${photoUrl || ''}" style="width: 28px; height: 28px; border-radius: 50%; background: ${photoUrl ? 'transparent' : avatarBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.15); overflow:hidden; cursor:${photoUrl ? 'pointer' : 'default'};" title="${photoUrl ? 'Click to view full screen' : ''}">
+                  ${photoUrl ? `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : initials}
                 </div>
                 <div style="font-size: 14px; font-weight: 600; color: #1e293b; white-space: nowrap;">
                   ${Utils.escape(log.employeeName)} <span style="font-size: 13px; font-weight: 500; color: #ef4444; opacity: 0.9;">(${Utils.escape(log.employeeId)})</span>

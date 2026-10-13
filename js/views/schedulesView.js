@@ -801,7 +801,7 @@ export function renderAdminSchedules(tab) {
               <td>
                 <div style="display:flex; align-items:center; gap:12px">
                   <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}">
-                    ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+                    ${u.photo ? `<img src="${Utils.resolvePhotoUrl(u.photo)}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
                   </div>
                   <div>
                     <div style="font-weight:700; color:var(--text-primary); font-size:13px">${Utils.escape(u.name)}</div>

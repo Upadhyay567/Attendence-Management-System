@@ -263,28 +263,37 @@ app.post('/api/mutate', async (req, res) => {
         });
         existing.attendanceLogs = Array.from(logMap.values());
 
-        // 2. Merge users safely by ID
-        const userMap = new Map((existing.users || []).map(u => [u.id, u]));
-        (data.users || []).forEach(u => {
-          if (u && u.id) {
-            const merged = { ...(userMap.get(u.id) || {}), ...u };
+        // 2. Sync users safely:
+        // When data.users is provided, treat it as authoritative from the client
+        // while preserving server-side fields (passwords, previous photos, etc.) from existing.users
+        if (Array.isArray(data.users) && data.users.length > 0) {
+          const existingUserMap = new Map((existing.users || []).map(u => [String(u.id), u]));
+          existing.users = data.users.map(u => {
+            if (!u || !u.id) return u;
+            const prev = existingUserMap.get(String(u.id)) || {};
+            const merged = { ...prev, ...u };
             if (u.scheduleId === '' || u.scheduleId === null || (Array.isArray(u.scheduleIds) && u.scheduleIds.length === 0)) {
               merged.scheduleId = '';
               merged.scheduleIds = [];
               merged.shiftLocations = {};
             }
-            userMap.set(u.id, merged);
-          }
-        });
-        existing.users = Array.from(userMap.values());
+            if (!merged.photo && prev.photo) {
+              merged.photo = prev.photo;
+            }
+            return merged;
+          });
+        }
 
-        // 3. Merge other collections
+        // 3. Sync other collections (schedules, notices, announcements, budgets, etc.)
         for (const k of Object.keys(data)) {
           if (k !== 'attendanceLogs' && k !== 'users') {
-            if (Array.isArray(data[k]) && Array.isArray(existing[k]) && data[k].length < existing[k].length && k !== 'leaveRequests' && k !== 'shiftSwaps') {
-              continue;
+            if (Array.isArray(data[k])) {
+              existing[k] = data[k];
+            } else if (data[k] && typeof data[k] === 'object') {
+              existing[k] = { ...(existing[k] || {}), ...data[k] };
+            } else if (data[k] !== undefined) {
+              existing[k] = data[k];
             }
-            existing[k] = data[k];
           }
         }
 
@@ -293,7 +302,8 @@ app.post('/api/mutate', async (req, res) => {
 
         const online = await connectMongoose();
         const useLocal = getUseLocalFileDB();
-        if (online && !useLocal && Array.isArray(data.users)) {
+        if (online && !useLocal && Array.isArray(data.users) && data.users.length > 0) {
+          const incomingIds = data.users.filter(u => u && u.id).map(u => u.id);
           const ops = data.users.filter(u => u && u.id).map(u => ({
             updateOne: {
               filter: { id: u.id },
@@ -304,6 +314,22 @@ app.post('/api/mutate', async (req, res) => {
           if (ops.length > 0) {
             await User.bulkWrite(ops).catch(e => console.warn('BulkWrite users non-fatal warning:', e.message));
           }
+          await User.deleteMany({ id: { $nin: incomingIds } }).catch(e => console.warn('Mongo delete stale users warning:', e.message));
+        }
+
+        if (online && !useLocal && Array.isArray(data.schedules) && data.schedules.length > 0) {
+          const incomingSchedIds = data.schedules.filter(s => s && s.id).map(s => s.id);
+          const sOps = data.schedules.filter(s => s && s.id).map(s => ({
+            updateOne: {
+              filter: { id: s.id },
+              update: { $set: s },
+              upsert: true
+            }
+          }));
+          if (sOps.length > 0) {
+            await Schedule.bulkWrite(sOps).catch(e => console.warn('BulkWrite schedules non-fatal warning:', e.message));
+          }
+          await Schedule.deleteMany({ id: { $nin: incomingSchedIds } }).catch(e => console.warn('Mongo delete stale schedules warning:', e.message));
         }
       }
       broadcastSSEEvent('db_updated', { action: 'sync', timestamp: Date.now() });

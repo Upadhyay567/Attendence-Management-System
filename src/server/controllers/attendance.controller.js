@@ -68,17 +68,17 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
       stateObj[key] = stateObj[key].map(item => {
         let match = true;
         for (const k in query) {
-          if (item[k] !== query[k]) { match = false; break; }
+          if (String(item[k]) !== String(query[k])) { match = false; break; }
         }
         return match ? { ...item, ...updates } : item;
       });
     }
-  } else if (type === 'delete' && query) {
+  } else if ((type === 'delete' || type === 'pull') && query) {
     if (Array.isArray(stateObj[key])) {
       stateObj[key] = stateObj[key].filter(item => {
         let match = true;
         for (const k in query) {
-          if (item[k] !== query[k]) { match = false; break; }
+          if (String(item[k]) !== String(query[k])) { match = false; break; }
         }
         return !match;
       });
@@ -143,13 +143,24 @@ async function getDbState(req, res) {
       const localData = readLocalDbStateCached();
       
       // Merge in any users from localData that might not have mirrored to Mongo yet
-      const localMap = new Map((localData?.users || []).map(u => [u.id, u]));
+      const localMap = new Map((localData?.users || []).map(u => [String(u.id), u]));
       let finalUsers = users.map(u => {
-        const localUser = localMap.get(u.id);
+        const localUser = localMap.get(String(u.id));
         if (localUser) {
           return {
             ...localUser,
             ...u,
+            photo: (u.photo && typeof u.photo === 'string' && u.photo.trim()) ? u.photo : (localUser.photo || null),
+            facePhoto: (u.facePhoto && typeof u.facePhoto === 'string' && u.facePhoto.trim()) ? u.facePhoto : (localUser.facePhoto || null),
+            scheduleIds: (Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0) ? u.scheduleIds : (localUser.scheduleIds || []),
+            preferredLocations: (Array.isArray(u.preferredLocations) && u.preferredLocations.length > 0) ? u.preferredLocations : (localUser.preferredLocations || []),
+            shiftLocations: (u.shiftLocations && typeof u.shiftLocations === 'object' && Object.keys(u.shiftLocations).length > 0) ? u.shiftLocations : (localUser.shiftLocations || {}),
+            dateOfJoining: u.dateOfJoining || localUser.dateOfJoining || '',
+            branch: u.branch || localUser.branch || '',
+            pincode: u.pincode || localUser.pincode || '',
+            bloodGroup: u.bloodGroup || localUser.bloodGroup || '',
+            emergencyContact: u.emergencyContact || localUser.emergencyContact || '',
+            biometricUserId: u.biometricUserId || localUser.biometricUserId || u.biometricId || localUser.biometricId || '',
             resume: u.resume || localUser.resume || null,
             aadhar: u.aadhar || localUser.aadhar || null,
             bankDetails: u.bankDetails || localUser.bankDetails || null,
@@ -162,10 +173,12 @@ async function getDbState(req, res) {
         return u;
       });
 
-      if (localData && Array.isArray(localData.users) && localData.users.length > users.length) {
-        const mongoIds = new Set(users.map(u => u.id));
-        const missing = localData.users.filter(u => u && !mongoIds.has(u.id));
-        finalUsers = [...finalUsers, ...missing];
+      if (localData && Array.isArray(localData.users)) {
+        const mongoIds = new Set(users.map(u => String(u.id)));
+        const missing = localData.users.filter(u => u && u.id && !mongoIds.has(String(u.id)));
+        if (missing.length > 0) {
+          finalUsers = [...finalUsers, ...missing];
+        }
       }
 
       // Robust Map-based merge for attendanceLogs: preserve non-empty checkOuts and latest punches
@@ -292,18 +305,36 @@ async function handleGranularMutation(req, res) {
     }
 
     if (online && !useLocal) {
-      if (type === 'update' && key === 'users' && query && updates) {
+      if (type === 'push' && payload && payload.id) {
         try {
-          await User.updateOne(query, { $set: updates });
-        } catch (mongoErr) {
-          console.warn('⚠️ Non-fatal Mongo user update warning:', mongoErr.message);
+          if (key === 'users') await User.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+          else if (key === 'attendanceLogs') await AttendanceLog.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+          else if (key === 'leaveRequests') await LeaveRequest.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+          else if (key === 'shiftSwaps') await ShiftSwap.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+          else if (key === 'schedules') await Schedule.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+          else if (key === 'notices') await Notice.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
+        } catch (mongoPushErr) {
+          console.warn('⚠️ Non-fatal Mongo push warning:', mongoPushErr.message);
         }
-      } else if (type === 'delete' && query) {
+      } else if (type === 'update' && query && updates) {
         try {
-          if (key === 'leaveRequests') await LeaveRequest.deleteOne(query);
-          else if (key === 'shiftSwaps') await ShiftSwap.deleteOne(query);
-          else if (key === 'attendanceLogs') await AttendanceLog.deleteOne(query);
-          else if (key === 'users') await User.deleteOne(query);
+          if (key === 'users') await User.updateOne(query, { $set: updates });
+          else if (key === 'attendanceLogs') await AttendanceLog.updateOne(query, { $set: updates });
+          else if (key === 'leaveRequests') await LeaveRequest.updateOne(query, { $set: updates });
+          else if (key === 'shiftSwaps') await ShiftSwap.updateOne(query, { $set: updates });
+          else if (key === 'schedules') await Schedule.updateOne(query, { $set: updates });
+          else if (key === 'notices') await Notice.updateOne(query, { $set: updates });
+        } catch (mongoErr) {
+          console.warn('⚠️ Non-fatal Mongo update warning:', mongoErr.message);
+        }
+      } else if ((type === 'delete' || type === 'pull') && query) {
+        try {
+          if (key === 'leaveRequests') await LeaveRequest.deleteMany(query);
+          else if (key === 'shiftSwaps') await ShiftSwap.deleteMany(query);
+          else if (key === 'attendanceLogs') await AttendanceLog.deleteMany(query);
+          else if (key === 'users') await User.deleteMany(query);
+          else if (key === 'schedules') await Schedule.deleteMany(query);
+          else if (key === 'notices') await Notice.deleteMany(query);
         } catch (mongoDelErr) {
           console.warn('⚠️ Non-fatal Mongo delete warning:', mongoDelErr.message);
         }

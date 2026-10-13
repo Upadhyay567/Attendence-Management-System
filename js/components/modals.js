@@ -10,6 +10,9 @@ window.closeModal = closeModal;
 
 export function openFullScreenImageModal(imageSrc) {
   if (!imageSrc) return;
+  const resolvedSrc = (typeof Utils !== 'undefined' && typeof Utils.resolvePhotoUrl === 'function') 
+    ? Utils.resolvePhotoUrl(imageSrc) 
+    : imageSrc;
   // Remove existing fullscreen overlays if any
   document.querySelectorAll('.modal-overlay.fullscreen-image-overlay').forEach(el => el.remove());
 
@@ -28,7 +31,7 @@ export function openFullScreenImageModal(imageSrc) {
       <div style="position: absolute; top: -48px; right: 0; display: flex; align-items: center; gap: 10px;">
         <button id="btn-close-fullscreen-view" type="button" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #ffffff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" title="Close (Esc)">&times;</button>
       </div>
-      <img src="${imageSrc}" alt="Profile Photo" style="max-width: min(85vw, 680px); max-height: 80vh; object-fit: contain; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.65); border: 2.5px solid rgba(251, 191, 36, 0.5); background: #111; cursor: default;">
+      <img src="${resolvedSrc}" alt="Profile Photo" style="max-width: min(85vw, 680px); max-height: 80vh; object-fit: contain; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.65); border: 2.5px solid rgba(251, 191, 36, 0.5); background: #111; cursor: default;">
       <div style="margin-top: 14px; font-size: 12px; color: rgba(255,255,255,0.7); text-align: center; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
         Press <kbd style="background:rgba(255,255,255,0.18); padding:2px 6px; border-radius:4px; font-family:monospace; border:1px solid rgba(255,255,255,0.3);">Esc</kbd> or click anywhere outside to close
       </div>

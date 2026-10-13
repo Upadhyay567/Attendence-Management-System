@@ -595,20 +595,10 @@ export const DB = {
     if (!this.data || typeof this.data !== 'object') return null;
     return {
       users: (this.data.users || []).map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        department: u.department,
-        status: u.status,
-        scheduleId: u.scheduleId,
-        avatar: u.avatar || '',
-        designation: u.designation || '',
-        employeeId: u.employeeId || '',
-        phone: u.phone || '',
-        company: u.company || '',
-        companyName: u.companyName || '',
-        preferredLocation: u.preferredLocation || '',
+        ...u,
+        photo: u.photo || null,
+        scheduleIds: Array.isArray(u.scheduleIds) ? u.scheduleIds : (u.scheduleId ? [u.scheduleId] : []),
+        preferredLocations: Array.isArray(u.preferredLocations) ? u.preferredLocations : (u.preferredLocation ? [u.preferredLocation] : []),
         shiftLocations: u.shiftLocations || {},
         documents: Array.isArray(u.documents) ? u.documents : [],
         verificationStatuses: u.verificationStatuses || {},
@@ -744,20 +734,20 @@ export const DB = {
       console.log('Skipping backend API fetch due to recent local write.');
     }
 
-    try {
-      const raw = localStorage.getItem(DB_KEY);
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (!this.data || !Array.isArray(this.data.attendanceLogs) || this.data.attendanceLogs.length === 0) {
-          this.data = cached;
-        } else if (cached && Array.isArray(cached.attendanceLogs) && cached.attendanceLogs.length > this.data.attendanceLogs.length) {
-          this.data = cached;
+    if (!this.data || !Array.isArray(this.data.users) || this.data.users.length === 0) {
+      try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached && Array.isArray(cached.users) && cached.users.length > 0) {
+            this.data = cached;
+          }
+        } else {
+          await this.reset();
         }
-      } else if (!this.data) {
-        await this.reset();
+      } catch (err) {
+        if (!this.data) await this.reset();
       }
-    } catch (err) {
-      if (!this.data) await this.reset();
     }
     
     try {
@@ -768,7 +758,7 @@ export const DB = {
     if (typeof window !== 'undefined') window.__ATTENDANCE_DB_DATA__ = this.data;
   },
 
-  validateAndMigrateState(shouldSave = true) {
+  validateAndMigrateState(shouldSave = false) {
     if (!this.data) this.data = {};
     
     // Check if the current user is an employee under data isolation
@@ -2001,7 +1991,7 @@ export const DB = {
         delete u.shiftLocations[id];
       }
     });
-    this.save();
+    this.save({ type: 'pull', key: 'schedules', query: { id } });
     return true;
   },
 

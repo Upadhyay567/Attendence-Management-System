@@ -12,6 +12,21 @@ export const Utils = {
       .replace(/'/g, '&#039;');
   },
 
+  // Resolve profile / face photo URL across origins (relative uploads vs absolute/base64)
+  resolvePhotoUrl(photo) {
+    if (!photo || typeof photo !== 'string') return '';
+    const trimmed = photo.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('data:') || trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('blob:')) {
+      return trimmed;
+    }
+    const baseUrl = (typeof window !== 'undefined' && window.apiBaseUrl) ? window.apiBaseUrl.replace(/\/+$/, '') : '';
+    if (trimmed.startsWith('/')) {
+      return baseUrl ? `${baseUrl}${trimmed}` : trimmed;
+    }
+    return baseUrl ? `${baseUrl}/${trimmed}` : trimmed;
+  },
+
   // Get today's date formatted as YYYY-MM-DD in local time
   getTodayString() {
     return new Date().toLocaleDateString('en-CA');

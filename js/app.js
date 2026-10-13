@@ -1,24 +1,24 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=94';
-import { renderAdminSchedules } from './views/schedulesView.js?v=101';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=99';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=94';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=94';
-import { renderAdminAttendances } from './views/attendancesView.js?v=98';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=94';
-import { renderAdminFinance } from './views/financeView.js?v=94';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=94';
-import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=102';
-import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=101';
-import { drawRadarMap } from './components/geofenceMap.js?v=94';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=94';
+import { renderLoginView } from './views/loginView.js?v=103';
+import { renderAdminSchedules } from './views/schedulesView.js?v=103';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=103';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=103';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=103';
+import { renderAdminAttendances } from './views/attendancesView.js?v=103';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=103';
+import { renderAdminFinance } from './views/financeView.js?v=103';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=103';
+import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=103';
+import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=103';
+import { drawRadarMap } from './components/geofenceMap.js?v=103';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=103';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=94';
-import { Auth } from './auth.js?v=94';
-import { Utils, html } from './utils.js?v=94';
-import { triggerBirthdayCelebration } from './celebration.js?v=94';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=94';
+import { DB } from './core/db.js?v=103';
+import { Auth } from './auth.js?v=103';
+import { Utils, html } from './utils.js?v=103';
+import { triggerBirthdayCelebration } from './celebration.js?v=103';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=103';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -1595,7 +1595,7 @@ function renderAppShell() {
       <div class="sidebar-footer">
         <div class="user-profile-summary">
           <div class="avatar clickable-list-avatar" data-photo="${user.photo || ''}" style="overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
-            ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
+            ${user.photo ? `<img src="${Utils.resolvePhotoUrl(user.photo)}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
           </div>
           <div class="user-info-text">
             <span class="user-name">${Utils.escape(user.name)}</span>
@@ -1660,7 +1660,7 @@ function renderAppShell() {
             <div class="top-nav-user" style="display:flex; align-items:center; gap:8px">
               <div id="top-user-profile-click-target" title="View Profile" style="cursor:pointer; display:flex; align-items:center; gap:8px">
                 <div class="top-nav-user-avatar clickable-list-avatar" data-photo="${user.photo || ''}" style="overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:${user.photo ? 'pointer' : 'default'}" title="${user.photo ? 'Click to view full screen' : ''}">
-                  ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
+                  ${user.photo ? `<img src="${Utils.resolvePhotoUrl(user.photo)}" style="width:100%; height:100%; object-fit:cover;">` : avatarText}
                 </div>
                 <div class="top-nav-user-info">
                   <span class="top-nav-user-name">${Utils.escape(user.name)}</span>
@@ -3091,7 +3091,7 @@ function renderEmployeeProfile() {
                 </div>
                 <div style="display:flex; gap:16px; align-items:center; margin:8px 0;">
                   <div id="profile-badge-photo-click" style="width:68px; height:68px; border-radius:${user.photo ? '12px' : '50%'}; background:${user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#fbbf24; border:2.5px solid #fbbf24; box-shadow:0 4px 14px rgba(0,0,0,0.22); flex-shrink:0; overflow:hidden; cursor:pointer; transition:transform 0.15s ease;" title="${user.photo ? 'Click badge photo for full view' : 'Click to upload photo'}">
-                    ${user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:cover; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:38px; height:38px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+                    ${user.photo ? `<img src="${Utils.resolvePhotoUrl(user.photo)}" style="width:100%; height:100%; object-fit:cover; background:transparent;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:38px; height:38px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
                   </div>
                   <div style="overflow:hidden; flex:1;">
                     <div style="font-size:16px; font-weight:800; color:#1e1e1e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;">${Utils.escape(user.name || user.username || 'Employee')}</div>

@@ -137,7 +137,7 @@ export function renderAdminUsers() {
       <tr>
         <td style="font-weight:600; display:flex; align-items:center; gap:12px; min-width:180px">
           <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #89201B 0%, #3d0d0a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(251,191,36,0.3); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
-            ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+            ${u.photo ? `<img src="${Utils.resolvePhotoUrl(u.photo)}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
           </div>
           <div>
             ${Utils.escape(u.name)}
@@ -643,7 +643,7 @@ export function renderAdminPayroll() {
       <tr>
         <td style="font-weight:600; display:flex; align-items:center; gap:12px; min-width:180px">
           <div class="clickable-list-avatar" data-photo="${u.photo || ''}" style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:#ffffff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; border:1px solid rgba(255,255,255,0.2); overflow:hidden; flex-shrink:0; cursor:${u.photo ? 'pointer' : 'default'}" title="${u.photo ? 'Click to view full screen' : ''}">
-            ${u.photo ? `<img src="${u.photo}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
+            ${u.photo ? `<img src="${Utils.resolvePhotoUrl(u.photo)}" style="width:100%; height:100%; object-fit:cover;">` : getInitials(u.name)}
           </div>
           <div>
             ${Utils.escape(u.name)}
@@ -971,7 +971,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;
   const schedules = DB.getSchedules();
-  let editorPhotoDataUrl = isEdit && user.photo ? user.photo : '';
+  let editorPhotoDataUrl = isEdit && user && user.photo ? user.photo : '';
+  let photoRemovedExplicitly = false;
 
   const activeTab = (initialTab === 'payroll') ? 'payroll' : 'employee';
 
@@ -1007,8 +1008,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         <div id="tab-pane-employee" style="display: ${activeTab === 'employee' ? 'flex' : 'none'}; flex-direction: column; gap: 14px;">
           <!-- Profile Photo Upload & Remove Section -->
           <div class="form-group" style="display:flex; align-items:center; gap:16px; margin-bottom:10px; background:rgba(255,255,255,0.02); padding:14px; border-radius:12px; border:1px solid var(--border)">
-            <div id="editor-photo-preview" style="width:64px; height:64px; border-radius:10px; background:${isEdit && user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; ${isEdit && user.photo ? 'cursor:pointer;' : ''}" title="${isEdit && user.photo ? 'Click to view full screen' : ''}">
-              ${isEdit && user.photo ? `<img src="${user.photo}" style="width:100%; height:100%; object-fit:contain;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
+            <div id="editor-photo-preview" style="width:64px; height:64px; border-radius:10px; background:${isEdit && user && user.photo ? 'transparent' : 'linear-gradient(135deg,#89201B,#5c0f0a)'}; border:2px solid #fbbf24; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; ${isEdit && user && user.photo ? 'cursor:pointer;' : ''}" title="${isEdit && user && user.photo ? 'Click to view full screen' : ''}">
+              ${isEdit && user && user.photo ? `<img src="${Utils.resolvePhotoUrl(user.photo)}" style="width:100%; height:100%; object-fit:contain;">` : `<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`}
             </div>
             <div style="display:flex; flex-direction:column; gap:6px">
               <input type="file" id="editor-photo-file-input" accept="image/*" style="display:none">
@@ -1517,6 +1518,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         }
         const reader = new FileReader();
         reader.onload = (event) => {
+          photoRemovedExplicitly = false;
           editorPhotoDataUrl = event.target.result;
           if (editorPhotoPreview) {
             editorPhotoPreview.innerHTML = html`<img src="${editorPhotoDataUrl}" style="width:100%; height:100%; object-fit:contain;">`;
@@ -1544,7 +1546,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
 
   if (btnEditorRemovePhoto) {
     btnEditorRemovePhoto.addEventListener('click', () => {
-      editorPhotoDataUrl = '';
+      photoRemovedExplicitly = true;
+      editorPhotoDataUrl = null;
       if (editorPhotoPreview) {
         editorPhotoPreview.innerHTML = html`<svg viewBox="0 0 24 24" fill="currentColor" style="width:36px; height:36px; color:#fbbf24;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>`;
         editorPhotoPreview.style.background = 'linear-gradient(135deg,#89201B,#5c0f0a)';
@@ -1717,7 +1720,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
-        photo: editorPhotoDataUrl || null,
+        photo: photoRemovedExplicitly ? null : (editorPhotoDataUrl || (isEdit && user && user.photo ? user.photo : null)),
         city, state,
         branch, pincode, bloodGroup, bonus,
         totalAllowances, totalDeduction: totalDeductions, totalDeductions,
