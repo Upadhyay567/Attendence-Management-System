@@ -261,7 +261,7 @@ export function renderRegisterEmployeeView() {
                     <div class="reg-shift-loc-picker-block" id="reg-shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'}; align-items:center; gap:8px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.08); margin-left:22px; flex-wrap:wrap;">
                       <span style="font-size:11px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">📍 Location:</span>
                       <select class="reg-shift-location-select form-input" data-shift-id="${s.id}" id="reg-shift-loc-${s.id}" style="flex:1; min-width:160px; max-width:240px; height:30px; padding:2px 8px; font-size:11.5px; border-radius:var(--radius-sm); cursor:pointer;">
-                        ${Object.keys(window.OFFICE_COORDINATES || { 'Delhi Head Office': true, 'Chattarpur Office': true, 'PITAM PURA': true, 'Warehouse 1340': true }).map(loc => `
+                        ${Object.keys(window.OFFICE_COORDINATES || { 'Delhi Head Office': true, 'Chattarpur Office': true, 'PITAM PURA': true, 'WH-1340': true }).filter(l => !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device').map(loc => `
                           <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
                         `).join('')}
                       </select>

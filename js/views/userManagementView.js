@@ -1193,7 +1193,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
                     <div class="shift-loc-picker-block" id="shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'};align-items:center;gap:8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.08);margin-left:22px;flex-wrap:wrap;">
                       <span style="font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;">📍 Work Location:</span>
                       <select class="editor-shift-location-select" data-shift-id="${s.id}" id="editor-shift-loc-${s.id}" style="flex:1;min-width:160px;max-width:240px;height:28px;padding:2px 8px;font-size:11.5px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-surface, #1e1e24);color:var(--text-primary);cursor:pointer;">
-                        ${Object.keys(window.OFFICE_COORDINATES || {}).map(loc => `
+                        ${Object.keys(window.OFFICE_COORDINATES || {}).filter(l => !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device').map(loc => `
                           <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
                         `).join('')}
                       </select>

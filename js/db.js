@@ -1704,10 +1704,73 @@ export const DB = {
     return false;
   },
 
-  // Schedules API
+  // Biometric & Location APIs
+  getBiometricDevices() {
+    return Array.isArray(this.data.biometricDevices) ? this.data.biometricDevices : [];
+  },
+
+  getBiometricLocations() {
+    const devices = this.getBiometricDevices();
+    const locs = new Set();
+    devices.forEach(d => {
+      if (d && d.location && typeof d.location === 'string' && d.location.trim()) {
+        const cleanLoc = d.location.trim();
+        if (!cleanLoc.includes('28.6952') && cleanLoc !== 'Office HQ' && cleanLoc !== 'Mock Device') {
+          locs.add(cleanLoc);
+        }
+      }
+    });
+    if (locs.size === 0) {
+      return [
+        'GT KARNAL SITE',
+        'Noida sector 61',
+        'Chattarpur Office',
+        'Siyonee',
+        'RETAIL',
+        'PITAM PURA',
+        'ASHOK VIHAR',
+        'HS Office',
+        'WH-1340',
+        'Surya Gurugram',
+        'PUNJABI BAGH',
+        'Delhi Head Office',
+        'WH-1340-close'
+      ].sort();
+    }
+    return [...locs].sort();
+  },
+
   getOfficeCoordinates() {
     if (!this.data.officeCoordinates) {
       this.data.officeCoordinates = {};
+    }
+    // Remove sample coordinates
+    for (const k of Object.keys(this.data.officeCoordinates)) {
+      if (k.includes('28.6952') || k === 'Office HQ' || k === 'Mock Device') {
+        delete this.data.officeCoordinates[k];
+      }
+    }
+    // Ensure all existing biometric locations are present
+    const bioLocs = this.getBiometricLocations();
+    const defaultCoords = {
+      'GT KARNAL SITE': { lat: 28.7180, lng: 77.1420 },
+      'Noida sector 61': { lat: 28.5990, lng: 77.3620 },
+      'Chattarpur Office': { lat: 28.5020, lng: 77.1780 },
+      'Siyonee': { lat: 28.6952, lng: 77.1860 },
+      'RETAIL': { lat: 28.6950, lng: 77.1850 },
+      'PITAM PURA': { lat: 28.6980, lng: 77.1410 },
+      'ASHOK VIHAR': { lat: 28.6920, lng: 77.1750 },
+      'HS Office': { lat: 28.6952, lng: 77.1860 },
+      'WH-1340': { lat: 28.7200, lng: 77.1450 },
+      'Surya Gurugram': { lat: 28.4595, lng: 77.0266 },
+      'PUNJABI BAGH': { lat: 28.6690, lng: 77.1260 },
+      'Delhi Head Office': { lat: 28.6952, lng: 77.1860 },
+      'WH-1340-close': { lat: 28.7205, lng: 77.1455 }
+    };
+    for (const loc of bioLocs) {
+      if (!this.data.officeCoordinates[loc]) {
+        this.data.officeCoordinates[loc] = defaultCoords[loc] || { lat: 28.6952, lng: 77.1860 };
+      }
     }
     return this.data.officeCoordinates;
   },

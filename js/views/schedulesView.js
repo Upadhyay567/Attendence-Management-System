@@ -18,11 +18,10 @@ export function renderAdminSchedules(tab) {
   const schedules = (typeof DB.getSchedules === 'function' ? DB.getSchedules() : (DB.data ? DB.data.schedules : [])) || [];
   const allUsers = (typeof DB.getUsers === 'function' ? DB.getUsers() : (DB.data ? DB.data.users : [])) || [];
   const officeCoords = (typeof DB.getOfficeCoordinates === 'function' ? DB.getOfficeCoordinates() : window.OFFICE_COORDINATES) || {};
-  const allLocationNames = [...new Set([
-    ...Object.keys(officeCoords),
-    ...schedules.map(s => s.location),
-    ...allUsers.flatMap(u => Array.isArray(u.preferredLocations) ? u.preferredLocations : [u.preferredLocation])
-  ].filter(Boolean))].sort();
+  const allLocationNames = (typeof DB.getBiometricLocations === 'function'
+    ? DB.getBiometricLocations()
+    : Object.keys(officeCoords || {})
+  ).filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device').sort();
 
   const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';
 
@@ -33,9 +32,12 @@ export function renderAdminSchedules(tab) {
     // Precompute lowercase search index for instant filtering across 1,200+ employees
     allUsers.forEach(u => {
       u._search = `${u.name || ''} ${u.employeeId || u.username || u.id || ''} ${u.department || ''}`.toLowerCase();
-      const locs = Array.isArray(u.preferredLocations)
+      const rawLocs = Array.isArray(u.preferredLocations)
         ? u.preferredLocations
         : (u.preferredLocation ? [u.preferredLocation] : []);
+      const locs = rawLocs.filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device');
+      u.preferredLocations = locs;
+      u.preferredLocation = locs[0] || '';
       u._locStr = locs.join(' , ').toLowerCase();
       u._dept = (u.department || '').toLowerCase();
     });
@@ -64,7 +66,7 @@ export function renderAdminSchedules(tab) {
     };
 
     const getLocChipsHtml = (locations) => {
-      const list = (locations || []).filter(Boolean);
+      const list = (locations || []).filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device');
       if (list.length === 0) {
         return `<span class="emp-multi-select-placeholder">-- No Worksite Location --</span>`;
       }
@@ -302,6 +304,10 @@ export function renderAdminSchedules(tab) {
             </label>
           `).join('')}
         </div>
+        <div class="emp-multi-select-footer" style="padding:8px 12px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-card, #ffffff);">
+          <span style="font-size:11px; color:var(--text-muted);">Auto-saves instantly</span>
+          <button type="button" class="btn btn-primary-equify btn-sm" id="global-shift-done-btn" style="padding:4px 14px; font-size:11.5px; font-weight:700;">Done ✓</button>
+        </div>
       `;
       document.body.appendChild(sharedShiftPopover);
     }
@@ -316,7 +322,7 @@ export function renderAdminSchedules(tab) {
       sharedLocPopover.style.zIndex = '999999';
       sharedLocPopover.innerHTML = `
         <div class="emp-multi-select-header">
-          <span class="emp-multi-select-title">Select Location(s)</span>
+          <span class="emp-multi-select-title">Select Worksite Location(s)</span>
           <div class="emp-multi-select-actions">
             <button type="button" class="emp-multi-select-action-btn" id="global-loc-select-all">Select All</button>
             <span style="color:var(--border)">|</span>
@@ -324,7 +330,7 @@ export function renderAdminSchedules(tab) {
           </div>
         </div>
         <div class="emp-multi-select-search">
-          <input type="text" id="global-loc-search-input" placeholder="Filter locations...">
+          <input type="text" id="global-loc-search-input" placeholder="Filter worksite locations...">
         </div>
         <div class="emp-multi-select-list" id="global-loc-options-list">
           <label class="emp-multi-select-option emp-multi-select-none-option" data-txt="-- no worksite location --">
@@ -341,6 +347,10 @@ export function renderAdminSchedules(tab) {
               </div>
             </label>
           `).join('')}
+        </div>
+        <div class="emp-multi-select-footer" style="padding:8px 12px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-card, #ffffff);">
+          <span style="font-size:11px; color:var(--text-muted);">Auto-saves instantly</span>
+          <button type="button" class="btn btn-primary-equify btn-sm" id="global-loc-done-btn" style="padding:4px 14px; font-size:11.5px; font-weight:700;">Done ✓</button>
         </div>
       `;
       document.body.appendChild(sharedLocPopover);
@@ -366,12 +376,22 @@ export function renderAdminSchedules(tab) {
     };
 
     const positionPopoverAt = (popover, trigger) => {
-      closeAllPopovers();
+      // Hide any other open popovers without resetting activeEditingEmpId
+      if (sharedShiftPopover && sharedShiftPopover !== popover) sharedShiftPopover.style.display = 'none';
+      if (sharedLocPopover && sharedLocPopover !== popover) sharedLocPopover.style.display = 'none';
+      const bulkSP = document.getElementById('bulk-shift-popover');
+      if (bulkSP && bulkSP !== popover) bulkSP.style.display = 'none';
+      const bulkLP = document.getElementById('bulk-loc-popover');
+      if (bulkLP && bulkLP !== popover) bulkLP.style.display = 'none';
+
+      document.querySelectorAll('.emp-multi-select-btn').forEach(b => {
+        if (b !== trigger) b.classList.remove('active');
+      });
       trigger.classList.add('active');
       popover.style.display = 'flex';
 
       const rect = trigger.getBoundingClientRect();
-      const popoverHeight = 280;
+      const popoverHeight = 310;
       const spaceBelow = window.innerHeight - rect.bottom;
 
       if (spaceBelow < popoverHeight && rect.top > popoverHeight) {
@@ -457,9 +477,12 @@ export function renderAdminSchedules(tab) {
 
       let assignedLocations = [];
       if (Array.isArray(user.preferredLocations)) {
-        assignedLocations = user.preferredLocations.filter(Boolean);
+        assignedLocations = user.preferredLocations.filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device');
       } else if (user.preferredLocation && user.preferredLocation !== 'No Worksite Location' && user.preferredLocation !== 'None' && user.preferredLocation.trim() !== '') {
-        assignedLocations = [user.preferredLocation.trim()];
+        const cleanL = user.preferredLocation.trim();
+        if (!cleanL.includes('28.6952') && cleanL !== 'Office HQ' && cleanL !== 'Mock Device') {
+          assignedLocations = [cleanL];
+        }
       }
 
       if (locSearchInput) locSearchInput.value = '';
@@ -504,33 +527,21 @@ export function renderAdminSchedules(tab) {
       // Mark row saving status
       const statusBadge = document.getElementById(`loc-status-${empId}`);
       if (statusBadge) {
-        statusBadge.innerHTML = '⏳ Saving...';
-        statusBadge.style.color = 'var(--warning)';
+        statusBadge.innerHTML = 'Saved ✓';
+        statusBadge.style.color = 'var(--success)';
       }
 
-      // Debounce database write for rapid multi-clicks
-      if (saveTimerMap.has(`shift_${empId}`)) {
-        clearTimeout(saveTimerMap.get(`shift_${empId}`));
-      }
-      saveTimerMap.set(`shift_${empId}`, setTimeout(() => {
-        saveTimerMap.delete(`shift_${empId}`);
-        const updates = {
-          scheduleIds: finalShiftIds,
-          scheduleId: finalShiftIds[0] || ''
-        };
-        DB.updateUser(empId, updates, { silent: true });
-        if (statusBadge) {
-          statusBadge.innerHTML = 'Saved ✓';
-          statusBadge.style.color = 'var(--success)';
-        }
-      }, 200));
+      DB.updateUser(empId, {
+        scheduleIds: finalShiftIds,
+        scheduleId: finalShiftIds[0] || ''
+      }, { silent: true });
     };
 
     const commitLocChange = (empId, locations) => {
       const user = DB.getUser(empId);
       if (!user) return;
 
-      const finalLocs = [...new Set((locations || []).filter(Boolean))];
+      const finalLocs = [...new Set((locations || []).filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device'))];
       user.preferredLocations = finalLocs;
       user.preferredLocation = finalLocs[0] || '';
       user._locStr = finalLocs.join(' , ').toLowerCase();
@@ -544,26 +555,14 @@ export function renderAdminSchedules(tab) {
       // Mark row saving status
       const statusBadge = document.getElementById(`loc-status-${empId}`);
       if (statusBadge) {
-        statusBadge.innerHTML = '⏳ Saving...';
-        statusBadge.style.color = 'var(--warning)';
+        statusBadge.innerHTML = 'Saved ✓';
+        statusBadge.style.color = 'var(--success)';
       }
 
-      // Debounce database write for rapid multi-clicks
-      if (saveTimerMap.has(`loc_${empId}`)) {
-        clearTimeout(saveTimerMap.get(`loc_${empId}`));
-      }
-      saveTimerMap.set(`loc_${empId}`, setTimeout(() => {
-        saveTimerMap.delete(`loc_${empId}`);
-        const updates = {
-          preferredLocations: finalLocs,
-          preferredLocation: finalLocs[0] || ''
-        };
-        DB.updateUser(empId, updates, { silent: true });
-        if (statusBadge) {
-          statusBadge.innerHTML = 'Saved ✓';
-          statusBadge.style.color = 'var(--success)';
-        }
-      }, 200));
+      DB.updateUser(empId, {
+        preferredLocations: finalLocs,
+        preferredLocation: finalLocs[0] || ''
+      }, { silent: true });
     };
 
     // Shared Shift Popover Checkbox Listeners
@@ -698,6 +697,16 @@ export function renderAdminSchedules(tab) {
         c.closest('.emp-multi-select-option')?.classList.remove('selected');
       });
       commitLocChange(activeEditingEmpId, []);
+    });
+
+    document.getElementById('global-shift-done-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllPopovers();
+    });
+
+    document.getElementById('global-loc-done-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAllPopovers();
     });
 
     // Close popovers on click outside or scroll
@@ -853,6 +862,10 @@ export function renderAdminSchedules(tab) {
       if (shiftBtn) {
         e.stopPropagation();
         const empId = shiftBtn.dataset.empid;
+        if (activeEditingEmpId === empId && activeEditingType === 'shift' && sharedShiftPopover && sharedShiftPopover.style.display === 'flex') {
+          closeAllPopovers();
+          return;
+        }
         openShiftPopoverFor(empId, shiftBtn);
         return;
       }
@@ -861,6 +874,10 @@ export function renderAdminSchedules(tab) {
       if (locBtn) {
         e.stopPropagation();
         const empId = locBtn.dataset.empid;
+        if (activeEditingEmpId === empId && activeEditingType === 'loc' && sharedLocPopover && sharedLocPopover.style.display === 'flex') {
+          closeAllPopovers();
+          return;
+        }
         openLocPopoverFor(empId, locBtn);
         return;
       }
@@ -1239,7 +1256,7 @@ export function renderAdminSchedules(tab) {
               </div>
               <select class="form-input inline-sched-location" data-id="${s.id}" style="padding:6px 8px;font-size:12px;width:100%;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm)">
                 <option value="" ${!s.location ? 'selected' : ''}>-- Select Location --</option>
-                ${Object.keys(window.OFFICE_COORDINATES || {}).map(loc => `
+                ${allLocationNames.map(loc => `
                   <option value="${loc}" ${s.location === loc ? 'selected' : ''}>${loc}</option>
                 `).join('')}
               </select>
