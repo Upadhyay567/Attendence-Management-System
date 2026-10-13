@@ -53,6 +53,8 @@ function startBiometricScheduler() {
   );
 }
 
+let lastWdmsWarnTime = 0;
+
 async function runSync() {
   if (running) {
     return;
@@ -72,7 +74,11 @@ async function runSync() {
         }
       }),
       syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 3, pageSize: 1000 }).catch(err => {
-        console.warn('⚠️ WDMS Cloud biometric sync warning:', err.message);
+        const now = Date.now();
+        if (now - lastWdmsWarnTime > 5 * 60 * 1000) {
+          console.warn('⚠️ WDMS Cloud biometric sync warning (throttled):', err.message);
+          lastWdmsWarnTime = now;
+        }
       })
     ]);
   } catch (error) {
