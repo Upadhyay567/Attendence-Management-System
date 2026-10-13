@@ -272,7 +272,6 @@ app.post('/api/mutate', async (req, res) => {
               merged.scheduleId = '';
               merged.scheduleIds = [];
               merged.shiftLocations = {};
-              merged.preferredLocations = [];
             }
             userMap.set(u.id, merged);
           }

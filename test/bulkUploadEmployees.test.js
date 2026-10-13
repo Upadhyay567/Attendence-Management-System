@@ -260,12 +260,31 @@ describe('Employee Directory Bulk Upload Data Feature', () => {
     });
   });
 
-  describe('3. Employee Directory View Button Visibility', () => {
+  describe('3. Employee Directory View Button Visibility & Styling', () => {
     test('addBtnHTML contains the Bulk Upload Data button for HR / Admin / Manager roles', () => {
       const viewCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'views', 'userManagementView.js'), 'utf8');
       expect(viewCode).toContain('id="btn-bulk-upload-users"');
       expect(viewCode).toContain('Bulk Upload Data');
       expect(viewCode).toContain('openBulkUploadModal');
+    });
+
+    test('Bulk upload modal uses compact remove button and "Upload" action button', () => {
+      const viewCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'views', 'userManagementView.js'), 'utf8');
+      // Compact remove button
+      expect(viewCode).toContain('btn-bulk-remove-compact');
+      expect(viewCode).toContain('id="btn-bulk-upload-remove-file"');
+      
+      // Upload action button replaced Start Bulk Upload
+      expect(viewCode).toContain('id="btn-process-bulk-upload"');
+      expect(viewCode).toContain('Upload');
+      expect(viewCode).not.toContain('Start Bulk Upload');
+    });
+
+    test('Employee Directory features premium styled delete button with SVG icon', () => {
+      const viewCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'views', 'userManagementView.js'), 'utf8');
+      expect(viewCode).toContain('btn-delete-user');
+      expect(viewCode).toContain('<polyline points="3 6 5 6 21 6"></polyline>');
+      expect(viewCode).toContain('<span>Delete</span>');
     });
   });
 });

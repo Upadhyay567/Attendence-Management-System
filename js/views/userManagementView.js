@@ -106,7 +106,15 @@ export function renderAdminUsers() {
             <button class="btn btn-danger btn-reject-profile-direct" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:var(--error)">Reject</button>
           ` : ''}
           <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:5px 10px;width:auto;font-size:11.5px;font-weight:600" title="Edit Profile">✏️ Edit Profile</button>
-          <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Delete">🗑️</button>
+          <button class="btn-delete-user" data-id="${u.id}" title="Delete Employee Profile">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+            <span>Delete</span>
+          </button>
         </div>
       `
       : `
@@ -2474,15 +2482,18 @@ export function openBulkUploadModal() {
         </div>
 
         <!-- File Selected Card -->
-        <div id="bulk-upload-selected-card" style="display: none; padding: 12px 16px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 22px;">📄</span>
-            <div>
-              <div id="bulk-upload-filename" style="font-weight: 700; font-size: 13px; color: var(--text-primary);">file.xlsx</div>
+        <div id="bulk-upload-selected-card" style="display: none; padding: 12px 16px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; justify-content: space-between; align-items: center; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <span style="font-size: 22px; flex-shrink: 0;">📄</span>
+            <div style="min-width: 0;">
+              <div id="bulk-upload-filename" style="font-weight: 700; font-size: 13px; color: var(--text-primary); word-break: break-all;">file.xlsx</div>
               <div id="bulk-upload-filesize" style="font-size: 11.5px; color: var(--text-muted);">0 KB • 0 records detected</div>
             </div>
           </div>
-          <button type="button" id="btn-bulk-upload-remove-file" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 11px;">Remove</button>
+          <button type="button" id="btn-bulk-upload-remove-file" class="btn-bulk-remove-compact" title="Remove this file">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Remove</span>
+          </button>
         </div>
 
         <!-- Processing Progress -->
@@ -2499,8 +2510,8 @@ export function openBulkUploadModal() {
       <!-- Footer Actions -->
       <div class="modal-actions" style="margin-top: auto; padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card, #ffffff);">
         <button class="btn btn-secondary" type="button" id="btn-bulk-upload-cancel" onclick="closeModal(this.closest('.modal-overlay'))">Cancel</button>
-        <button class="btn btn-primary-equify" type="button" id="btn-process-bulk-upload" disabled style="padding: 8px 18px; font-size: 13px; font-weight: 700; opacity: 0.6; cursor: not-allowed;">
-          Start Bulk Upload
+        <button class="btn btn-primary-equify" type="button" id="btn-process-bulk-upload" disabled style="width: auto; min-width: 110px; padding: 8px 22px; font-size: 13px; font-weight: 700; opacity: 0.6; cursor: not-allowed; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+          <span>📤</span> Upload
         </button>
       </div>
     </div>
@@ -2563,6 +2574,7 @@ export function openBulkUploadModal() {
 
           filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • ${parsedRows.length} employee record(s) detected`;
           processBtn.disabled = false;
+          processBtn.innerHTML = '<span>📤</span> Upload';
           processBtn.style.opacity = '1';
           processBtn.style.cursor = 'pointer';
         } catch (err) {
@@ -2621,8 +2633,10 @@ export function openBulkUploadModal() {
     selectedCard.style.display = 'none';
     dropzone.style.display = 'block';
     processBtn.disabled = true;
+    processBtn.innerHTML = '<span>📤</span> Upload';
     processBtn.style.opacity = '0.6';
     processBtn.style.cursor = 'not-allowed';
+    processBtn.style.display = 'inline-flex';
     resultsSection.style.display = 'none';
     resultsSection.innerHTML = '';
   });
@@ -2632,6 +2646,9 @@ export function openBulkUploadModal() {
     if (!parsedRows || parsedRows.length === 0) return;
 
     processBtn.disabled = true;
+    processBtn.innerHTML = '<span>⏳</span> Uploading...';
+    processBtn.style.opacity = '0.7';
+    processBtn.style.cursor = 'wait';
     processBtn.style.display = 'none';
     cancelBtn.disabled = true;
     removeFileBtn.disabled = true;
@@ -2718,9 +2735,13 @@ export function openBulkUploadModal() {
         }
       } catch (err) {
         spinner.style.display = 'none';
-        processBtn.style.display = 'block';
+        processBtn.style.display = 'inline-flex';
         processBtn.disabled = false;
+        processBtn.innerHTML = '<span>📤</span> Upload';
+        processBtn.style.opacity = '1';
+        processBtn.style.cursor = 'pointer';
         cancelBtn.disabled = false;
+        removeFileBtn.disabled = false;
         alert(`An error occurred while processing bulk employee upload: ${err.message}`);
       }
     }, 400);

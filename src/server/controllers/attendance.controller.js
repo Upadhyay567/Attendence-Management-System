@@ -51,7 +51,6 @@ function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
         if (updates.scheduleIds === undefined) updates.scheduleIds = [];
         if (updates.scheduleId === undefined) updates.scheduleId = '';
         if (updates.shiftLocations === undefined) updates.shiftLocations = {};
-        if (updates.preferredLocations === undefined) updates.preferredLocations = [];
         const todayStr = new Date().toISOString().split('T')[0];
         if (Array.isArray(stateObj.attendanceLogs)) {
           stateObj.attendanceLogs.forEach(l => {

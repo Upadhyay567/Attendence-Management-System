@@ -2562,7 +2562,15 @@ function renderAdminUsers() {
                        ` : ''}
                        <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Edit Profile">✏️ Profile</button>
                        <button class="btn btn-outline-equify btn-edit-payroll" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:rgba(79,70,229,0.1);color:#6366f1;border:1px solid rgba(79,70,229,0.3)" title="Edit Payroll & Banking">💳 Payroll</button>
-                       <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Delete">🗑️</button>
+                       <button class="btn-delete-user" data-id="${u.id}" title="Delete Profile">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+  <span>Delete</span>
+</button>
                      </div>
                    `
                    : `
@@ -2823,7 +2831,15 @@ function renderAdminUsers() {
                 ` : ''}
                 <button class="btn btn-secondary btn-edit-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Edit Profile">✏️ Profile</button>
                 <button class="btn btn-outline-equify btn-edit-payroll" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px;background:rgba(79,70,229,0.1);color:#6366f1;border:1px solid rgba(79,70,229,0.3)" title="Edit Payroll & Banking">💳 Payroll</button>
-                <button class="btn btn-danger btn-delete-user" data-id="${u.id}" style="padding:5px 8px;width:auto;font-size:11px" title="Delete">🗑️</button>
+                <button class="btn-delete-user" data-id="${u.id}" title="Delete Profile">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    <line x1="10" y1="11" x2="10" y2="17"></line>
+    <line x1="14" y1="11" x2="14" y2="17"></line>
+  </svg>
+  <span>Delete</span>
+</button>
               </div>
             `
             : `<div style="font-size:11px;color:var(--text-muted)">HR Control Only</div>`;
