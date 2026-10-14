@@ -1421,9 +1421,9 @@ async function syncBiometricAttendance(options = {}) {
     }
 
     /*
-     * Notify existing HRMS dashboard if records were created or updated.
+     * Notify existing HRMS dashboard if records were created or updated or on manual sync.
      */
-    if (result && (result.created > 0 || result.updated > 0)) {
+    if ((result && (result.created > 0 || result.updated > 0)) || isManual) {
       broadcastSSEEvent(
         'db_updated',
         {

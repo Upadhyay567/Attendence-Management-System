@@ -70,7 +70,12 @@ export async function renderAdminDashboard() {
         <h1 class="content-title">Live Attendance Monitoring</h1>
         <div class="content-subtitle">Real-time status tracking for workspace logs.</div>
       </div>
-      <div><button class="btn btn-secondary" id="btn-admin-reset-db">Reset Demo Data</button></div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="btn-admin-sync-biometric" style="background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(16,185,129,0.25); cursor: pointer;">
+          <span id="admin-sync-bio-icon">🔄</span> Sync Biometric
+        </button>
+        <button class="btn btn-secondary" id="btn-admin-reset-db">Reset Demo Data</button>
+      </div>
     </div>
     <div class="content-body">
       <!-- Welcome Banner Loading Skeleton -->
@@ -240,6 +245,33 @@ export async function renderAdminDashboard() {
 
 
   // Bind minimal click events on loading shell if they exist
+  const syncBioBtn = document.getElementById('btn-admin-sync-biometric');
+  if (syncBioBtn) {
+    syncBioBtn.addEventListener('click', async () => {
+      syncBioBtn.disabled = true;
+      const icon = document.getElementById('admin-sync-bio-icon');
+      if (icon) icon.style.animation = 'spin 1s linear infinite';
+      try {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('📡 Synchronizing live biometric punches from all devices...', 'info');
+        }
+        await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', { method: 'POST' }).catch(() => {});
+        await DB.init('immediate');
+        renderAdminDashboard();
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Biometric attendance synchronized successfully!', 'success');
+        }
+      } catch (err) {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('⚠️ Biometric sync warning: ' + err.message, 'warning');
+        }
+      } finally {
+        syncBioBtn.disabled = false;
+        if (icon) icon.style.animation = '';
+      }
+    });
+  }
+
   const resetDbBtn = document.getElementById('btn-admin-reset-db');
   if (resetDbBtn) {
     resetDbBtn.addEventListener('click', async () => {
@@ -1451,7 +1483,14 @@ export async function renderAdminDashboard() {
 
     const refreshBtn = document.getElementById('btn-refresh-biometric-feed');
     if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => {
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        const origHtml = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<span>⏳</span> Refreshing...';
+        try {
+          await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', { method: 'POST' }).catch(() => {});
+          await DB.init('immediate');
+        } catch (_) {}
         loadBiometricDashboardData();
         loadBiometricFleetData();
         const lastSyncEl = document.getElementById('fleet-last-sync');
@@ -1459,6 +1498,8 @@ export async function renderAdminDashboard() {
           const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
           lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
         }
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = origHtml;
       });
     }
 

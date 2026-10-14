@@ -39,6 +39,10 @@ const {
   readLocalDbStateCached
 } = require('../controllers/attendance.controller');
 
+const {
+  broadcastSSEEvent
+} = require('./events.routes');
+
 
 // =====================================================
 // HELPERS
@@ -626,6 +630,12 @@ router.post('/biometric/devices/:id/test', async (req, res) => {
 router.post('/biometric/sync-templates', async (req, res) => {
   try {
     const result = await replicateTemplatesAcrossDevices({ force: true });
+    try {
+      broadcastSSEEvent('db_updated', {
+        type: 'biometric_template_sync',
+        timestamp: Date.now()
+      });
+    } catch (_) {}
     return res.json({
       success: true,
       message: `Templates successfully synchronized: ${result.replicatedCount} user template(s) replicated across branches.`,
@@ -663,7 +673,7 @@ router.post('/biometric/sync', async (req, res) => {
     const wdmsPass = process.env.WDMS_PASS || 'Hs@20267';
 
     const [localRes, wdmsRes] = await Promise.allSettled([
-      syncBiometricAttendance().catch(err => {
+      syncBiometricAttendance({ manual: true }).catch(err => {
         console.warn('⚠️ Local biometric sync notice:', err.message);
         return { success: false, error: err.message };
       }),
@@ -675,6 +685,15 @@ router.post('/biometric/sync', async (req, res) => {
 
     const localData = localRes.status === 'fulfilled' ? localRes.value : { error: localRes.reason?.message };
     const wdmsData = wdmsRes.status === 'fulfilled' ? wdmsRes.value : { error: wdmsRes.reason?.message };
+
+    try {
+      broadcastSSEEvent('db_updated', {
+        type: 'biometric_sync',
+        timestamp: Date.now(),
+        local: localData,
+        wdms: wdmsData
+      });
+    } catch (_) {}
 
     return res.json({
       success: true,
