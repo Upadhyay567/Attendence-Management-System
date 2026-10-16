@@ -255,11 +255,18 @@ export async function renderAdminDashboard() {
         if (typeof showToastNotification === 'function') {
           showToastNotification('📡 Synchronizing live biometric punches from all devices...', 'info');
         }
-        await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', { method: 'POST' }).catch(() => {});
+        const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ forceRefresh: true })
+        }).catch(() => null);
         await DB.init('immediate');
         renderAdminDashboard();
+        if (typeof loadBiometricDashboardData === 'function') {
+          loadBiometricDashboardData();
+        }
         if (typeof showToastNotification === 'function') {
-          showToastNotification('✅ Biometric attendance synchronized successfully!', 'success');
+          showToastNotification('✅ Biometric attendance synchronized successfully from cloud server!', 'success');
         }
       } catch (err) {
         if (typeof showToastNotification === 'function') {
@@ -602,7 +609,7 @@ export async function renderAdminDashboard() {
   function getTodayCheckedInStaffRecords() {
     const todayStr = getLocalTodayDateStr();
     const activeEmployees = getAssignedUserIds();
-    let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && l.checkIn);
+    let allTodayLogs = (DB.getLogs() || []).filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt));
 
     // Group today's actual attendance records strictly by employee
     const userTodayMap = new Map();
@@ -617,7 +624,7 @@ export async function renderAdminDashboard() {
 
     const checkedInList = [];
     for (const [empKey, ulogs] of userTodayMap.entries()) {
-      ulogs.sort((a, b) => (b.checkIn || '').localeCompare(a.checkIn || ''));
+      ulogs.sort((a, b) => ((b.checkIn || b.checkOut || '')).localeCompare(a.checkIn || a.checkOut || ''));
       const latest = ulogs[0];
       const u = activeEmployees.find(e => String(e.id) === String(latest.userId) || (e.employeeId && String(e.employeeId) === String(latest.employeeId)) || (e.biometricUserId && String(e.biometricUserId) === String(latest.biometricUserId))) || DB.getUser(latest.userId);
       if (u && !isDummyUser(u)) {
@@ -626,7 +633,7 @@ export async function renderAdminDashboard() {
     }
 
     checkedInList.sort((a, b) => {
-      const timeCmp = (b.log.checkIn || '').localeCompare(a.log.checkIn || '');
+      const timeCmp = ((b.log.checkIn || b.log.checkOut || '')).localeCompare(a.log.checkIn || a.log.checkOut || '');
       if (timeCmp !== 0) return timeCmp;
       return (a.user.name || '').localeCompare(b.user.name || '');
     });
@@ -656,7 +663,7 @@ export async function renderAdminDashboard() {
       }
       return {
         user: u,
-        time: l.checkIn,
+        time: l.checkIn || l.checkOut || '—',
         location: formatLocationTag(l.location || l.biometricUsed || '—'),
         gpsStatus: gpsStatus
       };
@@ -672,7 +679,7 @@ export async function renderAdminDashboard() {
     const allLogs = DB.getLogs() || [];
 
     const checkedInUserKeys = new Set();
-    allLogs.filter(l => l.date === todayStr && l.checkIn).forEach(l => {
+    allLogs.filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt)).forEach(l => {
       if (l.userId) checkedInUserKeys.add(String(l.userId));
       if (l.employeeId) checkedInUserKeys.add(String(l.employeeId));
       if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId));
@@ -733,7 +740,7 @@ export async function renderAdminDashboard() {
   function showApprovedLeaveModal() {
     const activeEmployees = getAssignedUserIds();
     const activeUserIds = activeEmployees.map(u => u.id);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalTodayDateStr();
     const approvedLeaves = DB.getLeaveRequests().filter(lv => lv.status === 'Approved' && todayStr >= lv.startDate && todayStr <= lv.endDate && activeUserIds.includes(lv.userId));
     
     const items = approvedLeaves.map(lv => {
@@ -768,10 +775,10 @@ export async function renderAdminDashboard() {
     const todayStr = getLocalTodayDateStr();
     let logs = DB.getLogs().filter(l => l.date === todayStr);
 
-    // Present Today = Checked-In Staff Count (unique active non-dummy employees with check-in today)
+    // Present Today = Checked-In Staff Count (unique active non-dummy employees with punch today)
     const checkedInUserKeys = new Set();
     logs.forEach(l => {
-      if (l.checkIn) {
+      if (l.checkIn || l.checkOut || l.lastBiometricPunchAt) {
         if (l.userId) checkedInUserKeys.add(String(l.userId));
         if (l.employeeId) checkedInUserKeys.add(String(l.employeeId));
         if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId));
@@ -1091,15 +1098,15 @@ export async function renderAdminDashboard() {
   function renderLocationCheckboxDropdown(distinctLocs) {
     const locSelect = document.getElementById('live-feed-location-select');
     if (locSelect) {
-      const currentVal = liveFeedSelectedLocation;
+      const currentVal = formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim();
       const opts = `<option value="">All Locations (${currentTodayLogs.length})</option>` +
         distinctLocs.map(loc => {
-          const targetLoc = loc.toLowerCase().trim();
+          const targetLoc = formatLocationTag(loc).toLowerCase().trim();
           const count = currentTodayLogs.filter(l => {
-            const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+            const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
             return logLoc === targetLoc;
           }).length;
-          return `<option value="${Utils.escape(loc)}" ${currentVal.toLowerCase().trim() === targetLoc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
+          return `<option value="${Utils.escape(loc)}" ${currentVal === targetLoc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
         }).join('');
       if (locSelect.innerHTML !== opts) {
         locSelect.innerHTML = opts;
@@ -1114,9 +1121,9 @@ export async function renderAdminDashboard() {
     if (cbAll) cbAll.disabled = false;
 
     // Prune any liveFeedSelectedLocations that are not in distinctLocs
-    const validDistinctSet = new Set(distinctLocs.map(l => l.toLowerCase().trim()));
+    const validDistinctSet = new Set(distinctLocs.map(l => formatLocationTag(l).toLowerCase().trim()));
     for (const loc of Array.from(liveFeedSelectedLocations)) {
-      if (!validDistinctSet.has(loc.toLowerCase().trim())) {
+      if (!validDistinctSet.has(formatLocationTag(loc).toLowerCase().trim())) {
         liveFeedSelectedLocations.delete(loc);
       }
     }
@@ -1128,29 +1135,29 @@ export async function renderAdminDashboard() {
       btnText.textContent = `All Locations (${currentTodayLogs.length})`;
     } else if (liveFeedSelectedLocation || liveFeedSelectedLocations.size === 1) {
       const targetLocName = liveFeedSelectedLocation || Array.from(liveFeedSelectedLocations)[0];
-      const singleLoc = targetLocName.toLowerCase().trim();
+      const singleLoc = formatLocationTag(targetLocName).toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         return logLoc === singleLoc;
       }).length;
       btnText.textContent = `${targetLocName} (${count})`;
     } else {
       let combinedCount = 0;
-      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
+      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => formatLocationTag(l).toLowerCase().trim()));
       currentTodayLogs.forEach(l => {
-        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         if (selLower.has(logLoc)) combinedCount++;
       });
       btnText.textContent = `${liveFeedSelectedLocations.size} Locations (${combinedCount} punches)`;
     }
 
     listContainer.innerHTML = distinctLocs.map(loc => {
-      const targetLoc = loc.toLowerCase().trim();
+      const targetLoc = formatLocationTag(loc).toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         return logLoc === targetLoc;
       }).length;
-      const isChecked = !isAllSelected && (liveFeedSelectedLocations.has(loc) || liveFeedSelectedLocation.toLowerCase().trim() === targetLoc);
+      const isChecked = !isAllSelected && (liveFeedSelectedLocations.has(loc) || formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim() === targetLoc);
       return `
         <div class="live-feed-loc-row" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='transparent'">
           <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
@@ -1176,7 +1183,7 @@ export async function renderAdminDashboard() {
             liveFeedSelectedLocation = loc;
           } else {
             liveFeedSelectedLocations.delete(loc);
-            if (liveFeedSelectedLocation.toLowerCase().trim() === loc.toLowerCase().trim()) {
+            if (formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim() === formatLocationTag(loc).toLowerCase().trim()) {
               liveFeedSelectedLocation = liveFeedSelectedLocations.size === 1 ? Array.from(liveFeedSelectedLocations)[0] : '';
             }
           }
@@ -1196,8 +1203,8 @@ export async function renderAdminDashboard() {
     if (!feedBody) return;
 
     let distinctLocs = Array.from(new Set([
-      ...currentTodayLogs.map(l => (l.location || l.biometricUsed || '').trim()).filter(Boolean),
-      ...Object.keys(DB.getOfficeCoordinates() || {})
+      ...currentTodayLogs.map(l => formatLocationTag(l.location || l.biometricUsed || '').trim()).filter(Boolean),
+      ...Object.keys(DB.getOfficeCoordinates() || {}).map(l => formatLocationTag(l).trim()).filter(Boolean)
     ])).filter(loc => {
       if (!loc) return false;
       const l = loc.toLowerCase();
@@ -1208,15 +1215,15 @@ export async function renderAdminDashboard() {
 
     let filteredLogs = currentTodayLogs;
     if (liveFeedSelectedLocation) {
-      const singleLoc = liveFeedSelectedLocation.toLowerCase().trim();
+      const singleLoc = formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim();
       filteredLogs = currentTodayLogs.filter(l => {
-        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         return logLoc === singleLoc;
       });
     } else if (liveFeedSelectedLocations.size > 0) {
-      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => l.toLowerCase().trim()));
+      const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => formatLocationTag(l).toLowerCase().trim()));
       filteredLogs = currentTodayLogs.filter(l => {
-        const logLoc = (l.location || l.biometricUsed || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         return selLower.has(logLoc);
       });
     }
@@ -2128,13 +2135,13 @@ export async function renderAdminDashboard() {
       // 1. Employees with punches today first (sorted descending by check-in / latest punch)
       // 2. Employees with no punches today sorted alphabetically by employee name
       const sortedData = [...result.data].sort((a, b) => {
-        const hasPunchA = (a.todayAttendance && a.todayAttendance !== 'No Punch') || a.todayCheckIn || a.checkIn;
-        const hasPunchB = (b.todayAttendance && b.todayAttendance !== 'No Punch') || b.todayCheckIn || b.checkIn;
+        const hasPunchA = (a.todayAttendance && a.todayAttendance !== 'No Punch') || a.todayCheckIn || a.checkIn || a.todayCheckOut || a.checkOut || (a.latestPunch && a.latestPunch !== '—' && !a.latestPunch.includes('-'));
+        const hasPunchB = (b.todayAttendance && b.todayAttendance !== 'No Punch') || b.todayCheckIn || b.checkIn || b.todayCheckOut || b.checkOut || (b.latestPunch && b.latestPunch !== '—' && !b.latestPunch.includes('-'));
         if (hasPunchA && !hasPunchB) return -1;
         if (!hasPunchA && hasPunchB) return 1;
         if (hasPunchA && hasPunchB) {
-          const timeA = a.todayCheckIn || a.checkIn || a.latestPunch || '';
-          const timeB = b.todayCheckIn || b.checkIn || b.latestPunch || '';
+          const timeA = a.todayCheckOut || a.todayCheckIn || a.checkOut || a.checkIn || a.latestPunch || '';
+          const timeB = b.todayCheckOut || b.todayCheckIn || b.checkOut || b.checkIn || b.latestPunch || '';
           const cmp = timeB.localeCompare(timeA);
           if (cmp !== 0) return cmp;
         }
@@ -2153,7 +2160,15 @@ export async function renderAdminDashboard() {
         const formatPunchTime = (val) => {
           if (!val || val === '—' || val === '--:--' || val === '--') return '—';
           const trimmed = String(val).trim();
-          if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(trimmed)) return trimmed;
+          const timeParts = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+          if (timeParts) {
+            let h = parseInt(timeParts[1], 10);
+            const m = timeParts[2];
+            const s = timeParts[3] || '00';
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            return `${String(h12).padStart(2, '0')}:${m}:${s} ${ampm}`;
+          }
           const d = new Date(trimmed);
           if (!isNaN(d.getTime())) {
             return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
@@ -2163,9 +2178,22 @@ export async function renderAdminDashboard() {
 
         const checkInStr = formatPunchTime(emp.todayCheckIn || emp.checkIn);
         const checkOutStr = formatPunchTime(emp.todayCheckOut || emp.checkOut);
-        const latestPunchStr = emp.latestPunch 
-          ? (!isNaN(new Date(emp.latestPunch).getTime()) ? new Date(emp.latestPunch).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true }) : String(emp.latestPunch))
-          : '—';
+
+        let latestPunchStr = '—';
+        if (emp.latestPunch && emp.latestPunch !== '—') {
+          const lTrim = String(emp.latestPunch).trim();
+          const timeMatch = lTrim.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+          if (timeMatch) {
+            latestPunchStr = formatPunchTime(lTrim) + ' (Today)';
+          } else {
+            const d = new Date(lTrim);
+            if (!isNaN(d.getTime())) {
+              latestPunchStr = d.toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true });
+            } else {
+              latestPunchStr = lTrim;
+            }
+          }
+        }
 
         const isPresent = att === 'On Time' || att === 'Late';
 
@@ -2424,7 +2452,8 @@ function renderAdminUsers() {
     const l = loc.trim();
     const lower = l.toLowerCase();
     if (lower === 'chattarpur') return 'Chattarpur Office';
-    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+    if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
     if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
     return l;
   };

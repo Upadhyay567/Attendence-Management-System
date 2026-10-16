@@ -247,17 +247,19 @@ export function formatLocationTag(loc) {
   }
   const upper = clean.toUpperCase();
   if (upper === 'WH-1340' || upper === 'WH-1340-CLOSE' || upper === 'WH 1340' || upper.startsWith('WH-1340')) return 'Warehouse 1340';
-  if (upper === 'RETAIL') return 'Retail Store';
+  if (upper === 'RETAIL' || upper === 'RETAIL STORE') return 'Retail Store';
   if (upper === 'GT KARNAL SITE' || upper === 'GT KARNAL') return 'GT Karnal Site';
-  if (upper === 'PITAM PURA' || upper === 'PITAMPURA') return 'Pitampura Office';
+  if (upper === 'PITAM PURA' || upper === 'PITAMPURA' || upper === 'PITAMPURA OFFICE') return 'Pitampura Office';
   if (upper === 'ASHOK VIHAR' || upper === 'ASHOK VIHAR_EXTRA') return 'Ashok Vihar';
   if (upper === 'PUNJABI BAGH') return 'Punjabi Bagh';
   if (upper === 'SURYA OMAXE' || upper === 'OMAXE OFFICE') return 'Surya Omaxe';
   if (upper === 'SURYA GURUGRAM') return 'Surya Gurugram';
-  if (upper === 'HS OFFICE' || upper === 'OFFICE HQ' || upper === 'DELHI HEAD OFFICE' || upper.includes('HS GROUP HQ')) return 'HS Office HQ';
+  if (upper === 'DELHI HEAD OFFICE') return 'Delhi Head Office';
+  if (upper === 'HS OFFICE' || upper === 'HS OFFICE HQ' || upper === 'OFFICE HQ' || upper.includes('HS GROUP HQ')) return 'HS Office HQ';
   if (upper.includes('NOIDA SECTOR 61') || upper === 'NOIDA') return 'Noida Sector 61';
   if (upper.includes('CHATTARPUR') || upper.includes('RAAGWAAS')) return 'Chattarpur Office';
   if (upper === 'SIYONEE') return 'Siyonee';
+  if (upper === 'BRANCH OFFICE') return 'Branch Office';
   return clean;
 }
 

@@ -1081,28 +1081,53 @@ export function renderAdminAttendances() {
         : (emp?.scheduleId ? [emp.scheduleId] : []);
 
       let shift = null;
-      if (userShiftIds.length > 0) {
-        if (log.shiftId && userShiftIds.includes(log.shiftId)) {
-          shift = DB.getSchedule(log.shiftId);
-        } else {
-          shift = DB.getSchedule(userShiftIds[0]);
-        }
+      if (log.shiftId) {
+        shift = DB.getSchedule(log.shiftId);
+      }
+      if (!shift && userShiftIds.length > 0) {
+        shift = DB.getSchedule(userShiftIds[0]);
       }
       const shiftName = shift ? shift.name : 'Not Assigned';
       const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       const location = formatLocationTag(rawLocation);
       
-      // Standardize Work Status under Multiple Punches Algorithm on Workday:
-      let effectiveIn = log.checkIn;
-      let effectiveOut = log.checkOut;
-      if (!effectiveIn && effectiveOut) {
-        effectiveIn = effectiveOut;
-        effectiveOut = '';
+      // Determine standard workday parameters
+      let shiftStartMins = 9 * 60; // default 09:00 AM
+      let shiftEndMins = 17 * 60;  // default 05:00 PM
+      let grace = 15;
+      let halfDayCutoff = 120;
+      if (shift && shift.startTime) {
+        const [sH, sM] = shift.startTime.split(':').map(Number);
+        shiftStartMins = sH * 60 + (sM || 0);
+        if (shift.endTime) {
+          const [eH, eM] = shift.endTime.split(':').map(Number);
+          shiftEndMins = eH * 60 + (eM || 0);
+        }
+        if (shift.gracePeriod !== undefined) grace = Number(shift.gracePeriod);
+        if (shift.halfDayLimit !== undefined) halfDayCutoff = Number(shift.halfDayLimit);
       }
 
+      // Standardize Work Status under Multiple Punches Algorithm on Workday:
+      let effectiveIn = log.checkIn || '';
+      let effectiveOut = log.checkOut || '';
+
+      // If only one punch exists, accurately classify arrival vs departure
+      if (effectiveIn && !effectiveOut) {
+        const [inH, inM] = effectiveIn.split(':').map(Number);
+        const inMins = (inH || 0) * 60 + (inM || 0);
+        // If single punch is in the evening (>= 15:00 / 3 PM or >= shiftEndMins - 60) for a daytime shift:
+        const isEveningDeparture = shiftStartMins < 14 * 60 && (inMins >= 15 * 60 || inMins >= shiftEndMins - 60);
+        if (isEveningDeparture) {
+          effectiveOut = effectiveIn;
+          effectiveIn = '';
+        }
+      }
+
+      const isToday = log.date === todayStr;
       let workStatus = 'Absent';
       let atWorkStr = 'Absent';
       let atWorkMins = 0;
+
       if (effectiveIn && effectiveOut) {
         workStatus = 'Checked Out';
         atWorkStr = 'Checked Out';
@@ -1111,10 +1136,13 @@ export function renderAdminAttendances() {
         atWorkMins = (outH * 60 + outM) - (inH * 60 + inM);
         if (atWorkMins < 0) atWorkMins += 24 * 60;
       } else if (effectiveIn && !effectiveOut) {
-        const isToday = log.date === todayStr;
         workStatus = isToday ? 'In Session' : 'Missing Check-Out';
         atWorkStr = isToday ? 'In Session' : 'Missing Check-Out';
         atWorkMins = isToday ? 9999 : 0;
+      } else if (!effectiveIn && effectiveOut) {
+        workStatus = 'Missing Check-In';
+        atWorkStr = 'Missing Check-In';
+        atWorkMins = 0;
       } else {
         workStatus = 'Absent';
         atWorkStr = 'Absent';
@@ -1125,19 +1153,48 @@ export function renderAdminAttendances() {
       let s = log.status;
       if (log.isAbsent || (!effectiveIn && !effectiveOut)) {
         s = 'Absent';
-      } else if (!shift) {
-        s = effectiveIn ? 'On Time' : 'Absent';
-      } else if (!s || s === 'Present' || s === 'Absent') {
-        s = 'On Time';
-        if (shift && shift.startTime && effectiveIn) {
-          const [sH, sM] = shift.startTime.split(':').map(Number);
+      } else if (!effectiveIn && effectiveOut) {
+        // Punched departure only, missed morning arrival
+        s = 'Half Day';
+      } else if (effectiveIn && !effectiveOut) {
+        if (isToday) {
           const [iH, iM] = effectiveIn.split(':').map(Number);
-          const sMins = sH * 60 + (sM || 0);
-          const iMins = iH * 60 + (iM || 0);
-          const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
-          const halfDayLimit = shift.halfDayLimit !== undefined ? Number(shift.halfDayLimit) : 120;
-          if (iMins > sMins + grace) s = 'Late';
-          if (iMins >= sMins + halfDayLimit) s = 'Half Day';
+          const iMins = (iH || 0) * 60 + (iM || 0);
+          if (iMins > shiftStartMins + grace) s = 'Late';
+          if (iMins >= shiftStartMins + halfDayCutoff) s = 'Half Day';
+          if (!s || s === 'Present') s = 'On Time';
+        } else {
+          // Past workday: missed check-out penalty
+          s = 'Half Day';
+        }
+      } else if (effectiveIn && effectiveOut) {
+        const [iH, iM] = effectiveIn.split(':').map(Number);
+        const iMins = (iH || 0) * 60 + (iM || 0);
+        if (iMins > shiftStartMins + grace) s = 'Late';
+        if (iMins >= shiftStartMins + halfDayCutoff) s = 'Half Day';
+        if (atWorkMins > 0 && atWorkMins < 240) {
+          s = 'Half Day';
+        }
+        if (!s || s === 'Present' || (s !== 'Late' && s !== 'Half Day')) {
+          s = 'On Time';
+        }
+      }
+
+      let isLateArrival = false;
+      if (effectiveIn) {
+        const [iH, iM] = effectiveIn.split(':').map(Number);
+        const iMins = (iH || 0) * 60 + (iM || 0);
+        if (iMins > shiftStartMins + grace) {
+          isLateArrival = true;
+        }
+      }
+
+      let isEarlyDeparture = false;
+      if (effectiveOut) {
+        const [oH, oM] = effectiveOut.split(':').map(Number);
+        const oMins = (oH || 0) * 60 + (oM || 0);
+        if (oMins < shiftEndMins) {
+          isEarlyDeparture = true;
         }
       }
 
@@ -1157,6 +1214,11 @@ export function renderAdminAttendances() {
         badgeText = 'ON TIME';
       }
 
+      let checkInDisplay = effectiveIn || '--:--';
+      if (checkInDisplay !== '--:--' && checkInDisplay.length === 5) checkInDisplay += ':00';
+      let checkOutDisplay = effectiveOut || '--:--';
+      if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
+
       return {
         ...log,
         location,
@@ -1169,27 +1231,48 @@ export function renderAdminAttendances() {
         atWorkMins,
         status: s,
         badgeClass,
-        badgeText
+        badgeText,
+        effectiveIn,
+        effectiveOut,
+        checkInDisplay,
+        checkOutDisplay,
+        isLateArrival,
+        isEarlyDeparture
       };
     });
 
-    // Populate Location Dropdown options dynamically for current month
+    // Populate Location Dropdown options dynamically for current view
     const locFilterSelect = document.getElementById('admin-att-location-filter');
     if (locFilterSelect) {
-      const distinctLocs = Array.from(new Set([
-        ...mappedLogs.map(l => (l.location || '').trim()).filter(Boolean),
-        ...Object.keys(DB.getOfficeCoordinates() || {})
-      ])).filter(loc => {
-        if (!loc) return false;
-        const l = loc.toLowerCase();
-        return !l.includes('kohat') && !l.includes('not assigned') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close');
-      }).sort((a, b) => a.localeCompare(b));
+      const rawCandidates = [
+        ...mappedLogs.map(l => l.location || ''),
+        ...Object.keys(DB.getOfficeCoordinates() || {}),
+        ...(DB.getBiometricLocations ? DB.getBiometricLocations() : [])
+      ];
 
-      const currentVal = adminAttendancesLocationFilter;
+      const locationMap = new Map();
+      mappedLogs.forEach(l => {
+        const canonical = formatLocationTag(l.location || '');
+        if (canonical && canonical !== 'Not Assigned' && canonical !== '-' && !canonical.toLowerCase().includes('kohat') && !canonical.toLowerCase().includes('close')) {
+          locationMap.set(canonical, (locationMap.get(canonical) || 0) + 1);
+        }
+      });
+
+      const distinctLocs = Array.from(new Set(
+        rawCandidates
+          .map(loc => formatLocationTag(loc))
+          .filter(loc => {
+            if (!loc || loc === '-' || loc === 'Not Assigned') return false;
+            const l = loc.toLowerCase();
+            return !l.includes('kohat') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close') && !l.includes('close');
+          })
+      )).sort((a, b) => a.localeCompare(b));
+
+      const currentVal = formatLocationTag(adminAttendancesLocationFilter || '');
       const opts = `<option value="">All Locations (${mappedLogs.length})</option>` +
         distinctLocs.map(loc => {
-          const count = mappedLogs.filter(l => (l.location || '').toLowerCase().trim() === loc.toLowerCase().trim()).length;
-          return `<option value="${Utils.escape(loc)}" ${currentVal === loc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
+          const count = locationMap.get(loc) || 0;
+          return `<option value="${Utils.escape(loc)}" ${currentVal.toLowerCase().trim() === loc.toLowerCase().trim() ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
         }).join('');
 
       if (locFilterSelect.innerHTML !== opts) {
@@ -1200,9 +1283,9 @@ export function renderAdminAttendances() {
     // 2. Filter by location
     let filtered = mappedLogs;
     if (adminAttendancesLocationFilter) {
-      const targetLoc = adminAttendancesLocationFilter.toLowerCase().trim();
+      const targetLoc = formatLocationTag(adminAttendancesLocationFilter).toLowerCase().trim();
       filtered = filtered.filter(l => {
-        const logLoc = (l.location || '').toLowerCase().trim();
+        const logLoc = formatLocationTag(l.location || '').toLowerCase().trim();
         return logLoc === targetLoc;
       });
     }
@@ -1298,75 +1381,11 @@ export function renderAdminAttendances() {
         const avatarBg = getInitialsColor(log.userId || log.employeeName);
         const photoUrl = (log.emp && log.emp.photo) ? Utils.resolvePhotoUrl(log.emp.photo) : '';
         
-        let effectiveIn = log.checkIn;
-        let effectiveOut = log.checkOut;
-        if (!effectiveIn && effectiveOut) {
-          effectiveIn = effectiveOut;
-          effectiveOut = '';
-        }
+        const checkInDisplay = log.checkInDisplay || (log.checkIn || '--:--');
+        const checkOutDisplay = log.checkOutDisplay || (log.checkOut || '--:--');
+        const isLateArrival = !!log.isLateArrival;
+        const isEarlyDeparture = !!log.isEarlyDeparture;
 
-        // Format checkIn & checkOut to show full seconds if available or hh:mm:ss
-        let checkInDisplay = effectiveIn || '--:--';
-        if (checkInDisplay !== '--:--' && checkInDisplay.length === 5) checkInDisplay += ':00';
-        
-        let checkOutDisplay = effectiveOut || '--:--';
-        if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
-
-        const userShiftIds = Array.isArray(log.emp?.scheduleIds) && log.emp.scheduleIds.length > 0
-          ? log.emp.scheduleIds.filter(Boolean)
-          : (log.emp?.scheduleId ? [log.emp.scheduleId] : []);
-        let shift = null;
-        if (userShiftIds.length > 0) {
-          if (log.shiftId && userShiftIds.includes(log.shiftId)) {
-            shift = DB.getSchedule(log.shiftId);
-          } else {
-            shift = DB.getSchedule(userShiftIds[0]);
-          }
-        }
-        
-        let isLateArrival = false;
-        if (effectiveIn && shift) {
-          const [inH, inM] = effectiveIn.split(':').map(Number);
-          const [startH, startM] = shift.startTime.split(':').map(Number);
-          const checkInMins = inH * 60 + inM;
-          const startMins = startH * 60 + startM;
-          const grace = shift.gracePeriod || 0;
-          if (checkInMins > startMins + grace) {
-            isLateArrival = true;
-          }
-        }
-        
-        let isEarlyDeparture = false;
-        if (effectiveOut && shift) {
-          const [outH, outM] = effectiveOut.split(':').map(Number);
-          const [endH, endM] = shift.endTime.split(':').map(Number);
-          const checkOutMins = outH * 60 + outM;
-          const endMins = endH * 60 + endM;
-          if (checkOutMins < endMins) {
-            isEarlyDeparture = true;
-          }
-        }
-
-        let s = log.status;
-        if (!shift) {
-          s = effectiveIn ? 'On Time' : 'Absent';
-        } else if (!s || s === 'Present' || s === 'Absent') {
-          s = 'On Time';
-          if (shift && shift.startTime && effectiveIn) {
-            const [sH, sM] = shift.startTime.split(':').map(Number);
-            const [iH, iM] = effectiveIn.split(':').map(Number);
-            const sMins = sH * 60 + (sM || 0);
-            const iMins = iH * 60 + (iM || 0);
-            const grace = shift.gracePeriod !== undefined ? Number(shift.gracePeriod) : 15;
-            const halfDayLimit = shift.halfDayLimit !== undefined ? Number(shift.halfDayLimit) : 120;
-            if (iMins > sMins + grace) s = 'Late';
-            if (iMins >= sMins + halfDayLimit) s = 'Half Day';
-          }
-        }
-        let badgeClass = 'badge-on-time';
-        if (s === 'Late') badgeClass = 'badge-late';
-        else if (s === 'Half Day') badgeClass = 'badge-half-day';
-        else if (s === 'Absent') badgeClass = 'badge-absent';
 
         return `
           <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease; font-family: Calibri, 'Segoe UI', Arial, sans-serif;" onmouseover="this.style.background='rgba(0,0,0,0.015)'" onmouseout="this.style.background='transparent'">

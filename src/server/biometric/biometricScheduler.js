@@ -64,7 +64,7 @@ async function runSync() {
 
   try {
     const wdmsUser = process.env.WDMS_USER || 'admin';
-    const wdmsPass = process.env.WDMS_PASS || 'Hs@20267';
+    const wdmsPass = process.env.WDMS_PASS || 'Admin@123';
 
     // Run local ZKTeco K40 (192.168.1.7) and EasyWDMS cloud sync concurrently
     await Promise.allSettled([

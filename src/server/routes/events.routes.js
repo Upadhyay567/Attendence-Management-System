@@ -15,7 +15,11 @@ function ensureHeartbeat() {
     const deadClients = [];
     sseClients.forEach(client => {
       try {
-        client.res.write(': keep-alive\n\n');
+        if (!client || !client.res || client.res.destroyed || client.res.writableEnded) {
+          deadClients.push(client);
+        } else {
+          client.res.write(': keep-alive\n\n');
+        }
       } catch (err) {
         deadClients.push(client);
       }
@@ -30,7 +34,11 @@ function broadcastSSEEvent(eventType, data = {}) {
   const deadClients = [];
   sseClients.forEach(client => {
     try {
-      client.res.write(payload);
+      if (!client || !client.res || client.res.destroyed || client.res.writableEnded) {
+        deadClients.push(client);
+      } else {
+        client.res.write(payload);
+      }
     } catch (err) {
       deadClients.push(client);
     }

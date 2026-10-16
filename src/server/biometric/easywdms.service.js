@@ -34,7 +34,7 @@ function resolveDeviceLocation(sn, alias) {
   const cleanAlias = String(alias || '').trim();
 
   const map = {
-    'GED7241901313': { name: 'SURYA OMAXE', location: 'Delhi Head Office', branch: 'Delhi Head Office' },
+    'GED7241901313': { name: 'SURYA OMAXE', location: 'Surya Omaxe', branch: 'Surya Omaxe' },
     'CJOU232660306': { name: 'Ashok Vihar_Extra', location: 'Noida sector 61', branch: 'Noida Branch' },
     'GED7254501292': { name: 'Raagwaas Chattarpur', location: 'Chattarpur Office', branch: 'Chattarpur Branch' },
     '0056120200363': { name: 'WH-1340-close', location: 'WH-1340-close', branch: 'WH-1340-close' },
@@ -145,11 +145,8 @@ function getInitialLoginPage(host) {
  */
 async function authenticate(username, password, forceRefresh = false) {
   const user = username || process.env.WDMS_USER || 'admin';
-  const pass = password || process.env.WDMS_PASS || 'Hs@20267';
-
-  if (!user || !pass) {
-    throw new Error('Username and password are required to authenticate with ZKTeco WDMS');
-  }
+  const primaryPass = password || process.env.WDMS_PASS || 'Admin@123';
+  const candidatePasswords = [primaryPass, 'Admin@123', 'Hs@20267'].filter((p, i, a) => p && a.indexOf(p) === i);
 
   if (!forceRefresh && cachedCookie && Date.now() < cookieExpiresAt) {
     return cachedCookie;
@@ -159,57 +156,59 @@ async function authenticate(username, password, forceRefresh = false) {
   let lastError = null;
 
   for (const host of candidateHosts) {
-    try {
-      const init = await getInitialLoginPage(host);
-      const rawForm = `csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&template10=&login_type=pwd`;
-      const encryptedData = zkEncrypt(rawForm, init.formCsrf);
-      const postBody = `encrypt_data=${encodeURIComponent(encryptedData)}&csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}`;
-      const cookieHeader = init.cookies.map(c => c.split(';')[0]).join('; ');
+    for (const pass of candidatePasswords) {
+      try {
+        const init = await getInitialLoginPage(host);
+        const rawForm = `csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&template10=&login_type=pwd`;
+        const encryptedData = zkEncrypt(rawForm, init.formCsrf);
+        const postBody = `encrypt_data=${encodeURIComponent(encryptedData)}&csrfmiddlewaretoken=${encodeURIComponent(init.formCsrf)}`;
+        const cookieHeader = init.cookies.map(c => c.split(';')[0]).join('; ');
 
-      const res = await new Promise((resolve, reject) => {
-        const req = http.request({
-          hostname: host,
-          port: WDMS_PORT,
-          path: '/login/',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Referer': `http://${host}:${WDMS_PORT}/login/`,
-            'Cookie': cookieHeader,
-            'Content-Length': Buffer.byteLength(postBody)
-          },
-          timeout: 10000
-        }, r => {
-          let data = '';
-          r.on('data', c => data += c);
-          r.on('end', () => {
-            let json = null;
-            try { json = JSON.parse(data); } catch (_) {}
-            resolve({ statusCode: r.statusCode, headers: r.headers, data, json });
+        const res = await new Promise((resolve, reject) => {
+          const req = http.request({
+            hostname: host,
+            port: WDMS_PORT,
+            path: '/login/',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Referer': `http://${host}:${WDMS_PORT}/login/`,
+              'Cookie': cookieHeader,
+              'Content-Length': Buffer.byteLength(postBody)
+            },
+            timeout: 10000
+          }, r => {
+            let data = '';
+            r.on('data', c => data += c);
+            r.on('end', () => {
+              let json = null;
+              try { json = JSON.parse(data); } catch (_) {}
+              resolve({ statusCode: r.statusCode, headers: r.headers, data, json });
+            });
           });
+          req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout connecting to WDMS login on ${host}`)); });
+          req.on('error', reject);
+          req.write(postBody);
+          req.end();
         });
-        req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout connecting to WDMS login on ${host}`)); });
-        req.on('error', reject);
-        req.write(postBody);
-        req.end();
-      });
 
-      if (res.statusCode === 200 && res.json?.ret === 0) {
-        const setCookies = res.headers['set-cookie'] || [];
-        let cookieMap = {};
-        init.cookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
-        setCookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
-        cachedCookie = Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
-        cookieExpiresAt = Date.now() + 15 * 60 * 1000;
-        activeHost = host;
-        console.log(`✅ [WDMS] Authenticated successfully with ZKTeco Cloud Server (${activeHost}:${WDMS_PORT})`);
-        return cachedCookie;
+        if (res.statusCode === 200 && res.json?.ret === 0) {
+          const setCookies = res.headers['set-cookie'] || [];
+          let cookieMap = {};
+          init.cookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
+          setCookies.forEach(c => { const parts = c.split(';')[0].split('='); cookieMap[parts[0]] = parts.slice(1).join('='); });
+          cachedCookie = Object.entries(cookieMap).map(([k, v]) => `${k}=${v}`).join('; ');
+          cookieExpiresAt = Date.now() + 15 * 60 * 1000;
+          activeHost = host;
+          console.log(`✅ [WDMS] Authenticated successfully with ZKTeco Cloud Server (${activeHost}:${WDMS_PORT})`);
+          return cachedCookie;
+        }
+
+        lastError = new Error(`WDMS login failed on ${host}: ${res.json?.message || res.data || 'Wrong credentials'}`);
+      } catch (err) {
+        lastError = err;
       }
-
-      lastError = new Error(`WDMS login failed on ${host}: ${res.json?.message || res.data || 'Wrong credentials'}`);
-    } catch (err) {
-      lastError = err;
     }
   }
 
@@ -431,9 +430,9 @@ const METADATA_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  */
 async function syncFromWDMS(username, password, options = {}) {
   const user = username || process.env.WDMS_USER || 'admin';
-  const pass = password || process.env.WDMS_PASS || 'Hs@20267';
-  const maxPages = options.maxPages || 1;
-  const pageSize = options.pageSize || 200;
+  const pass = password || process.env.WDMS_PASS || 'Admin@123';
+  const maxPages = options.maxPages || 5;
+  const pageSize = options.pageSize || 1000;
 
   const cookie = await authenticate(user, pass);
 

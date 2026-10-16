@@ -33,7 +33,8 @@ export function renderAdminUsers() {
     const l = loc.trim();
     const lower = l.toLowerCase();
     if (lower === 'chattarpur') return 'Chattarpur Office';
-    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+    if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
     if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
     return l;
   };
@@ -581,7 +582,8 @@ export function renderAdminPayroll() {
     const l = loc.trim();
     const lower = l.toLowerCase();
     if (lower === 'chattarpur') return 'Chattarpur Office';
-    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+    if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+    if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
     if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
     return l;
   };
@@ -2022,7 +2024,7 @@ export function normalizeBulkRow(raw) {
   return norm;
 }
 
-export function downloadBulkUploadTemplate(format = 'xlsx') {
+export async function downloadBulkUploadTemplate(format = 'xlsx') {
   const sampleData = [
     {
       "Employee ID": "EMP101",
@@ -2100,24 +2102,236 @@ export function downloadBulkUploadTemplate(format = 'xlsx') {
     return;
   }
 
-  const exportExcel = () => {
-    if (!window.XLSX) {
-      alert('Excel library not ready. Downloading CSV template instead.');
-      downloadBulkUploadTemplate('csv');
+  // 1. Fetch available work locations from database records
+  const getDatabaseWorkLocations = () => {
+    const locSet = new Set();
+    const officeCoords = (typeof DB !== 'undefined' && DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : (window.OFFICE_COORDINATES || {})) || {};
+    Object.keys(officeCoords).forEach(loc => {
+      if (!loc || typeof loc !== 'string') return;
+      const clean = loc.trim();
+      const lower = clean.toLowerCase();
+      if (!lower.includes('close') && !lower.includes('(') && !lower.includes('mock') && lower !== 'none' && lower !== '--') {
+        locSet.add(clean);
+      }
+    });
+    const schedules = (typeof DB !== 'undefined' && DB.getSchedules ? DB.getSchedules() : []) || [];
+    schedules.forEach(s => {
+      if (s && s.location && typeof s.location === 'string') {
+        const clean = s.location.trim();
+        if (clean && !clean.toLowerCase().includes('close') && !clean.includes('(')) {
+          locSet.add(clean);
+        }
+      }
+    });
+    locSet.add('Delhi Head Office');
+    locSet.add('Noida sector 61');
+    return Array.from(locSet).sort((a, b) => a.localeCompare(b));
+  };
+
+  // 2. Fetch available shifts from database records
+  const getDatabaseShifts = () => {
+    const shiftSet = new Set();
+    const schedules = (typeof DB !== 'undefined' && DB.getSchedules ? DB.getSchedules() : []) || [];
+    schedules.forEach(s => {
+      if (s && s.name && typeof s.name === 'string') {
+        const clean = s.name.trim();
+        if (clean) shiftSet.add(clean);
+      }
+    });
+    shiftSet.add('General Shift');
+    shiftSet.add('Morning Shift 900');
+    shiftSet.add('Afternoon shift');
+    return Array.from(shiftSet);
+  };
+
+  // 3. Predefined Blood Group options
+  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  // 4. Predefined Gender options
+  const genders = ['Male', 'Female', 'Other'];
+
+  const workLocations = getDatabaseWorkLocations();
+  const assignedShifts = getDatabaseShifts();
+
+  // Try generating via ExcelJS for instant in-browser generation with data validation dropdowns
+  const ExcelJSClass = window.ExcelJS || (typeof ExcelJS !== 'undefined' ? ExcelJS : null);
+  if (ExcelJSClass) {
+    try {
+      const wb = new ExcelJSClass.Workbook();
+      wb.creator = 'HS Group Delhi';
+      wb.created = new Date();
+
+      const ws = wb.addWorksheet('Employees Template');
+      const refWs = wb.addWorksheet('ReferenceLists');
+      refWs.state = 'hidden';
+
+      // Populate reference lists sheet
+      workLocations.forEach((loc, i) => { refWs.getCell(i + 1, 1).value = loc; });
+      assignedShifts.forEach((s, i) => { refWs.getCell(i + 1, 2).value = s; });
+      genders.forEach((g, i) => { refWs.getCell(i + 1, 3).value = g; });
+      bloodGroups.forEach((b, i) => { refWs.getCell(i + 1, 4).value = b; });
+
+      const locRange = `ReferenceLists!$A$1:$A$${workLocations.length}`;
+      const shiftRange = `ReferenceLists!$B$1:$B$${assignedShifts.length}`;
+      const genderRange = `ReferenceLists!$C$1:$C$${genders.length}`;
+      const bgRange = `ReferenceLists!$D$1:$D$${bloodGroups.length}`;
+
+      // Exactly 26 standard columns in exact order
+      ws.columns = [
+        { header: 'Employee ID', key: 'empId', width: 16 },
+        { header: 'Employee Name', key: 'name', width: 22 },
+        { header: 'Department', key: 'dept', width: 20 },
+        { header: 'Designation', key: 'desig', width: 22 },
+        { header: 'Branch', key: 'branch', width: 20 },
+        { header: 'Work Location', key: 'location', width: 24 }, // Column F (Dropdown 1)
+        { header: 'Mobile Number', key: 'phone', width: 18 },
+        { header: 'Email', key: 'email', width: 26 },
+        { header: 'Date of Joining', key: 'doj', width: 16 },
+        { header: 'Date of Birth', key: 'dob', width: 16 },
+        { header: 'Gender', key: 'gender', width: 14 }, // Column K (Dropdown 4)
+        { header: 'Blood Group', key: 'bloodGroup', width: 14 }, // Column L (Dropdown 3)
+        { header: 'Pincode', key: 'pincode', width: 14 },
+        { header: 'City', key: 'city', width: 16 },
+        { header: 'State', key: 'state', width: 18 },
+        { header: 'Biometric User ID', key: 'bioId', width: 18 },
+        { header: 'Assigned Shift', key: 'shift', width: 22 }, // Column Q (Dropdown 2)
+        { header: 'Base Salary', key: 'base', width: 14 },
+        { header: 'HRA', key: 'hra', width: 12 },
+        { header: 'Travel Allowance', key: 'ta', width: 18 },
+        { header: 'PF', key: 'pf', width: 12 },
+        { header: 'PT', key: 'pt', width: 12 },
+        { header: 'Bank Name', key: 'bank', width: 22 },
+        { header: 'Account Number', key: 'account', width: 20 },
+        { header: 'IFSC Code', key: 'ifsc', width: 16 },
+        { header: 'UAN Number', key: 'uan', width: 18 }
+      ];
+
+      // Style Header Row
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF89201B' }
+      };
+      ws.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+      ws.getRow(1).height = 26;
+
+      // Add sample rows
+      sampleData.forEach(row => {
+        ws.addRow({
+          empId: row["Employee ID"],
+          name: row["Employee Name"],
+          dept: row["Department"],
+          desig: row["Designation"],
+          branch: row["Branch"],
+          location: row["Work Location"],
+          phone: row["Mobile Number"],
+          email: row["Email"],
+          doj: row["Date of Joining"],
+          dob: row["Date of Birth"],
+          gender: row["Gender"],
+          bloodGroup: row["Blood Group"],
+          pincode: row["Pincode"],
+          city: row["City"],
+          state: row["State"],
+          bioId: row["Biometric User ID"],
+          shift: row["Assigned Shift"],
+          base: row["Base Salary"],
+          hra: row["HRA"],
+          ta: row["Travel Allowance"],
+          pf: row["PF"],
+          pt: row["PT"],
+          bank: row["Bank Name"],
+          account: row["Account Number"],
+          ifsc: row["IFSC Code"],
+          uan: row["UAN Number"]
+        });
+      });
+
+      // Apply dropdown validations ONLY to the 4 specified fields across rows 2 to 500
+      for (let r = 2; r <= 500; r++) {
+        // 1. Work Location (Column F)
+        ws.getCell(`F${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [locRange],
+          showErrorMessage: true,
+          errorTitle: 'Invalid Location',
+          error: 'Please select an available work location from the dropdown list.'
+        };
+
+        // 4. Gender (Column K)
+        ws.getCell(`K${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [genderRange],
+          showErrorMessage: true,
+          errorTitle: 'Invalid Gender',
+          error: 'Please select a valid gender option from the dropdown list.'
+        };
+
+        // 3. Blood Group (Column L)
+        ws.getCell(`L${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [bgRange],
+          showErrorMessage: true,
+          errorTitle: 'Invalid Blood Group',
+          error: 'Please select a valid blood group option from the dropdown list.'
+        };
+
+        // 2. Assigned Shift (Column Q)
+        ws.getCell(`Q${r}`).dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [shiftRange],
+          showErrorMessage: true,
+          errorTitle: 'Invalid Shift',
+          error: 'Please select an available shift from the dropdown list.'
+        };
+      }
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Employee_Bulk_Upload_Template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return;
+    } catch (e) {
+      console.warn('Client-side ExcelJS template generation warning, attempting backend endpoint...', e);
+    }
+  }
+
+  // Fallback 1: Fetch from backend endpoint /api/reports/bulk-upload-template
+  try {
+    const res = await fetch((window.apiBaseUrl || '') + '/api/reports/bulk-upload-template');
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Employee_Bulk_Upload_Template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       return;
     }
+  } catch (err) {
+    console.warn('Backend template fetch failed:', err);
+  }
+
+  // Fallback 2: Basic SheetJS fallback if ExcelJS is unavailable
+  if (window.XLSX) {
     const ws = window.XLSX.utils.json_to_sheet(sampleData);
     const wb = window.XLSX.utils.book_new();
     window.XLSX.utils.book_append_sheet(wb, ws, 'Employees Template');
     window.XLSX.writeFile(wb, 'Employee_Bulk_Upload_Template.xlsx');
-  };
-
-  if (window.XLSX) {
-    exportExcel();
-  } else if (typeof loadSheetJS === 'function') {
-    loadSheetJS(exportExcel, () => {
-      downloadBulkUploadTemplate('csv');
-    });
   } else {
     downloadBulkUploadTemplate('csv');
   }

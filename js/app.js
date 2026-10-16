@@ -14,7 +14,7 @@ import { drawRadarMap } from './components/geofenceMap.js?v=103';
 import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=103';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=103';
+import { DB } from './core/db.js?v=108';
 import { Auth } from './auth.js?v=103';
 import { Utils, html } from './utils.js?v=103';
 import { triggerBirthdayCelebration } from './celebration.js?v=103';
@@ -6816,7 +6816,8 @@ function normalizeLocationName(loc) {
   const l = loc.trim();
   const lower = l.toLowerCase();
   if (lower === 'chattarpur') return 'Chattarpur Office';
-  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+  if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
   if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
   return l;
 }

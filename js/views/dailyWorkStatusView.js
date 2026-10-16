@@ -1,7 +1,7 @@
 // js/views/dailyWorkStatusView.js - Monthly 1-31 Attendance Matrix Grid
 import { DB } from '../core/db.js';
 import { Auth } from '../core/auth.js';
-import { Utils, html } from '../utils/helpers.js';
+import { Utils, html, formatLocationTag } from '../utils/helpers.js';
 import { closeModal } from '../components/modals.js';
 import { showToastNotification } from '../components/toast.js';
 
@@ -33,24 +33,29 @@ export function renderDailyWorkStatus() {
   const allLogs = DB.getLogs() || [];
   const devs = (DB.getBiometricDevices ? DB.getBiometricDevices() : []);
   const offices = (DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : {});
-  const distinctLocs = Array.from(new Set([
+  const rawCandidates = [
     ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
     ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
     ...Object.keys(offices)
-  ])).filter(loc => {
-    if (!loc) return false;
-    const l = loc.toLowerCase();
-    return !l.includes('kohat') && !l.includes('not assigned') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close');
-  }).sort((a, b) => a.localeCompare(b));
+  ];
 
   const logCountsByLoc = {};
-  distinctLocs.forEach(loc => {
-    const tLoc = loc.toLowerCase().trim();
-    logCountsByLoc[loc] = allLogs.filter(l => {
-      const lLoc = (l.location || l.biometricUsed || l.branch || '').toLowerCase().trim();
-      return lLoc === tLoc;
-    }).length;
+  allLogs.forEach(l => {
+    const canonical = formatLocationTag(l.location || l.biometricUsed || l.branch || '');
+    if (canonical && canonical !== 'Not Assigned' && canonical !== '-') {
+      logCountsByLoc[canonical] = (logCountsByLoc[canonical] || 0) + 1;
+    }
   });
+
+  const distinctLocs = Array.from(new Set(
+    rawCandidates
+      .map(loc => formatLocationTag(loc))
+      .filter(loc => {
+        if (!loc || loc === '-' || loc === 'Not Assigned') return false;
+        const l = loc.toLowerCase();
+        return !l.includes('kohat') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close') && !l.includes('close');
+      })
+  )).sort((a, b) => a.localeCompare(b));
 
   main.innerHTML = html`
     <div id="daily-work-status-page-container" style="padding: 24px 32px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">
@@ -229,9 +234,9 @@ export function renderDailyWorkStatus() {
 
     // 3. Apply Location Filter
     if (dailyWorkStatusLocationFilter) {
-      const targetLoc = dailyWorkStatusLocationFilter.toLowerCase().trim();
+      const targetLoc = formatLocationTag(dailyWorkStatusLocationFilter).toLowerCase().trim();
       employees = employees.filter(e => {
-        const addCheck = (val) => typeof val === 'string' && val.toLowerCase().trim() === targetLoc;
+        const addCheck = (val) => typeof val === 'string' && formatLocationTag(val).toLowerCase().trim() === targetLoc;
         if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
         if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
         if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
@@ -240,7 +245,11 @@ export function renderDailyWorkStatus() {
         }
 
         const userLocs = userLocationsMap.get(e.id) || userLocationsMap.get(e.employeeId) || userLocationsMap.get(`bio_${e.biometricUserId}`);
-        if (userLocs && userLocs.has(targetLoc)) return true;
+        if (userLocs) {
+          for (const rawL of userLocs) {
+            if (formatLocationTag(rawL).toLowerCase().trim() === targetLoc) return true;
+          }
+        }
 
         return false;
       });

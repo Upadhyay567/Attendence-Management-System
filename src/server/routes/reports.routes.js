@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth.middleware');
-const { downloadAttendanceCSV, downloadPayslipPDF } = require('../controllers/reports.controller');
+const { downloadAttendanceCSV, downloadPayslipPDF, downloadBulkUploadTemplateExcel } = require('../controllers/reports.controller');
 
 function createReportsRouter(User, AttendanceLog, getUseLocalFileDB) {
   router.get('/attendance-csv', authenticateToken, (req, res) => {
@@ -11,6 +11,14 @@ function createReportsRouter(User, AttendanceLog, getUseLocalFileDB) {
 
   router.get('/payslip-pdf', authenticateToken, (req, res) => {
     downloadPayslipPDF(req, res, User, getUseLocalFileDB());
+  });
+
+  // Bulk Upload Employee Data Template with dropdowns
+  router.get('/reports/bulk-upload-template', (req, res) => {
+    downloadBulkUploadTemplateExcel(req, res);
+  });
+  router.get('/bulk-upload-template', (req, res) => {
+    downloadBulkUploadTemplateExcel(req, res);
   });
 
   // Profile download query route supporting userIds & location filtering
@@ -32,7 +40,8 @@ function createReportsRouter(User, AttendanceLog, getUseLocalFileDB) {
         const l = loc.trim();
         const lower = l.toLowerCase();
         if (lower === 'chattarpur') return 'Chattarpur Office';
-        if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+        if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+        if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
         if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
         return l;
       };

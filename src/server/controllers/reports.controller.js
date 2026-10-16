@@ -179,7 +179,238 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
   }
 }
 
+/**
+ * Generate Excel Bulk Upload Data Template with native Data Validation Dropdowns for:
+ * 1. Work Location (Column F) - From database officeCoordinates & schedules
+ * 2. Assigned Shift (Column Q) - From database schedules
+ * 3. Blood Group (Column L) - Predefined options
+ * 4. Gender (Column K) - Predefined options
+ */
+async function downloadBulkUploadTemplateExcel(req, res) {
+  try {
+    const ExcelJS = require('exceljs');
+    let state = {};
+    if (fs.existsSync(LOCAL_DB_FILE)) {
+      try {
+        state = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf-8'));
+      } catch (_) {}
+    }
+
+    // 1. Fetch available work locations from database records
+    const locSet = new Set();
+    const officeCoords = state.officeCoordinates || {};
+    Object.keys(officeCoords).forEach(loc => {
+      if (!loc || typeof loc !== 'string') return;
+      const clean = loc.trim();
+      const lower = clean.toLowerCase();
+      if (!lower.includes('close') && !lower.includes('(') && !lower.includes('mock') && lower !== 'none' && lower !== '--') {
+        locSet.add(clean);
+      }
+    });
+    (state.schedules || []).forEach(s => {
+      if (s && s.location && typeof s.location === 'string') {
+        const clean = s.location.trim();
+        if (clean && !clean.toLowerCase().includes('close') && !clean.includes('(')) {
+          locSet.add(clean);
+        }
+      }
+    });
+    locSet.add('Delhi Head Office');
+    locSet.add('Noida sector 61');
+    const workLocations = Array.from(locSet).sort((a, b) => a.localeCompare(b));
+
+    // 2. Fetch available shifts from database records
+    const shiftSet = new Set();
+    (state.schedules || []).forEach(s => {
+      if (s && s.name && typeof s.name === 'string') {
+        const clean = s.name.trim();
+        if (clean) shiftSet.add(clean);
+      }
+    });
+    shiftSet.add('General Shift');
+    shiftSet.add('Morning Shift 900');
+    shiftSet.add('Afternoon shift');
+    const assignedShifts = Array.from(shiftSet);
+
+    // 3. Predefined Blood Group options
+    const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+    // 4. Predefined Gender options
+    const genders = ['Male', 'Female', 'Other'];
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'HS Group Delhi';
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet('Employees Template');
+    const refWs = wb.addWorksheet('ReferenceLists');
+    refWs.state = 'hidden';
+
+    // Populate reference sheet for data validation dropdowns
+    workLocations.forEach((loc, i) => { refWs.getCell(i + 1, 1).value = loc; });
+    assignedShifts.forEach((s, i) => { refWs.getCell(i + 1, 2).value = s; });
+    genders.forEach((g, i) => { refWs.getCell(i + 1, 3).value = g; });
+    bloodGroups.forEach((b, i) => { refWs.getCell(i + 1, 4).value = b; });
+
+    const locRange = `ReferenceLists!$A$1:$A$${workLocations.length}`;
+    const shiftRange = `ReferenceLists!$B$1:$B$${assignedShifts.length}`;
+    const genderRange = `ReferenceLists!$C$1:$C$${genders.length}`;
+    const bgRange = `ReferenceLists!$D$1:$D$${bloodGroups.length}`;
+
+    // Exactly 26 standard columns in exact specified sequence
+    ws.columns = [
+      { header: 'Employee ID', key: 'empId', width: 16 },
+      { header: 'Employee Name', key: 'name', width: 22 },
+      { header: 'Department', key: 'dept', width: 20 },
+      { header: 'Designation', key: 'desig', width: 22 },
+      { header: 'Branch', key: 'branch', width: 20 },
+      { header: 'Work Location', key: 'location', width: 24 }, // Column F
+      { header: 'Mobile Number', key: 'phone', width: 18 },
+      { header: 'Email', key: 'email', width: 26 },
+      { header: 'Date of Joining', key: 'doj', width: 16 },
+      { header: 'Date of Birth', key: 'dob', width: 16 },
+      { header: 'Gender', key: 'gender', width: 14 }, // Column K
+      { header: 'Blood Group', key: 'bloodGroup', width: 14 }, // Column L
+      { header: 'Pincode', key: 'pincode', width: 14 },
+      { header: 'City', key: 'city', width: 16 },
+      { header: 'State', key: 'state', width: 18 },
+      { header: 'Biometric User ID', key: 'bioId', width: 18 },
+      { header: 'Assigned Shift', key: 'shift', width: 22 }, // Column Q
+      { header: 'Base Salary', key: 'base', width: 14 },
+      { header: 'HRA', key: 'hra', width: 12 },
+      { header: 'Travel Allowance', key: 'ta', width: 18 },
+      { header: 'PF', key: 'pf', width: 12 },
+      { header: 'PT', key: 'pt', width: 12 },
+      { header: 'Bank Name', key: 'bank', width: 22 },
+      { header: 'Account Number', key: 'account', width: 20 },
+      { header: 'IFSC Code', key: 'ifsc', width: 16 },
+      { header: 'UAN Number', key: 'uan', width: 18 }
+    ];
+
+    // Style Header Row
+    ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    ws.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF89201B' }
+    };
+    ws.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    ws.getRow(1).height = 26;
+
+    // Add standard sample rows
+    ws.addRow({
+      empId: 'EMP101',
+      name: 'Rahul Sharma',
+      dept: 'Engineering',
+      desig: 'Software Developer',
+      branch: 'Delhi Head Office',
+      location: 'Delhi Head Office',
+      phone: '+91 9876543210',
+      email: 'rahul.sharma@example.com',
+      doj: '2024-05-15',
+      dob: '1995-08-20',
+      gender: 'Male',
+      bloodGroup: 'B+',
+      pincode: '110001',
+      city: 'New Delhi',
+      state: 'Delhi',
+      bioId: '101',
+      shift: 'General Shift',
+      base: 45000,
+      hra: 6750,
+      ta: 2000,
+      pf: 1800,
+      pt: 200,
+      bank: 'State Bank of India',
+      account: '987654321012',
+      ifsc: 'SBIN0001234',
+      uan: '100987654321'
+    });
+
+    ws.addRow({
+      empId: 'EMP102',
+      name: 'Priya Verma',
+      dept: 'Human Resources',
+      desig: 'HR Executive',
+      branch: 'Noida Branch',
+      location: 'Noida sector 61',
+      phone: '+91 9812345678',
+      email: 'priya.verma@example.com',
+      doj: '2024-06-01',
+      dob: '1998-03-12',
+      gender: 'Female',
+      bloodGroup: 'O+',
+      pincode: '201301',
+      city: 'Noida',
+      state: 'Uttar Pradesh',
+      bioId: '102',
+      shift: 'General Shift',
+      base: 38000,
+      hra: 5700,
+      ta: 1500,
+      pf: 1800,
+      pt: 200,
+      bank: 'HDFC Bank',
+      account: '50100234567891',
+      ifsc: 'HDFC0000123',
+      uan: '100987654322'
+    });
+
+    // Apply data validations ONLY to the four specified columns (rows 2 to 500)
+    for (let r = 2; r <= 500; r++) {
+      // 1. Work Location (Column F)
+      ws.getCell(`F${r}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [locRange],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Location',
+        error: 'Please select an available work location from the dropdown list.'
+      };
+
+      // 4. Gender (Column K)
+      ws.getCell(`K${r}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [genderRange],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Gender',
+        error: 'Please select a valid gender option from the dropdown list.'
+      };
+
+      // 3. Blood Group (Column L)
+      ws.getCell(`L${r}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [bgRange],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Blood Group',
+        error: 'Please select a valid blood group option from the dropdown list.'
+      };
+
+      // 2. Assigned Shift (Column Q)
+      ws.getCell(`Q${r}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [shiftRange],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Shift',
+        error: 'Please select an available shift from the dropdown list.'
+      };
+    }
+
+    const buffer = await wb.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Employee_Bulk_Upload_Template.xlsx"');
+    return res.status(200).send(buffer);
+  } catch (err) {
+    console.error('Failed to generate bulk upload template:', err);
+    return res.status(500).json({ error: 'Failed to generate bulk upload template: ' + err.message });
+  }
+}
+
 module.exports = {
   downloadAttendanceCSV,
-  downloadPayslipPDF
+  downloadPayslipPDF,
+  downloadBulkUploadTemplateExcel
 };

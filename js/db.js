@@ -492,11 +492,18 @@ export const DB = {
     }
 
     // Connect to Server-Sent Events (SSE) stream for instant real-time DB & biometric updates across all tabs
-    if (typeof window.EventSource !== 'undefined' && !window.sseSource) {
+    if (typeof window.EventSource !== 'undefined' && !window._sseInitDone) {
+      window._sseInitDone = true;
+
       const connectSSE = () => {
         // Avoid connecting if browser is offline or tab is completely hidden/suspended
         if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
         if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
+        // If an active connection is already OPEN (1) or CONNECTING (0), do not duplicate
+        if (window.sseSource && window.sseSource.readyState !== 2) {
+          return;
+        }
 
         try {
           if (window.sseSource) {
@@ -527,50 +534,71 @@ export const DB = {
           });
 
           es.onerror = () => {
-            // When browser network is suspended (sleep, offline, tab suspend), close and debounce reconnect
-            if (window.sseSource === es) {
-              try { es.close(); } catch (_) {}
-              window.sseSource = null;
-            }
             if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
-            if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-              return; // Wait until tab becomes visible
+
+            // If offline or tab is hidden, close cleanly and wait for visible/online event
+            if ((typeof document !== 'undefined' && document.visibilityState === 'hidden') ||
+                (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+              if (window.sseSource) {
+                try { window.sseSource.close(); } catch (_) {}
+                window.sseSource = null;
+              }
+              return;
             }
-            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-              return; // Wait until online event
+
+            // If native EventSource closed, clean reference and debounce reconnect
+            if (es.readyState === 2) {
+              window.sseSource = null;
+              window._sseReconnectTimer = setTimeout(connectSSE, 5000);
             }
-            window._sseReconnectTimer = setTimeout(connectSSE, 4000);
           };
         } catch (e) {
+          window.sseSource = null;
           if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
-          window._sseReconnectTimer = setTimeout(connectSSE, 4000);
+          window._sseReconnectTimer = setTimeout(connectSSE, 5000);
         }
       };
 
       if (!window._sseListenersAttached && typeof window !== 'undefined') {
         window._sseListenersAttached = true;
         
-        // Re-establish cleanly on online event with 500ms grace period
+        // Re-establish cleanly on online event
         window.addEventListener('online', () => {
           if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
           window._sseReconnectTimer = setTimeout(() => {
-            if (!window.sseSource || window.sseSource.readyState === 2) connectSSE();
-          }, 500);
+            connectSSE();
+          }, 800);
         });
 
-        // Re-establish cleanly when returning from background / wake from sleep
+        // Close on offline
+        window.addEventListener('offline', () => {
+          if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+          if (window.sseSource) {
+            try { window.sseSource.close(); } catch (_) {}
+            window.sseSource = null;
+          }
+        });
+
+        // Cleanly close stream when tab is hidden to prevent net::ERR_NETWORK_IO_SUSPENDED
         if (typeof document !== 'undefined') {
           document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'hidden') {
+              if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
+              if (window.sseSource) {
+                try { window.sseSource.close(); } catch (_) {}
+                window.sseSource = null;
+              }
+            } else if (document.visibilityState === 'visible') {
               if (window._sseReconnectTimer) clearTimeout(window._sseReconnectTimer);
               window._sseReconnectTimer = setTimeout(() => {
-                if (!window.sseSource || window.sseSource.readyState === 2) connectSSE();
-              }, 500);
+                connectSSE();
+                DB.init(true);
+              }, 300);
             }
           });
         }
 
-        // Cleanly close stream before page freezes/hides to prevent net::ERR_NETWORK_IO_SUSPENDED
+        // Cleanly close stream before page freezes/hides
         window.addEventListener('pagehide', () => {
           if (window.sseSource) {
             try { window.sseSource.close(); } catch (_) {}
@@ -945,10 +973,15 @@ export const DB = {
         });
       } else {
         // Fallback to full state sync if no meta is provided (e.g. imports or resets)
+        // Trim massive historical attendance logs to avoid sending 70MB over HTTP on every single save
+        const syncData = { ...this.data };
+        if (Array.isArray(syncData.attendanceLogs) && syncData.attendanceLogs.length > 500) {
+          syncData.attendanceLogs = syncData.attendanceLogs.slice(-500);
+        }
         return fetch(baseUrl + '/api/mutate', {
           method: 'POST',
           headers: headers,
-          body: JSON.stringify({ action: 'sync', data: this.data })
+          body: JSON.stringify({ action: 'sync', data: syncData })
         }).then(res => {
           if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
         }).catch(err => {
@@ -1713,6 +1746,7 @@ export const DB = {
     if (locs.size === 0) {
       return [
         'GT KARNAL SITE',
+        'Surya Omaxe',
         'Noida sector 61',
         'Chattarpur Office',
         'Siyonee',
@@ -1744,6 +1778,7 @@ export const DB = {
     const bioLocs = this.getBiometricLocations();
     const defaultCoords = {
       'GT KARNAL SITE': { lat: 28.7180, lng: 77.1420 },
+      'Surya Omaxe': { lat: 28.6950, lng: 77.1855 },
       'Noida sector 61': { lat: 28.5990, lng: 77.3620 },
       'Chattarpur Office': { lat: 28.5020, lng: 77.1780 },
       'Siyonee': { lat: 28.6952, lng: 77.1860 },

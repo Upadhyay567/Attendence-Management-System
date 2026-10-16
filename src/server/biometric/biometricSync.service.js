@@ -754,23 +754,16 @@ function processLocalPunch(
       }
     }
 
-    // Normalize legacy records where checkOut exists without checkIn
-    if (!primaryLog.checkIn && primaryLog.checkOut) {
-      primaryLog.checkIn = primaryLog.checkOut;
-      primaryLog.checkInPunchId = primaryLog.checkOutPunchId || punchId;
-      primaryLog.checkOut = '';
-      primaryLog.checkOutPunchId = '';
-    }
-
-    const [inH, inM] = (primaryLog.checkIn || '23:59').split(':').map(Number);
-    const inMins = (inH || 0) * 60 + (inM || 0);
+    const inStr = primaryLog.checkIn || '';
+    const [inH, inM] = inStr ? inStr.split(':').map(Number) : [null, null];
+    const inMins = inStr ? ((inH || 0) * 60 + (inM || 0)) : null;
 
     const outStr = primaryLog.checkOut || '';
     const [outH, outM] = outStr ? outStr.split(':').map(Number) : [null, null];
-    const outMins = outStr ? (outH * 60 + outM) : null;
+    const outMins = outStr ? ((outH || 0) * 60 + (outM || 0)) : null;
 
     // Accidental double-tap within 1 minute of Check-In or Check-Out
-    if (Math.abs(punchMins - inMins) <= 1 || (outMins !== null && Math.abs(punchMins - outMins) <= 1)) {
+    if ((inMins !== null && Math.abs(punchMins - inMins) <= 1) || (outMins !== null && Math.abs(punchMins - outMins) <= 1)) {
       if (!Array.isArray(primaryLog.allPunchIds)) primaryLog.allPunchIds = [];
       if (!primaryLog.allPunchIds.includes(punchId)) primaryLog.allPunchIds.push(punchId);
       state.processedPunchIds.push(punchId);
@@ -780,9 +773,21 @@ function processLocalPunch(
     }
 
     // Strict Multiple Punches Algorithm on Workday:
-    // Earliest punch is assigned to Check-In with arrival terminal location.
-    // Latest punch is assigned to Check-Out with departure terminal location.
-    if (punchMins < inMins) {
+    // If checkIn is missing (single evening punch existed previously):
+    if (inMins === null) {
+      if (outMins !== null && punchMins < outMins) {
+        primaryLog.checkIn = time;
+        primaryLog.checkInPunchId = punchId;
+        primaryLog.location = punch.location || punch.deviceName || primaryLog.location;
+        primaryLog.biometricUsed = punch.deviceName || DEVICE_NAME;
+        primaryLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
+      } else {
+        primaryLog.checkOut = time;
+        primaryLog.checkOutPunchId = punchId;
+        primaryLog.departureLocation = punch.location || punch.deviceName || primaryLog.departureLocation;
+        primaryLog.departureDevice = punch.deviceName || DEVICE_NAME;
+      }
+    } else if (punchMins < inMins) {
       if (!primaryLog.checkOut) {
         primaryLog.checkOut = primaryLog.checkIn;
         primaryLog.checkOutPunchId = primaryLog.checkInPunchId;
@@ -850,10 +855,19 @@ function processLocalPunch(
     state.attendanceLogs
   );
   const shiftObj = schedules.find(s => String(s.id) === String(targetShiftId));
-  // Multiple Punches Algorithm: First punch of the workday is ALWAYS Check-In
-  const initialCheckIn = time;
-  const initialCheckOut = '';
-  const status = computeAttendanceStatus(initialCheckIn, initialCheckOut, shiftObj);
+  // Determine if single punch is an arrival punch (morning/midday) or departure punch (evening)
+  const [pH, pM] = time.split(':').map(Number);
+  const pMins = (pH || 0) * 60 + (pM || 0);
+  const shiftStartH = shiftObj && shiftObj.startTime ? parseInt(shiftObj.startTime.split(':')[0], 10) : 9;
+  const isLateDeparture = (shiftStartH < 15) && (pMins >= 15 * 60);
+
+  let initialCheckIn = time;
+  let initialCheckOut = '';
+  if (isLateDeparture) {
+    initialCheckIn = '';
+    initialCheckOut = time;
+  }
+  const status = initialCheckIn ? computeAttendanceStatus(initialCheckIn, initialCheckOut, shiftObj) : 'Half Day';
 
   const newLog = {
     id: createAttendanceId(
@@ -876,9 +890,9 @@ function processLocalPunch(
 
     checkOut: initialCheckOut,
 
-    checkInPunchId: punchId,
+    checkInPunchId: initialCheckIn ? punchId : '',
 
-    checkOutPunchId: '',
+    checkOutPunchId: initialCheckOut ? punchId : '',
 
     biometricPunchId: punchId,
 
@@ -887,10 +901,19 @@ function processLocalPunch(
     status: status,
 
     biometricUsed:
-      punch.deviceName || DEVICE_NAME,
+      initialCheckIn ? (punch.deviceName || DEVICE_NAME) : '',
 
     biometricDeviceId:
-      punch.deviceSerial || DEVICE.serial,
+      initialCheckIn ? (punch.deviceSerial || DEVICE.serial) : '',
+
+    departureLocation:
+      initialCheckOut ? (punch.location || (employee.shiftLocations && employee.shiftLocations[targetShiftId]) || employee.preferredLocation || LOCATION) : '',
+
+    departureDevice:
+      initialCheckOut ? (punch.deviceName || DEVICE_NAME) : '',
+
+    departureDeviceId:
+      initialCheckOut ? (punch.deviceSerial || DEVICE.serial) : '',
 
     biometricUserId:
       punch.biometricUserId,

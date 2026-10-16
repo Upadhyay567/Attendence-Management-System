@@ -23,7 +23,8 @@ export const normalizeLocationName = (loc) => {
   const l = loc.trim();
   const lower = l.toLowerCase();
   if (lower === 'chattarpur') return 'Chattarpur Office';
-  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Delhi Head Office';
+  if (lower === 'omaxe office' || lower === 'surya omaxe') return 'Surya Omaxe';
+  if (lower === 'gt karnal site' || lower === 'gt karnal') return 'GT Karnal Site';
   if (lower.includes('pitampura') || lower === 'hs group hq, pitampura, delhi') return 'PITAM PURA';
   return l;
 };

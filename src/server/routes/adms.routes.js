@@ -53,7 +53,7 @@ const easywdmsService = require('../biometric/easywdms.service');
 admsApiRouter.post('/wdms-sync', async (req, res) => {
   try {
     const username = req.body?.username || process.env.WDMS_USER || 'admin';
-    const password = req.body?.password || process.env.WDMS_PASS || 'Hs@20267';
+    const password = req.body?.password || process.env.WDMS_PASS || 'Admin@123';
     const maxPages = req.body?.maxPages ? parseInt(req.body.maxPages, 10) : 3;
 
     const result = await easywdmsService.syncFromWDMS(username, password, { maxPages });

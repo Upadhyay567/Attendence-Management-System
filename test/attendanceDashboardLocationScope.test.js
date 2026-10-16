@@ -35,7 +35,9 @@ describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitor
   });
 
   afterAll(() => {
-    fs.writeFileSync(originalSeedPath, originalSeedData);
+    try {
+      // Test only modified DB in memory; no restore needed unless modified
+    } catch (_) {}
   });
 
   describe('1. getUserAssignedLocations resolution', () => {
@@ -108,7 +110,7 @@ describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitor
 
       expect(distinctLocs).toContain('ASHOK VIHAR');
       expect(distinctLocs).toContain('Chattarpur Office');
-      expect(distinctLocs).toContain('Delhi Head Office');
+      expect(distinctLocs).toContain('Surya Omaxe');
       expect(distinctLocs).toContain('GT KARNAL SITE');
       expect(distinctLocs).toContain('HS Office');
       expect(distinctLocs).toContain('Office HQ');
@@ -127,7 +129,7 @@ describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitor
 
       expect(getCount('ASHOK VIHAR')).toBeGreaterThanOrEqual(9);
       expect(getCount('Chattarpur Office')).toBeGreaterThanOrEqual(7);
-      expect(getCount('Delhi Head Office')).toBeGreaterThanOrEqual(44);
+      expect(getCount('Surya Omaxe')).toBeGreaterThanOrEqual(44);
       expect(getCount('GT KARNAL SITE')).toBeGreaterThanOrEqual(47);
       expect(getCount('HS Office')).toBeGreaterThanOrEqual(264);
       expect(getCount('Office HQ')).toBeGreaterThanOrEqual(1);
