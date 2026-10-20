@@ -772,19 +772,23 @@ function processLocalPunch(
       return;
     }
 
+    const empPrefLocation = (employee && employee.preferredLocation && employee.preferredLocation.trim()) ||
+      (employee && Array.isArray(employee.preferredLocations) && employee.preferredLocations[0] && employee.preferredLocations[0].trim()) ||
+      (employee && employee.shiftLocations && employee.shiftLocations[primaryLog.shiftId]) || '';
+
     // Strict Multiple Punches Algorithm on Workday:
     // If checkIn is missing (single evening punch existed previously):
     if (inMins === null) {
       if (outMins !== null && punchMins < outMins) {
         primaryLog.checkIn = time;
         primaryLog.checkInPunchId = punchId;
-        primaryLog.location = punch.location || punch.deviceName || primaryLog.location;
+        primaryLog.location = punch.location || punch.deviceName || empPrefLocation || primaryLog.location;
         primaryLog.biometricUsed = punch.deviceName || DEVICE_NAME;
         primaryLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
       } else {
         primaryLog.checkOut = time;
         primaryLog.checkOutPunchId = punchId;
-        primaryLog.departureLocation = punch.location || punch.deviceName || primaryLog.departureLocation;
+        primaryLog.departureLocation = punch.location || punch.deviceName || empPrefLocation || primaryLog.departureLocation;
         primaryLog.departureDevice = punch.deviceName || DEVICE_NAME;
       }
     } else if (punchMins < inMins) {
@@ -796,16 +800,20 @@ function processLocalPunch(
       }
       primaryLog.checkIn = time;
       primaryLog.checkInPunchId = punchId;
-      primaryLog.location = punch.location || punch.deviceName || primaryLog.location;
+      primaryLog.location = punch.location || punch.deviceName || empPrefLocation || primaryLog.location;
       primaryLog.biometricUsed = punch.deviceName || DEVICE_NAME;
       primaryLog.biometricDeviceId = punch.deviceSerial || DEVICE.serial;
     } else {
       if (outMins === null || punchMins >= outMins) {
         primaryLog.checkOut = time;
         primaryLog.checkOutPunchId = punchId;
-        primaryLog.departureLocation = punch.location || punch.deviceName || primaryLog.location;
+        primaryLog.departureLocation = punch.location || punch.deviceName || empPrefLocation || primaryLog.departureLocation || primaryLog.location;
         primaryLog.departureDevice = punch.deviceName || DEVICE_NAME;
       }
+    }
+
+    if (!primaryLog.location && empPrefLocation) {
+      primaryLog.location = empPrefLocation;
     }
 
     const shiftObj = schedules.find(s => String(s.id) === String(primaryLog.shiftId));
@@ -907,7 +915,11 @@ function processLocalPunch(
       initialCheckIn ? (punch.deviceSerial || DEVICE.serial) : '',
 
     departureLocation:
-      initialCheckOut ? (punch.location || (employee.shiftLocations && employee.shiftLocations[targetShiftId]) || employee.preferredLocation || LOCATION) : '',
+      initialCheckOut ? (punch.location ||
+        punch.deviceName ||
+        (employee && employee.preferredLocation && employee.preferredLocation.trim()) ||
+        (employee && Array.isArray(employee.preferredLocations) && employee.preferredLocations[0] && employee.preferredLocations[0].trim()) ||
+        LOCATION) : '',
 
     departureDevice:
       initialCheckOut ? (punch.deviceName || DEVICE_NAME) : '',
@@ -923,8 +935,10 @@ function processLocalPunch(
 
     location:
       punch.location ||
-      (employee.shiftLocations && employee.shiftLocations[targetShiftId]) ||
-      employee.preferredLocation ||
+      punch.deviceName ||
+      (employee && employee.preferredLocation && employee.preferredLocation.trim()) ||
+      (employee && Array.isArray(employee.preferredLocations) && employee.preferredLocations[0] && employee.preferredLocations[0].trim()) ||
+      (employee && employee.shiftLocations && employee.shiftLocations[targetShiftId]) ||
       LOCATION,
 
     deviationFlag: false,

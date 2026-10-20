@@ -235,7 +235,13 @@ async function syncLocalToMongo(seedData) {
         await model.deleteMany({});
         const batchSize = 1000;
         for (let i = 0; i < docs.length; i += batchSize) {
-          const chunk = docs.slice(i, i + batchSize);
+          const chunk = docs.slice(i, i + batchSize).map(doc => {
+            if (doc && doc._id && typeof doc._id === 'string' && !/^[0-9a-fA-F]{24}$/.test(doc._id)) {
+              const { _id, ...rest } = doc;
+              return rest;
+            }
+            return doc;
+          });
           await model.insertMany(chunk, { ordered: false }).catch(err => {
             console.warn(`⚠️ Warning: non-fatal sync chunk issue on ${model.modelName}:`, err.message);
           });

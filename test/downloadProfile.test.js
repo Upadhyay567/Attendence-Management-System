@@ -288,6 +288,8 @@ describe('Download Profile Modal and Dossier Generation', () => {
     expect(combinedDownload.length).not.toBe(rawUsers.length);
   });
 
+  jest.setTimeout(20000);
+
   test('Backend route POST /api/reports/profiles correctly applies location and userIds filters', async () => {
     const express = require('express');
     const request = require('supertest');

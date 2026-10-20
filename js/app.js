@@ -4,8 +4,8 @@ import { renderAdminSchedules } from './views/schedulesView.js?v=103';
 import { renderAdminDashboard } from './views/adminDashboard.js?v=103';
 import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=103';
 import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=103';
-import { renderAdminAttendances } from './views/attendancesView.js?v=103';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=103';
+import { renderAdminAttendances } from './views/attendancesView.js?v=110';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=110';
 import { renderAdminFinance } from './views/financeView.js?v=103';
 import { renderEmployeeLeaves } from './views/leavesView.js?v=103';
 import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=103';
@@ -14,7 +14,7 @@ import { drawRadarMap } from './components/geofenceMap.js?v=103';
 import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=103';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=108';
+import { DB } from './core/db.js?v=110';
 import { Auth } from './auth.js?v=103';
 import { Utils, html } from './utils.js?v=103';
 import { triggerBirthdayCelebration } from './celebration.js?v=103';

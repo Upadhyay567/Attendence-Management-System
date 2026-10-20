@@ -1761,6 +1761,8 @@ export const DB = {
         'WH-1340-close'
       ].sort();
     }
+    locs.add('Delhi Head Office');
+    locs.add('Noida sector 61');
     return [...locs].sort();
   },
 
@@ -1798,6 +1800,60 @@ export const DB = {
       }
     }
     return this.data.officeCoordinates;
+  },
+
+  getWorkLocations() {
+    const locSet = new Set();
+    const officeCoords = this.getOfficeCoordinates() || {};
+    Object.keys(officeCoords).forEach(loc => {
+      if (!loc || typeof loc !== 'string') return;
+      const clean = loc.trim();
+      const lower = clean.toLowerCase();
+      if (!lower.includes('close') && !lower.includes('(') && !lower.includes('mock') && !lower.includes('28.6952') && lower !== 'none' && lower !== '--' && lower !== 'office hq' && lower !== 'branch office') {
+        locSet.add(clean);
+      }
+    });
+
+    const schedules = this.getSchedules() || [];
+    schedules.forEach(s => {
+      if (s && s.location && typeof s.location === 'string') {
+        const clean = s.location.trim();
+        const lower = clean.toLowerCase();
+        if (clean && !lower.includes('close') && !lower.includes('(') && lower !== 'office hq' && lower !== 'branch office') {
+          locSet.add(clean);
+        }
+      }
+    });
+
+    const bioLocs = this.getBiometricLocations() || [];
+    bioLocs.forEach(loc => {
+      if (loc && typeof loc === 'string') {
+        const clean = loc.trim();
+        const lower = clean.toLowerCase();
+        if (clean && !lower.includes('close') && !lower.includes('(') && lower !== 'office hq' && lower !== 'branch office') {
+          locSet.add(clean);
+        }
+      }
+    });
+
+    [
+      'Surya Gurugram',
+      'Surya Omaxe',
+      'GT KARNAL SITE',
+      'RETAIL',
+      'Delhi Head Office',
+      'Chattarpur Office',
+      'PITAM PURA',
+      'ASHOK VIHAR',
+      'PUNJABI BAGH',
+      'HS Office',
+      'WH-1340',
+      'Siyonee',
+      'Noida sector 61',
+      'Chandani Chowk 2'
+    ].forEach(l => locSet.add(l));
+
+    return Array.from(locSet).sort((a, b) => a.localeCompare(b));
   },
 
   saveOfficeCoordinate(name, lat, lng, skipSave = false) {

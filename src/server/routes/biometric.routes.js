@@ -424,6 +424,11 @@ router.get('/biometric/dashboard', async (req, res) => {
         addLogs(logsByBioId.get(biometricId));
         if (user.employeeId) addLogs(logsByBioId.get(String(user.employeeId).trim()));
         if (userDigits) addLogs(logsByDigits.get(userDigits));
+        userLogs.sort((a, b) => {
+          const dtA = (a.date || '') + ' ' + (a.checkOut || a.checkIn || '');
+          const dtB = (b.date || '') + ' ' + (b.checkOut || b.checkIn || '');
+          return dtB.localeCompare(dtA);
+        });
 
         const toIsoDateTime = (dStr, tStr) => {
           if (!tStr) return null;
@@ -438,24 +443,30 @@ router.get('/biometric/dashboard', async (req, res) => {
         let combinedCheckIn = null;
         let combinedCheckOut = null;
         let combinedStatus = null;
-        let combinedDevice = null;
-        let combinedLocation = null;
-        let combinedDeviceId = null;
+        let checkInDevice = null;
+        let checkInLocation = null;
+        let checkInDeviceId = null;
+        let checkOutDevice = null;
+        let checkOutLocation = null;
+        let checkOutDeviceId = null;
 
         if (todayLogs.length > 0) {
           for (const tl of todayLogs) {
             if (tl.checkIn && (!combinedCheckIn || tl.checkIn < combinedCheckIn)) {
               combinedCheckIn = tl.checkIn;
+              checkInDevice = tl.biometricUsed || tl.location;
+              checkInLocation = tl.location || tl.biometricUsed;
+              checkInDeviceId = tl.biometricDeviceId;
             }
             if (tl.checkOut && (!combinedCheckOut || tl.checkOut > combinedCheckOut)) {
               combinedCheckOut = tl.checkOut;
+              checkOutDevice = tl.departureDevice || tl.departureLocation || tl.biometricUsed || tl.location;
+              checkOutLocation = tl.departureLocation || tl.departureDevice || tl.location || tl.biometricUsed;
+              checkOutDeviceId = tl.departureDeviceId || tl.biometricDeviceId;
             }
             if (tl.status && tl.status !== 'Absent') {
               combinedStatus = tl.status;
             }
-            if (tl.biometricUsed) combinedDevice = tl.biometricUsed;
-            if (tl.location) combinedLocation = tl.location;
-            if (tl.biometricDeviceId) combinedDeviceId = tl.biometricDeviceId;
           }
         }
         const todayLog = todayLogs[0] || null;
@@ -467,8 +478,38 @@ router.get('/biometric/dashboard', async (req, res) => {
           latestPunchDisplay = `${rec.date} ${rec.checkOut || rec.checkIn || ''}`.trim();
         }
 
-        const deviceName = combinedDevice || todayLog?.biometricUsed || userLogs[0]?.biometricUsed || DEVICE.name;
-        const punchLocation = combinedLocation || todayLog?.location || userLogs[0]?.location || user.preferredLocation || 'Branch Office';
+        let deviceName = DEVICE.name;
+        let punchLocation = 'Branch Office';
+
+        if (checkInLocation && checkOutLocation && checkInLocation !== checkOutLocation) {
+          punchLocation = `${checkInLocation} (In) • ${checkOutLocation} (Out)`;
+          deviceName = `${checkInDevice || checkInLocation} (In) • ${checkOutDevice || checkOutLocation} (Out)`;
+        } else if (checkInLocation) {
+          punchLocation = checkInLocation;
+          deviceName = checkInDevice || checkInLocation;
+        } else if (checkOutLocation) {
+          punchLocation = checkOutLocation;
+          deviceName = checkOutDevice || checkOutLocation;
+        } else if (userLogs.length > 0) {
+          const prev = userLogs[0];
+          const prevInLoc = prev.location || prev.biometricUsed;
+          const prevOutLoc = prev.departureLocation || prev.departureDevice;
+          if (prevInLoc && prevOutLoc && prevInLoc !== prevOutLoc) {
+            punchLocation = `${prevInLoc} (In) • ${prevOutLoc} (Out)`;
+            deviceName = `${prev.biometricUsed || prevInLoc} (In) • ${prev.departureDevice || prevOutLoc} (Out)`;
+          } else {
+            punchLocation = prevInLoc || prevOutLoc || user.preferredLocation || 'Branch Office';
+            deviceName = prev.biometricUsed || prev.departureDevice || DEVICE.name;
+          }
+        } else {
+          punchLocation = user.preferredLocation || (Array.isArray(user.preferredLocations) && user.preferredLocations[0]) || 'Branch Office';
+          deviceName = DEVICE.name;
+        }
+
+        const deviceDisplay = (checkInLocation && checkOutLocation && checkInLocation !== checkOutLocation)
+          ? `${deviceName}`
+          : `${deviceName} • ${punchLocation}`;
+
         const finalStatus = combinedStatus || (todayLog ? (todayLog.status || 'On Time') : ((combinedCheckIn || combinedCheckOut) ? 'On Time' : 'No Punch'));
 
         return {
@@ -480,12 +521,12 @@ router.get('/biometric/dashboard', async (req, res) => {
           uid: index + 1,
           device: deviceName,
           location: punchLocation,
-          deviceDisplay: `${deviceName} • ${punchLocation}`,
-          deviceIp: combinedDeviceId || todayLog?.biometricDeviceId || DEVICE.ip,
+          deviceDisplay: deviceDisplay,
+          deviceIp: checkInDeviceId || checkOutDeviceId || todayLog?.biometricDeviceId || DEVICE.ip,
           devicePort: DEVICE.port,
           totalPunches: userLogs.length,
           latestPunch: latestPunchDisplay,
-          latestPunchIp: combinedDeviceId || todayLog?.biometricDeviceId || DEVICE.ip,
+          latestPunchIp: checkInDeviceId || checkOutDeviceId || todayLog?.biometricDeviceId || DEVICE.ip,
           checkIn: combinedCheckIn,
           checkOut: combinedCheckOut,
           todayCheckIn: combinedCheckIn,

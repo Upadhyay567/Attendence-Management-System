@@ -237,11 +237,19 @@ export function renderDailyWorkStatus() {
       const targetLoc = formatLocationTag(dailyWorkStatusLocationFilter).toLowerCase().trim();
       employees = employees.filter(e => {
         const addCheck = (val) => typeof val === 'string' && formatLocationTag(val).toLowerCase().trim() === targetLoc;
-        if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
-        if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
-        if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
-        if (e.shiftLocations && typeof e.shiftLocations === 'object') {
-          if (Object.values(e.shiftLocations).some(addCheck)) return true;
+        const hasPref = (e.workLocation && e.workLocation.trim()) ||
+                        (e.preferredLocation && e.preferredLocation.trim()) ||
+                        (Array.isArray(e.preferredLocations) && e.preferredLocations.length > 0) ||
+                        (Array.isArray(e.assignedLocations) && e.assignedLocations.length > 0) ||
+                        (e.shiftLocations && typeof e.shiftLocations === 'object' && Object.keys(e.shiftLocations).length > 0);
+        if (hasPref) {
+          if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
+          if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
+          if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
+          if (e.shiftLocations && typeof e.shiftLocations === 'object') {
+            if (Object.values(e.shiftLocations).some(addCheck)) return true;
+          }
+          return false;
         }
 
         const userLocs = userLocationsMap.get(e.id) || userLocationsMap.get(e.employeeId) || userLocationsMap.get(`bio_${e.biometricUserId}`);
@@ -672,10 +680,18 @@ function exportDailyWorkStatusCSV(year, month) {
     const targetLoc = dailyWorkStatusLocationFilter.toLowerCase().trim();
     employees = employees.filter(e => {
       const addCheck = (val) => typeof val === 'string' && val.toLowerCase().trim() === targetLoc;
-      if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
-      if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
-      if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
-      if (e.shiftLocations && typeof e.shiftLocations === 'object' && Object.values(e.shiftLocations).some(addCheck)) return true;
+      const hasPref = (e.workLocation && e.workLocation.trim()) ||
+                      (e.preferredLocation && e.preferredLocation.trim()) ||
+                      (Array.isArray(e.preferredLocations) && e.preferredLocations.length > 0) ||
+                      (Array.isArray(e.assignedLocations) && e.assignedLocations.length > 0) ||
+                      (e.shiftLocations && typeof e.shiftLocations === 'object' && Object.keys(e.shiftLocations).length > 0);
+      if (hasPref) {
+        if (addCheck(e.workLocation) || addCheck(e.preferredLocation)) return true;
+        if (Array.isArray(e.preferredLocations) && e.preferredLocations.some(addCheck)) return true;
+        if (Array.isArray(e.assignedLocations) && e.assignedLocations.some(addCheck)) return true;
+        if (e.shiftLocations && typeof e.shiftLocations === 'object' && Object.values(e.shiftLocations).some(addCheck)) return true;
+        return false;
+      }
       const userLocs = userLocationsMap.get(e.id) || userLocationsMap.get(e.employeeId) || userLocationsMap.get(`bio_${e.biometricUserId}`);
       return userLocs && userLocs.has(targetLoc);
     });

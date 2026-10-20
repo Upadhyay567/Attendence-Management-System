@@ -35,7 +35,7 @@ function resolveDeviceLocation(sn, alias) {
 
   const map = {
     'GED7241901313': { name: 'SURYA OMAXE', location: 'Surya Omaxe', branch: 'Surya Omaxe' },
-    'CJOU232660306': { name: 'Ashok Vihar_Extra', location: 'Noida sector 61', branch: 'Noida Branch' },
+    'CJOU232660306': { name: 'HS Office- FF', location: 'HS Office', branch: 'HS Office' },
     'GED7254501292': { name: 'Raagwaas Chattarpur', location: 'Chattarpur Office', branch: 'Chattarpur Branch' },
     '0056120200363': { name: 'WH-1340-close', location: 'WH-1340-close', branch: 'WH-1340-close' },
     'CEZF192660043': { name: 'Siyonee', location: 'Siyonee', branch: 'Siyonee' },
@@ -504,21 +504,40 @@ async function syncFromWDMS(username, password, options = {}) {
     } catch (_) {}
   }
 
-  // Merge WDMS employees into dbUsers if missing
+  // Merge WDMS employees into dbUsers if missing or upgrade placeholder names
   let newEmployeesAdded = 0;
   employees.forEach(emp => {
     const pin = String(emp.emp_code || emp.pin || '').trim();
-    if (pin === '30191' || pin.toLowerCase() === 'admin' || (emp.name && emp.name.toLowerCase() === 'admin')) return;
+    if (!pin) return;
     const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.name || `Employee ${pin}`;
-    const exists = dbUsers.find(u => 
-      u.biometricUserId === pin || u.employeeId === pin || u.id === `usr_bio_${pin}`
-    );
-    if (!exists && pin) {
+    const pinDigits = pin.replace(/\D/g, '');
+
+    const exists = dbUsers.find(u => {
+      const uEmp = String(u.employeeId || '').trim();
+      const uBio = String(u.biometricUserId || u.biometricId || '').trim();
+      if (uBio === pin || uEmp === pin || u.id === `usr_bio_${pin}`) return true;
+      if (pinDigits && (uBio === pinDigits || uEmp === pinDigits || u.id === `usr_bio_${pinDigits}`)) return true;
+      if (pinDigits && (uEmp === `E${pinDigits}` || uBio === `E${pinDigits}`)) return true;
+      return false;
+    });
+
+    if (exists) {
+      // If user had a placeholder name but WDMS has their real name, update it!
+      const isPlaceholder = /^Employee\s+\d+$/i.test(exists.name) || /^NN-\d+$/i.test(exists.name);
+      if (isPlaceholder && fullName && !/^Employee\s+\d+$/i.test(fullName) && fullName.toLowerCase() !== 'admin') {
+        exists.name = fullName;
+        exists._search = `${fullName.toLowerCase()} ${exists.employeeId || ''} ${exists.department || ''}`.trim();
+      }
+      if (pin.startsWith('E') && !exists.employeeId?.startsWith('E')) {
+        exists.employeeId = pin;
+      }
+    } else {
+      if (pin === '30191' || pin.toLowerCase() === 'admin' || (emp.name && emp.name.toLowerCase() === 'admin')) return;
       dbUsers.push({
         id: `usr_bio_${pin}`,
         employeeId: pin,
-        biometricUserId: pin,
-        biometricId: pin,
+        biometricUserId: pinDigits || pin,
+        biometricId: pinDigits || pin,
         name: fullName,
         username: `bio_${pin}`,
         role: 'employee',

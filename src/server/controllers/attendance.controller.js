@@ -238,21 +238,6 @@ async function getDbState(req, res) {
       const localData = readLocalDbStateCached();
       if (localData) {
         const { activityLogs, processedPunchIds, biometricVault, ...clientData } = localData;
-        if (Array.isArray(clientData.attendanceLogs)) {
-          const uMap = new Map();
-          clientData.attendanceLogs = clientData.attendanceLogs.filter(l => {
-            if (!l || !l.date) return false;
-            const k = (l.userId || l.employeeId || l.id) + '_' + l.date;
-            if (uMap.has(k)) {
-              const existing = uMap.get(k);
-              if (l.checkIn && (!existing.checkIn || l.checkIn < existing.checkIn)) existing.checkIn = l.checkIn;
-              if (l.checkOut && (!existing.checkOut || l.checkOut > existing.checkOut)) existing.checkOut = l.checkOut;
-              return false;
-            }
-            uMap.set(k, l);
-            return true;
-          });
-        }
         return res.json(clientData);
       }
       return res.status(404).json({ error: 'Seed database file missing.' });

@@ -261,9 +261,14 @@ export async function renderAdminDashboard() {
           body: JSON.stringify({ forceRefresh: true })
         }).catch(() => null);
         await DB.init('immediate');
-        renderAdminDashboard();
+        if (typeof updateDashboardViews === 'function') {
+          updateDashboardViews();
+        }
         if (typeof loadBiometricDashboardData === 'function') {
-          loadBiometricDashboardData();
+          loadBiometricDashboardData(true);
+        }
+        if (typeof loadBiometricFleetData === 'function') {
+          loadBiometricFleetData();
         }
         if (typeof showToastNotification === 'function') {
           showToastNotification('✅ Biometric attendance synchronized successfully from cloud server!', 'success');
@@ -1103,8 +1108,9 @@ export async function renderAdminDashboard() {
         distinctLocs.map(loc => {
           const targetLoc = formatLocationTag(loc).toLowerCase().trim();
           const count = currentTodayLogs.filter(l => {
-            const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-            return logLoc === targetLoc;
+            const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+            const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+            return inLoc === targetLoc || outLoc === targetLoc;
           }).length;
           return `<option value="${Utils.escape(loc)}" ${currentVal === targetLoc ? 'selected' : ''}>${Utils.escape(loc)} (${count})</option>`;
         }).join('');
@@ -1137,16 +1143,18 @@ export async function renderAdminDashboard() {
       const targetLocName = liveFeedSelectedLocation || Array.from(liveFeedSelectedLocations)[0];
       const singleLoc = formatLocationTag(targetLocName).toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-        return logLoc === singleLoc;
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        return inLoc === singleLoc || outLoc === singleLoc;
       }).length;
       btnText.textContent = `${targetLocName} (${count})`;
     } else {
       let combinedCount = 0;
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => formatLocationTag(l).toLowerCase().trim()));
       currentTodayLogs.forEach(l => {
-        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-        if (selLower.has(logLoc)) combinedCount++;
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        if (selLower.has(inLoc) || selLower.has(outLoc)) combinedCount++;
       });
       btnText.textContent = `${liveFeedSelectedLocations.size} Locations (${combinedCount} punches)`;
     }
@@ -1154,8 +1162,9 @@ export async function renderAdminDashboard() {
     listContainer.innerHTML = distinctLocs.map(loc => {
       const targetLoc = formatLocationTag(loc).toLowerCase().trim();
       const count = currentTodayLogs.filter(l => {
-        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-        return logLoc === targetLoc;
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        return inLoc === targetLoc || outLoc === targetLoc;
       }).length;
       const isChecked = !isAllSelected && (liveFeedSelectedLocations.has(loc) || formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim() === targetLoc);
       return `
@@ -1170,6 +1179,7 @@ export async function renderAdminDashboard() {
         </div>
       `;
     }).join('');
+  }
 
     listContainer.querySelectorAll('.cb-live-feed-loc-item').forEach(cb => {
       cb.addEventListener('change', () => {
@@ -1203,7 +1213,10 @@ export async function renderAdminDashboard() {
     if (!feedBody) return;
 
     let distinctLocs = Array.from(new Set([
-      ...currentTodayLogs.map(l => formatLocationTag(l.location || l.biometricUsed || '').trim()).filter(Boolean),
+      ...currentTodayLogs.flatMap(l => [
+        formatLocationTag(l.location || l.biometricUsed || '').trim(),
+        formatLocationTag(l.departureLocation || l.departureDevice || '').trim()
+      ]).filter(Boolean),
       ...Object.keys(DB.getOfficeCoordinates() || {}).map(l => formatLocationTag(l).trim()).filter(Boolean)
     ])).filter(loc => {
       if (!loc) return false;
@@ -1217,14 +1230,16 @@ export async function renderAdminDashboard() {
     if (liveFeedSelectedLocation) {
       const singleLoc = formatLocationTag(liveFeedSelectedLocation).toLowerCase().trim();
       filteredLogs = currentTodayLogs.filter(l => {
-        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-        return logLoc === singleLoc;
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        return inLoc === singleLoc || outLoc === singleLoc;
       });
     } else if (liveFeedSelectedLocations.size > 0) {
       const selLower = new Set(Array.from(liveFeedSelectedLocations).map(l => formatLocationTag(l).toLowerCase().trim()));
       filteredLogs = currentTodayLogs.filter(l => {
-        const logLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
-        return selLower.has(logLoc);
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        return selLower.has(inLoc) || selLower.has(outLoc);
       });
     }
 
@@ -1393,6 +1408,19 @@ export async function renderAdminDashboard() {
           </div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${distKm.toFixed(2)} km away</div>`;
       }
+      let rowLoc = '—';
+      const inLoc = (l.location && l.location.trim()) || (l.biometricUsed && l.biometricUsed.trim());
+      const outLoc = (l.departureLocation && l.departureLocation.trim()) || (l.departureDevice && l.departureDevice.trim());
+      if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
+        rowLoc = `${formatLocationTag(inLoc)} (In) • ${formatLocationTag(outLoc)} (Out)`;
+      } else if (inLoc) {
+        rowLoc = formatLocationTag(inLoc);
+      } else if (outLoc) {
+        rowLoc = formatLocationTag(outLoc);
+      } else if (u?.preferredLocation) {
+        rowLoc = formatLocationTag(u.preferredLocation);
+      }
+
       return `
         <tr>
           <td style="font-weight:600">${Utils.escape(u ? u.name : (l.employeeName || l.userName || 'Employee'))}</td>
@@ -1400,16 +1428,262 @@ export async function renderAdminDashboard() {
           <td>${checkInVal}</td>
           <td>${checkOutVal}</td>
           <td>${gpsCellHTML}</td>
-          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(formatLocationTag(l.location || l.biometricUsed || '—'))}</td>
+          <td style="font-size:12px;color:var(--text-secondary);font-weight:600">${Utils.escape(rowLoc)}</td>
           <td><span class="badge ${statusClass}">${displayStatus}</span></td>
         </tr>
       `;
     }).join('');
   }
 
+  function renderBiometricRowsHTML(sortedData) {
+    if (!sortedData || sortedData.length === 0) {
+      return '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">No biometric employee records found on device.</td></tr>';
+    }
+
+    const formatPunchTime = (val) => {
+      if (!val || val === '—' || val === '--:--' || val === '--') return '—';
+      const trimmed = String(val).trim();
+      const timeParts = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (timeParts) {
+        let h = parseInt(timeParts[1], 10);
+        const m = timeParts[2];
+        const s = timeParts[3] || '00';
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${m}:${s} ${ampm}`;
+      }
+      const d = new Date(trimmed);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      }
+      return trimmed;
+    };
+
+    return sortedData.map(emp => {
+      const att = emp.todayAttendance || 'No Punch';
+      let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
+      if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
+      else if (att === 'Late') statusBadge = '<span class="badge badge-late">Late</span>';
+      else if (att === 'Half Day') statusBadge = '<span class="badge badge-half-day">Half Day</span>';
+      else if (att === 'Absent') statusBadge = '<span class="badge badge-absent">Absent</span>';
+      else if (att !== 'No Punch') statusBadge = `<span class="badge badge-on-time">${Utils.escape(att)}</span>`;
+
+      const checkInStr = formatPunchTime(emp.todayCheckIn || emp.checkIn);
+      const checkOutStr = formatPunchTime(emp.todayCheckOut || emp.checkOut);
+
+      let latestPunchStr = '—';
+      if (emp.latestPunch && emp.latestPunch !== '—') {
+        const lTrim = String(emp.latestPunch).trim();
+        const timeMatch = lTrim.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (timeMatch) {
+          latestPunchStr = formatPunchTime(lTrim) + ' (Today)';
+        } else {
+          const d = new Date(lTrim);
+          if (!isNaN(d.getTime())) {
+            latestPunchStr = d.toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true });
+          } else {
+            latestPunchStr = lTrim;
+          }
+        }
+      }
+
+      const isPresent = att === 'On Time' || att === 'Late';
+
+      return `
+        <tr data-emp-row="true">
+          <td style="font-weight: 600; text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeName || 'Unknown')}</td>
+          <td style="text-align: left; padding: 12px 14px;"><code style="font-size: 11.5px;">${Utils.escape(emp.userId || '—')}</code></td>
+          <td style="text-align: left; padding: 12px 14px;"><span class="badge badge-neutral" style="font-weight: 700;">${Utils.escape(emp.biometricId || '—')}</span></td>
+          <td style="text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeId || '—')}</td>
+          <td style="padding: 12px 14px; text-align: center;">${statusBadge}</td>
+          <td style="padding: 12px 14px; text-align: center; font-weight: 600; color: ${isPresent ? 'var(--success, #10b981)' : 'var(--text-muted)'};">${checkInStr}</td>
+          <td style="padding: 12px 14px; text-align: center;">${checkOutStr}</td>
+          <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">${latestPunchStr}</td>
+          <td style="padding: 12px 14px; text-align: center; font-weight: 700;">${emp.totalPunches ?? 0}</td>
+          <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">
+            <div style="font-weight: 600; color: var(--text-primary);">📟 ${Utils.escape(emp.device || 'ZKTeco')}</div>
+            ${emp.location ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${Utils.escape(emp.location)}</div>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function generateFleetCardsHTML(devices) {
+    if (!devices || devices.length === 0) {
+      return '<div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">No biometric devices registered yet. Click "Add Device" to configure a branch machine.</div>';
+    }
+
+    return devices.map(dev => {
+      const isOnline = dev.status === 'Online';
+      const badgeClass = isOnline ? 'badge-on-time' : 'badge-neutral';
+      const badgeText = isOnline ? '● Online' : '○ Offline';
+
+      return `
+        <div class="fleet-device-card" style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div>
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                  <span>📟</span> ${Utils.escape(dev.name)}
+                </div>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
+                  📍 ${Utils.escape(dev.branch || dev.location || 'Branch')} ${dev.location ? '• ' + Utils.escape(dev.location) : ''}
+                </div>
+              </div>
+              <span id="badge-status-${dev.id}" class="badge ${badgeClass}" style="font-size: 10.5px; font-weight: 600;">
+                ${badgeText}
+              </span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
+              <div><strong>IP Address:</strong> <code style="font-size: 11.5px;">${Utils.escape(dev.ip)}:${dev.port || 4370}</code></div>
+              <div><strong>Vault Templates:</strong> <span id="vault-count-${dev.id}" style="font-weight: 600; color: var(--text-primary);">${dev.enrolledUsersCount || 0} Synced</span></div>
+              <div><strong>Serial:</strong> <span style="font-size: 11px; font-family: monospace;">${Utils.escape(dev.serial || '—')}</span></div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid var(--border-color, #f1f5f9); padding-top: 10px;">
+            <button class="btn btn-secondary btn-test-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Test Ping Latency">
+              <span>⚡</span> Ping
+            </button>
+            <button class="btn btn-secondary btn-sync-single-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Synchronize Users & Templates">
+              <span>🔄</span> Sync
+            </button>
+            <button class="btn btn-secondary btn-edit-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--primary, #c93830); border-color: rgba(201, 56, 48, 0.25);" title="Edit Device Settings">
+              <span>✏️</span> Edit
+            </button>
+            <button class="btn btn-secondary btn-delete-device" data-id="${dev.id}" data-name="${Utils.escape(dev.name)}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #ef4444; border-color: rgba(239, 68, 68, 0.25);" title="Remove Device">
+              <span>🗑️</span> Remove
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function bindFleetCardEvents(grid, devices) {
+    if (!grid) return;
+
+    grid.querySelectorAll('.btn-test-device').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Testing...';
+
+        try {
+          const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${id}/test`, { method: 'POST' });
+          const result = await res.json();
+          const badge = document.getElementById(`badge-status-${id}`);
+
+          if (result.success) {
+            if (badge) {
+              badge.className = 'badge badge-on-time';
+              badge.textContent = `⚡ ${result.latencyMs}ms Online`;
+            }
+            btn.innerHTML = `<span>✓</span> ${result.latencyMs}ms`;
+          } else {
+            if (badge) {
+              badge.className = 'badge badge-neutral';
+              badge.textContent = '○ Offline (Queued)';
+            }
+            btn.innerHTML = '<span>⚠️</span> Offline';
+          }
+        } catch (e) {
+          btn.innerHTML = '<span>⚠️</span> Error';
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡</span> Ping';
+          }, 3000);
+        }
+      });
+    });
+
+    grid.querySelectorAll('.btn-sync-single-device').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Syncing...';
+        await triggerGlobalTemplateSync();
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔄</span> Sync';
+      });
+    });
+
+    grid.querySelectorAll('.btn-edit-device').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const devList = (devices && devices.length > 0) ? devices : (typeof DB !== 'undefined' && typeof DB.getBiometricDevices === 'function' ? DB.getBiometricDevices() : []);
+        const dev = devList.find(d => String(d.id) === String(id));
+        if (dev) {
+          showEditBiometricDeviceModal(dev);
+        }
+      });
+    });
+
+    grid.querySelectorAll('.btn-delete-device').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const devName = btn.getAttribute('data-name') || id;
+        if (!confirm(`Are you sure you want to remove the biometric device "${devName}"?`)) {
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳</span> Removing...';
+
+        try {
+          const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+          });
+          const data = await res.json();
+          if (data.success) {
+            if (typeof showToastNotification === 'function') {
+              showToastNotification(`🗑️ Device "${devName}" removed successfully`, 'success');
+            } else {
+              alert(`🗑️ Device "${devName}" removed successfully.`);
+            }
+            loadBiometricFleetData();
+          } else {
+            alert('⚠️ Failed to remove device: ' + (data.message || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = '<span>🗑️</span> Remove';
+          }
+        } catch (err) {
+          alert('❌ Network error: ' + err.message);
+          btn.disabled = false;
+          btn.innerHTML = '<span>🗑️</span> Remove';
+        }
+      });
+    });
+  }
+
   function renderBiometricDashboardPanel() {
     const container = document.getElementById('dashboard-biometric-panel-container');
     if (!container) return;
+
+    // 1. If panel already exists in DOM, DO NOT destroy and rebuild container.innerHTML!
+    // Performing in-place silent refresh keeps both fleet cards & live attendance feed visible at all times!
+    if (document.getElementById('biometric-attendance-panel')) {
+      loadBiometricFleetData();
+      loadBiometricDashboardData(true);
+      return;
+    }
+
+    // 2. Pre-populate initial state from in-memory cache or DB so screen is NEVER blank
+    const cachedDevices = (typeof DB !== 'undefined' && typeof DB.getBiometricDevices === 'function' && DB.getBiometricDevices().length > 0)
+      ? DB.getBiometricDevices()
+      : (window._cachedFleetDevices || []);
+
+    const initialFleetHTML = cachedDevices.length > 0
+      ? generateFleetCardsHTML(cachedDevices)
+      : '<div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">Loading branch biometric devices...</div>';
+
+    const initialTbodyHTML = (window._cachedBiometricDashboardData && window._cachedBiometricDashboardData.length > 0)
+      ? renderBiometricRowsHTML(window._cachedBiometricDashboardData)
+      : '<tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>';
+
+    const initialStatusBadgeHTML = (window._cachedBiometricDashboardData && window._cachedBiometricDashboardData.length > 0)
+      ? `<span id="biometric-status-badge" class="badge badge-on-time" style="font-size: 11px;">ZKTeco Fleet Synchronized (${window._cachedBiometricDashboardData.length} records)</span>`
+      : `<span id="biometric-status-badge" class="badge badge-pending" style="font-size: 11px;">Checking Fleet...</span>`;
 
     container.innerHTML = html`
       <div class="card-panel" style="margin-top: 20px;" id="biometric-attendance-panel">
@@ -1442,7 +1716,7 @@ export async function renderAdminDashboard() {
         <div style="margin: 18px 0 14px 0;">
           <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span>Connected Branch Hardware (<span id="fleet-count-badge">3</span> Devices)</span>
+              <span>Connected Branch Hardware (<span id="fleet-count-badge">${cachedDevices.length || 3}</span> Devices)</span>
               <span class="badge badge-on-time" id="fleet-refresh-badge" style="font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25);">
                 ● 15s Auto-Refresh
               </span>
@@ -1450,9 +1724,7 @@ export async function renderAdminDashboard() {
             <span id="fleet-last-sync" style="font-size: 11px; font-weight: normal; color: var(--text-secondary);">Replication: Auto-Active (Every 15s)</span>
           </div>
           <div id="biometric-fleet-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
-            <div style="padding: 16px; border: 1px dashed var(--border-color, #e2e8f0); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 12px;">
-              Loading branch biometric devices...
-            </div>
+            ${initialFleetHTML}
           </div>
         </div>
 
@@ -1461,7 +1733,7 @@ export async function renderAdminDashboard() {
           <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
             <span>🕒</span> Live Biometric Attendance Feed (All Branches)
           </h4>
-          <span id="biometric-status-badge" class="badge badge-pending" style="font-size: 11px;">Checking Fleet...</span>
+          ${initialStatusBadgeHTML}
         </div>
 
         <div class="table-container" style="overflow-x: auto;">
@@ -1481,32 +1753,65 @@ export async function renderAdminDashboard() {
               </tr>
             </thead>
             <tbody id="biometric-dashboard-tbody">
-              <tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>
+              ${initialTbodyHTML}
             </tbody>
           </table>
         </div>
       </div>
     `;
 
+    // Bind card buttons if pre-populated
+    const fleetGrid = document.getElementById('biometric-fleet-grid');
+    if (fleetGrid && cachedDevices.length > 0) {
+      bindFleetCardEvents(fleetGrid, cachedDevices);
+    }
+
     const refreshBtn = document.getElementById('btn-refresh-biometric-feed');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async () => {
+        if (window._isBiometricSyncing) return;
+        window._isBiometricSyncing = true;
         refreshBtn.disabled = true;
         const origHtml = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '<span>⏳</span> Refreshing...';
+        refreshBtn.innerHTML = '<span>🔄</span> Syncing in background...';
+
+        const statusBadge = document.getElementById('biometric-status-badge');
+        if (statusBadge) {
+          statusBadge.className = 'badge badge-pending';
+          statusBadge.innerHTML = '🔄 Syncing in background...';
+        }
+
+        const fleetBadge = document.getElementById('fleet-refresh-badge');
+        if (fleetBadge) {
+          fleetBadge.innerHTML = '🔄 Syncing fleet in background...';
+        }
+
         try {
           await fetch((window.apiBaseUrl || '') + '/api/biometric/sync', { method: 'POST' }).catch(() => {});
-          await DB.init('immediate');
+          await DB.init('immediate').catch(() => {});
         } catch (_) {}
-        loadBiometricDashboardData();
-        loadBiometricFleetData();
+
+        await Promise.all([
+          loadBiometricDashboardData(true),
+          loadBiometricFleetData()
+        ]);
+
         const lastSyncEl = document.getElementById('fleet-last-sync');
         if (lastSyncEl) {
           const timeNow = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
           lastSyncEl.innerHTML = `<span style="color:#10b981; font-weight:600;">● Active</span> &bull; Refreshed at ${timeNow} (15s auto-refresh)`;
         }
+
+        if (fleetBadge) {
+          fleetBadge.innerHTML = '● 15s Auto-Refresh';
+        }
+
         refreshBtn.disabled = false;
         refreshBtn.innerHTML = origHtml;
+        window._isBiometricSyncing = false;
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('✅ Biometric fleet and attendance synchronized in background', 'success');
+        }
       });
     }
 
@@ -1526,7 +1831,7 @@ export async function renderAdminDashboard() {
     }
 
     loadBiometricFleetData();
-    loadBiometricDashboardData();
+    loadBiometricDashboardData(true);
   }
 
   async function loadBiometricFleetData() {
@@ -1537,7 +1842,19 @@ export async function renderAdminDashboard() {
     try {
       const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/devices');
       const json = await res.json();
-      const devices = json.devices || [];
+      let devices = json.devices || [];
+
+      // Fallback to local DB biometric devices if server response is empty
+      if ((!devices || devices.length === 0) && typeof DB !== 'undefined' && typeof DB.getBiometricDevices === 'function') {
+        const localDevs = DB.getBiometricDevices();
+        if (localDevs && localDevs.length > 0) {
+          devices = localDevs;
+        }
+      }
+
+      if (devices && devices.length > 0) {
+        window._cachedFleetDevices = devices;
+      }
 
       if (badgeCount && badgeCount.textContent != devices.length) badgeCount.textContent = devices.length;
 
@@ -1573,145 +1890,9 @@ export async function renderAdminDashboard() {
         return;
       }
 
-      grid.innerHTML = devices.map(dev => {
-        const isOnline = dev.status === 'Online';
-        const badgeClass = isOnline ? 'badge-on-time' : 'badge-neutral';
-        const badgeText = isOnline ? '● Online' : '○ Offline';
-
-        return `
-          <div class="fleet-device-card" style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <div>
-                  <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                    <span>📟</span> ${Utils.escape(dev.name)}
-                  </div>
-                  <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">
-                    📍 ${Utils.escape(dev.branch || dev.location || 'Branch')} ${dev.location ? '• ' + Utils.escape(dev.location) : ''}
-                  </div>
-                </div>
-                <span id="badge-status-${dev.id}" class="badge ${badgeClass}" style="font-size: 10.5px; font-weight: 600;">
-                  ${badgeText}
-                </span>
-              </div>
-              <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
-                <div><strong>IP Address:</strong> <code style="font-size: 11.5px;">${Utils.escape(dev.ip)}:${dev.port || 4370}</code></div>
-                <div><strong>Vault Templates:</strong> <span id="vault-count-${dev.id}" style="font-weight: 600; color: var(--text-primary);">${dev.enrolledUsersCount || 0} Synced</span></div>
-                <div><strong>Serial:</strong> <span style="font-size: 11px; font-family: monospace;">${Utils.escape(dev.serial || '—')}</span></div>
-              </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; border-top: 1px solid var(--border-color, #f1f5f9); padding-top: 10px;">
-              <button class="btn btn-secondary btn-test-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Test Ping Latency">
-                <span>⚡</span> Ping
-              </button>
-              <button class="btn btn-secondary btn-sync-single-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer;" title="Synchronize Users & Templates">
-                <span>🔄</span> Sync
-              </button>
-              <button class="btn btn-secondary btn-edit-device" data-id="${dev.id}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--primary, #c93830); border-color: rgba(201, 56, 48, 0.25);" title="Edit Device Settings">
-                <span>✏️</span> Edit
-              </button>
-              <button class="btn btn-secondary btn-delete-device" data-id="${dev.id}" data-name="${Utils.escape(dev.name)}" style="font-size: 11px; padding: 6px 8px; height: auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: #ef4444; border-color: rgba(239, 68, 68, 0.25);" title="Remove Device">
-                <span>🗑️</span> Remove
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // Bind Test Ping buttons
-      grid.querySelectorAll('.btn-test-device').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-id');
-          btn.disabled = true;
-          btn.innerHTML = '<span>⏳</span> Testing...';
-
-          try {
-            const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${id}/test`, { method: 'POST' });
-            const result = await res.json();
-            const badge = document.getElementById(`badge-status-${id}`);
-
-            if (result.success) {
-              if (badge) {
-                badge.className = 'badge badge-on-time';
-                badge.textContent = `⚡ ${result.latencyMs}ms Online`;
-              }
-              btn.innerHTML = `<span>✓</span> ${result.latencyMs}ms`;
-            } else {
-              if (badge) {
-                badge.className = 'badge badge-neutral';
-                badge.textContent = '○ Offline (Queued)';
-              }
-              btn.innerHTML = '<span>⚠️</span> Offline';
-            }
-          } catch (e) {
-            btn.innerHTML = '<span>⚠️</span> Error';
-          } finally {
-            setTimeout(() => {
-              btn.disabled = false;
-              btn.innerHTML = '<span>⚡</span> Ping';
-            }, 3000);
-          }
-        });
-      });
-
-      // Bind Sync Single Device buttons
-      grid.querySelectorAll('.btn-sync-single-device').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          btn.disabled = true;
-          btn.innerHTML = '<span>⏳</span> Syncing...';
-          await triggerGlobalTemplateSync();
-          btn.disabled = false;
-          btn.innerHTML = '<span>🔄</span> Sync';
-        });
-      });
-
-      // Bind Edit Device buttons
-      grid.querySelectorAll('.btn-edit-device').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.getAttribute('data-id');
-          const dev = devices.find(d => String(d.id) === String(id));
-          if (dev) {
-            showEditBiometricDeviceModal(dev);
-          }
-        });
-      });
-
-      // Bind Remove Device buttons
-      grid.querySelectorAll('.btn-delete-device').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-id');
-          const devName = btn.getAttribute('data-name') || id;
-          if (!confirm(`Are you sure you want to remove the biometric device "${devName}"?`)) {
-            return;
-          }
-
-          btn.disabled = true;
-          btn.innerHTML = '<span>⏳</span> Removing...';
-
-          try {
-            const res = await fetch((window.apiBaseUrl || '') + `/api/biometric/devices/${encodeURIComponent(id)}`, {
-              method: 'DELETE'
-            });
-            const data = await res.json();
-            if (data.success) {
-              if (typeof showToastNotification === 'function') {
-                showToastNotification(`🗑️ Device "${devName}" removed successfully`, 'success');
-              } else {
-                alert(`🗑️ Device "${devName}" removed successfully.`);
-              }
-              loadBiometricFleetData();
-            } else {
-              alert('⚠️ Failed to remove device: ' + (data.message || 'Unknown error'));
-              btn.disabled = false;
-              btn.innerHTML = '<span>🗑️</span> Remove';
-            }
-          } catch (err) {
-            alert('❌ Network error: ' + err.message);
-            btn.disabled = false;
-            btn.innerHTML = '<span>🗑️</span> Remove';
-          }
-        });
-      });
+      // Rebuild cards only if count or device IDs changed, without any intermediate blank state
+      grid.innerHTML = generateFleetCardsHTML(devices);
+      bindFleetCardEvents(grid, devices);
 
       const lastSyncEl = document.getElementById('fleet-last-sync');
       if (lastSyncEl) {
@@ -1721,14 +1902,35 @@ export async function renderAdminDashboard() {
 
     } catch (err) {
       console.warn('⚠️ Could not load biometric fleet devices:', err.message);
+      // DO NOT clear grid if devices were already rendered!
+      if (grid.querySelectorAll('.fleet-device-card').length === 0 && typeof DB !== 'undefined' && typeof DB.getBiometricDevices === 'function') {
+        const fallbackDevs = DB.getBiometricDevices();
+        if (fallbackDevs && fallbackDevs.length > 0) {
+          grid.innerHTML = generateFleetCardsHTML(fallbackDevs);
+          bindFleetCardEvents(grid, fallbackDevs);
+          if (badgeCount) badgeCount.textContent = fallbackDevs.length;
+        }
+      }
     }
   }
 
   async function triggerGlobalTemplateSync() {
     const btn = document.getElementById('btn-sync-all-templates');
     const icon = document.getElementById('sync-template-icon');
-    if (btn) btn.disabled = true;
-    if (icon) icon.style.display = 'inline-block';
+    if (btn) {
+      btn.disabled = true;
+      btn.dataset.origHtml = btn.innerHTML;
+      btn.innerHTML = '<span class="spin">🔄</span> Syncing in background...';
+    }
+
+    const fleetBadge = document.getElementById('fleet-refresh-badge');
+    if (fleetBadge) fleetBadge.innerHTML = '🔄 Syncing templates in background...';
+
+    const statusBadge = document.getElementById('biometric-status-badge');
+    if (statusBadge) {
+      statusBadge.className = 'badge badge-pending';
+      statusBadge.innerHTML = '🔄 Replicating templates across branches...';
+    }
 
     try {
       const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/sync-templates', { method: 'POST' });
@@ -1741,15 +1943,21 @@ export async function renderAdminDashboard() {
         } else {
           alert(msg);
         }
-        loadBiometricFleetData();
-        loadBiometricDashboardData(true);
+        await Promise.all([
+          loadBiometricFleetData(),
+          loadBiometricDashboardData(true)
+        ]);
       } else {
         alert('⚠️ Template sync warning: ' + (data.message || 'Unknown error'));
       }
     } catch (err) {
       alert('❌ Failed to trigger template replication: ' + err.message);
     } finally {
-      if (btn) btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+      }
+      if (fleetBadge) fleetBadge.innerHTML = '● 15s Auto-Refresh';
     }
   }
 
@@ -2097,14 +2305,20 @@ export async function renderAdminDashboard() {
     const badge = document.getElementById('biometric-status-badge');
     if (!tbody) return;
 
+    // Check if table currently has actual employee rows displayed
+    const hasExistingRows = tbody.querySelectorAll('tr[data-emp-row="true"]').length > 0 ||
+      (tbody.children.length > 0 && !tbody.innerText.includes('Fetching biometric records') && !tbody.innerText.includes('No biometric employee records found') && !tbody.innerText.includes('Failed to fetch biometric dashboard'));
+
     try {
-      const isAlreadyPopulated = tbody.children.length > 0 && !tbody.innerText.includes('Fetching biometric records');
-      if (!silent && !isAlreadyPopulated) {
+      // ONLY show connecting placeholder on first load when there are absolutely NO existing rows
+      if (!silent && !hasExistingRows) {
         tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px 0; color: var(--text-muted);">Fetching biometric records from device...</td></tr>';
-        if (badge) {
-          badge.className = 'badge badge-pending';
-          badge.textContent = 'Connecting...';
-        }
+      }
+
+      // Non-intrusive badge indication during sync without disturbing rows
+      if (badge && (window._isBiometricSyncing || !silent)) {
+        badge.className = 'badge badge-pending';
+        badge.textContent = '🔄 Syncing in background...';
       }
 
       const res = await fetch((window.apiBaseUrl || '') + '/api/biometric/dashboard');
@@ -2113,13 +2327,19 @@ export async function renderAdminDashboard() {
       if (!result.success || !Array.isArray(result.data)) {
         if (badge) {
           badge.className = 'badge badge-half-day';
-          badge.textContent = 'Device Busy / Staging Mode';
+          badge.textContent = hasExistingRows ? 'Syncing in background (cached data active)' : 'Device Busy / Staging Mode';
         }
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
-          '⚠️ ' + Utils.escape(result.message || result.error || 'Biometric device unreachable or busy. (Click Refresh to retry)') +
-          '</td></tr>';
+        // NEVER wipe existing rows if fetch returns busy/staging
+        if (!hasExistingRows) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
+            '⚠️ ' + Utils.escape(result.message || result.error || 'Biometric device unreachable or busy. (Click Refresh to retry)') +
+            '</td></tr>';
+        }
         return;
       }
+
+      // Store in memory cache
+      window._cachedBiometricDashboardData = result.data;
 
       if (badge) {
         badge.className = 'badge badge-on-time';
@@ -2127,7 +2347,9 @@ export async function renderAdminDashboard() {
       }
 
       if (result.data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">No biometric employee records found on device.</td></tr>';
+        if (!hasExistingRows) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">No biometric employee records found on device.</td></tr>';
+        }
         return;
       }
 
@@ -2148,73 +2370,7 @@ export async function renderAdminDashboard() {
         return (a.employeeName || '').localeCompare(b.employeeName || '');
       });
 
-      const newRowsHTML = sortedData.map(emp => {
-        const att = emp.todayAttendance || 'No Punch';
-        let statusBadge = '<span class="badge badge-neutral">No Punch</span>';
-        if (att === 'On Time') statusBadge = '<span class="badge badge-on-time">On Time</span>';
-        else if (att === 'Late') statusBadge = '<span class="badge badge-late">Late</span>';
-        else if (att === 'Half Day') statusBadge = '<span class="badge badge-half-day">Half Day</span>';
-        else if (att === 'Absent') statusBadge = '<span class="badge badge-absent">Absent</span>';
-        else if (att !== 'No Punch') statusBadge = `<span class="badge badge-on-time">${Utils.escape(att)}</span>`;
-
-        const formatPunchTime = (val) => {
-          if (!val || val === '—' || val === '--:--' || val === '--') return '—';
-          const trimmed = String(val).trim();
-          const timeParts = trimmed.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-          if (timeParts) {
-            let h = parseInt(timeParts[1], 10);
-            const m = timeParts[2];
-            const s = timeParts[3] || '00';
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            const h12 = h % 12 || 12;
-            return `${String(h12).padStart(2, '0')}:${m}:${s} ${ampm}`;
-          }
-          const d = new Date(trimmed);
-          if (!isNaN(d.getTime())) {
-            return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-          }
-          return trimmed;
-        };
-
-        const checkInStr = formatPunchTime(emp.todayCheckIn || emp.checkIn);
-        const checkOutStr = formatPunchTime(emp.todayCheckOut || emp.checkOut);
-
-        let latestPunchStr = '—';
-        if (emp.latestPunch && emp.latestPunch !== '—') {
-          const lTrim = String(emp.latestPunch).trim();
-          const timeMatch = lTrim.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-          if (timeMatch) {
-            latestPunchStr = formatPunchTime(lTrim) + ' (Today)';
-          } else {
-            const d = new Date(lTrim);
-            if (!isNaN(d.getTime())) {
-              latestPunchStr = d.toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium', hour12: true });
-            } else {
-              latestPunchStr = lTrim;
-            }
-          }
-        }
-
-        const isPresent = att === 'On Time' || att === 'Late';
-
-        return `
-          <tr>
-            <td style="font-weight: 600; text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeName || 'Unknown')}</td>
-            <td style="text-align: left; padding: 12px 14px;"><code style="font-size: 11.5px;">${Utils.escape(emp.userId || '—')}</code></td>
-            <td style="text-align: left; padding: 12px 14px;"><span class="badge badge-neutral" style="font-weight: 700;">${Utils.escape(emp.biometricId || '—')}</span></td>
-            <td style="text-align: left; padding: 12px 14px;">${Utils.escape(emp.employeeId || '—')}</td>
-            <td style="padding: 12px 14px; text-align: center;">${statusBadge}</td>
-            <td style="padding: 12px 14px; text-align: center; font-weight: 600; color: ${isPresent ? 'var(--success, #10b981)' : 'var(--text-muted)'};">${checkInStr}</td>
-            <td style="padding: 12px 14px; text-align: center;">${checkOutStr}</td>
-            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">${latestPunchStr}</td>
-            <td style="padding: 12px 14px; text-align: center; font-weight: 700;">${emp.totalPunches ?? 0}</td>
-            <td style="padding: 12px 14px; text-align: center; font-size: 12px; color: var(--text-secondary);">
-              <div style="font-weight: 600; color: var(--text-primary);">📟 ${Utils.escape(emp.device || 'ZKTeco')}</div>
-              ${emp.location ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${Utils.escape(emp.location)}</div>` : ''}
-            </td>
-          </tr>
-        `;
-      }).join('');
+      const newRowsHTML = renderBiometricRowsHTML(sortedData);
 
       if (tbody.innerHTML !== newRowsHTML) {
         tbody.innerHTML = newRowsHTML;
@@ -2223,11 +2379,14 @@ export async function renderAdminDashboard() {
     } catch (err) {
       if (badge) {
         badge.className = 'badge badge-half-day';
-        badge.textContent = 'Connection Error';
+        badge.textContent = hasExistingRows ? 'Syncing in background (cached data active)' : 'Connection Error';
       }
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
-        '⚠️ Failed to fetch biometric dashboard: ' + Utils.escape(err.message || String(err)) +
-        '</td></tr>';
+      // NEVER wipe existing rows on error
+      if (!hasExistingRows) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px 0; color: var(--text-muted);">' +
+          '⚠️ Failed to fetch biometric dashboard: ' + Utils.escape(err.message || String(err)) +
+          '</td></tr>';
+      }
     }
   }
 

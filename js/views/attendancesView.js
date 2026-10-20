@@ -1088,8 +1088,21 @@ export function renderAdminAttendances() {
         shift = DB.getSchedule(userShiftIds[0]);
       }
       const shiftName = shift ? shift.name : 'Not Assigned';
-      const rawLocation = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
-      const location = formatLocationTag(rawLocation);
+      // Exact biometric punch location takes precedence over static profile preferredLocation
+      let location = '-';
+      const inLoc = (log.location && log.location.trim()) || (log.biometricUsed && log.biometricUsed.trim());
+      const outLoc = (log.departureLocation && log.departureLocation.trim()) || (log.departureDevice && log.departureDevice.trim());
+      if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
+        location = `${formatLocationTag(inLoc)} (In) • ${formatLocationTag(outLoc)} (Out)`;
+      } else if (inLoc) {
+        location = formatLocationTag(inLoc);
+      } else if (outLoc) {
+        location = formatLocationTag(outLoc);
+      } else {
+        const fallback = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
+          (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0] && emp.preferredLocations[0].trim()) || '-';
+        location = formatLocationTag(fallback);
+      }
       
       // Determine standard workday parameters
       let shiftStartMins = 9 * 60; // default 09:00 AM
@@ -1245,17 +1258,25 @@ export function renderAdminAttendances() {
     const locFilterSelect = document.getElementById('admin-att-location-filter');
     if (locFilterSelect) {
       const rawCandidates = [
-        ...mappedLogs.map(l => l.location || ''),
+        ...mappedLogs.flatMap(l => [l.location || '', l.departureLocation || '', l.biometricUsed || '', l.departureDevice || '']),
         ...Object.keys(DB.getOfficeCoordinates() || {}),
         ...(DB.getBiometricLocations ? DB.getBiometricLocations() : [])
       ];
 
       const locationMap = new Map();
       mappedLogs.forEach(l => {
-        const canonical = formatLocationTag(l.location || '');
-        if (canonical && canonical !== 'Not Assigned' && canonical !== '-' && !canonical.toLowerCase().includes('kohat') && !canonical.toLowerCase().includes('close')) {
-          locationMap.set(canonical, (locationMap.get(canonical) || 0) + 1);
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '');
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '');
+        const counted = new Set();
+        if (inLoc && inLoc !== 'Not Assigned' && inLoc !== '-' && !inLoc.toLowerCase().includes('kohat') && !inLoc.toLowerCase().includes('close')) {
+          counted.add(inLoc);
         }
+        if (outLoc && outLoc !== 'Not Assigned' && outLoc !== '-' && !outLoc.toLowerCase().includes('kohat') && !outLoc.toLowerCase().includes('close')) {
+          counted.add(outLoc);
+        }
+        counted.forEach(loc => {
+          locationMap.set(loc, (locationMap.get(loc) || 0) + 1);
+        });
       });
 
       const distinctLocs = Array.from(new Set(
@@ -1285,8 +1306,10 @@ export function renderAdminAttendances() {
     if (adminAttendancesLocationFilter) {
       const targetLoc = formatLocationTag(adminAttendancesLocationFilter).toLowerCase().trim();
       filtered = filtered.filter(l => {
-        const logLoc = formatLocationTag(l.location || '').toLowerCase().trim();
-        return logLoc === targetLoc;
+        const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
+        const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
+        const fullLoc = (l.location || '').toLowerCase();
+        return inLoc === targetLoc || outLoc === targetLoc || fullLoc.includes(targetLoc);
       });
     }
 
@@ -1858,8 +1881,20 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
         shift = DB.getSchedule(userShiftIds[0]);
       }
     }
-    const shiftName = shift ? shift.name : '-';
-    const location = (log.location && log.location.trim()) || (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
+    let location = '-';
+    const inLoc = (log.location && log.location.trim()) || (log.biometricUsed && log.biometricUsed.trim());
+    const outLoc = (log.departureLocation && log.departureLocation.trim()) || (log.departureDevice && log.departureDevice.trim());
+    if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
+      location = `${formatLocationTag(inLoc)} (In) • ${formatLocationTag(outLoc)} (Out)`;
+    } else if (inLoc) {
+      location = formatLocationTag(inLoc);
+    } else if (outLoc) {
+      location = formatLocationTag(outLoc);
+    } else {
+      const fallback = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
+        (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0] && emp.preferredLocations[0].trim()) || '-';
+      location = formatLocationTag(fallback);
+    }
     
     let atWorkStr = '--';
     if (log.checkIn && log.checkOut) {

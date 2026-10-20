@@ -973,6 +973,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
   const isEdit = userId !== null;
   const user = isEdit ? DB.getUser(userId) : null;
   const schedules = DB.getSchedules();
+  const workLocations = (typeof DB !== 'undefined' && DB.getWorkLocations ? DB.getWorkLocations() : []) || [];
+  const userWorkLoc = isEdit && user ? (user.preferredLocation || user.workLocation || (Array.isArray(user.preferredLocations) ? user.preferredLocations[0] : '') || user.branch || '') : '';
   let editorPhotoDataUrl = isEdit && user && user.photo ? user.photo : '';
   let photoRemovedExplicitly = false;
 
@@ -1075,15 +1077,32 @@ export function openUserModal(userId = null, initialTab = 'employee') {
             </div>
           </div>
 
-          <!-- Branch & Pincode Fields -->
+          <!-- Work Location & Branch Fields -->
           <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
+            <div>
+              <label class="form-label" for="editor-work-location" style="font-weight:700;">Work Location <span style="color:var(--danger);font-size:11px">*</span></label>
+              <select class="form-input" id="editor-work-location" required>
+                <option value="">-- Select Work Location --</option>
+                ${workLocations.map(loc => `
+                  <option value="${loc}" ${(userWorkLoc === loc || (isEdit && user && (user.preferredLocation === loc || user.workLocation === loc || user.branch === loc))) ? 'selected' : ''}>${loc}</option>
+                `).join('')}
+              </select>
+            </div>
             <div>
               <label class="form-label" for="editor-branch">Branch</label>
               <input class="form-input" type="text" id="editor-branch" value="${isEdit ? Utils.escape(user.branch || '') : ''}" placeholder="e.g. Delhi Head Office">
             </div>
+          </div>
+
+          <!-- Pincode & Biometric User ID Fields -->
+          <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
             <div>
               <label class="form-label" for="editor-pincode">Pincode</label>
               <input class="form-input" type="text" id="editor-pincode" value="${isEdit ? Utils.escape(user.pincode || '') : ''}" placeholder="e.g. 110001" maxlength="10">
+            </div>
+            <div>
+              <label class="form-label" for="editor-biometric-id">Biometric User ID <span style="color:var(--text-muted);font-size:11px">(Machine ID)</span></label>
+              <input class="form-input" type="text" id="editor-biometric-id" value="${isEdit ? Utils.escape(user.biometricUserId || user.biometricId || '') : ''}" placeholder="e.g. BIO-101">
             </div>
           </div>
 
@@ -1099,15 +1118,9 @@ export function openUserModal(userId = null, initialTab = 'employee') {
             </div>
           </div>
 
-          <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
-            <div>
-              <label class="form-label" for="editor-biometric-id">Biometric User ID <span style="color:var(--text-muted);font-size:11px">(Machine ID)</span></label>
-              <input class="form-input" type="text" id="editor-biometric-id" value="${isEdit ? Utils.escape(user.biometricUserId || user.biometricId || '') : ''}" placeholder="e.g. BIO-101">
-            </div>
-            <div>
-              <label class="form-label" for="editor-pass">Security Password (Optional)</label>
-              <input class="form-input" type="password" id="editor-pass" placeholder="Leave blank to keep unchanged">
-            </div>
+          <div class="form-group">
+            <label class="form-label" for="editor-pass">Security Password (Optional)</label>
+            <input class="form-input" type="password" id="editor-pass" placeholder="Leave blank to keep unchanged">
           </div>
 
           <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
@@ -1204,7 +1217,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
                     <div class="shift-loc-picker-block" id="shift-loc-block-${s.id}" style="display:${isChecked ? 'flex' : 'none'};align-items:center;gap:8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,0.08);margin-left:22px;flex-wrap:wrap;">
                       <span style="font-size:11px;font-weight:600;color:var(--text-secondary);white-space:nowrap;">📍 Work Location:</span>
                       <select class="editor-shift-location-select" data-shift-id="${s.id}" id="editor-shift-loc-${s.id}" style="flex:1;min-width:160px;max-width:240px;height:28px;padding:2px 8px;font-size:11.5px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-surface, #1e1e24);color:var(--text-primary);cursor:pointer;">
-                        ${Object.keys(window.OFFICE_COORDINATES || {}).filter(l => !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device').map(loc => `
+                        ${workLocations.map(loc => `
                           <option value="${loc}" ${shiftLoc === loc ? 'selected' : ''}>${loc}</option>
                         `).join('')}
                       </select>
@@ -1585,6 +1598,16 @@ export function openUserModal(userId = null, initialTab = 'employee') {
     });
   });
 
+  const editorWorkLocSelect = overlay.querySelector('#editor-work-location');
+  const editorBranchInput = overlay.querySelector('#editor-branch');
+  if (editorWorkLocSelect && editorBranchInput) {
+    editorWorkLocSelect.addEventListener('change', () => {
+      if (!editorBranchInput.value || editorWorkLocSelect.value) {
+        editorBranchInput.value = editorWorkLocSelect.value;
+      }
+    });
+  }
+
   document.getElementById('user-editor-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = document.getElementById('editor-name') ? document.getElementById('editor-name').value.trim() : (isEdit ? user.name : '');
@@ -1600,7 +1623,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
     const baseSalary = baseSalaryVal === '' ? null : Number(baseSalaryVal);
 
     // New Fields
-    const branch = document.getElementById('editor-branch') ? document.getElementById('editor-branch').value.trim() : (isEdit ? user.branch || '' : '');
+    const workLocation = document.getElementById('editor-work-location') ? document.getElementById('editor-work-location').value.trim() : '';
+    const branch = (document.getElementById('editor-branch') ? document.getElementById('editor-branch').value.trim() : (isEdit ? user.branch || '' : '')) || workLocation;
     const pincode = document.getElementById('editor-pincode') ? document.getElementById('editor-pincode').value.trim() : (isEdit ? user.pincode || '' : '');
     const bloodGroup = document.getElementById('editor-blood-group') ? document.getElementById('editor-blood-group').value.trim() : (isEdit ? user.bloodGroup || '' : '');
 
@@ -1637,7 +1661,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
       }
     });
 
-    const preferredLocation = (scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations).find(Boolean) || (isEdit && user ? user.preferredLocation : null) || '');
+    const preferredLocation = workLocation || ((scheduleId && shiftLocations[scheduleId]) ? shiftLocations[scheduleId] : (Object.values(shiftLocations).find(Boolean) || (isEdit && user ? user.preferredLocation : null) || ''));
+    const preferredLocations = preferredLocation ? [preferredLocation] : (user && user.preferredLocations ? user.preferredLocations : []);
 
     const roleEl = document.getElementById('editor-role');
     const role = roleEl ? roleEl.value : (isEdit ? user.role : 'employee');
@@ -1718,7 +1743,9 @@ export function openUserModal(userId = null, initialTab = 'employee') {
       // Only include the password field in the update if the admin entered a new one.
       // If left blank, omit it so the existing hashed password on the server is preserved.
       const updates = {
-        name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact,
+        name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role,
+        workLocation, preferredLocation, preferredLocations,
+        gender, department, designation, dateOfJoining, emergencyContact,
         resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
@@ -1803,7 +1830,8 @@ export function openUserModal(userId = null, initialTab = 'employee') {
       const createdUser = DB.addUser({
         name, employeeId: employeeId || nextEmpId, biometricUserId, biometricId: biometricUserId,
         email, phone, dob, username: finalUsername, password: finalPassword, role,
-        baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation,
+        baseSalary, scheduleId, scheduleIds, shiftLocations,
+        workLocation, preferredLocation, preferredLocations,
         gender, department, designation, dateOfJoining, emergencyContact,
         resume: resumeObj, aadhar: aadharObj,
         allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
