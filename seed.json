@@ -63732,22 +63732,23 @@
       "date": "2026-10-20",
       "shiftId": "",
       "checkIn": "09:25:06",
-      "checkOut": "",
+      "checkOut": "15:35:21",
       "checkInPunchId": "CJOU232660306_1044_2026-10-20T03:55:06.000Z",
-      "checkOutPunchId": "",
+      "checkOutPunchId": "CJOU232660306_1044_2026-10-20T10:05:21.000Z",
       "biometricPunchId": "CJOU232660306_1044_2026-10-20T03:55:06.000Z",
       "allPunchIds": [
         "CJOU232660306_1044_2026-10-20T03:55:06.000Z",
-        "CJOU232660306_1044_2026-10-20T03:55:07.000Z"
+        "CJOU232660306_1044_2026-10-20T03:55:07.000Z",
+        "CJOU232660306_1044_2026-10-20T10:05:21.000Z"
       ],
       "status": "On Time",
       "biometricUsed": "HS Office- FF",
       "biometricDeviceId": "CJOU232660306",
-      "departureLocation": "",
-      "departureDevice": "",
+      "departureLocation": "HS Office",
+      "departureDevice": "HS Office- FF",
       "departureDeviceId": "",
       "biometricUserId": "1044",
-      "lastBiometricPunchAt": "2026-10-20T03:55:06.000Z",
+      "lastBiometricPunchAt": "2026-10-20T10:05:21.000Z",
       "location": "HS Office",
       "deviationFlag": false,
       "justification": "",
@@ -63757,7 +63758,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-20T04:24:00.386Z",
-      "updatedAt": "2026-10-20T04:24:00.386Z"
+      "updatedAt": "2026-10-20T10:04:36.099Z"
     },
     {
       "id": "BIO_usr_bio_4037_2026-10-20",
@@ -2234601,10 +2234602,26 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-20T10:00:33.060Z",
+    "lastSyncAt": "2026-10-20T10:04:36.131Z",
     "lastLogCount": 3000
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-20T10:04:36.099Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_1044",
+      "userName": "Bhole Sharma",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_1044_2026-10-20",
+        "shiftId": "",
+        "checkIn": "09:25:06",
+        "checkOut": "15:35:21",
+        "status": "On Time",
+        "device": "HS Office- FF"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-20T10:00:33.018Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -2242467,26 +2242484,9 @@
         "device": "WH-1340"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-20T04:28:15.472Z",
-      "action": "BIOMETRIC_CHECKOUT",
-      "userId": "usr_bio_5414",
-      "userName": "Employee 5414",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_5414_2026-10-17",
-        "shiftId": "",
-        "checkIn": "06:50:03",
-        "checkOut": "18:07:14",
-        "status": "On Time",
-        "device": "WH-1340"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "GED7241901313_1290_2026-10-16T07:47:08.000Z",
     "CEZF192660043_5342_2026-10-16T10:04:42.000Z",
     "CEZF192660044_703_2026-10-16T10:11:26.000Z",
     "CEZF192660044_703_2026-10-16T10:20:33.000Z",
@@ -2247485,7 +2247485,8 @@
     "GED7253700398_1071_2026-10-20T09:36:14.000Z",
     "CEZF192660043_5417_2026-10-20T09:39:38.000Z",
     "CJOU232660306_1258_2026-10-20T09:42:53.000Z",
-    "GED7242602598_1104_2026-10-20T10:00:46.000Z"
+    "GED7242602598_1104_2026-10-20T10:00:46.000Z",
+    "CJOU232660306_1044_2026-10-20T10:05:21.000Z"
   ],
   "biometricDevices": [
     {
