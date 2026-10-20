@@ -684,16 +684,19 @@ export async function renderAdminDashboard() {
     const allLogs = DB.getLogs() || [];
 
     const checkedInUserKeys = new Set();
-    allLogs.filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt)).forEach(l => {
-      if (l.userId) checkedInUserKeys.add(String(l.userId));
-      if (l.employeeId) checkedInUserKeys.add(String(l.employeeId));
-      if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId));
+    allLogs.filter(l => l.date === todayStr && (l.checkIn || l.checkOut || l.lastBiometricPunchAt || (l.status && l.status !== 'Absent'))).forEach(l => {
+      if (l.userId) checkedInUserKeys.add(String(l.userId).toUpperCase().trim());
+      if (l.employeeId) checkedInUserKeys.add(String(l.employeeId).toUpperCase().trim());
+      if (l.biometricUserId) checkedInUserKeys.add(String(l.biometricUserId).toUpperCase().trim());
+      if (l.employeeName) checkedInUserKeys.add(String(l.employeeName).toLowerCase().trim());
     });
 
     const absentUsers = activeEmployees.filter(u => {
-      const isCheckedInToday = checkedInUserKeys.has(String(u.id)) ||
-        (u.employeeId && checkedInUserKeys.has(String(u.employeeId))) ||
-        (u.biometricUserId && checkedInUserKeys.has(String(u.biometricUserId)));
+      const isCheckedInToday = checkedInUserKeys.has(String(u.id).toUpperCase().trim()) ||
+        (u.employeeId && checkedInUserKeys.has(String(u.employeeId).toUpperCase().trim())) ||
+        (u.biometricUserId && checkedInUserKeys.has(String(u.biometricUserId).toUpperCase().trim())) ||
+        (u.biometricId && checkedInUserKeys.has(String(u.biometricId).toUpperCase().trim())) ||
+        (u.name && checkedInUserKeys.has(String(u.name).toLowerCase().trim()));
       return !isCheckedInToday;
     });
 
@@ -1179,7 +1182,6 @@ export async function renderAdminDashboard() {
         </div>
       `;
     }).join('');
-  }
 
     listContainer.querySelectorAll('.cb-live-feed-loc-item').forEach(cb => {
       cb.addEventListener('change', () => {

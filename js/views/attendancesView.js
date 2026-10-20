@@ -1035,17 +1035,20 @@ export function renderAdminAttendances() {
     targetLeftJoinDates.forEach(targetDate => {
       const presentUserKeysOnDate = new Set();
       existingLogs.forEach(l => {
-        if (l.date === targetDate && (l.checkIn || l.checkOut)) {
-          if (l.userId) presentUserKeysOnDate.add(String(l.userId));
-          if (l.employeeId) presentUserKeysOnDate.add(String(l.employeeId));
-          if (l.biometricUserId) presentUserKeysOnDate.add(String(l.biometricUserId));
+        if (l.date === targetDate && (l.checkIn || l.checkOut || l.lastBiometricPunchAt || (l.status && l.status !== 'Absent'))) {
+          if (l.userId) presentUserKeysOnDate.add(String(l.userId).toUpperCase().trim());
+          if (l.employeeId) presentUserKeysOnDate.add(String(l.employeeId).toUpperCase().trim());
+          if (l.biometricUserId) presentUserKeysOnDate.add(String(l.biometricUserId).toUpperCase().trim());
+          if (l.employeeName) presentUserKeysOnDate.add(String(l.employeeName).toLowerCase().trim());
         }
       });
 
       activeUsers.forEach(emp => {
-        const isPresent = presentUserKeysOnDate.has(String(emp.id)) ||
-          (emp.employeeId && presentUserKeysOnDate.has(String(emp.employeeId))) ||
-          (emp.biometricUserId && presentUserKeysOnDate.has(String(emp.biometricUserId)));
+        const isPresent = presentUserKeysOnDate.has(String(emp.id).toUpperCase().trim()) ||
+          (emp.employeeId && presentUserKeysOnDate.has(String(emp.employeeId).toUpperCase().trim())) ||
+          (emp.biometricUserId && presentUserKeysOnDate.has(String(emp.biometricUserId).toUpperCase().trim())) ||
+          (emp.biometricId && presentUserKeysOnDate.has(String(emp.biometricId).toUpperCase().trim())) ||
+          (emp.name && presentUserKeysOnDate.has(String(emp.name).toLowerCase().trim()));
         if (!isPresent) {
           const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0
             ? emp.scheduleIds.filter(Boolean)
