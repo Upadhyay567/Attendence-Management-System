@@ -724,7 +724,7 @@ export const DB = {
     if (!isRecentLocalWrite) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
         
         const headers = {};
         if (token) {

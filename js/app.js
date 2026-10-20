@@ -1188,7 +1188,7 @@ function setupRouter() {
 
       // ROLE PERMISSIONS & ROUTING
       const baseRole = DB.getUserBaseRole(user.role);
-      const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager';
+      const isManagementRole = baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager' || baseRole === 'admin' || baseRole === 'superadmin';
 
       // Role-based route guard
       if (!isManagementRole) {

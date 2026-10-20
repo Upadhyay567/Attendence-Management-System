@@ -19,9 +19,10 @@ export function renderAdminUsers() {
     if (uid && seenUserIds.has(uid)) return false;
     if (uid) seenUserIds.add(uid);
 
-    if (user && (user.role === 'manager' || user.role === 'hr' || user.role === 'admin')) {
+    const baseRole = DB.getUserBaseRole ? DB.getUserBaseRole(user?.role) : (user?.role || '');
+    if (user && (baseRole === 'manager' || baseRole === 'hr' || baseRole === 'admin' || baseRole === 'superadmin' || user.role === 'manager' || user.role === 'hr' || user.role === 'admin' || user.role === 'superadmin')) {
       return true; // show all employee, hr, and manager profiles, including their own!
-    } else if (user && user.role === 'finance_manager') {
+    } else if (user && (baseRole === 'finance_manager' || user.role === 'finance_manager')) {
       return false; // Not showing employee list to Finance Manager
     } else {
       return user && u.id === user.id;
@@ -570,7 +571,8 @@ export function renderAdminPayroll() {
     if (uid && seenUserIds.has(uid)) return false;
     if (uid) seenUserIds.add(uid);
 
-    if (user && (user.role === 'manager' || user.role === 'hr' || user.role === 'admin' || user.role === 'finance_manager')) {
+    const baseRole = DB.getUserBaseRole ? DB.getUserBaseRole(user?.role) : (user?.role || '');
+    if (user && (baseRole === 'manager' || baseRole === 'hr' || baseRole === 'admin' || baseRole === 'superadmin' || baseRole === 'finance_manager' || user.role === 'manager' || user.role === 'hr' || user.role === 'admin' || user.role === 'superadmin' || user.role === 'finance_manager')) {
       return true;
     } else {
       return user && u.id === user.id;

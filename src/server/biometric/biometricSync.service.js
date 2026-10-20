@@ -1472,8 +1472,9 @@ async function syncBiometricAttendance(options = {}) {
       );
     }
 
-    // Check if new users were detected on any device that are not yet in the vault
-    if (combinedUsers.length > 0) {
+    // Check if new users were detected on any device that are not yet in the vault (throttled to at most once every 10 mins)
+    const nowTime = Date.now();
+    if (combinedUsers.length > 0 && (!global._lastAutoReplicationTime || nowTime - global._lastAutoReplicationTime > 10 * 60 * 1000)) {
       const vault = await getVaultUsers();
       const vaultUserIds = new Set(vault.map(v => String(v.biometricUserId).trim()));
       const hasNewUsers = combinedUsers.some(u => {
@@ -1482,6 +1483,7 @@ async function syncBiometricAttendance(options = {}) {
       });
 
       if (hasNewUsers) {
+        global._lastAutoReplicationTime = nowTime;
         console.log('🔄 New enrolled biometric user(s) detected, starting cross-branch template replication...');
         replicateTemplatesAcrossDevices().catch(err => {
           console.warn('⚠️ Auto-replication background task notice:', err.message);
