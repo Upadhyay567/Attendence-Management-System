@@ -31,18 +31,30 @@
         var s = str.toLowerCase();
         return s.indexOf('cannot find menu item') !== -1 ||
                s.indexOf('translate-page') !== -1 ||
-               s.indexOf('save-page') !== -1;
+               s.indexOf('save-page') !== -1 ||
+               s.indexOf('chrome-extension://') !== -1 ||
+               s.indexOf('extension context invalidated') !== -1;
       };
 
-      window.addEventListener('unhandledrejection', function(event) {
-        if (event && event.reason) {
-          var msg = event.reason.message || event.reason.stack || String(event.reason);
-          if (isExtensionError(msg)) {
-            event.preventDefault();
-            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      var handleRejection = function(event) {
+        try {
+          var msg = '';
+          if (event && event.reason) {
+            msg = event.reason.message || event.reason.stack || String(event.reason);
+          } else if (event) {
+            msg = String(event);
           }
-        }
-      }, true);
+          if (isExtensionError(msg)) {
+            if (event.preventDefault) event.preventDefault();
+            if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+            if (event.stopPropagation) event.stopPropagation();
+            return true;
+          }
+        } catch (_) {}
+      };
+
+      window.onunhandledrejection = handleRejection;
+      window.addEventListener('unhandledrejection', handleRejection, true);
 
       window.addEventListener('error', function(event) {
         if (event && (isExtensionError(event.message) || (event.error && isExtensionError(event.error.message)))) {
@@ -84,7 +96,7 @@
   <script src="js/libs/exceljs.min.js"></script>
 
   <!-- App Bootstrapper script module -->
-  <script type="module" src="js/app.js?v=122"></script>
+  <script type="module" src="js/app.js?v=123"></script>
   <script>
     function checkAndForceBoot() {
       var root = document.getElementById('app-root');

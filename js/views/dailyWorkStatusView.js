@@ -30,6 +30,7 @@ export function renderDailyWorkStatus() {
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0];
 
+  const allLogs = DB.getLogs() || [];
   let distinctLocs = [];
   let logCountsByLoc = {};
 
@@ -37,7 +38,6 @@ export function renderDailyWorkStatus() {
     distinctLocs = window._dwsLocCache.distinctLocs;
     logCountsByLoc = window._dwsLocCache.logCountsByLoc;
   } else {
-    const allLogs = DB.getLogs() || [];
     const devs = (DB.getBiometricDevices ? DB.getBiometricDevices() : []);
     const offices = (DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : {});
     const rawCandidates = [
