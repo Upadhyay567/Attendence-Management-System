@@ -370,6 +370,9 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
       // Update details if missing
       if (!existingUser.biometricUserId) existingUser.biometricUserId = pin;
       if (!existingUser.name && name) existingUser.name = name;
+      if (existingUser.role === 0 || existingUser.role === '0' || !existingUser.role) {
+        existingUser.role = 'employee';
+      }
     } else {
       // Create new employee linked to machine
       const newUserId = `usr_bio_${pin}`;
@@ -381,7 +384,7 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
         biometricId: pin,
         name: name || `Employee ${pin}`,
         username: `bio_${pin}`,
-        role: privilege === '14' ? 'admin' : 'employee',
+        role: (privilege === '14' || privilege === 14) ? 'hr' : 'employee',
         status: 'Active',
         department: 'Operations',
         designation: 'Staff',

@@ -373,7 +373,9 @@ export function renderLoginView() {
           submitBtn.textContent = 'Log In';
         }
         if (status === 403 || (data && !data.success && (data.code === 'ROLE_MISMATCH' || data.assignedRole || data.baseRole))) {
-          const properRole = (data && (data.baseRole || data.assignedRole)) || '';
+          let properRole = (data && (data.baseRole || data.assignedRole)) || '';
+          if (properRole === 0 || properRole === '0' || properRole === 'user' || properRole === 'staff') properRole = 'employee';
+          if (properRole === 14 || properRole === '14' || properRole === 'admin') properRole = 'hr';
           const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' || properRole === 'finance_manager' ? 'Manager Portal' : 'Employee Portal');
           warningEl.innerHTML = `
             <div style="margin-bottom:8px;">⚠️ ${Utils.escape((data && data.error) || 'Access Denied: Account role is not authorized for this portal.')}</div>

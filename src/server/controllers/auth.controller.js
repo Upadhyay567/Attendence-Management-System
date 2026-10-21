@@ -7,12 +7,18 @@ const { JWT_SECRET } = require('../middleware/auth.middleware');
 const { readLocalDbStateCached, invalidateLocalDbCache } = require('./attendance.controller');
 
 function getBaseRole(userRole) {
-  if (!userRole) return null;
+  if (userRole === undefined || userRole === null || userRole === '' || userRole === 0 || userRole === '0') return 'employee';
+  if (userRole === 14 || userRole === '14') return 'hr';
   const norm = String(userRole).toLowerCase().trim();
-  if (norm === 'hr' || norm === 'admin') return 'hr';
-  if (norm === 'manager' || norm === 'finance_manager') return 'manager';
-  if (norm === 'employee') return 'employee';
+  if (norm === '0' || norm === 'employee' || norm === 'user' || norm === 'staff') return 'employee';
+  if (norm === '14' || norm === 'hr' || norm === 'admin' || norm === 'superadmin') return 'hr';
+  if (norm === 'manager' || norm === 'finance_manager' || norm === '1' || norm === '2') return 'manager';
   return norm;
+}
+
+function normalizeRole(role) {
+  const base = getBaseRole(role);
+  return base || 'employee';
 }
 
 function findUserByLoginKey(users, loginKey, targetRole = null) {
@@ -142,6 +148,8 @@ async function loginUser(req, res) {
       });
     }
 
+    // Auto-normalize hardware biometric code (0 -> employee, 14 -> hr)
+    foundUser.role = normalizeRole(foundUser.role);
     const foundUserBaseRole = getBaseRole(foundUser.role);
 
     // If an HR / Admin account logs in through ANY portal, allow them through seamlessly.

@@ -609,17 +609,18 @@ function processLocalPunch(
   if (!biometricUser) {
     const existingEmp = findLocalEmployee(users, punch.biometricUserId, '', punch.location || punch.biometricUsed || '');
     if (existingEmp) {
+      const normRole = (existingEmp.role === 14 || existingEmp.role === '14' || existingEmp.role === 'admin' || existingEmp.role === 'hr') ? 'hr' : ((existingEmp.role === 'manager' || existingEmp.role === 'finance_manager') ? existingEmp.role : 'employee');
       biometricUser = {
         userId: String(punch.biometricUserId),
         name: existingEmp.name,
-        role: existingEmp.role || '0'
+        role: normRole
       };
       deviceUserMap.set(String(punch.biometricUserId), biometricUser);
     } else {
       biometricUser = {
         userId: String(punch.biometricUserId),
         name: `Employee ${punch.biometricUserId}`,
-        role: '0'
+        role: 'employee'
       };
       deviceUserMap.set(String(punch.biometricUserId), biometricUser);
     }
@@ -630,6 +631,7 @@ function processLocalPunch(
    */
   if (
     String(biometricUser.role) === '14' ||
+    biometricUser.role === 'admin' ||
     biometricUser.name.toLowerCase() === 'admin' ||
     String(punch.biometricUserId) === '30191'
   ) {

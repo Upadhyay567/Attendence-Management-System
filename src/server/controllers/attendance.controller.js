@@ -146,10 +146,16 @@ async function getDbState(req, res) {
       const localMap = new Map((localData?.users || []).map(u => [String(u.id), u]));
       let finalUsers = users.map(u => {
         const localUser = localMap.get(String(u.id));
+        const rawRole = u.role !== undefined && u.role !== null ? u.role : (localUser ? localUser.role : 'employee');
+        const normRole = (rawRole === 14 || rawRole === '14' || String(rawRole).toLowerCase() === 'admin' || String(rawRole).toLowerCase() === 'hr')
+          ? 'hr'
+          : ((rawRole === 'manager' || rawRole === 'finance_manager') ? rawRole : 'employee');
+
         if (localUser) {
           return {
             ...localUser,
             ...u,
+            role: normRole,
             department: u.department || localUser.department || '',
             designation: u.designation || localUser.designation || '',
             baseSalary: (u.baseSalary !== undefined && u.baseSalary !== null && u.baseSalary !== '') ? u.baseSalary : (localUser.baseSalary || null),
@@ -189,12 +195,18 @@ async function getDbState(req, res) {
             profileVerificationComment: u.profileVerificationComment || localUser.profileVerificationComment || ''
           };
         }
-        return u;
+        return { ...u, role: normRole };
       });
 
       if (localData && Array.isArray(localData.users)) {
         const mongoIds = new Set(users.map(u => String(u.id)));
-        const missing = localData.users.filter(u => u && u.id && !mongoIds.has(String(u.id)));
+        const missing = localData.users.filter(u => u && u.id && !mongoIds.has(String(u.id))).map(u => {
+          const rawRole = u.role;
+          const normRole = (rawRole === 14 || rawRole === '14' || String(rawRole).toLowerCase() === 'admin' || String(rawRole).toLowerCase() === 'hr')
+            ? 'hr'
+            : ((rawRole === 'manager' || rawRole === 'finance_manager') ? rawRole : 'employee');
+          return { ...u, role: normRole };
+        });
         if (missing.length > 0) {
           finalUsers = [...finalUsers, ...missing];
         }

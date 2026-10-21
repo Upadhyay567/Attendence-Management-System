@@ -18,9 +18,9 @@ export function renderAdminSchedules(tab) {
   const schedules = (typeof DB.getSchedules === 'function' ? DB.getSchedules() : (DB.data ? DB.data.schedules : [])) || [];
   const allUsers = (typeof DB.getUsers === 'function' ? DB.getUsers() : (DB.data ? DB.data.users : [])) || [];
   const officeCoords = (typeof DB.getOfficeCoordinates === 'function' ? DB.getOfficeCoordinates() : window.OFFICE_COORDINATES) || {};
-  const allLocationNames = (typeof DB.getBiometricLocations === 'function'
-    ? DB.getBiometricLocations()
-    : Object.keys(officeCoords || {})
+  const allLocationNames = (typeof DB.getWorkLocations === 'function'
+    ? DB.getWorkLocations()
+    : (typeof DB.getBiometricLocations === 'function' ? DB.getBiometricLocations() : Object.keys(officeCoords || {}))
   ).filter(l => l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device').sort();
 
   const getInitials = (name) => (name || '').split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || '?';

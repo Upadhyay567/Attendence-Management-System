@@ -1103,6 +1103,11 @@ export const DB = {
     const unique = [];
     for (const u of this.data.users) {
       if (!u) continue;
+      if (u.role === 0 || u.role === '0' || !u.role || u.role === 'user' || u.role === 'staff') {
+        u.role = 'employee';
+      } else if (u.role === 14 || u.role === '14' || u.role === 'admin') {
+        u.role = 'hr';
+      }
       const key = u.id || (u.employeeId ? String(u.employeeId).trim().toUpperCase() : null);
       if (key && seen.has(key)) continue;
       if (key) seen.add(key);
@@ -1473,10 +1478,10 @@ export const DB = {
   },
 
   getUserBaseRole(roleId) {
-    if (!roleId) return 'employee';
-    if (roleId === 'admin' || roleId === 'superadmin' || roleId === 'hr' || roleId === 'manager' || roleId === 'finance_manager' || roleId === 'employee') {
-      return roleId;
-    }
+    if (!roleId || roleId === 0 || roleId === '0' || roleId === 'user' || roleId === 'staff') return 'employee';
+    if (roleId === 14 || roleId === '14' || roleId === 'admin' || roleId === 'superadmin' || roleId === 'hr') return 'hr';
+    if (roleId === 'manager' || roleId === 'finance_manager' || roleId === 1 || roleId === '1' || roleId === 2 || roleId === '2') return 'manager';
+    if (roleId === 'employee') return 'employee';
     const customRoles = this.getCustomRoles();
     const custom = customRoles.find(r => r.id === roleId);
     if (custom) {
@@ -1839,6 +1844,24 @@ export const DB = {
       }
     });
 
+    // Also include any assigned locations from all registered employees
+    const users = this.data && Array.isArray(this.data.users) ? this.data.users : [];
+    users.forEach(u => {
+      const uLocs = [];
+      if (u.preferredLocation && typeof u.preferredLocation === 'string') uLocs.push(u.preferredLocation);
+      if (Array.isArray(u.preferredLocations)) uLocs.push(...u.preferredLocations);
+      if (Array.isArray(u.assignedLocations)) uLocs.push(...u.assignedLocations);
+      if (u.workLocation && typeof u.workLocation === 'string') uLocs.push(u.workLocation);
+      uLocs.forEach(loc => {
+        if (!loc || typeof loc !== 'string') return;
+        const clean = loc.trim();
+        const lower = clean.toLowerCase();
+        if (clean && !lower.includes('close') && !lower.includes('(') && !lower.includes('mock') && !lower.includes('28.6952') && lower !== 'none' && lower !== '--' && lower !== 'office hq' && lower !== 'branch office') {
+          locSet.add(clean);
+        }
+      });
+    });
+
     [
       'Surya Gurugram',
       'Surya Omaxe',
@@ -1853,7 +1876,8 @@ export const DB = {
       'WH-1340',
       'Siyonee',
       'Noida sector 61',
-      'Chandani Chowk 2'
+      'Chandani Chowk 2',
+      'Raagwaas Chattarpur'
     ].forEach(l => locSet.add(l));
 
     return Array.from(locSet).sort((a, b) => a.localeCompare(b));
