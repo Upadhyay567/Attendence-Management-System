@@ -30,32 +30,42 @@ export function renderDailyWorkStatus() {
   const todayObj = new Date();
   const todayStr = todayObj.toISOString().split('T')[0];
 
-  const allLogs = DB.getLogs() || [];
-  const devs = (DB.getBiometricDevices ? DB.getBiometricDevices() : []);
-  const offices = (DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : {});
-  const rawCandidates = [
-    ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
-    ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
-    ...Object.keys(offices)
-  ];
+  let distinctLocs = [];
+  let logCountsByLoc = {};
 
-  const logCountsByLoc = {};
-  allLogs.forEach(l => {
-    const canonical = formatLocationTag(l.location || l.biometricUsed || l.branch || '');
-    if (canonical && canonical !== 'Not Assigned' && canonical !== '-') {
-      logCountsByLoc[canonical] = (logCountsByLoc[canonical] || 0) + 1;
-    }
-  });
+  if (window._dwsLocCache && (Date.now() - window._dwsLocCacheTime < 30000)) {
+    distinctLocs = window._dwsLocCache.distinctLocs;
+    logCountsByLoc = window._dwsLocCache.logCountsByLoc;
+  } else {
+    const allLogs = DB.getLogs() || [];
+    const devs = (DB.getBiometricDevices ? DB.getBiometricDevices() : []);
+    const offices = (DB.getOfficeCoordinates ? DB.getOfficeCoordinates() : {});
+    const rawCandidates = [
+      ...allLogs.map(l => (l.location || l.biometricUsed || l.branch || '').trim()).filter(Boolean),
+      ...devs.map(d => (d.location || d.branch || d.name || '').trim()).filter(Boolean),
+      ...Object.keys(offices)
+    ];
 
-  const distinctLocs = Array.from(new Set(
-    rawCandidates
-      .map(loc => formatLocationTag(loc))
-      .filter(loc => {
-        if (!loc || loc === '-' || loc === 'Not Assigned') return false;
-        const l = loc.toLowerCase();
-        return !l.includes('kohat') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close') && !l.includes('close');
-      })
-  )).sort((a, b) => a.localeCompare(b));
+    allLogs.forEach(l => {
+      const canonical = formatLocationTag(l.location || l.biometricUsed || l.branch || '');
+      if (canonical && canonical !== 'Not Assigned' && canonical !== '-') {
+        logCountsByLoc[canonical] = (logCountsByLoc[canonical] || 0) + 1;
+      }
+    });
+
+    distinctLocs = Array.from(new Set(
+      rawCandidates
+        .map(loc => formatLocationTag(loc))
+        .filter(loc => {
+          if (!loc || loc === '-' || loc === 'Not Assigned') return false;
+          const l = loc.toLowerCase();
+          return !l.includes('kohat') && !l.includes('none') && !l.includes('--') && !l.startsWith('(') && !l.startsWith('worksite') && !l.endsWith('-close') && !l.includes('close');
+        })
+    )).sort((a, b) => a.localeCompare(b));
+
+    window._dwsLocCache = { distinctLocs, logCountsByLoc };
+    window._dwsLocCacheTime = Date.now();
+  }
 
   main.innerHTML = html`
     <div id="daily-work-status-page-container" style="padding: 24px 32px; font-family: Calibri, 'Segoe UI', Arial, sans-serif; max-width: 100%; box-sizing: border-box;">
@@ -279,10 +289,13 @@ export function renderDailyWorkStatus() {
       employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
     }
 
+    // Performance: Filter logs specifically for the selected month (avoiding O(N) overhead on 60,000+ logs)
+    const monthPrefix = `${dailyWorkStatusSelectedYear}-${String(dailyWorkStatusSelectedMonth + 1).padStart(2, '0')}`;
+    const monthLogs = allLogs.filter(l => l && l.date && l.date.startsWith(monthPrefix));
+
     // Map logs by keys: `${userId}_${dateStr}`, `${employeeId}_${dateStr}`, `${biometricUserId}_${dateStr}`
     const logsMap = new Map();
-    allLogs.forEach(l => {
-      if (!l || !l.date) return;
+    monthLogs.forEach(l => {
       const keys = new Set();
       if (l.userId) keys.add(`${l.userId}_${l.date}`);
       if (l.employeeId) keys.add(`${l.employeeId}_${l.date}`);
@@ -295,6 +308,90 @@ export function renderDailyWorkStatus() {
         logsMap.get(k).push(l);
       });
     });
+
+    // Lookup table for shift schedules
+    const allSchedules = (DB.getSchedules ? DB.getSchedules() : (DB.data?.schedules || [])) || [];
+    const schedulesMap = new Map(allSchedules.map(s => [String(s.id), s]));
+
+    // Helper: Determine if a day is a weekly off for an employee
+    const isEmployeeWeeklyOff = (employee, dayOfWeek) => {
+      // 1. Check user weeklyOff property
+      if (employee && employee.weeklyOff) {
+        const woList = Array.isArray(employee.weeklyOff) ? employee.weeklyOff : [employee.weeklyOff];
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const currentDayName = dayNames[dayOfWeek];
+        if (woList.some(w => {
+          const s = String(w).toLowerCase().trim();
+          return s === currentDayName || s === String(dayOfWeek);
+        })) {
+          return true;
+        }
+      }
+
+      // 2. Check assigned schedule(s) workDays
+      const sIds = Array.isArray(employee?.scheduleIds) && employee.scheduleIds.length > 0
+        ? employee.scheduleIds
+        : (employee?.scheduleId ? [employee.scheduleId] : []);
+
+      if (sIds.length > 0) {
+        let checkedAny = false;
+        for (const sId of sIds) {
+          const sch = schedulesMap.get(String(sId));
+          if (sch && Array.isArray(sch.workDays) && sch.workDays.length > 0) {
+            checkedAny = true;
+            // If day is not in schedule working days, it is a Weekly Off
+            if (!sch.workDays.includes(dayOfWeek)) {
+              return true;
+            }
+          }
+        }
+        if (checkedAny) {
+          return false;
+        }
+      }
+
+      // 3. Default fallback: Sunday is Weekly Off
+      return dayOfWeek === 0;
+    };
+
+    // Helper: Determine if attendance log corresponds to Half Day
+    const evaluateIsHalfDay = (log, employee) => {
+      if (!log) return false;
+      if (log.status === 'Half Day') return true;
+
+      if (log.checkIn) {
+        const [inH, inM] = log.checkIn.split(':').map(Number);
+        const inMins = (inH || 0) * 60 + (inM || 0);
+
+        const sIds = Array.isArray(employee?.scheduleIds) && employee.scheduleIds.length > 0
+          ? employee.scheduleIds
+          : (employee?.scheduleId ? [employee.scheduleId] : []);
+        const empShift = (log.shiftId && schedulesMap.get(String(log.shiftId))) || 
+                         (sIds[0] && schedulesMap.get(String(sIds[0])));
+
+        if (empShift && empShift.startTime) {
+          const [sH, sM] = empShift.startTime.split(':').map(Number);
+          const sMins = (sH || 0) * 60 + (sM || 0);
+          const halfDayLimit = empShift.halfDayLimit !== undefined ? Number(empShift.halfDayLimit) : 120;
+          if (inMins >= sMins + halfDayLimit) {
+            return true;
+          }
+        } else {
+          // Standard policy fallback: arrival at or after 12:30 PM is 2nd half / Half Day
+          if (inMins >= 12 * 60 + 30) {
+            return true;
+          }
+        }
+      }
+
+      if (log.checkIn && log.checkOut) {
+        const dur = Utils.calculateDuration(log.checkIn, log.checkOut);
+        const hrs = parseFloat(dur) || 0;
+        if (hrs > 0 && hrs < 6) return true;
+      }
+
+      return false;
+    };
 
     // Map approved leaves by userId
     const leavesMap = new Map();
@@ -369,7 +466,7 @@ export function renderDailyWorkStatus() {
         const dayNum = i + 1;
         const dateStr = `${dailyWorkStatusSelectedYear}-${String(dailyWorkStatusSelectedMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
         const dayOfWeek = new Date(dailyWorkStatusSelectedYear, dailyWorkStatusSelectedMonth, dayNum).getDay();
-        const isSunday = dayOfWeek === 0;
+        const isOffDay = isEmployeeWeeklyOff(emp, dayOfWeek);
 
         const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
                         logsMap.get(`${emp.employeeId}_${dateStr}`) || 
@@ -391,12 +488,7 @@ export function renderDailyWorkStatus() {
           badgeHTML = `<span style="width:20px; height:20px; background:#ef4444; color:#ffffff; font-size:11px; font-weight:800; border-radius:3.5px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(239,68,68,0.3);" title="Conflict (${dateStr})">C</span>`;
         } else if (empLogs.length > 0) {
           const log = empLogs[0];
-          let isHalfDay = log.status === 'Half Day';
-          if (!isHalfDay && log.checkIn && log.checkOut) {
-            const dur = Utils.calculateDuration(log.checkIn, log.checkOut);
-            const hrs = parseFloat(dur) || 0;
-            if (hrs > 0 && hrs < 6) isHalfDay = true;
-          }
+          const isHalfDay = evaluateIsHalfDay(log, emp);
 
           if (isHalfDay) {
             // Half Day Present (HP)
@@ -405,13 +497,13 @@ export function renderDailyWorkStatus() {
             // Present (P)
             badgeHTML = `<span style="width:20px; height:20px; background:#10b981; color:#ffffff; font-size:11px; font-weight:800; border-radius:3.5px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(16,185,129,0.3);" title="Present (${dateStr})">P</span>`;
           }
-        } else if (dateStr < todayStr && !isSunday) {
-          // Absent (A) for past working days
+        } else if (dateStr < todayStr && !isOffDay) {
+          // Absent (A) only for past scheduled working days
           badgeHTML = `<span style="width:20px; height:20px; background:#a78bfa; color:#ffffff; font-size:11px; font-weight:800; border-radius:3.5px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(167,139,250,0.3);" title="Absent (${dateStr})">A</span>`;
         }
 
         return `
-          <td style="padding: 4px 1px; vertical-align: middle; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; height: 36px;">
+          <td style="padding: 4px 1px; vertical-align: middle; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; height: 36px; background: ${isOffDay && empLogs.length === 0 ? 'rgba(241,245,249,0.45)' : 'transparent'};">
             ${badgeHTML}
           </td>
         `;
@@ -712,10 +804,13 @@ function exportDailyWorkStatusCSV(year, month) {
     employees = employees.filter(e => (e.department || '').toLowerCase() === dailyWorkStatusDepartmentFilter.toLowerCase());
   }
 
+  // Performance: Filter logs specifically for the exported month
+  const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const monthLogs = allLogs.filter(l => l && l.date && l.date.startsWith(monthPrefix));
+
   // Map logs by keys: `${userId}_${dateStr}`, `${employeeId}_${dateStr}`, `${biometricUserId}_${dateStr}`
   const logsMap = new Map();
-  allLogs.forEach(l => {
-    if (!l || !l.date) return;
+  monthLogs.forEach(l => {
     const keys = new Set();
     if (l.userId) keys.add(`${l.userId}_${l.date}`);
     if (l.employeeId) keys.add(`${l.employeeId}_${l.date}`);
@@ -728,6 +823,80 @@ function exportDailyWorkStatusCSV(year, month) {
       logsMap.get(k).push(l);
     });
   });
+
+  const allSchedules = (DB.getSchedules ? DB.getSchedules() : (DB.data?.schedules || [])) || [];
+  const schedulesMap = new Map(allSchedules.map(s => [String(s.id), s]));
+
+  const isEmployeeWeeklyOff = (employee, dayOfWeek) => {
+    if (employee && employee.weeklyOff) {
+      const woList = Array.isArray(employee.weeklyOff) ? employee.weeklyOff : [employee.weeklyOff];
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const currentDayName = dayNames[dayOfWeek];
+      if (woList.some(w => {
+        const s = String(w).toLowerCase().trim();
+        return s === currentDayName || s === String(dayOfWeek);
+      })) {
+        return true;
+      }
+    }
+
+    const sIds = Array.isArray(employee?.scheduleIds) && employee.scheduleIds.length > 0
+      ? employee.scheduleIds
+      : (employee?.scheduleId ? [employee.scheduleId] : []);
+
+    if (sIds.length > 0) {
+      let checkedAny = false;
+      for (const sId of sIds) {
+        const sch = schedulesMap.get(String(sId));
+        if (sch && Array.isArray(sch.workDays) && sch.workDays.length > 0) {
+          checkedAny = true;
+          if (!sch.workDays.includes(dayOfWeek)) {
+            return true;
+          }
+        }
+      }
+      if (checkedAny) return false;
+    }
+
+    return dayOfWeek === 0;
+  };
+
+  const evaluateIsHalfDay = (log, employee) => {
+    if (!log) return false;
+    if (log.status === 'Half Day') return true;
+
+    if (log.checkIn) {
+      const [inH, inM] = log.checkIn.split(':').map(Number);
+      const inMins = (inH || 0) * 60 + (inM || 0);
+
+      const sIds = Array.isArray(employee?.scheduleIds) && employee.scheduleIds.length > 0
+        ? employee.scheduleIds
+        : (employee?.scheduleId ? [employee.scheduleId] : []);
+      const empShift = (log.shiftId && schedulesMap.get(String(log.shiftId))) || 
+                       (sIds[0] && schedulesMap.get(String(sIds[0])));
+
+      if (empShift && empShift.startTime) {
+        const [sH, sM] = empShift.startTime.split(':').map(Number);
+        const sMins = (sH || 0) * 60 + (sM || 0);
+        const halfDayLimit = empShift.halfDayLimit !== undefined ? Number(empShift.halfDayLimit) : 120;
+        if (inMins >= sMins + halfDayLimit) {
+          return true;
+        }
+      } else {
+        if (inMins >= 12 * 60 + 30) {
+          return true;
+        }
+      }
+    }
+
+    if (log.checkIn && log.checkOut) {
+      const dur = Utils.calculateDuration(log.checkIn, log.checkOut);
+      const hrs = parseFloat(dur) || 0;
+      if (hrs > 0 && hrs < 6) return true;
+    }
+
+    return false;
+  };
 
   const leavesMap = new Map();
   allLeaves.forEach(lv => {
@@ -748,7 +917,7 @@ function exportDailyWorkStatusCSV(year, month) {
       const dayNum = i + 1;
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
       const dayOfWeek = new Date(year, month, dayNum).getDay();
-      const isSunday = dayOfWeek === 0;
+      const isOffDay = isEmployeeWeeklyOff(emp, dayOfWeek);
 
       const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
                       logsMap.get(`${emp.employeeId}_${dateStr}`) || 
@@ -766,12 +935,7 @@ function exportDailyWorkStatusCSV(year, month) {
         return 'C';
       } else if (empLogs.length > 0) {
         const log = empLogs[0];
-        let isHalfDay = log.status === 'Half Day';
-        if (!isHalfDay && log.checkIn && log.checkOut) {
-          const dur = Utils.calculateDuration(log.checkIn, log.checkOut);
-          const hrs = parseFloat(dur) || 0;
-          if (hrs > 0 && hrs < 6) isHalfDay = true;
-        }
+        const isHalfDay = evaluateIsHalfDay(log, emp);
         if (isHalfDay) {
           countHP++;
           return 'HP';
@@ -779,7 +943,7 @@ function exportDailyWorkStatusCSV(year, month) {
           countP++;
           return 'P';
         }
-      } else if (dateStr < todayStr && !isSunday) {
+      } else if (dateStr < todayStr && !isOffDay) {
         countA++;
         return 'A';
       }

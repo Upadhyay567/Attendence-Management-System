@@ -544,22 +544,34 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj) {
     if (inMins >= startMins + halfDayLimit) {
       status = 'Half Day';
     }
+  } else {
+    // Standard work policy fallback: arrival at or after 12:30 PM is Half Day
+    if (inMins >= 12 * 60 + 30) {
+      status = 'Half Day';
+    } else if (inMins > 9 * 60 + 30) {
+      status = 'Late';
+    }
   }
 
   // If check-out is present, evaluate total work duration vs expected shift duration
-  if (checkOutTime && shiftObj && shiftObj.startTime && shiftObj.endTime) {
+  if (checkOutTime) {
     const [outH, outM] = checkOutTime.split(':').map(Number);
     const outMins = (outH || 0) * 60 + (outM || 0);
     let totalWorkMins = outMins - inMins;
     if (totalWorkMins < 0) totalWorkMins += 24 * 60; // overnight support
 
-    const [schStartH, schStartM] = shiftObj.startTime.split(':').map(Number);
-    const [schEndH, schEndM] = shiftObj.endTime.split(':').map(Number);
-    let expectedWorkMins = (schEndH * 60 + (schEndM || 0)) - (schStartH * 60 + (schStartM || 0));
-    if (expectedWorkMins < 0) expectedWorkMins += 24 * 60;
+    if (shiftObj && shiftObj.startTime && shiftObj.endTime) {
+      const [schStartH, schStartM] = shiftObj.startTime.split(':').map(Number);
+      const [schEndH, schEndM] = shiftObj.endTime.split(':').map(Number);
+      let expectedWorkMins = (schEndH * 60 + (schEndM || 0)) - (schStartH * 60 + (schStartM || 0));
+      if (expectedWorkMins < 0) expectedWorkMins += 24 * 60;
 
-    const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
-    if (totalWorkMins < halfDayThreshold) {
+      const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
+      if (totalWorkMins < halfDayThreshold) {
+        status = 'Half Day';
+      }
+    } else if (totalWorkMins > 0 && totalWorkMins < 300) {
+      // General fallback: less than 5 hours worked is Half Day
       status = 'Half Day';
     }
   }
@@ -818,7 +830,11 @@ function processLocalPunch(
       primaryLog.location = empPrefLocation;
     }
 
-    const shiftObj = schedules.find(s => String(s.id) === String(primaryLog.shiftId));
+    const resolvedShiftId = primaryLog.shiftId || employee.scheduleId || (Array.isArray(employee.scheduleIds) ? employee.scheduleIds[0] : '') || '';
+    if (!primaryLog.shiftId && resolvedShiftId) {
+      primaryLog.shiftId = resolvedShiftId;
+    }
+    const shiftObj = schedules.find(s => String(s.id) === String(resolvedShiftId));
     const evaluatedStatus = computeAttendanceStatus(primaryLog.checkIn, primaryLog.checkOut, shiftObj);
 
     if (!primaryLog.employeeName && employee.name) primaryLog.employeeName = employee.name;

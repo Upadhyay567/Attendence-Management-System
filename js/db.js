@@ -743,6 +743,7 @@ export const DB = {
           if (fetchedData && typeof fetchedData === 'object') {
             this.data = fetchedData;
             this.invalidatePayrollCache();
+            this.invalidateLogsCache();
             if (typeof window !== 'undefined') window.__ATTENDANCE_DB_DATA__ = this.data;
             this.lastFetchSuccess = Date.now();
             this._safeSaveLocalStorage();
@@ -2113,7 +2114,12 @@ export const DB = {
     return true;
   },
 
-  // Attendance Logs API
+  // Attendance Logs API - High-Performance Cached Sort
+  invalidateLogsCache() {
+    this._sortedLogs = null;
+    this._sortedLogsSource = null;
+  },
+
   getLogs(userId = null) {
     if (userId) {
       const user = this.getUser(userId);
@@ -2126,9 +2132,27 @@ export const DB = {
         const logDigits = String(l.biometricUserId || l.employeeId || '').replace(/\D/g, '');
         if (userDigits && logDigits && userDigits === logDigits) return true;
         return false;
-      }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      }).sort((a, b) => {
+        const da = a.date || '';
+        const db = b.date || '';
+        return db > da ? 1 : (db < da ? -1 : 0);
+      });
     }
-    return (this.data.attendanceLogs || []).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+    if (this._sortedLogs && this._sortedLogsSource === this.data.attendanceLogs) {
+      return this._sortedLogs;
+    }
+
+    const logs = this.data.attendanceLogs || [];
+    const sorted = logs.slice().sort((a, b) => {
+      const da = a.date || '';
+      const db = b.date || '';
+      return db > da ? 1 : (db < da ? -1 : 0);
+    });
+
+    this._sortedLogs = sorted;
+    this._sortedLogsSource = logs;
+    return sorted;
   },
 
   getTodayLog(userId, shiftId = null, dateOverride = null) {
