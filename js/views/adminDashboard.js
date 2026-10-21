@@ -2554,25 +2554,24 @@ export async function renderAdminDashboard() {
           loadBiometricDashboardData(true);
         }
 
-        // Only do DB.init if data is stale (> 30s) to avoid unnecessary heavy network & storage overhead
-        if (!DB.lastFetchSuccess || (Date.now() - DB.lastFetchSuccess >= 30000)) {
-          await DB.init();
-
-          // Check if the current user has been deactivated
-          const freshUser = DB.getUser(currentUser.id);
-          if (freshUser && freshUser.status === 'Inactive') {
-            Auth.logout();
-            window.location.hash = '#login';
-            if (typeof showToastNotification === 'function') {
-              showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
-            } else {
-              alert('Your account is Inactive. Please contact HR.');
-            }
-            clearInterval(window.adminDashboardInterval);
-            window.adminDashboardInterval = null;
-            return;
+        // Check if the current user has been deactivated
+        const freshUser = DB.getUser(currentUser.id);
+        if (freshUser && freshUser.status === 'Inactive') {
+          Auth.logout();
+          window.location.hash = '#login';
+          if (typeof showToastNotification === 'function') {
+            showToastNotification('⚠️ Your account is Inactive. Please contact HR.', 'error');
+          } else {
+            alert('Your account is Inactive. Please contact HR.');
           }
+          clearInterval(window.adminDashboardInterval);
+          window.adminDashboardInterval = null;
+          return;
+        }
 
+        // Only do a full background DB.init if data is very stale (> 10 mins) as a passive fallback
+        if (!DB.lastFetchSuccess || (Date.now() - DB.lastFetchSuccess >= 600000)) {
+          await DB.init();
           updateDashboardViews();
         }
       } catch (err) {

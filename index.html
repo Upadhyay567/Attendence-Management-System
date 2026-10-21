@@ -25,19 +25,48 @@
     };
 
     // Filter out external browser extension errors (e.g. Chrome translation / save page context menu rejections)
-    window.addEventListener('unhandledrejection', function(event) {
-      if (event && event.reason) {
-        var msg = (event.reason.message || event.reason.toString ? event.reason.toString() : String(event.reason)).toLowerCase();
-        if (msg.indexOf('cannot find menu item') !== -1 ||
-            msg.indexOf('translate-page') !== -1 ||
-            msg.indexOf('save-page') !== -1) {
-          event.preventDefault();
+    (function() {
+      var isExtensionError = function(str) {
+        if (!str || typeof str !== 'string') return false;
+        var s = str.toLowerCase();
+        return s.indexOf('cannot find menu item') !== -1 ||
+               s.indexOf('translate-page') !== -1 ||
+               s.indexOf('save-page') !== -1;
+      };
+
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event && event.reason) {
+          var msg = event.reason.message || event.reason.stack || String(event.reason);
+          if (isExtensionError(msg)) {
+            event.preventDefault();
+            if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+          }
         }
-      }
-    });
+      }, true);
+
+      window.addEventListener('error', function(event) {
+        if (event && (isExtensionError(event.message) || (event.error && isExtensionError(event.error.message)))) {
+          event.preventDefault();
+          if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+        }
+      }, true);
+
+      var origConsoleError = console.error;
+      console.error = function() {
+        for (var i = 0; i < arguments.length; i++) {
+          var arg = arguments[i];
+          var str = arg && (arg.message || arg.stack || String(arg));
+          if (isExtensionError(str)) return;
+        }
+        origConsoleError.apply(console, arguments);
+      };
+    })();
   </script>
 </head>
 <body>
+  <!-- Hidden elements to satisfy external extension DOM lookups -->
+  <div id="save-page" style="display:none" aria-hidden="true"></div>
+  <div id="translate-page" style="display:none" aria-hidden="true"></div>
 
   <!-- Single Page Application Shell container -->
   <div id="app-root">
@@ -55,7 +84,7 @@
   <script src="js/libs/exceljs.min.js"></script>
 
   <!-- App Bootstrapper script module -->
-  <script type="module" src="js/app.js?v=116"></script>
+  <script type="module" src="js/app.js?v=120"></script>
   <script>
     function checkAndForceBoot() {
       var root = document.getElementById('app-root');
