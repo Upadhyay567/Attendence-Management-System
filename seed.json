@@ -2485125,21 +2485125,20 @@
         "dev_wdms_ged7261303265"
       ],
       "lastReplicatedAt": "2026-10-20T11:29:45.640Z",
-      "__v": 0,
       "createdAt": "2026-10-21T04:21:14.021Z",
-      "updatedAt": "2026-10-21T04:45:17.650Z"
+      "updatedAt": "2026-10-21T04:45:17.650Z",
+      "__v": 0
     },
     {
       "_id": "6ad8435d4a07703f07871c44",
       "biometricUserId": "EMP1447",
-      "__v": 0,
-      "cardno": 0,
-      "createdAt": "2026-10-21T04:45:17.653Z",
-      "enrolledOnDevice": "dev_wdms_0056120200363",
-      "lastReplicatedAt": "2026-10-21T04:45:13.797Z",
+      "uid": 1340,
       "name": "Abhishek Kumar",
-      "password": "",
       "role": 0,
+      "password": "",
+      "cardno": 0,
+      "templateData": "FP_TEMPLATE_AUTO_VAULT_EMP1447",
+      "enrolledOnDevice": "dev_wdms_0056120200363",
       "syncedDevices": [
         "dev_wdms_0056120200363",
         "dev_wdms_cezf192660043",
@@ -2485156,12 +2485155,39 @@
         "dev_wdms_ged7254501292",
         "dev_wdms_ged7261303265"
       ],
-      "templateData": "FP_TEMPLATE_AUTO_VAULT_EMP1447",
-      "uid": 1340,
-      "updatedAt": "2026-10-21T04:45:17.653Z"
+      "lastReplicatedAt": "2026-10-21T04:45:13.797Z",
+      "createdAt": "2026-10-21T04:45:17.653Z",
+      "updatedAt": "2026-10-21T04:45:17.653Z",
+      "__v": 0
     }
   ],
   "biometricSyncLogs": [
+    {
+      "id": "synclog_1792562849741",
+      "timestamp": "2026-10-21T06:07:29.741Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_wdms_0056120200363",
+        "dev_wdms_cezf192660043",
+        "dev_wdms_cjou232660306",
+        "dev_wdms_ged7242602598",
+        "dev_wdms_ged7241900691",
+        "dev_wdms_cezf192660067",
+        "dev_wdms_cezf192660044",
+        "dev_wdms_ged7241901313",
+        "dev_wdms_cgkk230961662",
+        "dev_wdms_cjou232660338",
+        "dev_wdms_cjou232660943",
+        "dev_wdms_ged7253700398",
+        "dev_wdms_ged7254501292",
+        "dev_wdms_ged7261303265"
+      ],
+      "usersReplicated": 13,
+      "totalVaultUsers": 1340,
+      "status": "SUCCESS",
+      "details": "Replicated 13 user templates across 14 branch devices."
+    },
     {
       "id": "synclog_1792558526354",
       "timestamp": "2026-10-21T04:55:26.354Z",
@@ -2485658,32 +2485684,6 @@
       ],
       "usersReplicated": 13,
       "totalVaultUsers": 1321,
-      "status": "SUCCESS",
-      "details": "Replicated 13 user templates across 14 branch devices."
-    },
-    {
-      "id": "synclog_1792124427556",
-      "timestamp": "2026-10-16T04:20:27.556Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_zk_main",
-        "dev_k40_noida",
-        "dev_k40_mukw97p4",
-        "dev_wdms_cezf192660043",
-        "dev_wdms_ged7242602598",
-        "dev_wdms_ged7241900691",
-        "dev_wdms_cgkk230961662",
-        "dev_wdms_cjou232660338",
-        "dev_wdms_cjou232660943",
-        "dev_wdms_ged7253700398",
-        "dev_wdms_ged7261303265",
-        "dev_wdms_cezf192660067",
-        "dev_wdms_ged7241901313",
-        "dev_wdms_0056120200363"
-      ],
-      "usersReplicated": 13,
-      "totalVaultUsers": 1320,
       "status": "SUCCESS",
       "details": "Replicated 13 user templates across 14 branch devices."
     }
