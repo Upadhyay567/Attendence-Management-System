@@ -79,10 +79,27 @@ function readLocalDB() {
 }
 
 function writeLocalDB(state) {
-  try {
-    fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(state, null, 2), 'utf8');
-  } catch (err) {
-    console.error('❌ Error writing LOCAL_DB_FILE in adms.service:', err.message);
+  if (!state) return;
+  const tmpFile = `${LOCAL_DB_FILE}.tmp.${Date.now()}`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+      fs.renameSync(tmpFile, LOCAL_DB_FILE);
+      return;
+    } catch (writeErr) {
+      try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
+      if (attempt === 2) {
+        try {
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(state, null, 2), 'utf8');
+        } catch (finalErr) {
+          // Non-blocking warning if file locked during git push
+        }
+      } else {
+        const waitMs = 50 * (attempt + 1);
+        const start = Date.now();
+        while (Date.now() - start < waitMs) {}
+      }
+    }
   }
 }
 
