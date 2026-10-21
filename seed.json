@@ -87821,6 +87821,40 @@
   ],
   "attendanceLogs": [
     {
+      "id": "BIO_usr_bio_822_2026-10-21",
+      "userId": "usr_bio_822",
+      "employeeName": "Mohit",
+      "employeeId": "822",
+      "date": "2026-10-21",
+      "shiftId": "",
+      "checkIn": "14:32:30",
+      "checkOut": "",
+      "checkInPunchId": "GED7241900691_822_2026-10-21T09:02:30.000Z",
+      "checkOutPunchId": "",
+      "biometricPunchId": "GED7241900691_822_2026-10-21T09:02:30.000Z",
+      "allPunchIds": [
+        "GED7241900691_822_2026-10-21T09:02:30.000Z"
+      ],
+      "status": "On Time",
+      "biometricUsed": "PITAM PURA",
+      "biometricDeviceId": "GED7241900691",
+      "departureLocation": "",
+      "departureDevice": "",
+      "departureDeviceId": "",
+      "biometricUserId": "822",
+      "lastBiometricPunchAt": "2026-10-21T09:02:30.000Z",
+      "location": "PITAM PURA",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-10-21T09:01:36.041Z",
+      "updatedAt": "2026-10-21T09:01:36.041Z"
+    },
+    {
       "id": "BIO_usr_bio_1249_2026-10-21",
       "userId": "usr_bio_1249",
       "employeeName": "Arti Panwar",
@@ -2423083,10 +2423117,25 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-21T08:51:18.820Z",
+    "lastSyncAt": "2026-10-21T09:01:36.131Z",
     "lastLogCount": 3000
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-21T09:01:36.041Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_bio_822",
+      "userName": "Mohit",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_822_2026-10-21",
+        "shiftId": "",
+        "checkIn": "14:32:30",
+        "status": "On Time",
+        "device": "PITAM PURA"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-21T08:51:18.747Z",
       "action": "BIOMETRIC_CHECKIN",
@@ -2430577,25 +2430626,9 @@
         "device": "WH-1340"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-21T04:19:18.597Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_4037",
-      "userName": "DILIP KUMAR",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_4037_2026-10-21",
-        "shiftId": "",
-        "checkIn": "09:18:12",
-        "status": "On Time",
-        "device": "HS Office"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "CJOU232660943_994_2026-10-19T03:48:40.000Z",
     "CJOU232660306_986_2026-10-19T03:48:43.000Z",
     "CJOU232660943_781_2026-10-19T03:48:48.000Z",
     "CJOU232660338_5281_2026-10-19T03:48:51.000Z",
@@ -2435594,7 +2435627,8 @@
     "CEZF192660044_703_2026-10-21T07:28:01.000Z",
     "CJOU232660943_5443_2026-10-21T07:33:03.000Z",
     "GED7241900691_1026_2026-10-21T08:39:29.000Z",
-    "GED7242602598_1249_2026-10-21T08:51:35.000Z"
+    "GED7242602598_1249_2026-10-21T08:51:35.000Z",
+    "GED7241900691_822_2026-10-21T09:02:30.000Z"
   ],
   "biometricDevices": [
     {
