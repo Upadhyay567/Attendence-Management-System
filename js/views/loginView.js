@@ -372,7 +372,7 @@ export function renderLoginView() {
           submitBtn.disabled = false;
           submitBtn.textContent = 'Log In';
         }
-        if (status === 403) {
+        if (status === 403 || (data && !data.success && (data.code === 'ROLE_MISMATCH' || data.assignedRole || data.baseRole))) {
           const properRole = (data && (data.baseRole || data.assignedRole)) || '';
           const properTitle = properRole === 'hr' ? 'HR / Admin Portal' : (properRole === 'manager' || properRole === 'finance_manager' ? 'Manager Portal' : 'Employee Portal');
           warningEl.innerHTML = `

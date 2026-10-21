@@ -135,15 +135,23 @@ async function loginUser(req, res) {
     }
 
     if (foundUser.status === 'Inactive') {
-      return res.status(403).json({ error: 'Account is Inactive. Please contact HR Administration.' });
+      return res.json({ 
+        success: false,
+        code: 'ACCOUNT_INACTIVE',
+        error: 'Account is Inactive. Please contact HR Administration.' 
+      });
     }
 
     const foundUserBaseRole = getBaseRole(foundUser.role);
 
-    if (role) {
+    // If an HR / Admin account logs in through ANY portal, allow them through seamlessly.
+    // For non-admin roles (e.g. employee attempting to access HR / Manager portal), return clean role mismatch:
+    if (role && foundUserBaseRole !== 'hr') {
       const reqBaseRole = getBaseRole(role);
       if (reqBaseRole && foundUserBaseRole && reqBaseRole !== foundUserBaseRole) {
-        return res.status(403).json({ 
+        return res.json({ 
+          success: false,
+          code: 'ROLE_MISMATCH',
           error: `Access Denied: Account '${key}' is assigned to the '${foundUser.role.toUpperCase()}' role and cannot log in through the '${role.toUpperCase()}' portal.`,
           assignedRole: foundUser.role,
           baseRole: foundUserBaseRole

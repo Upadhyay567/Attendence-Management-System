@@ -23,6 +23,18 @@
         return result + str + (values[i] !== undefined ? values[i] : '');
       }, '');
     };
+
+    // Filter out external browser extension errors (e.g. Chrome translation / save page context menu rejections)
+    window.addEventListener('unhandledrejection', function(event) {
+      if (event && event.reason) {
+        var msg = (event.reason.message || event.reason.toString ? event.reason.toString() : String(event.reason)).toLowerCase();
+        if (msg.indexOf('cannot find menu item') !== -1 ||
+            msg.indexOf('translate-page') !== -1 ||
+            msg.indexOf('save-page') !== -1) {
+          event.preventDefault();
+        }
+      }
+    });
   </script>
 </head>
 <body>
@@ -43,7 +55,7 @@
   <script src="js/libs/exceljs.min.js"></script>
 
   <!-- App Bootstrapper script module -->
-  <script type="module" src="js/app.js?v=115"></script>
+  <script type="module" src="js/app.js?v=116"></script>
   <script>
     function checkAndForceBoot() {
       var root = document.getElementById('app-root');

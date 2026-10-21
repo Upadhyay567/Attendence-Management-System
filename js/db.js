@@ -749,7 +749,10 @@ export const DB = {
             try {
               this.validateAndMigrateState(false);
             } catch (migErr) {}
-            console.log('Database state initialized from backend API.');
+            if (!this._lastInitLogged || (Date.now() - this._lastInitLogged > 60000)) {
+              console.log('Database state initialized from backend API.');
+              this._lastInitLogged = Date.now();
+            }
             return;
           }
         }
