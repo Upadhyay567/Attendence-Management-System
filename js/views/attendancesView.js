@@ -14,6 +14,7 @@ let adminAttendancesSelectedIds = new Set();
 let adminAttendancesSelectedMonth = new Date().getMonth();
 let adminAttendancesSelectedYear = new Date().getFullYear();
 let adminAttendancesLocationFilter = '';
+let adminAttendancesPunchFilter = ''; // '', 'in_session', 'missing_out', 'missing_in', 'completed', 'half_day', 'late', 'absent'
 let adminAttendancesFilterMode = 'month'; // 'month' or 'manual'
 let adminAttendancesSingleDate = ''; // 'YYYY-MM-DD'
 let adminAttendancesFromDate = ''; // 'YYYY-MM-DD'
@@ -202,6 +203,20 @@ export function renderAdminAttendances() {
           <div style="position: relative; flex-shrink: 0;">
             <select id="admin-att-location-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 12px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 150px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
               <option value="">All Locations</option>
+            </select>
+          </div>
+
+          <!-- Punch / Attendance Status Filter Dropdown -->
+          <div style="position: relative; flex-shrink: 0;">
+            <select id="admin-att-punch-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 10px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 155px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
+              <option value="">All Statuses</option>
+              <option value="in_session">⏳ In Session (Active Today)</option>
+              <option value="missing_out">⚠️ Missing Check-Out</option>
+              <option value="missing_in">⚠️ Missing Check-In</option>
+              <option value="completed">✅ Completed (In &amp; Out)</option>
+              <option value="half_day">🌓 Half Day</option>
+              <option value="late">⏰ Late Arrival</option>
+              <option value="absent">❌ Absent</option>
             </select>
           </div>
 
@@ -700,6 +715,17 @@ export function renderAdminAttendances() {
   if (locSelectInput) {
     locSelectInput.addEventListener('change', (e) => {
       adminAttendancesLocationFilter = e.target.value.trim();
+      adminAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
+
+  // Punch Status Filter Dropdown Event
+  const punchSelectInput = document.getElementById('admin-att-punch-filter');
+  if (punchSelectInput) {
+    punchSelectInput.value = adminAttendancesPunchFilter;
+    punchSelectInput.addEventListener('change', (e) => {
+      adminAttendancesPunchFilter = e.target.value.trim();
       adminAttendancesCurrentPage = 1;
       updateTable();
     });
@@ -1232,8 +1258,19 @@ export function renderAdminAttendances() {
 
       let checkInDisplay = effectiveIn || '--:--';
       if (checkInDisplay !== '--:--' && checkInDisplay.length === 5) checkInDisplay += ':00';
+      if (!effectiveIn && effectiveOut) {
+        checkInDisplay = `<span style="color:#d97706; font-weight:700; background:#fef3c7; padding:2px 6px; border-radius:4px; font-size:11.5px;" title="Employee missed morning check-in punch on biometric device">Missing In</span>`;
+      }
+
       let checkOutDisplay = effectiveOut || '--:--';
       if (checkOutDisplay !== '--:--' && checkOutDisplay.length === 5) checkOutDisplay += ':00';
+      if (effectiveIn && !effectiveOut) {
+        if (isToday) {
+          checkOutDisplay = `<span style="color:#0284c7; font-weight:600; background:#e0f2fe; padding:2px 6px; border-radius:4px; font-size:11.5px;" title="Shift currently active (employee has not punched out yet)">Active (--:--)</span>`;
+        } else {
+          checkOutDisplay = `<span style="color:#d97706; font-weight:700; background:#fef3c7; padding:2px 6px; border-radius:4px; font-size:11.5px;" title="Employee missed evening check-out punch on biometric device">Missing Out</span>`;
+        }
+      }
 
       return {
         ...log,
@@ -1314,6 +1351,25 @@ export function renderAdminAttendances() {
         const fullLoc = (l.location || '').toLowerCase();
         return inLoc === targetLoc || outLoc === targetLoc || fullLoc.includes(targetLoc);
       });
+    }
+
+    // 2b. Filter by punch / attendance status
+    if (adminAttendancesPunchFilter) {
+      if (adminAttendancesPunchFilter === 'in_session') {
+        filtered = filtered.filter(l => l.workStatus === 'In Session');
+      } else if (adminAttendancesPunchFilter === 'missing_out') {
+        filtered = filtered.filter(l => l.workStatus === 'Missing Check-Out');
+      } else if (adminAttendancesPunchFilter === 'missing_in') {
+        filtered = filtered.filter(l => l.workStatus === 'Missing Check-In');
+      } else if (adminAttendancesPunchFilter === 'completed') {
+        filtered = filtered.filter(l => l.workStatus === 'Checked Out');
+      } else if (adminAttendancesPunchFilter === 'half_day') {
+        filtered = filtered.filter(l => l.status === 'Half Day');
+      } else if (adminAttendancesPunchFilter === 'late') {
+        filtered = filtered.filter(l => l.status === 'Late' || l.isLateArrival);
+      } else if (adminAttendancesPunchFilter === 'absent') {
+        filtered = filtered.filter(l => l.isAbsent || l.status === 'Absent' || l.workStatus === 'Absent');
+      }
     }
 
     // 3. Filter by search query

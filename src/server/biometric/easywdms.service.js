@@ -397,6 +397,8 @@ async function fetchTransactions(cookieStr, query = {}) {
     q.set('page', String(page));
     if (query.start_time) q.set('start_time', query.start_time);
     if (query.end_time) q.set('end_time', query.end_time);
+    if (query.emp_code) q.set('emp_code', String(query.emp_code));
+    if (query.terminal_sn) q.set('terminal_sn', String(query.terminal_sn));
 
     const res = await fetchWithCookie(`/iclock/api/transactions/?${q.toString()}`, cookie);
     if (res.statusCode !== 200) {

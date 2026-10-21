@@ -522,8 +522,17 @@ async function findMongoAttendance(
    COMPUTE ATTENDANCE STATUS BASED ON CHECK-IN & SHIFT RULES
 ========================================================= */
 
-function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj) {
-  if (!checkInTime) return 'Absent';
+function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj, dateStr = null) {
+  if (!checkInTime && !checkOutTime) return 'Absent';
+  if (!checkInTime && checkOutTime) return 'Half Day'; // Departed/worked, but missed morning arrival punch
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isPastDate = Boolean(dateStr && dateStr < todayStr);
+
+  // If check-in is present but check-out is missing on a completed past workday:
+  if (checkInTime && !checkOutTime && isPastDate) {
+    return 'Half Day'; // Missed departure punch penalty
+  }
 
   const [inH, inM] = checkInTime.split(':').map(Number);
   const inMins = (inH || 0) * 60 + (inM || 0);
@@ -835,7 +844,7 @@ function processLocalPunch(
       primaryLog.shiftId = resolvedShiftId;
     }
     const shiftObj = schedules.find(s => String(s.id) === String(resolvedShiftId));
-    const evaluatedStatus = computeAttendanceStatus(primaryLog.checkIn, primaryLog.checkOut, shiftObj);
+    const evaluatedStatus = computeAttendanceStatus(primaryLog.checkIn, primaryLog.checkOut, shiftObj, date);
 
     if (!primaryLog.employeeName && employee.name) primaryLog.employeeName = employee.name;
     if (!primaryLog.employeeId && employee.employeeId) primaryLog.employeeId = employee.employeeId;
@@ -893,7 +902,7 @@ function processLocalPunch(
     initialCheckIn = '';
     initialCheckOut = time;
   }
-  const status = initialCheckIn ? computeAttendanceStatus(initialCheckIn, initialCheckOut, shiftObj) : 'Half Day';
+  const status = initialCheckIn ? computeAttendanceStatus(initialCheckIn, initialCheckOut, shiftObj, date) : 'Half Day';
 
   const newLog = {
     id: createAttendanceId(

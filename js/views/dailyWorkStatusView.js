@@ -355,9 +355,16 @@ export function renderDailyWorkStatus() {
     };
 
     // Helper: Determine if attendance log corresponds to Half Day
-    const evaluateIsHalfDay = (log, employee) => {
+    const evaluateIsHalfDay = (log, employee, dateStr = null, todayStr = null) => {
       if (!log) return false;
       if (log.status === 'Half Day') return true;
+
+      // On a completed past workday, a single punch (missing check-in or missing check-out) is classified as Half Day
+      if (dateStr && todayStr && dateStr < todayStr) {
+        if ((log.checkIn && !log.checkOut) || (!log.checkIn && log.checkOut)) {
+          return true;
+        }
+      }
 
       if (log.checkIn) {
         const [inH, inM] = log.checkIn.split(':').map(Number);
@@ -488,7 +495,7 @@ export function renderDailyWorkStatus() {
           badgeHTML = `<span style="width:20px; height:20px; background:#ef4444; color:#ffffff; font-size:11px; font-weight:800; border-radius:3.5px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(239,68,68,0.3);" title="Conflict (${dateStr})">C</span>`;
         } else if (empLogs.length > 0) {
           const log = empLogs[0];
-          const isHalfDay = evaluateIsHalfDay(log, emp);
+          const isHalfDay = evaluateIsHalfDay(log, emp, dateStr, todayStr);
 
           if (isHalfDay) {
             // Half Day Present (HP)
@@ -861,9 +868,16 @@ function exportDailyWorkStatusCSV(year, month) {
     return dayOfWeek === 0;
   };
 
-  const evaluateIsHalfDay = (log, employee) => {
+  const evaluateIsHalfDay = (log, employee, dateStr = null, todayStr = null) => {
     if (!log) return false;
     if (log.status === 'Half Day') return true;
+
+    // On a completed past workday, a single punch (missing check-in or missing check-out) is classified as Half Day
+    if (dateStr && todayStr && dateStr < todayStr) {
+      if ((log.checkIn && !log.checkOut) || (!log.checkIn && log.checkOut)) {
+        return true;
+      }
+    }
 
     if (log.checkIn) {
       const [inH, inM] = log.checkIn.split(':').map(Number);
@@ -935,7 +949,7 @@ function exportDailyWorkStatusCSV(year, month) {
         return 'C';
       } else if (empLogs.length > 0) {
         const log = empLogs[0];
-        const isHalfDay = evaluateIsHalfDay(log, emp);
+        const isHalfDay = evaluateIsHalfDay(log, emp, dateStr, todayStr);
         if (isHalfDay) {
           countHP++;
           return 'HP';
