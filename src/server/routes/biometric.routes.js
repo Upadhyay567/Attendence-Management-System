@@ -767,6 +767,11 @@ router.post('/biometric/sync', async (req, res) => {
       });
     } catch (_) {}
 
+    try {
+      const { autoCommitAndPush } = require('../utils/gitAutoSync');
+      autoCommitAndPush('chore(sync): automated biometric punch sync', true);
+    } catch (_) {}
+
     return res.json({
       success: true,
       message: 'Biometric sync completed across all local and cloud devices',
