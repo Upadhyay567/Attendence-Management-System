@@ -253,17 +253,15 @@ async function syncLocalToMongo(seedData) {
 
     const officeDocs = Object.entries(seedData.officeCoordinates || {}).map(([name, coords]) => ({ name, ...coords }));
 
-    await Promise.all([
-      safeInsert(User, seedData.users || []),
-      safeInsert(AttendanceLog, seedData.attendanceLogs || []),
-      safeInsert(LeaveRequest, seedData.leaveRequests || []),
-      safeInsert(ShiftSwap, seedData.shiftSwaps || []),
-      safeInsert(Schedule, seedData.schedules || []),
-      safeInsert(Notice, seedData.notices || []),
-      safeInsert(OfficeCoordinate, officeDocs),
-      safeInsert(BiometricDevice, seedData.biometricDevices || []),
-      safeInsert(BiometricVault, seedData.biometricVault || [])
-    ]);
+    await safeInsert(User, seedData.users || []);
+    await safeInsert(BiometricDevice, seedData.biometricDevices || []);
+    await safeInsert(Schedule, seedData.schedules || []);
+    await safeInsert(LeaveRequest, seedData.leaveRequests || []);
+    await safeInsert(ShiftSwap, seedData.shiftSwaps || []);
+    await safeInsert(Notice, seedData.notices || []);
+    await safeInsert(OfficeCoordinate, officeDocs);
+    await safeInsert(BiometricVault, seedData.biometricVault || []);
+    await safeInsert(AttendanceLog, seedData.attendanceLogs || []);
   } catch (err) {
     console.warn('⚠️ Non-fatal syncLocalToMongo warning:', err.message);
   } finally {
