@@ -88707,21 +88707,22 @@
       "date": "2026-10-21",
       "shiftId": "",
       "checkIn": "10:47:04",
-      "checkOut": "",
+      "checkOut": "19:28:07",
       "checkInPunchId": "GED7261303265_1333_2026-10-21T05:17:04.000Z",
-      "checkOutPunchId": "",
+      "checkOutPunchId": "GED7261303265_1333_2026-10-21T13:58:07.000Z",
       "biometricPunchId": "GED7261303265_1333_2026-10-21T05:17:04.000Z",
       "allPunchIds": [
-        "GED7261303265_1333_2026-10-21T05:17:04.000Z"
+        "GED7261303265_1333_2026-10-21T05:17:04.000Z",
+        "GED7261303265_1333_2026-10-21T13:58:07.000Z"
       ],
-      "status": "On Time",
+      "status": "Late",
       "biometricUsed": "Surya Gurugram",
       "biometricDeviceId": "GED7261303265",
-      "departureLocation": "",
-      "departureDevice": "",
+      "departureLocation": "Surya Gurugram",
+      "departureDevice": "Surya Gurugram",
       "departureDeviceId": "",
       "biometricUserId": "1333",
-      "lastBiometricPunchAt": "2026-10-21T05:17:04.000Z",
+      "lastBiometricPunchAt": "2026-10-21T13:58:07.000Z",
       "location": "Surya Gurugram",
       "deviationFlag": false,
       "justification": "",
@@ -88731,7 +88732,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-21T05:16:33.258Z",
-      "updatedAt": "2026-10-21T11:42:37.639Z",
+      "updatedAt": "2026-10-21T14:00:10.013Z",
       "_id": "6ad8a4faba1b1b9c8588daca",
       "__v": 0
     },
@@ -2423564,10 +2423565,26 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-21T13:48:29.286Z",
+    "lastSyncAt": "2026-10-21T14:00:10.168Z",
     "lastLogCount": 3000
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-21T14:00:10.013Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_1333",
+      "userName": "Anmol",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_1333_2026-10-21",
+        "shiftId": "",
+        "checkIn": "10:47:04",
+        "checkOut": "19:28:07",
+        "status": "Late",
+        "device": "Surya Gurugram"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-21T13:44:17.176Z",
       "action": "BIOMETRIC_CHECKOUT",
@@ -2431096,25 +2431113,9 @@
         "device": "WH-1340"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-21T04:19:18.717Z",
-      "action": "BIOMETRIC_CHECKIN",
-      "userId": "usr_bio_5171",
-      "userName": "SONU PRAJAPATI",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_5171_2026-10-21",
-        "shiftId": "",
-        "checkIn": "09:19:48",
-        "status": "On Time",
-        "device": "RETAIL"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "CEZF192660043_5440_2026-10-19T03:52:25.000Z",
     "CJOU232660338_3950_2026-10-19T03:52:34.000Z",
     "CJOU232660943_5306_2026-10-19T03:52:35.000Z",
     "CJOU232660943_3104_2026-10-19T03:52:43.000Z",
@@ -2436113,7 +2436114,8 @@
     "CEZF192660044_1148_2026-10-21T13:34:26.000Z",
     "CEZF192660044_1114_2026-10-21T13:34:38.000Z",
     "CEZF192660044_1159_2026-10-21T13:38:14.000Z",
-    "GED7242602598_1249_2026-10-21T13:44:38.000Z"
+    "GED7242602598_1249_2026-10-21T13:44:38.000Z",
+    "GED7261303265_1333_2026-10-21T13:58:07.000Z"
   ],
   "biometricDevices": [
     {
