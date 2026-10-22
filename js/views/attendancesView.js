@@ -1933,13 +1933,13 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
       : (emp?.scheduleId ? [emp.scheduleId] : []);
 
     let shift = null;
-    if (userShiftIds.length > 0) {
-      if (log.shiftId && userShiftIds.includes(log.shiftId)) {
-        shift = DB.getSchedule(log.shiftId);
-      } else {
-        shift = DB.getSchedule(userShiftIds[0]);
-      }
+    if (log.shiftId) {
+      shift = DB.getSchedule(log.shiftId);
     }
+    if (!shift && userShiftIds.length > 0) {
+      shift = DB.getSchedule(userShiftIds[0]);
+    }
+    const shiftName = shift ? shift.name : 'Not Assigned';
     let location = '-';
     const inLoc = (log.location && log.location.trim()) || (log.biometricUsed && log.biometricUsed.trim());
     const outLoc = (log.departureLocation && log.departureLocation.trim()) || (log.departureDevice && log.departureDevice.trim());
@@ -1956,11 +1956,23 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
     }
     
     let atWorkStr = '--';
+    let workStatus = log.workStatus || '--';
+    let badgeText = log.badgeText || log.status || 'ON TIME';
     if (log.checkIn && log.checkOut) {
       const atWork = Utils.calculateDuration(log.checkIn, log.checkOut);
       atWorkStr = atWork === '-' ? '--' : atWork;
+      workStatus = 'Checked Out';
     } else if (log.checkIn && !log.checkOut) {
       atWorkStr = 'In Session';
+      workStatus = 'In Session';
+    } else if (!log.checkIn && log.checkOut) {
+      atWorkStr = '--';
+      workStatus = 'Missing Check-In';
+      badgeText = 'HALF DAY';
+    } else if (log.isAbsent || (!log.checkIn && !log.checkOut)) {
+      atWorkStr = 'Absent';
+      workStatus = 'Absent';
+      badgeText = 'ABSENT';
     }
 
     let checkInDisplay = log.checkIn || '--';
@@ -1977,6 +1989,8 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
       shiftName,
       location,
       atWorkStr,
+      workStatus,
+      badgeText,
       checkInDisplay,
       checkOutDisplay
     };
