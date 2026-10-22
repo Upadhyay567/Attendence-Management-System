@@ -11,7 +11,7 @@ async function triggerSync() {
     headers: {
       'Content-Type': 'application/json'
     },
-    timeout: 60000
+    timeout: 150000
   };
 
   return new Promise((resolve, reject) => {

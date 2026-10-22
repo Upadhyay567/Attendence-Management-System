@@ -2437794,16 +2437794,15 @@
       "serial": "0056120200363",
       "location": "WH-1340-close",
       "branch": "WH-1340-close",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 161,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 14393,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:10.912Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:22.455Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c8d",
@@ -2437814,16 +2437813,15 @@
       "serial": "CEZF192660043",
       "location": "Siyonee",
       "branch": "Siyonee",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 218,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 12941,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.890Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.106Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c8e",
@@ -2437834,16 +2437832,15 @@
       "serial": "CJOU232660306",
       "location": "HS Office",
       "branch": "HS Office",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 171,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 775,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.893Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.112Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c8f",
@@ -2437854,16 +2437851,15 @@
       "serial": "GED7242602598",
       "location": "RETAIL",
       "branch": "RETAIL",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 497,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 16191,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.895Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.120Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c90",
@@ -2437874,16 +2437870,15 @@
       "serial": "GED7241900691",
       "location": "PITAM PURA",
       "branch": "PITAM PURA",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 157,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 13006,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.897Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.854Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c91",
@@ -2437894,16 +2437889,15 @@
       "serial": "CEZF192660067",
       "location": "PUNJABI BAGH",
       "branch": "PUNJABI BAGH",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.905Z",
-      "enrolledUsersCount": 104,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 7843,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.899Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.876Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c92",
@@ -2437914,16 +2437908,15 @@
       "serial": "CEZF192660044",
       "location": "GT KARNAL SITE",
       "branch": "GT KARNAL SITE",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 226,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 14172,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.901Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.882Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c93",
@@ -2437934,16 +2437927,15 @@
       "serial": "GED7241901313",
       "location": "Surya Omaxe",
       "branch": "Surya Omaxe",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 218,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 15752,
       "createdAt": "2026-10-20T09:43:09.241Z",
-      "updatedAt": "2026-10-21T13:48:14.903Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:23.885Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c94",
@@ -2437954,16 +2437946,15 @@
       "serial": "CGKK230961662",
       "location": "ASHOK VIHAR",
       "branch": "ASHOK VIHAR",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 162,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 7251,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.905Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:36.620Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c95",
@@ -2437974,16 +2437965,15 @@
       "serial": "CJOU232660338",
       "location": "HS Office",
       "branch": "HS Office",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 714,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 19005,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.907Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:37.387Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c96",
@@ -2437994,16 +2437984,15 @@
       "serial": "CJOU232660943",
       "location": "HS Office",
       "branch": "HS Office",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 687,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 19868,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.909Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:37.765Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c97",
@@ -2438014,16 +2438003,15 @@
       "serial": "GED7253700398",
       "location": "WH-1340",
       "branch": "WH-1340",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 160,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 11108,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.911Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:37.770Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c98",
@@ -2438034,16 +2438022,15 @@
       "serial": "GED7254501292",
       "location": "Chattarpur Office",
       "branch": "Chattarpur Branch",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 58,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 2418,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.913Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:42.734Z",
+      "__v": 0
     },
     {
       "_id": "6ad737ada09cd872146a3c99",
@@ -2438054,16 +2438041,15 @@
       "serial": "GED7261303265",
       "location": "Surya Gurugram",
       "branch": "Surya Gurugram",
-      "status": "Online",
+      "status": "Offline",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T04:29:19.906Z",
-      "enrolledUsersCount": 64,
+      "lastSyncAt": "2026-10-22T04:30:39.934Z",
+      "enrolledUsersCount": 1343,
       "totalPunchesCount": 1532,
       "createdAt": "2026-10-20T09:43:09.242Z",
-      "updatedAt": "2026-10-21T13:48:14.916Z",
-      "__v": 0,
-      "source": "easywdms"
+      "updatedAt": "2026-10-22T04:29:43.809Z",
+      "__v": 0
     }
   ],
   "biometricVault": [
@@ -2487655,6 +2487641,7 @@
       "__v": 0
     },
     {
+      "_id": "6ad990f7ad0128ecc79b169d",
       "biometricUserId": "1357",
       "uid": 1343,
       "name": "Employee 1357",
@@ -2487679,10 +2487666,39 @@
         "dev_wdms_ged7254501292",
         "dev_wdms_ged7261303265"
       ],
-      "lastReplicatedAt": "2026-10-21T13:53:13.051Z"
+      "lastReplicatedAt": "2026-10-21T13:53:13.051Z",
+      "__v": 0,
+      "createdAt": "2026-10-22T04:28:39.782Z",
+      "updatedAt": "2026-10-22T04:28:39.782Z"
     }
   ],
   "biometricSyncLogs": [
+    {
+      "id": "synclog_1792643451750",
+      "timestamp": "2026-10-22T04:30:51.751Z",
+      "action": "CROSS_BRANCH_REPLICATION",
+      "sourceDevice": "Central Biometric Vault",
+      "targetDevices": [
+        "dev_wdms_0056120200363",
+        "dev_wdms_cezf192660043",
+        "dev_wdms_cjou232660306",
+        "dev_wdms_ged7242602598",
+        "dev_wdms_ged7241900691",
+        "dev_wdms_cezf192660067",
+        "dev_wdms_cezf192660044",
+        "dev_wdms_ged7241901313",
+        "dev_wdms_cgkk230961662",
+        "dev_wdms_cjou232660338",
+        "dev_wdms_cjou232660943",
+        "dev_wdms_ged7253700398",
+        "dev_wdms_ged7254501292",
+        "dev_wdms_ged7261303265"
+      ],
+      "usersReplicated": 13,
+      "totalVaultUsers": 1343,
+      "status": "SUCCESS",
+      "details": "Replicated 13 user templates across 14 branch devices."
+    },
     {
       "id": "synclog_1792590807188",
       "timestamp": "2026-10-21T13:53:27.188Z",
@@ -2488154,32 +2488170,6 @@
     {
       "id": "synclog_1792571073521",
       "timestamp": "2026-10-21T08:24:33.521Z",
-      "action": "CROSS_BRANCH_REPLICATION",
-      "sourceDevice": "Central Biometric Vault",
-      "targetDevices": [
-        "dev_wdms_0056120200363",
-        "dev_wdms_cezf192660043",
-        "dev_wdms_cjou232660306",
-        "dev_wdms_ged7242602598",
-        "dev_wdms_ged7241900691",
-        "dev_wdms_cezf192660067",
-        "dev_wdms_cezf192660044",
-        "dev_wdms_ged7241901313",
-        "dev_wdms_cgkk230961662",
-        "dev_wdms_cjou232660338",
-        "dev_wdms_cjou232660943",
-        "dev_wdms_ged7253700398",
-        "dev_wdms_ged7254501292",
-        "dev_wdms_ged7261303265"
-      ],
-      "usersReplicated": 13,
-      "totalVaultUsers": 1342,
-      "status": "SUCCESS",
-      "details": "Replicated 13 user templates across 14 branch devices."
-    },
-    {
-      "id": "synclog_1792570428675",
-      "timestamp": "2026-10-21T08:13:48.675Z",
       "action": "CROSS_BRANCH_REPLICATION",
       "sourceDevice": "Central Biometric Vault",
       "targetDevices": [
