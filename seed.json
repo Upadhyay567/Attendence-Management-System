@@ -88117,6 +88117,40 @@
   ],
   "attendanceLogs": [
     {
+      "id": "BIO_usr_bio_1331_2026-10-22",
+      "userId": "usr_bio_1331",
+      "employeeName": "Sohanlal",
+      "employeeId": "1331",
+      "date": "2026-10-22",
+      "shiftId": "",
+      "checkIn": "10:45:49",
+      "checkOut": "",
+      "checkInPunchId": "GED7261303265_1331_2026-10-22T05:15:49.000Z",
+      "checkOutPunchId": "",
+      "biometricPunchId": "GED7261303265_1331_2026-10-22T05:15:49.000Z",
+      "allPunchIds": [
+        "GED7261303265_1331_2026-10-22T05:15:49.000Z"
+      ],
+      "status": "Late",
+      "biometricUsed": "Surya Gurugram",
+      "biometricDeviceId": "GED7261303265",
+      "departureLocation": "",
+      "departureDevice": "",
+      "departureDeviceId": "",
+      "biometricUserId": "1331",
+      "lastBiometricPunchAt": "2026-10-22T05:15:49.000Z",
+      "location": "Surya Gurugram",
+      "deviationFlag": false,
+      "justification": "",
+      "coords": "",
+      "distance": 0,
+      "facePhoto": "",
+      "latitude": null,
+      "longitude": null,
+      "createdAt": "2026-10-22T05:15:36.187Z",
+      "updatedAt": "2026-10-22T05:15:36.187Z"
+    },
+    {
       "id": "BIO_usr_bio_1146_2026-10-22",
       "userId": "usr_bio_1146",
       "employeeName": "Javed",
@@ -104654,21 +104688,22 @@
       "date": "2026-10-22",
       "shiftId": "",
       "checkIn": "09:15:31",
-      "checkOut": "",
+      "checkOut": "10:45:48",
       "checkInPunchId": "CJOU232660943_50581_2026-10-22T03:45:31.000Z",
-      "checkOutPunchId": "",
+      "checkOutPunchId": "CJOU232660943_50581_2026-10-22T05:15:48.000Z",
       "biometricPunchId": "CJOU232660943_50581_2026-10-22T03:45:31.000Z",
       "allPunchIds": [
-        "CJOU232660943_50581_2026-10-22T03:45:31.000Z"
+        "CJOU232660943_50581_2026-10-22T03:45:31.000Z",
+        "CJOU232660943_50581_2026-10-22T05:15:48.000Z"
       ],
-      "status": "On Time",
+      "status": "Half Day",
       "biometricUsed": "HS Office",
       "biometricDeviceId": "CJOU232660943",
-      "departureLocation": "",
-      "departureDevice": "",
+      "departureLocation": "HS Office",
+      "departureDevice": "HS Office",
       "departureDeviceId": "",
       "biometricUserId": "50581",
-      "lastBiometricPunchAt": "2026-10-22T03:45:31.000Z",
+      "lastBiometricPunchAt": "2026-10-22T05:15:48.000Z",
       "location": "HS Office",
       "deviationFlag": false,
       "justification": "",
@@ -104678,7 +104713,7 @@
       "latitude": null,
       "longitude": null,
       "createdAt": "2026-10-22T04:33:46.950Z",
-      "updatedAt": "2026-10-22T04:47:46.771Z",
+      "updatedAt": "2026-10-22T05:15:36.182Z",
       "_id": "6ad9922eda8fa684c21aad4b",
       "__v": 0
     },
@@ -2442528,10 +2442563,41 @@
   "biometricSync": {
     "deviceIp": "192.168.1.7",
     "deviceSerial": "CEZF192660044",
-    "lastSyncAt": "2026-10-22T05:14:34.205Z",
+    "lastSyncAt": "2026-10-22T05:15:36.303Z",
     "lastLogCount": 3000
   },
   "activityLogs": [
+    {
+      "timestamp": "2026-10-22T05:15:36.187Z",
+      "action": "BIOMETRIC_CHECKIN",
+      "userId": "usr_bio_1331",
+      "userName": "Sohanlal",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_1331_2026-10-22",
+        "shiftId": "",
+        "checkIn": "10:45:49",
+        "status": "Late",
+        "device": "Surya Gurugram"
+      },
+      "ipAddress": "127.0.0.1"
+    },
+    {
+      "timestamp": "2026-10-22T05:15:36.182Z",
+      "action": "BIOMETRIC_CHECKOUT",
+      "userId": "usr_bio_50581",
+      "userName": "MAHESH",
+      "userRole": "employee",
+      "details": {
+        "attendanceId": "BIO_usr_bio_50581_2026-10-22",
+        "shiftId": "",
+        "checkIn": "09:15:31",
+        "checkOut": "10:45:48",
+        "status": "Half Day",
+        "device": "HS Office"
+      },
+      "ipAddress": "127.0.0.1"
+    },
     {
       "timestamp": "2026-10-22T05:14:34.110Z",
       "action": "BIOMETRIC_CHECKIN",
@@ -2450041,43 +2450107,9 @@
         "device": "Surya Gurugram"
       },
       "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-22T04:33:27.631Z",
-      "action": "BIOMETRIC_CHECKOUT",
-      "userId": "usr_bio_1293",
-      "userName": "Vishal",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_1293_2026-10-21",
-        "shiftId": "",
-        "checkIn": "10:28:55",
-        "checkOut": "21:02:18",
-        "status": "Late",
-        "device": "PITAM PURA"
-      },
-      "ipAddress": "127.0.0.1"
-    },
-    {
-      "timestamp": "2026-10-22T04:33:27.626Z",
-      "action": "BIOMETRIC_CHECKOUT",
-      "userId": "usr_bio_1247",
-      "userName": "Sagar",
-      "userRole": "employee",
-      "details": {
-        "attendanceId": "BIO_usr_bio_1247_2026-10-21",
-        "shiftId": "",
-        "checkIn": "10:29:06",
-        "checkOut": "21:02:16",
-        "status": "Late",
-        "device": "SURYA OMAXE"
-      },
-      "ipAddress": "127.0.0.1"
     }
   ],
   "processedPunchIds": [
-    "CGKK230961662_0543_2026-10-20T03:39:35.000Z",
-    "CEZF192660044_1087_2026-10-20T03:42:44.000Z",
     "CEZF192660044_998_2026-10-20T03:43:21.000Z",
     "GED7253700398_5084_2026-10-20T03:43:25.000Z",
     "CEZF192660044_1102_2026-10-20T03:43:49.000Z",
@@ -2455075,7 +2455107,9 @@
     "CJOU232660943_5443_2026-10-22T05:15:07.000Z",
     "GED7254501292_947_2026-10-22T05:15:13.000Z",
     "GED7254501292_1234_2026-10-22T05:15:19.000Z",
-    "GED7254501292_1146_2026-10-22T05:15:28.000Z"
+    "GED7254501292_1146_2026-10-22T05:15:28.000Z",
+    "CJOU232660943_50581_2026-10-22T05:15:48.000Z",
+    "GED7261303265_1331_2026-10-22T05:15:49.000Z"
   ],
   "biometricDevices": [
     {
@@ -2455090,12 +2455124,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 161,
       "totalPunchesCount": 14393,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.569Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8d",
@@ -2455109,12 +2455144,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 218,
       "totalPunchesCount": 12942,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.574Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8e",
@@ -2455128,12 +2455164,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 171,
       "totalPunchesCount": 777,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.576Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8f",
@@ -2455147,12 +2455184,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 497,
       "totalPunchesCount": 16192,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.578Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c90",
@@ -2455166,12 +2455204,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 157,
       "totalPunchesCount": 13031,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.580Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c91",
@@ -2455185,12 +2455224,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 104,
       "totalPunchesCount": 7843,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.582Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c92",
@@ -2455204,12 +2455244,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 226,
       "totalPunchesCount": 14172,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.584Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c93",
@@ -2455223,12 +2455264,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 218,
       "totalPunchesCount": 15752,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T05:12:31.586Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c94",
@@ -2455242,12 +2455284,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 162,
       "totalPunchesCount": 7251,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.588Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c95",
@@ -2455261,12 +2455304,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 714,
       "totalPunchesCount": 19005,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.590Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c96",
@@ -2455280,12 +2455324,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
-      "totalPunchesCount": 19873,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 687,
+      "totalPunchesCount": 19875,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.592Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c97",
@@ -2455299,12 +2455344,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 160,
       "totalPunchesCount": 11109,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.594Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c98",
@@ -2455318,12 +2455364,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
-      "totalPunchesCount": 2418,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 58,
+      "totalPunchesCount": 2421,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.596Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c99",
@@ -2455337,12 +2455384,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T05:13:09.295Z",
-      "enrolledUsersCount": 1343,
-      "totalPunchesCount": 1551,
+      "lastSyncAt": "2026-10-22T05:18:29.994Z",
+      "enrolledUsersCount": 64,
+      "totalPunchesCount": 1552,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T05:12:31.598Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     }
   ],
   "biometricVault": [
