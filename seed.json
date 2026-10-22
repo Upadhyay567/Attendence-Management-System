@@ -2463926,12 +2463926,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 161,
       "totalPunchesCount": 14393,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.061Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8d",
@@ -2463945,12 +2463946,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 218,
       "totalPunchesCount": 12943,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.065Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8e",
@@ -2463964,12 +2463966,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 171,
       "totalPunchesCount": 777,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.067Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c8f",
@@ -2463983,12 +2463986,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 497,
       "totalPunchesCount": 16193,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.069Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c90",
@@ -2464002,12 +2464006,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
-      "totalPunchesCount": 13031,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 157,
+      "totalPunchesCount": 13032,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.071Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c91",
@@ -2464021,12 +2464026,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 104,
       "totalPunchesCount": 7843,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.073Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c92",
@@ -2464040,12 +2464046,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 226,
       "totalPunchesCount": 14176,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.076Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c93",
@@ -2464059,12 +2464066,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 218,
       "totalPunchesCount": 15818,
       "createdAt": "2026-10-20T09:43:09.241Z",
       "updatedAt": "2026-10-22T08:10:41.078Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c94",
@@ -2464078,12 +2464086,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 162,
       "totalPunchesCount": 7251,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.079Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c95",
@@ -2464097,12 +2464106,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 714,
       "totalPunchesCount": 19081,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.081Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c96",
@@ -2464116,12 +2464126,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 687,
       "totalPunchesCount": 19875,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.082Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c97",
@@ -2464135,12 +2464146,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 160,
       "totalPunchesCount": 11112,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.084Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c98",
@@ -2464154,12 +2464166,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 58,
       "totalPunchesCount": 2425,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.085Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     },
     {
       "_id": "6ad737ada09cd872146a3c99",
@@ -2464173,12 +2464186,13 @@
       "status": "Online",
       "enabled": true,
       "isPrimary": false,
-      "lastSyncAt": "2026-10-22T08:11:22.621Z",
-      "enrolledUsersCount": 1343,
+      "lastSyncAt": "2026-10-22T08:16:40.449Z",
+      "enrolledUsersCount": 64,
       "totalPunchesCount": 1556,
       "createdAt": "2026-10-20T09:43:09.242Z",
       "updatedAt": "2026-10-22T08:10:41.086Z",
-      "__v": 0
+      "__v": 0,
+      "source": "easywdms"
     }
   ],
   "biometricVault": [
