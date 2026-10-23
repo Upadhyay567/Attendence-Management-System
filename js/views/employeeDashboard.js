@@ -31,7 +31,7 @@ export function renderEmployeeDashboard() {
   const officeCoordsMap = window.OFFICE_COORDINATES || {
     'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
     'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
-    'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+    'HS Office': { lat: 28.6952, lng: 77.1860 }
   };
   Object.entries(officeCoordsMap).forEach(([locName, coords]) => {
     const isPreferred = locName === officeName;

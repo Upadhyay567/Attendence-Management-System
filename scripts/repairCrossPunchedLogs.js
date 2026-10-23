@@ -13,7 +13,7 @@ const schedules = seed.schedules || [];
 // Device serial to location / name mapping
 const deviceMap = {
   'GED7241901313': { name: 'SURYA OMAXE', location: 'Delhi Head Office', branch: 'Delhi Head Office' },
-  'CJOU232660306': { name: 'Ashok Vihar_Extra', location: 'Noida sector 61', branch: 'Noida Branch' },
+  'CJOU232660306': { name: 'HS Office- FF', location: 'HS Office', branch: 'HS Office' },
   'GED7254501292': { name: 'Raagwaas Chattarpur', location: 'Chattarpur Office', branch: 'Chattarpur Branch' },
   '0056120200363': { name: 'WH-1340-close', location: 'WH-1340-close', branch: 'WH-1340-close' },
   'CEZF192660043': { name: 'Siyonee', location: 'Siyonee', branch: 'Siyonee' },

@@ -10,7 +10,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
   beforeAll(async () => {
     await connectMongoose();
     await syncLocalToMongoOnBoot();
-  });
+  }, 120000);
 
   // Close database connection after tests
   afterAll(async () => {
@@ -259,7 +259,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(Array.isArray(response.body.devices)).toBe(true);
       expect(response.body.devices.length).toBeGreaterThanOrEqual(1);
 
-      const sampleDev = response.body.devices.find(d => d.id === 'dev_k40_noida' || d.id.startsWith('dev_wdms_') || d.ip === '192.168.0.51' || d.ip === '192.168.1.51');
+      const sampleDev = response.body.devices.find(d => d.id === 'dev_k40_primary' || d.id === 'dev_k40_noida' || d.id.startsWith('dev_wdms_') || d.ip === '192.168.0.51' || d.ip === '192.168.1.51');
       expect(sampleDev).toBeDefined();
     });
 
@@ -449,8 +449,8 @@ describe('HS Group Attendance System API Integration Tests', () => {
           key: 'users',
           query: { id: testUserId },
           updates: {
-            preferredLocation: 'Noida sector 61',
-            shiftLocations: { 'sch_mfl8wvv': 'Noida sector 61' }
+            preferredLocation: 'HS Office',
+            shiftLocations: { 'sch_mfl8wvv': 'HS Office' }
           }
         });
 
@@ -480,10 +480,10 @@ describe('HS Group Attendance System API Integration Tests', () => {
             role: 'employee',
             scheduleIds: ['sch_q8jji9v', 'sch_3ebecon'],
             scheduleId: 'sch_q8jji9v',
-            preferredLocations: ['Noida sector 61', 'chandani chowk'],
-            preferredLocation: 'Noida sector 61',
+            preferredLocations: ['HS Office', 'chandani chowk'],
+            preferredLocation: 'HS Office',
             shiftLocations: {
-              'sch_q8jji9v': 'Noida sector 61',
+              'sch_q8jji9v': 'HS Office',
               'sch_3ebecon': 'chandani chowk'
             }
           }
@@ -496,7 +496,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
       const testUser = stateRes.body.users.find(u => u.id === testUserId);
       expect(testUser).toBeDefined();
       expect(testUser.scheduleIds).toEqual(expect.arrayContaining(['sch_q8jji9v', 'sch_3ebecon']));
-      expect(testUser.preferredLocations).toEqual(expect.arrayContaining(['Noida sector 61', 'chandani chowk']));
+      expect(testUser.preferredLocations).toEqual(expect.arrayContaining(['HS Office', 'chandani chowk']));
 
       // Clean up test user so database remains clean
       await request(app)

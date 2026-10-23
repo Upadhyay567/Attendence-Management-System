@@ -2091,8 +2091,8 @@ export async function downloadBulkUploadTemplate(format = 'xlsx') {
       "Employee Name": "Priya Verma",
       "Department": "Human Resources",
       "Designation": "HR Executive",
-      "Branch": "Noida Branch",
-      "Work Location": "Noida sector 61",
+      "Branch": "HS Office",
+      "Work Location": "HS Office",
       "Mobile Number": "+91 9812345678",
       "Email": "priya.verma@example.com",
       "Date of Joining": "2024-06-01",
@@ -2100,7 +2100,7 @@ export async function downloadBulkUploadTemplate(format = 'xlsx') {
       "Gender": "Female",
       "Blood Group": "O+",
       "Pincode": "201301",
-      "City": "Noida",
+      "City": "Delhi",
       "State": "Uttar Pradesh",
       "Biometric User ID": "102",
       "Assigned Shift": "General Shift",
@@ -2156,7 +2156,7 @@ export async function downloadBulkUploadTemplate(format = 'xlsx') {
       }
     });
     locSet.add('Delhi Head Office');
-    locSet.add('Noida sector 61');
+    locSet.add('HS Office');
     return Array.from(locSet).sort((a, b) => a.localeCompare(b));
   };
 

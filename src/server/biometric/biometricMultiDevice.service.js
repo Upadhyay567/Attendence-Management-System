@@ -662,8 +662,8 @@ async function replicateTemplatesAcrossDevices(options = {}) {
         password: '',
         cardno: 0,
         templateData: `FP_TEMPLATE_AUTO_VAULT_${bioId}`,
-        enrolledOnDevice: devices[0]?.id || 'dev_k40_noida',
-        syncedDevices: [devices[0]?.id || 'dev_k40_noida'],
+        enrolledOnDevice: devices[0]?.id || 'dev_k40_primary',
+        syncedDevices: [devices[0]?.id || 'dev_k40_primary'],
         lastReplicatedAt: new Date().toISOString()
       };
       vaultMap.set(bioId, newEntry);

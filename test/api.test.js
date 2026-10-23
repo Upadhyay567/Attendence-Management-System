@@ -278,7 +278,7 @@ describe('Attendance System Core & Security API Tests', () => {
     it('Verify location filter matching logic matches preferred, assigned, and punch locations', () => {
       const user1 = { id: 'u1', employeeId: 'E1', preferredLocation: 'GT KARNAL SITE' };
       const user2 = { id: 'u2', employeeId: 'E2', preferredLocation: 'Cyber City, Gurugram' };
-      const user3 = { id: 'u3', employeeId: 'E3', assignedLocations: ['Noida sector 61'] };
+      const user3 = { id: 'u3', employeeId: 'E3', assignedLocations: ['HS Office'] };
 
       const checkLoc = (u, target) => {
         if (!target || target === 'all') return true;
@@ -294,7 +294,7 @@ describe('Attendance System Core & Security API Tests', () => {
       expect(checkLoc(user1, 'GT KARNAL SITE')).toBe(true);
       expect(checkLoc(user1, 'Cyber City, Gurugram')).toBe(false);
       expect(checkLoc(user2, 'Cyber City, Gurugram')).toBe(true);
-      expect(checkLoc(user3, 'Noida sector 61')).toBe(true);
+      expect(checkLoc(user3, 'HS Office')).toBe(true);
       expect(checkLoc(user3, 'GT KARNAL SITE')).toBe(false);
     });
   });

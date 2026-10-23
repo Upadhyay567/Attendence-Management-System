@@ -256,7 +256,7 @@ export function formatLocationTag(loc) {
   if (upper === 'SURYA GURUGRAM') return 'Surya Gurugram';
   if (upper === 'DELHI HEAD OFFICE') return 'Delhi Head Office';
   if (upper === 'HS OFFICE' || upper === 'HS OFFICE HQ' || upper === 'OFFICE HQ' || upper.includes('HS GROUP HQ')) return 'HS Office HQ';
-  if (upper.includes('NOIDA SECTOR 61') || upper === 'NOIDA') return 'Noida Sector 61';
+  if (upper.includes('NOIDA SECTOR 61') || upper === 'NOIDA') return 'HS Office HQ';
   if (upper.includes('CHATTARPUR') || upper.includes('RAAGWAAS')) return 'Chattarpur Office';
   if (upper === 'SIYONEE') return 'Siyonee';
   if (upper === 'BRANCH OFFICE') return 'Branch Office';

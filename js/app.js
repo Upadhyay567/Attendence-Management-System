@@ -7771,7 +7771,7 @@ function renderAdminMyAttendances() {
     'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
     'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
     'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
-    'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+    'HS Office': { lat: 28.6952, lng: 77.1860 }
   };
   Object.entries(officeCoordsMap).forEach(([locName, coords]) => {
     const isPreferred = locName === officeName;
@@ -8401,7 +8401,7 @@ function renderAdminMyAttendances() {
         'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
         'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
         'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
-        'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+        'HS Office': { lat: 28.6952, lng: 77.1860 }
       };
       const targetCoords = officeMap[officeName] || officeMap['Kohat Enclave, Pitampura, Delhi'] || officeMap[Object.keys(officeMap)[0]] || { lat: 28.6978, lng: 77.1408 };
       const distance = calculateHaversineDistance(coords.lat, coords.lng, targetCoords.lat, targetCoords.lng);
@@ -8637,7 +8637,7 @@ function renderAdminMyAttendances() {
       'Kohat Enclave, Pitampura, Delhi': { lat: 28.6978, lng: 77.1408 },
       'Chandni Chowk': { lat: 28.6562, lng: 77.2310 },
       'Omaxe City, Delhi': { lat: 28.8130, lng: 77.0673 },
-      'Noida sector 61': { lat: 28.5996, lng: 77.3621 }
+      'HS Office': { lat: 28.6952, lng: 77.1860 }
     };
     const officeName = (user && user.shiftLocations && schedule && user.shiftLocations[schedule.id]) || (user && user.preferredLocation) || 'Kohat Enclave, Pitampura, Delhi';
     const targetCoords = officeCoordsFallback[officeName] || officeCoordsFallback['Kohat Enclave, Pitampura, Delhi'] || officeCoordsFallback[Object.keys(officeCoordsFallback)[0]] || { lat: 28.6978, lng: 77.1408 };

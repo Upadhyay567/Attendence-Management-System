@@ -59,14 +59,14 @@ describe('Attendance Dashboard All Locations & Real-Time Biometric Punch Monitor
 
     test('Collects and trims valid locations from all assignment properties', () => {
       const user = {
-        preferredLocation: ' Noida sector 61 ',
+        preferredLocation: ' HS Office ',
         preferredLocations: ['Site Alpha', 'Site Beta'],
         shiftLocations: { shift_1: 'Site Gamma', shift_2: 'Site Alpha' },
         assignedLocations: ['Site Delta', 'Site Beta']
       };
       const locs = getUserAssignedLocations(user);
       expect(locs).toEqual(expect.arrayContaining([
-        'Noida sector 61',
+        'HS Office',
         'Site Alpha',
         'Site Beta',
         'Site Gamma',

@@ -33,7 +33,7 @@ describe('Employee Shift & Worksite Assignment - Manual Allocation & Biometric L
 
       // Verify known biometric worksite locations are present
       expect(bioLocs).toContain('GT KARNAL SITE');
-      expect(bioLocs).toContain('Noida sector 61');
+      expect(bioLocs).toContain('HS Office');
       expect(bioLocs).toContain('Chattarpur Office');
       expect(bioLocs).toContain('PITAM PURA');
       expect(bioLocs).toContain('Delhi Head Office');
@@ -59,7 +59,7 @@ describe('Employee Shift & Worksite Assignment - Manual Allocation & Biometric L
       expect(coords['GT KARNAL SITE'].lat).toBeCloseTo(28.7180, 2);
       expect(coords['GT KARNAL SITE'].lng).toBeCloseTo(77.1420, 2);
 
-      expect(coords['Noida sector 61']).toBeDefined();
+      expect(coords['HS Office']).toBeDefined();
       expect(coords['Delhi Head Office']).toBeDefined();
       expect(coords['Chattarpur Office']).toBeDefined();
     });
@@ -107,7 +107,7 @@ describe('Employee Shift & Worksite Assignment - Manual Allocation & Biometric L
     });
 
     test('Manual assignment: updating worksite location modifies preferredLocations and strips sample placeholders', () => {
-      const selectedLocs = ['GT KARNAL SITE', 'Noida sector 61'];
+      const selectedLocs = ['GT KARNAL SITE', 'HS Office'];
       DB.updateUser(testUser.id, {
         preferredLocations: selectedLocs,
         preferredLocation: selectedLocs[0]

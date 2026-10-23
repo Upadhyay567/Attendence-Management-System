@@ -216,7 +216,7 @@ async function downloadBulkUploadTemplateExcel(req, res) {
       }
     });
     locSet.add('Delhi Head Office');
-    locSet.add('Noida sector 61');
+    locSet.add('HS Office');
     const workLocations = Array.from(locSet).sort((a, b) => a.localeCompare(b));
 
     // 2. Fetch available shifts from database records
@@ -332,17 +332,17 @@ async function downloadBulkUploadTemplateExcel(req, res) {
       name: 'Priya Verma',
       dept: 'Human Resources',
       desig: 'HR Executive',
-      branch: 'Noida Branch',
-      location: 'Noida sector 61',
+      branch: 'HS Office',
+      location: 'HS Office',
       phone: '+91 9812345678',
       email: 'priya.verma@example.com',
       doj: '2024-06-01',
       dob: '1998-03-12',
       gender: 'Female',
       bloodGroup: 'O+',
-      pincode: '201301',
-      city: 'Noida',
-      state: 'Uttar Pradesh',
+      pincode: '110006',
+      city: 'Delhi',
+      state: 'Delhi',
       bioId: '102',
       shift: 'General Shift',
       base: 38000,

@@ -40,7 +40,7 @@ const defaultUsers = [
     "documents": [],
     "resume": null,
     "aadhar": null,
-    "preferredLocation": "Noida sector 61",
+    "preferredLocation": "HS Office",
     "managerId": "",
     "assignedById": "usr_admin",
     "profileVerificationStatus": "Approved",
@@ -108,7 +108,7 @@ const defaultUsers = [
     "documents": [],
     "resume": null,
     "aadhar": null,
-    "preferredLocation": "Noida sector 61",
+    "preferredLocation": "HS Office",
     "managerId": "",
     "assignedById": "usr_7kek2wc",
     "profileVerificationStatus": "Approved",
@@ -142,7 +142,7 @@ const defaultUsers = [
     "documents": [],
     "resume": null,
     "aadhar": null,
-    "preferredLocation": "Noida sector 61",
+    "preferredLocation": "HS Office",
     "managerId": "",
     "assignedById": "usr_7kek2wc",
     "profileVerificationStatus": "Approved",
@@ -190,7 +190,7 @@ const defaultUsers = [
       "size": "512 KB",
       "date": "2026-06-10"
     },
-    "preferredLocation": "Noida sector 61",
+    "preferredLocation": "HS Office",
     "assignedById": "usr_hr",
     "profileVerificationStatus": "Approved",
     "profileVerificationComment": "",
@@ -293,7 +293,7 @@ const defaultUsers = [
     "username": "rahulsharma",
     "password": "Surya@123",
     "role": "employee",
-    "preferredLocation": "Noida sector 61",
+    "preferredLocation": "HS Office",
     "managerId": "usr_manager",
     "assignedById": "usr_7kek2wc"
   },
@@ -1756,7 +1756,6 @@ export const DB = {
       return [
         'GT KARNAL SITE',
         'Surya Omaxe',
-        'Noida sector 61',
         'Chattarpur Office',
         'Siyonee',
         'RETAIL',
@@ -1771,7 +1770,6 @@ export const DB = {
       ].sort();
     }
     locs.add('Delhi Head Office');
-    locs.add('Noida sector 61');
     return [...locs].sort();
   },
 
@@ -1790,7 +1788,6 @@ export const DB = {
     const defaultCoords = {
       'GT KARNAL SITE': { lat: 28.7180, lng: 77.1420 },
       'Surya Omaxe': { lat: 28.6950, lng: 77.1855 },
-      'Noida sector 61': { lat: 28.5990, lng: 77.3620 },
       'Chattarpur Office': { lat: 28.5020, lng: 77.1780 },
       'Siyonee': { lat: 28.6952, lng: 77.1860 },
       'RETAIL': { lat: 28.6950, lng: 77.1850 },
@@ -1876,7 +1873,6 @@ export const DB = {
       'HS Office',
       'WH-1340',
       'Siyonee',
-      'Noida sector 61',
       'Chandani Chowk 2',
       'Raagwaas Chattarpur'
     ].forEach(l => locSet.add(l));

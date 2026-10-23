@@ -18,7 +18,7 @@ function SchedulesView({ dbState, onDataUpdated }) {
     // Defaults if empty
     if (locSet.size === 0) {
       locSet.add('Chandni Chowk HQ');
-      locSet.add('Noida Sector 61');
+      locSet.add('HS Office');
       locSet.add('Omaxe Mall Worksite');
     }
     return Array.from(locSet);

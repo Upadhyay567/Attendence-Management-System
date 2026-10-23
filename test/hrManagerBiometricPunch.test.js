@@ -53,7 +53,7 @@ describe('HR & Manager Role Biometric Punch Display & Scoping', () => {
       expect(hrUser).toBeDefined();
       const locs = getUserAssignedLocations(hrUser);
       expect(locs).toContain('GT KARNAL SITE');
-      expect(locs).toContain('Noida sector 61');
+      expect(locs).toContain('HS Office');
     });
 
     test('Amit Sharma (Manager) has assigned worksites in seed.json', () => {
