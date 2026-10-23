@@ -286,7 +286,7 @@ async function fetchTerminals(cookieStr) {
         const meta = resolveDeviceLocation(sn, term.alias || term.terminal_name);
 
         let existing = db.biometricDevices.find(d => String(d.serial || '').trim().toUpperCase() === sn);
-        if (!existing && (sn === 'CEZF192660044' || ip === '192.168.1.7')) {
+        if (!existing && sn === 'CEZF192660044') {
           existing = db.biometricDevices.find(d => d.id === 'dev_zk_main' || d.serial === 'CEZF192660044');
         }
 
@@ -300,14 +300,18 @@ async function fetchTerminals(cookieStr) {
           existing.status = isOnline ? 'Online' : 'Offline';
           existing.lastSyncAt = new Date().toISOString();
           existing.source = 'easywdms';
-          if (ip) existing.ip = ip;
+          if (sn === 'GED7241901313') {
+            existing.ip = '192.168.1.8'; // Disambiguate Surya Omaxe from local GT Karnal device
+          } else if (ip) {
+            existing.ip = ip;
+          }
           existing.enrolledUsersCount = term.user_count || existing.enrolledUsersCount || 0;
           existing.totalPunchesCount = term.transaction_count || existing.totalPunchesCount || 0;
         } else {
           db.biometricDevices.push({
             id: `dev_wdms_${sn.toLowerCase()}`,
             name: meta.name,
-            ip: ip || activeHost,
+            ip: sn === 'GED7241901313' ? '192.168.1.8' : (ip || activeHost),
             port: 4370,
             serial: sn,
             location: meta.location,

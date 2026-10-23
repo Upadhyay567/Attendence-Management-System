@@ -1347,13 +1347,15 @@ async function syncBiometricAttendance(options = {}) {
 
     const reachabilityResults = await Promise.all(
       devices.map(async (dev) => {
-        if (!dev.enabled) return { id: dev.id, reachable: false, isWDMS: false };
-        const isLocalPrimary = (dev.ip === DEVICE.ip) || (dev.id === 'dev_zk_main') || Boolean(dev.isPrimary);
+        if (!dev.enabled) return { id: dev.id, reachable: false, isWDMS: false, isLocalPrimary: false };
+        const primarySerial = String(process.env.BIOMETRIC_DEVICE_SERIAL || DEVICE.serial || 'CEZF192660044').trim().toUpperCase();
+        const devSerial = String(dev.serial || '').trim().toUpperCase();
+        const isLocalPrimary = Boolean(dev.isPrimary) || dev.id === 'dev_zk_main' || (devSerial === primarySerial && dev.ip === DEVICE.ip);
         const isWDMS = !isLocalPrimary && (dev.source === 'easywdms' || String(dev.id).startsWith('dev_wdms_'));
         if (isWDMS) {
-          return { id: dev.id, reachable: isCloudOnline, isWDMS: true };
+          return { id: dev.id, reachable: isCloudOnline, isWDMS: true, isLocalPrimary: false };
         }
-        return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 1000), isWDMS: false };
+        return { id: dev.id, reachable: await isPortReachable(dev.ip, dev.port, 1000), isWDMS: false, isLocalPrimary };
       })
     );
     const reachableMap = new Map(reachabilityResults.map(r => [r.id, r]));
@@ -1390,8 +1392,8 @@ async function syncBiometricAttendance(options = {}) {
       let devLogs = [];
       let isOnline = false;
 
-      // Primary K40 connection (or same IP as env)
-      if (dev.ip === DEVICE.ip || dev.id === 'dev_zk_main' || dev.isPrimary) {
+      // Primary K40 connection (strictly local primary hardware device)
+      if (reachInfo.isLocalPrimary || dev.id === 'dev_zk_main' || dev.isPrimary) {
         try {
           const snapshot = await getDeviceSnapshot();
           devUsers = snapshot.users || [];

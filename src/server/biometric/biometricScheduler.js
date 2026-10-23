@@ -67,11 +67,12 @@ async function runSync() {
     const wdmsPass = process.env.WDMS_PASS || 'Admin@123';
 
     // Run local ZKTeco K40 (192.168.1.7) and EasyWDMS cloud sync concurrently
-    await Promise.allSettled([
+    const [localRes, wdmsRes] = await Promise.allSettled([
       syncBiometricAttendance().catch(err => {
         if (!err?.message?.includes('timeout') && !err?.message?.includes('ECONNREFUSED')) {
           console.warn('⚠️ Local biometric sync notice:', err.message);
         }
+        return { error: err.message };
       }),
       syncFromWDMS(wdmsUser, wdmsPass, { maxPages: 3, pageSize: 1000 }).catch(err => {
         const now = Date.now();
@@ -79,8 +80,27 @@ async function runSync() {
           console.warn('⚠️ WDMS Cloud biometric sync warning (throttled):', err.message);
           lastWdmsWarnTime = now;
         }
+        return { error: err.message };
       })
     ]);
+
+    const localVal = localRes.status === 'fulfilled' ? localRes.value : null;
+    const wdmsVal = wdmsRes.status === 'fulfilled' ? wdmsRes.value : null;
+
+    const hadUpdates = (localVal?.result && (localVal.result.created > 0 || localVal.result.updated > 0)) ||
+                       (wdmsVal?.ingestionResult && (wdmsVal.ingestionResult.created > 0 || wdmsVal.ingestionResult.updated > 0));
+
+    if (hadUpdates) {
+      try {
+        const { broadcastSSEEvent } = require('../routes/events.routes');
+        broadcastSSEEvent('db_updated', {
+          type: 'biometric_sync',
+          timestamp: Date.now(),
+          local: localVal,
+          wdms: wdmsVal
+        });
+      } catch (_) {}
+    }
 
   } catch (error) {
     console.error(
