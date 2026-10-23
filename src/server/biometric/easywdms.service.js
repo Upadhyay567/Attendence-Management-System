@@ -28,6 +28,36 @@ function getActiveHost() {
   return activeHost;
 }
 
+const WDMS_AREA_ID_MAP = {
+  16: 'Surya Gurugram',
+  15: 'Chattarpur Office',
+  11: 'Surya Omaxe',
+  9: 'GT KARNAL SITE',
+  8: 'PUNJABI BAGH',
+  7: 'ASHOK VIHAR',
+  6: 'Siyonee',
+  14: 'PITAM PURA',
+  3: 'RETAIL',
+  4: 'HS Office',
+  5: 'HS Office',
+  17: 'HS Office',
+  2: 'WH-1340'
+};
+
+function resolveEmployeeLocationFromWDMS(emp) {
+  const areas = Array.isArray(emp.area) ? emp.area : (emp.area ? [emp.area] : []);
+  const areaIds = areas.map(a => typeof a === 'object' ? Number(a.id) : Number(a)).filter(Boolean);
+  
+  // Specific branch offices take priority over generic HQ/Retail areas (3, 4, 5, 17)
+  const branchPriority = [16, 15, 11, 9, 8, 7, 6, 14, 2, 3, 4, 5, 17];
+  for (const bId of branchPriority) {
+    if (areaIds.includes(bId) && WDMS_AREA_ID_MAP[bId]) {
+      return WDMS_AREA_ID_MAP[bId];
+    }
+  }
+  return emp.location || 'HS Office';
+}
+
 // Canonical hardware terminal mapping across all branches
 function resolveDeviceLocation(sn, alias) {
   const cleanSn = String(sn || '').trim().toUpperCase();
@@ -537,8 +567,16 @@ async function syncFromWDMS(username, password, options = {}) {
       if (pin.startsWith('E') && !exists.employeeId?.startsWith('E')) {
         exists.employeeId = pin;
       }
+      if (!exists.preferredLocation) {
+        const resolved = resolveEmployeeLocationFromWDMS(emp);
+        exists.preferredLocation = resolved;
+        exists.preferredLocations = [resolved];
+        exists.workLocation = resolved;
+        exists.branch = resolved;
+      }
     } else {
       if (pin === '30191' || pin.toLowerCase() === 'admin' || (emp.name && emp.name.toLowerCase() === 'admin')) return;
+      const resolvedLoc = resolveEmployeeLocationFromWDMS(emp);
       dbUsers.push({
         id: `usr_bio_${pin}`,
         employeeId: pin,
@@ -551,8 +589,10 @@ async function syncFromWDMS(username, password, options = {}) {
         scheduleId: '',
         scheduleIds: [],
         shiftLocations: {},
-        preferredLocation: emp.area?.area_name || emp.location || '',
-        preferredLocations: (emp.area?.area_name || emp.location) ? [emp.area?.area_name || emp.location] : [],
+        preferredLocation: resolvedLoc,
+        preferredLocations: [resolvedLoc],
+        workLocation: resolvedLoc,
+        branch: resolvedLoc,
         department: emp.department?.dept_name || 'Operations'
       });
       newEmployeesAdded++;
