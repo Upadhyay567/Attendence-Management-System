@@ -82,10 +82,6 @@ async function runSync() {
       })
     ]);
 
-    try {
-      const { autoCommitAndPush } = require('../utils/gitAutoSync');
-      autoCommitAndPush('chore(sync): automated biometric punch sync');
-    } catch (_) {}
   } catch (error) {
     console.error(
       '❌ Scheduled biometric sync error:',

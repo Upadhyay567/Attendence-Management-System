@@ -11,7 +11,9 @@ let _lastGitSyncTime = 0;
  * @param {boolean} force - Bypass cooldown throttle
  */
 function autoCommitAndPush(customMessage = 'chore(sync): automated biometric punch sync', force = false) {
-  const enabled = String(process.env.AUTO_GIT_COMMIT ?? 'true').toLowerCase() !== 'false';
+  // Disabled for routine biometric punches per user requirement.
+  // Git commits and pushes should only occur when project code/configuration changes are made.
+  const enabled = String(process.env.AUTO_GIT_COMMIT ?? 'false').toLowerCase() === 'true';
   if (!enabled) return;
 
   const now = Date.now();
