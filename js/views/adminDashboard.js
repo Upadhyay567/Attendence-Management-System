@@ -2809,13 +2809,13 @@ function renderAdminUsers() {
                 
                 const totalAllowVal = (u.totalAllowances !== null && u.totalAllowances !== undefined && u.totalAllowances !== '')
                   ? Number(u.totalAllowances)
-                  : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.bonus || 0));
+                  : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.allowanceCCA || 0) + (u.allowancePerformance || 0) + (u.allowanceOther || 0) + (u.bonus || 0));
 
                 const totalDeductVal = (u.totalDeductions !== null && u.totalDeductions !== undefined && u.totalDeductions !== '')
                   ? Number(u.totalDeductions)
                   : ((u.totalDeduction !== null && u.totalDeduction !== undefined && u.totalDeduction !== '')
                     ? Number(u.totalDeduction)
-                    : ((u.deductionPF || 0) + (u.deductionPT || 0)));
+                    : ((u.deductionPF || 0) + (u.deductionESI || 0) + (u.deductionAdvance || 0) + (u.deductionOther || 0)));
 
                 return `
                   <tr>
@@ -3076,13 +3076,13 @@ function renderAdminUsers() {
           
           const totalAllowVal = (u.totalAllowances !== null && u.totalAllowances !== undefined && u.totalAllowances !== '')
             ? Number(u.totalAllowances)
-            : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.bonus || 0));
+            : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.allowanceCCA || 0) + (u.allowancePerformance || 0) + (u.allowanceOther || 0) + (u.bonus || 0));
 
           const totalDeductVal = (u.totalDeductions !== null && u.totalDeductions !== undefined && u.totalDeductions !== '')
             ? Number(u.totalDeductions)
             : ((u.totalDeduction !== null && u.totalDeduction !== undefined && u.totalDeduction !== '')
               ? Number(u.totalDeduction)
-              : ((u.deductionPF || 0) + (u.deductionPT || 0)));
+              : ((u.deductionPF || 0) + (u.deductionESI || 0) + (u.deductionAdvance || 0) + (u.deductionOther || 0)));
 
           return `
             <tr>
@@ -3241,14 +3241,38 @@ function openUserModal(userId = null, initialTab = 'employee') {
             <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
-            <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
-            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}" placeholder="e.g. 0">
+            <label class="form-label" for="editor-cca" style="font-size:11px">CCA (INR/Month)</label>
+            <input class="form-input" type="number" id="editor-cca" value="${isEdit ? (user.allowanceCCA !== undefined && user.allowanceCCA !== null ? user.allowanceCCA : '') : ''}" placeholder="e.g. 0">
           </div>
         </div>
         <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
           <div>
-            <label class="form-label" for="editor-pt" style="font-size:11px">Professional Tax (PT)</label>
-            <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}" placeholder="e.g. 0">
+            <label class="form-label" for="editor-performance" style="font-size:11px">Performance Amount (INR)</label>
+            <input class="form-input" type="number" id="editor-performance" value="${isEdit ? (user.allowancePerformance !== undefined && user.allowancePerformance !== null ? user.allowancePerformance : '') : ''}" placeholder="e.g. 0">
+          </div>
+          <div>
+            <label class="form-label" for="editor-other-allowances" style="font-size:11px">Other Allowances (INR)</label>
+            <input class="form-input" type="number" id="editor-other-allowances" value="${isEdit ? (user.allowanceOther !== undefined && user.allowanceOther !== null ? user.allowanceOther : '') : ''}" placeholder="e.g. 0">
+          </div>
+        </div>
+        <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
+            <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}" placeholder="e.g. 0">
+          </div>
+          <div>
+            <label class="form-label" for="editor-esi" style="font-size:11px">ESI Deduction (INR/Month)</label>
+            <input class="form-input" type="number" id="editor-esi" value="${isEdit ? (user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : '') : ''}" placeholder="e.g. 0">
+          </div>
+        </div>
+        <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label" for="editor-advance" style="font-size:11px">Advance Salary (INR)</label>
+            <input class="form-input" type="number" id="editor-advance" value="${isEdit ? (user.deductionAdvance !== undefined && user.deductionAdvance !== null ? user.deductionAdvance : '') : ''}" placeholder="e.g. 0">
+          </div>
+          <div>
+            <label class="form-label" for="editor-other-deductions" style="font-size:11px">Others Deduction (INR)</label>
+            <input class="form-input" type="number" id="editor-other-deductions" value="${isEdit ? (user.deductionOther !== undefined && user.deductionOther !== null ? user.deductionOther : '') : ''}" placeholder="e.g. 0">
           </div>
           <div>
             <label class="form-label" for="editor-tds" style="font-size:11px">TDS Tax Rate (%)</label>
@@ -3548,10 +3572,22 @@ function openUserModal(userId = null, initialTab = 'employee') {
     const allowanceHRA = hraVal === '' ? null : Number(hraVal);
     const travelVal = document.getElementById('editor-travel') ? document.getElementById('editor-travel').value.trim() : '';
     const allowanceTravel = travelVal === '' ? null : Number(travelVal);
+    const ccaVal = document.getElementById('editor-cca') ? document.getElementById('editor-cca').value.trim() : '';
+    const allowanceCCA = ccaVal === '' ? null : Number(ccaVal);
+    const perfVal = document.getElementById('editor-performance') ? document.getElementById('editor-performance').value.trim() : '';
+    const allowancePerformance = perfVal === '' ? null : Number(perfVal);
+    const otherAllowVal = document.getElementById('editor-other-allowances') ? document.getElementById('editor-other-allowances').value.trim() : '';
+    const allowanceOther = otherAllowVal === '' ? null : Number(otherAllowVal);
+
     const pfVal = document.getElementById('editor-pf') ? document.getElementById('editor-pf').value.trim() : '';
     const deductionPF = pfVal === '' ? null : Number(pfVal);
-    const ptVal = document.getElementById('editor-pt') ? document.getElementById('editor-pt').value.trim() : '';
-    const deductionPT = ptVal === '' ? null : Number(ptVal);
+    const esiVal = document.getElementById('editor-esi') ? document.getElementById('editor-esi').value.trim() : '';
+    const deductionESI = esiVal === '' ? null : Number(esiVal);
+    const advanceVal = document.getElementById('editor-advance') ? document.getElementById('editor-advance').value.trim() : '';
+    const deductionAdvance = advanceVal === '' ? null : Number(advanceVal);
+    const otherDedVal = document.getElementById('editor-other-deductions') ? document.getElementById('editor-other-deductions').value.trim() : '';
+    const deductionOther = otherDedVal === '' ? null : Number(otherDedVal);
+    const deductionPT = 0;
     const tdsVal = document.getElementById('editor-tds') ? document.getElementById('editor-tds').value.trim() : '';
     const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
@@ -3622,7 +3658,8 @@ function openUserModal(userId = null, initialTab = 'employee') {
       const existingUserCloned = targetUserObj ? JSON.parse(JSON.stringify(targetUserObj)) : null;
       const updates = { 
         name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, 
-        resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, allowanceCCA, allowancePerformance, allowanceOther,
+        deductionPF, deductionESI, deductionAdvance, deductionOther, deductionPT: 0, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
         photo: photoRemovedExplicitly ? null : (editorPhotoDataUrl || (targetUserObj ? targetUserObj.photo : null)),
@@ -3665,28 +3702,35 @@ function openUserModal(userId = null, initialTab = 'employee') {
         return;
       }
       const hashedPass = Utils.hashPassword(finalPassword);
-      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, biometricUserId, biometricId: biometricUserId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
+      createdUser = DB.addUser({ name, employeeId: employeeId || nextEmpId, biometricUserId, biometricId: biometricUserId, email, phone, dob, username: finalUsername, password: hashedPass, role, baseSalary, scheduleId, scheduleIds, shiftLocations, preferredLocation, gender, department, designation, dateOfJoining, emergencyContact, resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, allowanceCCA, allowancePerformance, allowanceOther, deductionPF, deductionESI, deductionAdvance, deductionOther, deductionPT: 0, deductionTDS, managerId, assignedById, photo: editorPhotoDataUrl || null, city, state });
       if (createdUser) {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee portal profile was registered by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
       }
     }
 
-    try {
-      const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-      const token = sess ? JSON.parse(sess).token : '';
-      await fetch((window.apiBaseUrl || '') + '/api/mutate', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ action: 'sync', data: DB.data })
-      });
-    } catch (err) {
-      console.warn('Network error synchronizing mutation with backend database:', err);
-    }
-
     closeModal(overlay);
+
+    // Background non-blocking sync
+    (async () => {
+      try {
+        const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        const token = sess ? JSON.parse(sess).token : '';
+        const syncData = { ...DB.data };
+        if (Array.isArray(syncData.attendanceLogs) && syncData.attendanceLogs.length > 100) {
+          syncData.attendanceLogs = syncData.attendanceLogs.slice(-100);
+        }
+        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ action: 'sync', data: syncData })
+        });
+      } catch (err) {
+        console.warn('Network error synchronizing mutation with backend database (non-fatal):', err);
+      }
+    })();
 
     if (isEdit) {
       if (typeof showToastNotification === 'function') {

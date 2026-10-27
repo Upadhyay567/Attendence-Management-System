@@ -464,13 +464,13 @@ export function renderLoginView() {
     sessionStorage.setItem('attendance_current_session', sessionData);
     localStorage.setItem('attendance_current_session', sessionData);
     
-    // Sync DB with backend server for this session before navigating to dashboard
-    DB.init().finally(() => {
-      const baseRole = DB.getUserBaseRole(user.role);
-      const targetHash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') 
-        ? '#admin-dashboard' 
-        : '#dashboard';
+    // 2. Resolve destination dashboard hash
+    const baseRole = DB.getUserBaseRole(user.role);
+    const targetHash = (baseRole === 'hr' || baseRole === 'manager' || baseRole === 'finance_manager') 
+      ? '#admin-dashboard' 
+      : '#dashboard';
 
+    const navigateToDashboard = () => {
       if (window.location.hash === targetHash) {
         if (typeof window.appHandleRoute === 'function') {
           window.appHandleRoute();
@@ -480,7 +480,19 @@ export function renderLoginView() {
       } else {
         window.location.hash = targetHash;
       }
-    });
+    };
+
+    // 3. Fast navigation: If DB state is already present in cache, open dashboard instantly
+    if (DB.data && Array.isArray(DB.data.users) && DB.data.users.length > 0) {
+      navigateToDashboard();
+      // Non-blocking background sync
+      DB.init(true).catch(() => {});
+    } else {
+      // First load / empty cache: fetch state quickly then navigate
+      DB.init(true).finally(() => {
+        navigateToDashboard();
+      });
+    }
   };
 
   // Bootstrap login view with Role Selector list

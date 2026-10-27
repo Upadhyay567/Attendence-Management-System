@@ -480,8 +480,13 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
     const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
     const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
     const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
+    const cca = (u.allowanceCCA !== undefined && u.allowanceCCA !== null && !isNaN(u.allowanceCCA)) ? Number(u.allowanceCCA) : 0;
+    const perf = (u.allowancePerformance !== undefined && u.allowancePerformance !== null && !isNaN(u.allowancePerformance)) ? Number(u.allowancePerformance) : 0;
+    const otherAll = (u.allowanceOther !== undefined && u.allowanceOther !== null && !isNaN(u.allowanceOther)) ? Number(u.allowanceOther) : 0;
     const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
-    const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
+    const esi = (u.deductionESI !== undefined && u.deductionESI !== null && !isNaN(u.deductionESI)) ? Number(u.deductionESI) : 0;
+    const advance = (u.deductionAdvance !== undefined && u.deductionAdvance !== null && !isNaN(u.deductionAdvance)) ? Number(u.deductionAdvance) : 0;
+    const otherDed = (u.deductionOther !== undefined && u.deductionOther !== null && !isNaN(u.deductionOther)) ? Number(u.deductionOther) : 0;
     const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
     const loc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (userSchedules[0]?.location || 'Head Office');
 
@@ -507,9 +512,17 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
       'Base Salary (INR)': base,
       'HRA Allowance (INR)': hra,
       'Travel Allowance (INR)': travel,
+      'CCA (INR)': cca,
+      'Performance Amount (INR)': perf,
+      'Other Allowances (INR)': otherAll,
       'PF Deduction (INR)': pf,
-      'PT Deduction (INR)': pt,
-      'TDS Tax Rate (%)': tds
+      'ESI Deduction (INR)': esi,
+      'Advance Salary Deduction (INR)': advance,
+      'Others Deduction (INR)': otherDed,
+      'TDS Tax Rate (%)': tds,
+      'UAN No.': u.uanNo || u.uanNumber || 'N/A',
+      'PF No.': u.pfNo || u.pfNumber || 'N/A',
+      'ESI No.': u.esiNo || u.esiNumber || 'N/A'
     });
   });
 
@@ -521,7 +534,9 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
         'Email', 'Phone Number', 'Emergency Contact', 'Residential Address', 'City',
         'Date of Birth', 'Date of Joining', 'Verification Status',
         'Base Salary (INR)', 'HRA Allowance (INR)', 'Travel Allowance (INR)',
-        'PF Deduction (INR)', 'PT Deduction (INR)', 'TDS Tax Rate (%)'
+        'CCA (INR)', 'Performance Amount (INR)', 'Other Allowances (INR)',
+        'PF Deduction (INR)', 'ESI Deduction (INR)', 'Advance Salary Deduction (INR)', 'Others Deduction (INR)', 'TDS Tax Rate (%)',
+        'UAN No.', 'PF No.', 'ESI No.'
       ];
       const worksheet = XLSX.utils.json_to_sheet(excelData, { header: headers });
       const workbook = XLSX.utils.book_new();
@@ -699,8 +714,13 @@ export function downloadProfilePDF(profiles, dbInstance) {
     const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
     const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
     const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
+    const cca = (u.allowanceCCA !== undefined && u.allowanceCCA !== null && !isNaN(u.allowanceCCA)) ? Number(u.allowanceCCA) : 0;
+    const perf = (u.allowancePerformance !== undefined && u.allowancePerformance !== null && !isNaN(u.allowancePerformance)) ? Number(u.allowancePerformance) : 0;
+    const otherAll = (u.allowanceOther !== undefined && u.allowanceOther !== null && !isNaN(u.allowanceOther)) ? Number(u.allowanceOther) : 0;
     const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
-    const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 200;
+    const esi = (u.deductionESI !== undefined && u.deductionESI !== null && !isNaN(u.deductionESI)) ? Number(u.deductionESI) : 0;
+    const advance = (u.deductionAdvance !== undefined && u.deductionAdvance !== null && !isNaN(u.deductionAdvance)) ? Number(u.deductionAdvance) : 0;
+    const otherDed = (u.deductionOther !== undefined && u.deductionOther !== null && !isNaN(u.deductionOther)) ? Number(u.deductionOther) : 0;
     const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
     const workLoc = u.workLocation || u.preferredLocation || (Array.isArray(u.preferredLocations) ? u.preferredLocations.join(', ') : '') || (userSchedules[0]?.location || 'Head Office');
 
@@ -758,7 +778,9 @@ export function downloadProfilePDF(profiles, dbInstance) {
         <div class="grid-container">
           <div class="info-block"><span class="label">Base Salary</span><span class="value">₹${base.toLocaleString()}</span></div>
           <div class="info-block"><span class="label">HRA / Travel Allowance</span><span class="value">₹${hra.toLocaleString()} / ₹${travel.toLocaleString()}</span></div>
-          <div class="info-block"><span class="label">PF / PT Deductions</span><span class="value">₹${pf.toLocaleString()} / ₹${pt.toLocaleString()}</span></div>
+          <div class="info-block"><span class="label">CCA / Performance / Others</span><span class="value">₹${cca.toLocaleString()} / ₹${perf.toLocaleString()} / ₹${otherAll.toLocaleString()}</span></div>
+          <div class="info-block"><span class="label">PF / ESI Deductions</span><span class="value">₹${pf.toLocaleString()} / ₹${esi.toLocaleString()}</span></div>
+          <div class="info-block"><span class="label">Advance / Others Deductions</span><span class="value">₹${advance.toLocaleString()} / ₹${otherDed.toLocaleString()}</span></div>
           <div class="info-block"><span class="label">TDS Tax Rate</span><span class="value">${tds}%</span></div>
         </div>
 
@@ -1226,8 +1248,8 @@ function downloadReportPDF(reports, monthStr, year) {
           <thead>
             <tr>
               <th>Base Salary</th>
-              <th>Allowances (HRA + Travel)</th>
-              <th>Statutory Deductions (PF + PT + TDS)</th>
+              <th>Allowances (HRA + Travel + CCA + Perf + Other)</th>
+              <th>Statutory / Discretionary Deductions (PF + ESI + Advance + Others + TDS)</th>
               <th>Attendance Deductions</th>
               <th>Net Payout Estimate</th>
             </tr>
@@ -1235,8 +1257,8 @@ function downloadReportPDF(reports, monthStr, year) {
           <tbody>
             <tr>
               <td>₹${((p.baseSalary || 0).toLocaleString())}</td>
-              <td>₹${((p.allowanceHRA || 0) + (p.allowanceTravel || 0)).toLocaleString()}</td>
-              <td>₹${((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0)).toLocaleString()}</td>
+              <td>₹${(((p.allowanceHRA || 0) + (p.allowanceTravel || 0) + (p.allowanceCCA || 0) + (p.allowancePerformance || 0) + (p.allowanceOther || 0) + (p.bonus || 0)).toLocaleString())}</td>
+              <td>₹${(((p.deductionPF || 0) + (p.deductionESI || 0) + (p.deductionAdvance || 0) + (p.deductionOther || 0) + (p.deductionTDSVal || 0)).toLocaleString())}</td>
               <td>₹${((p.absentDeduction || 0) + (p.sundayDeduction || 0) + (p.halfDayDeduction || 0)).toLocaleString()}</td>
               <td class="stat-highlight" style="font-size:13px; color:#89201B">₹${(p.netSalary || 0).toLocaleString()}</td>
             </tr>
@@ -1312,10 +1334,19 @@ function downloadReportExcel(reports, filename) {
       'Total Hours': r.totalHours,
       'Overtime Hours': r.overtimeHours,
       'Base Salary (INR)': p.baseSalary || 0,
-      'Allowances (INR)': (p.allowanceHRA || 0) + (p.allowanceTravel || 0),
-      'PF + PT Deductions (INR)': (p.deductionPF || 0) + (p.deductionPT || 0),
+      'HRA (INR)': p.allowanceHRA || 0,
+      'Travel Allowance (INR)': p.allowanceTravel || 0,
+      'CCA (INR)': p.allowanceCCA || 0,
+      'Performance Amount (INR)': p.allowancePerformance || 0,
+      'Other Allowances (INR)': p.allowanceOther || 0,
+      'Total Allowances (INR)': ((p.allowanceHRA || 0) + (p.allowanceTravel || 0) + (p.allowanceCCA || 0) + (p.allowancePerformance || 0) + (p.allowanceOther || 0) + (p.bonus || 0)),
+      'PF Deduction (INR)': p.deductionPF || 0,
+      'ESI Deduction (INR)': p.deductionESI || 0,
+      'Advance Salary Deduction (INR)': p.deductionAdvance || 0,
+      'Others Deduction (INR)': p.deductionOther || 0,
       'TDS Tax Deduction (INR)': p.deductionTDSVal || 0,
       'Attendance Deductions (INR)': (p.absentDeduction || 0) + (p.sundayDeduction || 0) + (p.halfDayDeduction || 0),
+      'Total Deductions (INR)': p.totalDeductions || 0,
       'Net Payout (INR)': p.netSalary || 0
     });
   });
@@ -1326,9 +1357,9 @@ function downloadReportExcel(reports, filename) {
         'Employee ID', 'Employee Name', 'Department', 'Designation',
         'Total Work Days', 'Actual Working Days', 'Present Days', 'Absent Days', 'Sunday Penalties', 'Late Days', 'Half Days',
         'Total Hours', 'Overtime Hours',
-        'Base Salary (INR)', 'Allowances (INR)',
-        'PF + PT Deductions (INR)', 'TDS Tax Deduction (INR)',
-        'Attendance Deductions (INR)', 'Net Payout (INR)'
+        'Base Salary (INR)', 'HRA (INR)', 'Travel Allowance (INR)', 'CCA (INR)', 'Performance Amount (INR)', 'Other Allowances (INR)', 'Total Allowances (INR)',
+        'PF Deduction (INR)', 'ESI Deduction (INR)', 'Advance Salary Deduction (INR)', 'Others Deduction (INR)', 'TDS Tax Deduction (INR)',
+        'Attendance Deductions (INR)', 'Total Deductions (INR)', 'Net Payout (INR)'
       ];
       
       const worksheet = XLSX.utils.json_to_sheet(excelData, { header: headers });

@@ -124,16 +124,44 @@ async function loginUser(req, res) {
     }
 
     let foundUser = null;
-    const online = await connectMongoose();
-    const useLocal = getUseLocalFileDB();
+    const db = readLocalDbStateCached();
+    if (db && Array.isArray(db.users)) {
+      foundUser = findUserByLoginKey(db.users, key, role);
+    }
 
-    if (online && !useLocal) {
-      const allUsers = await User.find({}).lean();
-      foundUser = findUserByLoginKey(allUsers, key, role);
-    } else {
-      const db = readLocalDbStateCached();
-      const users = (db && Array.isArray(db.users)) ? db.users : [];
-      foundUser = findUserByLoginKey(users, key, role);
+    if (!foundUser) {
+      const online = await connectMongoose();
+      const useLocal = getUseLocalFileDB();
+
+      if (online && !useLocal) {
+        const cleanKey = String(key).trim();
+        const upperKey = cleanKey.toUpperCase();
+        const lowerKey = cleanKey.toLowerCase();
+        const digits = cleanKey.replace(/\D/g, '');
+
+        const orConditions = [
+          { employeeId: cleanKey },
+          { employeeId: upperKey },
+          { username: lowerKey },
+          { id: cleanKey },
+          { biometricUserId: cleanKey }
+        ];
+        if (digits) {
+          orConditions.push({ biometricUserId: digits }, { employeeId: digits }, { employeeId: `E${digits}` });
+        }
+        foundUser = await User.findOne({ $or: orConditions }).lean();
+        if (!foundUser) {
+          const candidateUsers = await User.find({
+            $or: [
+              { name: new RegExp(`^${cleanKey}$`, 'i') },
+              { email: lowerKey }
+            ]
+          }).limit(5).lean();
+          if (candidateUsers.length > 0) {
+            foundUser = findUserByLoginKey(candidateUsers, key, role);
+          }
+        }
+      }
     }
 
     if (!foundUser) {

@@ -627,13 +627,13 @@ export function renderAdminPayroll() {
   const renderPayrollRow = (u) => {
     const totalAllowVal = (u.totalAllowances !== null && u.totalAllowances !== undefined && u.totalAllowances !== '')
       ? Number(u.totalAllowances)
-      : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.bonus || 0));
+      : ((u.allowanceHRA || 0) + (u.allowanceTravel || 0) + (u.allowanceCCA || 0) + (u.allowancePerformance || 0) + (u.allowanceOther || 0) + (u.bonus || 0));
 
     const totalDeductVal = (u.totalDeductions !== null && u.totalDeductions !== undefined && u.totalDeductions !== '')
       ? Number(u.totalDeductions)
       : ((u.totalDeduction !== null && u.totalDeduction !== undefined && u.totalDeduction !== '')
         ? Number(u.totalDeduction)
-        : ((u.deductionPF || 0) + (u.deductionPT || 0)));
+        : ((u.deductionPF || 0) + (u.deductionESI || 0) + (u.deductionAdvance || 0) + (u.deductionOther || 0)));
 
     const isAuthorized = user && (user.role === 'hr' || user.role === 'manager' || user.role === 'admin' || user.role === 'finance_manager');
     const actionsHTML = isAuthorized
@@ -661,11 +661,22 @@ export function renderAdminPayroll() {
         </td>
         <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.branch || '—')}</td>
         <td style="font-weight:700;color:var(--primary); white-space:nowrap">${u.baseSalary ? `₹${Number(u.baseSalary).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.allowanceHRA !== null && u.allowanceHRA !== undefined && u.allowanceHRA !== '') ? `₹${Number(u.allowanceHRA).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.allowanceTravel !== null && u.allowanceTravel !== undefined && u.allowanceTravel !== '') ? `₹${Number(u.allowanceTravel).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.allowanceCCA !== null && u.allowanceCCA !== undefined && u.allowanceCCA !== '') ? `₹${Number(u.allowanceCCA).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.allowancePerformance !== null && u.allowancePerformance !== undefined && u.allowancePerformance !== '') ? `₹${Number(u.allowancePerformance).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.allowanceOther !== null && u.allowanceOther !== undefined && u.allowanceOther !== '') ? `₹${Number(u.allowanceOther).toLocaleString()}` : '—'}</td>
         <td style="font-weight:600;color:var(--success); white-space:nowrap">${totalAllowVal > 0 ? `₹${totalAllowVal.toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.deductionPF !== null && u.deductionPF !== undefined && u.deductionPF !== '') ? `₹${Number(u.deductionPF).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.deductionESI !== null && u.deductionESI !== undefined && u.deductionESI !== '') ? `₹${Number(u.deductionESI).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.deductionAdvance !== null && u.deductionAdvance !== undefined && u.deductionAdvance !== '') ? `₹${Number(u.deductionAdvance).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.deductionOther !== null && u.deductionOther !== undefined && u.deductionOther !== '') ? `₹${Number(u.deductionOther).toLocaleString()}` : '—'}</td>
+        <td style="font-size:12px; white-space:nowrap">${(u.deductionTDS !== null && u.deductionTDS !== undefined && u.deductionTDS !== '') ? `${u.deductionTDS}%` : '—'}</td>
         <td style="font-weight:600;color:var(--error); white-space:nowrap">${totalDeductVal > 0 ? `₹${totalDeductVal.toLocaleString()}` : '—'}</td>
         <td style="font-weight:600;color:var(--accent, #d97706); white-space:nowrap">${(u.bonus !== undefined && u.bonus !== null && u.bonus !== '') ? `₹${Number(u.bonus).toLocaleString()}` : '—'}</td>
         <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.uanNo || u.uanNumber || '—')}</code></td>
         <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.pfNo || u.pfNumber || '—')}</code></td>
+        <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.esiNo || u.esiNumber || '—')}</code></td>
         <td style="font-size:12px; white-space:nowrap">${Utils.escape(u.bankName || '—')}</td>
         <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.accountNumber || '—')}</code></td>
         <td style="white-space:nowrap"><code style="font-size:11px">${Utils.escape(u.ifscCode || '—')}</code></td>
@@ -726,11 +737,22 @@ export function renderAdminPayroll() {
                 <th style="white-space:nowrap">User ID</th>
                 <th style="white-space:nowrap">Branch</th>
                 <th style="white-space:nowrap">Base Salary</th>
+                <th style="white-space:nowrap">HRA</th>
+                <th style="white-space:nowrap">Travel Allow.</th>
+                <th style="white-space:nowrap">CCA</th>
+                <th style="white-space:nowrap">Performance Amt</th>
+                <th style="white-space:nowrap">Other Allowances</th>
                 <th style="white-space:nowrap">Total Allowances</th>
+                <th style="white-space:nowrap">PF</th>
+                <th style="white-space:nowrap">ESI</th>
+                <th style="white-space:nowrap">Advance Salary</th>
+                <th style="white-space:nowrap">Others Ded.</th>
+                <th style="white-space:nowrap">TDS (%)</th>
                 <th style="white-space:nowrap">Total Deduction</th>
                 <th style="white-space:nowrap">Bonus</th>
                 <th style="white-space:nowrap">UAN No.</th>
                 <th style="white-space:nowrap">PF No.</th>
+                <th style="white-space:nowrap">ESI No.</th>
                 <th style="white-space:nowrap">Bank Name</th>
                 <th style="white-space:nowrap">Account Number</th>
                 <th style="white-space:nowrap">IFSC Code</th>
@@ -1279,13 +1301,18 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>➕</span> Allowances
               </div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Auto-calculates from HRA + Travel + Bonus</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Auto-calculates from HRA + Travel + CCA + Performance + Other + Bonus</span>
             </div>
             <div class="form-group" style="margin-bottom: 12px;">
               <label class="form-label" for="editor-total-allowances" style="font-weight: 700; color: var(--success);">Total Allowances (INR/Month)</label>
-              <input class="form-input" type="number" id="editor-total-allowances" value="${isEdit ? (user.totalAllowances !== undefined && user.totalAllowances !== null ? user.totalAllowances : '') : ''}" placeholder="e.g. 15000" style="font-weight: 700; border-color: rgba(16,185,129,0.3);">
+              <input class="form-input" type="number" id="editor-total-allowances" value="${(() => {
+                if (!isEdit || !user) return '';
+                const comp = (parseFloat(user.allowanceHRA) || 0) + (parseFloat(user.allowanceTravel) || 0) + (parseFloat(user.allowanceCCA) || 0) + (parseFloat(user.allowancePerformance) || 0) + (parseFloat(user.allowanceOther) || 0) + (parseFloat(user.bonus) || 0);
+                if (user.totalAllowances !== undefined && user.totalAllowances !== null && Number(user.totalAllowances) > 0) return user.totalAllowances;
+                return comp > 0 ? comp : (user.totalAllowances === 0 ? 0 : '');
+              })()}" placeholder="e.g. 15000" style="font-weight: 700; border-color: rgba(16,185,129,0.3);">
             </div>
-            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px; margin-bottom: 0;">
+            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px; margin-bottom: 10px;">
               <div>
                 <label class="form-label" for="editor-hra" style="font-size:11px">HRA (INR/Month)</label>
                 <input class="form-input" type="number" id="editor-hra" value="${isEdit ? (user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : '') : ''}" placeholder="e.g. 10000">
@@ -1293,6 +1320,20 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               <div>
                 <label class="form-label" for="editor-travel" style="font-size:11px">Travel Allowance (INR/Month)</label>
                 <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="e.g. 3000">
+              </div>
+              <div>
+                <label class="form-label" for="editor-cca" style="font-size:11px">CCA (INR/Month)</label>
+                <input class="form-input" type="number" id="editor-cca" value="${isEdit ? (user.allowanceCCA !== undefined && user.allowanceCCA !== null ? user.allowanceCCA : '') : ''}" placeholder="e.g. 2000">
+              </div>
+            </div>
+            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px; margin-bottom: 0;">
+              <div>
+                <label class="form-label" for="editor-performance" style="font-size:11px">Performance Amount (INR)</label>
+                <input class="form-input" type="number" id="editor-performance" value="${isEdit ? (user.allowancePerformance !== undefined && user.allowancePerformance !== null ? user.allowancePerformance : '') : ''}" placeholder="e.g. 5000">
+              </div>
+              <div>
+                <label class="form-label" for="editor-other-allowances" style="font-size:11px">Other Allowances (INR)</label>
+                <input class="form-input" type="number" id="editor-other-allowances" value="${isEdit ? (user.allowanceOther !== undefined && user.allowanceOther !== null ? user.allowanceOther : '') : ''}" placeholder="e.g. 1500">
               </div>
             </div>
           </div>
@@ -1303,20 +1344,39 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span>➖</span> Deductions
               </div>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Auto-calculates from PF + PT + TDS</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">Auto-calculates from PF + ESI + Advance + Others + TDS</span>
             </div>
             <div class="form-group" style="margin-bottom: 12px;">
               <label class="form-label" for="editor-total-deductions" style="font-weight: 700; color: var(--error);">Total Deduction (INR/Month)</label>
-              <input class="form-input" type="number" id="editor-total-deductions" value="${isEdit ? (user.totalDeductions !== undefined && user.totalDeductions !== null ? user.totalDeductions : (user.totalDeduction !== undefined && user.totalDeduction !== null ? user.totalDeduction : '')) : ''}" placeholder="e.g. 6200" style="font-weight: 700; border-color: rgba(239,68,68,0.3);">
+              <input class="form-input" type="number" id="editor-total-deductions" value="${(() => {
+                if (!isEdit || !user) return '';
+                const base = parseFloat(user.baseSalary) || 0;
+                const tdsRate = parseFloat(user.deductionTDS) || 0;
+                const tdsVal = Math.round(base * (tdsRate / 100));
+                const comp = (parseFloat(user.deductionPF) || 0) + (parseFloat(user.deductionESI) || 0) + (parseFloat(user.deductionAdvance) || 0) + (parseFloat(user.deductionOther) || 0) + tdsVal;
+                const saved = user.totalDeductions !== undefined && user.totalDeductions !== null ? user.totalDeductions : user.totalDeduction;
+                if (saved !== undefined && saved !== null && Number(saved) > 0) return saved;
+                return comp > 0 ? comp : (saved === 0 ? 0 : '');
+              })()}" placeholder="e.g. 6200" style="font-weight: 700; border-color: rgba(239,68,68,0.3);">
             </div>
-            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px; margin-bottom: 0;">
+            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px; margin-bottom: 10px;">
               <div>
                 <label class="form-label" for="editor-pf" style="font-size:11px">PF (INR/Month)</label>
                 <input class="form-input" type="number" id="editor-pf" value="${isEdit ? (user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : '') : ''}" placeholder="e.g. 3000">
               </div>
               <div>
-                <label class="form-label" for="editor-pt" style="font-size:11px">Professional Tax (PT)</label>
-                <input class="form-input" type="number" id="editor-pt" value="${isEdit ? (user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : '') : ''}" placeholder="e.g. 200">
+                <label class="form-label" for="editor-esi" style="font-size:11px">ESI Deduction (INR/Month)</label>
+                <input class="form-input" type="number" id="editor-esi" value="${isEdit ? (user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : '') : ''}" placeholder="e.g. 500">
+              </div>
+            </div>
+            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px; margin-bottom: 0;">
+              <div>
+                <label class="form-label" for="editor-advance" style="font-size:11px">Advance Salary Deduction (INR)</label>
+                <input class="form-input" type="number" id="editor-advance" value="${isEdit ? (user.deductionAdvance !== undefined && user.deductionAdvance !== null ? user.deductionAdvance : '') : ''}" placeholder="e.g. 2000">
+              </div>
+              <div>
+                <label class="form-label" for="editor-other-deductions" style="font-size:11px">Others Deduction (INR)</label>
+                <input class="form-input" type="number" id="editor-other-deductions" value="${isEdit ? (user.deductionOther !== undefined && user.deductionOther !== null ? user.deductionOther : '') : ''}" placeholder="e.g. 500">
               </div>
               <div>
                 <label class="form-label" for="editor-tds" style="font-size:11px">TDS Tax Rate (%)</label>
@@ -1325,12 +1385,12 @@ export function openUserModal(userId = null, initialTab = 'employee') {
             </div>
           </div>
 
-          <!-- Section 4: Statutory & Social Security (UAN & PF No) -->
+          <!-- Section 4: Statutory & Social Security (UAN, PF & ESI No) -->
           <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 16px;">
             <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-              <span>🏛️</span> Statutory & PF Numbers
+              <span>🏛️</span> Statutory, PF & ESI Numbers
             </div>
-            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px; margin-bottom: 0;">
+            <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px; margin-bottom: 0;">
               <div>
                 <label class="form-label" for="editor-uan">UAN No. <span style="font-size:11px; color:var(--text-muted);">(Universal Account No)</span></label>
                 <input class="form-input" type="text" id="editor-uan" value="${isEdit ? Utils.escape(user.uanNo || user.uanNumber || '') : ''}" placeholder="e.g. 101234567890">
@@ -1338,6 +1398,10 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               <div>
                 <label class="form-label" for="editor-pf-no">PF No. <span style="font-size:11px; color:var(--text-muted);">(Provident Fund No)</span></label>
                 <input class="form-input" type="text" id="editor-pf-no" value="${isEdit ? Utils.escape(user.pfNo || user.pfNumber || '') : ''}" placeholder="e.g. MH/BAN/0012345/000/0000123">
+              </div>
+              <div>
+                <label class="form-label" for="editor-esi-no">ESI No. <span style="font-size:11px; color:var(--text-muted);">(Employee State Insurance No)</span></label>
+                <input class="form-input" type="text" id="editor-esi-no" value="${isEdit ? Utils.escape(user.esiNo || user.esiNumber || '') : ''}" placeholder="e.g. 11000123456789001">
               </div>
             </div>
           </div>
@@ -1464,58 +1528,70 @@ export function openUserModal(userId = null, initialTab = 'employee') {
   // Live Auto-Calculation for Allowances and Deductions
   const hraInput = overlay.querySelector('#editor-hra');
   const travelInput = overlay.querySelector('#editor-travel');
+  const ccaInput = overlay.querySelector('#editor-cca');
+  const performanceInput = overlay.querySelector('#editor-performance');
+  const otherAllowancesInput = overlay.querySelector('#editor-other-allowances');
   const bonusInput = overlay.querySelector('#editor-bonus');
   const totalAllowancesInput = overlay.querySelector('#editor-total-allowances');
 
   const pfInput = overlay.querySelector('#editor-pf');
-  const ptInput = overlay.querySelector('#editor-pt');
+  const esiInput = overlay.querySelector('#editor-esi');
+  const advanceInput = overlay.querySelector('#editor-advance');
+  const otherDeductionsInput = overlay.querySelector('#editor-other-deductions');
   const tdsInput = overlay.querySelector('#editor-tds');
   const salaryInput = overlay.querySelector('#editor-salary');
   const totalDeductionsInput = overlay.querySelector('#editor-total-deductions');
 
-  let userManuallySetAllowances = (isEdit && user && user.totalAllowances !== undefined && user.totalAllowances !== null);
-  let userManuallySetDeductions = (isEdit && user && ((user.totalDeductions !== undefined && user.totalDeductions !== null) || (user.totalDeduction !== undefined && user.totalDeduction !== null)));
-
   function recalcAllowances() {
-    if (userManuallySetAllowances) return;
     const hra = parseFloat(hraInput?.value || 0) || 0;
     const travel = parseFloat(travelInput?.value || 0) || 0;
+    const cca = parseFloat(ccaInput?.value || 0) || 0;
+    const performance = parseFloat(performanceInput?.value || 0) || 0;
+    const otherAllow = parseFloat(otherAllowancesInput?.value || 0) || 0;
     const bonus = parseFloat(bonusInput?.value || 0) || 0;
-    const sum = hra + travel + bonus;
+    const sum = hra + travel + cca + performance + otherAllow + bonus;
     if (totalAllowancesInput) {
-      totalAllowancesInput.value = sum > 0 ? sum : '';
+      totalAllowancesInput.value = sum > 0 ? sum : 0;
     }
   }
 
   function recalcDeductions() {
-    if (userManuallySetDeductions) return;
     const pf = parseFloat(pfInput?.value || 0) || 0;
-    const pt = parseFloat(ptInput?.value || 0) || 0;
+    const esi = parseFloat(esiInput?.value || 0) || 0;
+    const advance = parseFloat(advanceInput?.value || 0) || 0;
+    const otherDed = parseFloat(otherDeductionsInput?.value || 0) || 0;
     const tdsPct = parseFloat(tdsInput?.value || 0) || 0;
     const salary = parseFloat(salaryInput?.value || 0) || 0;
-    const tdsAmt = (salary * tdsPct) / 100;
-    const sum = pf + pt + tdsAmt;
+    const tdsAmt = Math.round((salary * tdsPct) / 100);
+    const sum = pf + esi + advance + otherDed + tdsAmt;
     if (totalDeductionsInput) {
-      totalDeductionsInput.value = sum > 0 ? Math.round(sum) : '';
+      totalDeductionsInput.value = sum > 0 ? sum : 0;
     }
   }
 
-  if (totalAllowancesInput) {
-    totalAllowancesInput.addEventListener('input', () => {
-      userManuallySetAllowances = true;
-    });
-  }
-  if (totalDeductionsInput) {
-    totalDeductionsInput.addEventListener('input', () => {
-      userManuallySetDeductions = true;
-    });
-  }
-
-  [hraInput, travelInput, bonusInput].forEach(inp => {
-    if (inp) inp.addEventListener('input', recalcAllowances);
+  [hraInput, travelInput, ccaInput, performanceInput, otherAllowancesInput, bonusInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', recalcAllowances);
+      inp.addEventListener('change', recalcAllowances);
+    }
   });
 
-  [pfInput, ptInput, tdsInput, salaryInput].forEach(inp => {
+  [pfInput, esiInput, advanceInput, otherDeductionsInput, tdsInput, salaryInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', recalcDeductions);
+      inp.addEventListener('change', recalcDeductions);
+    }
+  });
+
+  // Ensure initial auto-calculate populates immediately if totals are 0 or empty
+  if (totalAllowancesInput && (!totalAllowancesInput.value || totalAllowancesInput.value === '0')) {
+    recalcAllowances();
+  }
+  if (totalDeductionsInput && (!totalDeductionsInput.value || totalDeductionsInput.value === '0')) {
+    recalcDeductions();
+  }
+
+  [pfInput, esiInput, advanceInput, otherDeductionsInput, tdsInput, salaryInput].forEach(inp => {
     if (inp) inp.addEventListener('input', recalcDeductions);
   });
 
@@ -1643,6 +1719,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
 
     const uanNo = document.getElementById('editor-uan') ? document.getElementById('editor-uan').value.trim() : (isEdit ? (user.uanNo || user.uanNumber || '') : '');
     const pfNo = document.getElementById('editor-pf-no') ? document.getElementById('editor-pf-no').value.trim() : (isEdit ? (user.pfNo || user.pfNumber || '') : '');
+    const esiNo = document.getElementById('editor-esi-no') ? document.getElementById('editor-esi-no').value.trim() : (isEdit ? (user.esiNo || user.esiNumber || '') : '');
 
     const bankName = document.getElementById('editor-bank-name') ? document.getElementById('editor-bank-name').value.trim() : (isEdit ? user.bankName || '' : '');
     const accountNumber = document.getElementById('editor-account-number') ? document.getElementById('editor-account-number').value.trim() : (isEdit ? user.accountNumber || '' : '');
@@ -1687,10 +1764,22 @@ export function openUserModal(userId = null, initialTab = 'employee') {
     const allowanceHRA = hraVal === '' ? null : Number(hraVal);
     const travelVal = document.getElementById('editor-travel') ? document.getElementById('editor-travel').value.trim() : '';
     const allowanceTravel = travelVal === '' ? null : Number(travelVal);
+    const ccaVal = document.getElementById('editor-cca') ? document.getElementById('editor-cca').value.trim() : '';
+    const allowanceCCA = ccaVal === '' ? null : Number(ccaVal);
+    const perfVal = document.getElementById('editor-performance') ? document.getElementById('editor-performance').value.trim() : '';
+    const allowancePerformance = perfVal === '' ? null : Number(perfVal);
+    const otherAllowVal = document.getElementById('editor-other-allowances') ? document.getElementById('editor-other-allowances').value.trim() : '';
+    const allowanceOther = otherAllowVal === '' ? null : Number(otherAllowVal);
+
     const pfVal = document.getElementById('editor-pf') ? document.getElementById('editor-pf').value.trim() : '';
     const deductionPF = pfVal === '' ? null : Number(pfVal);
-    const ptVal = document.getElementById('editor-pt') ? document.getElementById('editor-pt').value.trim() : '';
-    const deductionPT = ptVal === '' ? null : Number(ptVal);
+    const esiVal = document.getElementById('editor-esi') ? document.getElementById('editor-esi').value.trim() : '';
+    const deductionESI = esiVal === '' ? null : Number(esiVal);
+    const advanceVal = document.getElementById('editor-advance') ? document.getElementById('editor-advance').value.trim() : '';
+    const deductionAdvance = advanceVal === '' ? null : Number(advanceVal);
+    const otherDedVal = document.getElementById('editor-other-deductions') ? document.getElementById('editor-other-deductions').value.trim() : '';
+    const deductionOther = otherDedVal === '' ? null : Number(otherDedVal);
+    const deductionPT = 0;
     const tdsVal = document.getElementById('editor-tds') ? document.getElementById('editor-tds').value.trim() : '';
     const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
@@ -1750,14 +1839,15 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         name, employeeId, biometricUserId, biometricId: biometricUserId, email, phone, dob, baseSalary, scheduleId, scheduleIds, shiftLocations, role,
         workLocation, preferredLocation, preferredLocations,
         gender, department, designation, dateOfJoining, emergencyContact,
-        resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        resume: resumeObj, aadhar: aadharObj, allowanceHRA, allowanceTravel, allowanceCCA, allowancePerformance, allowanceOther,
+        deductionPF, deductionESI, deductionAdvance, deductionOther, deductionPT: 0, deductionTDS,
         managerId, assignedById,
         profileVerificationStatus: 'Approved',
         photo: photoRemovedExplicitly ? null : (editorPhotoDataUrl || (isEdit && user && user.photo ? user.photo : null)),
         city, state,
         branch, pincode, bloodGroup, bonus,
         totalAllowances, totalDeduction: totalDeductions, totalDeductions,
-        uanNo, uanNumber: uanNo, pfNo, pfNumber: pfNo,
+        uanNo, uanNumber: uanNo, pfNo, pfNumber: pfNo, esiNo, esiNumber: esiNo,
         bankName, accountNumber, ifscCode, bankBranchName,
         profileVerificationComment: '',
         pendingProfileEdits: null
@@ -1771,37 +1861,45 @@ export function openUserModal(userId = null, initialTab = 'employee') {
       const diffText = DB.generateProfileChangeDiff ? DB.generateProfileChangeDiff(existingUserCloned, updates, currentUser ? currentUser.name : 'HR/Manager') : `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`;
       DB.notifyEmployeeProfileChange(userId, 'updated', diffText, currentUser);
 
-      try {
-        let sessionToken = '';
-        try {
-          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-          if (sess) sessionToken = JSON.parse(sess).token || '';
-        } catch (e) {}
-        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
-          },
-          body: JSON.stringify({ action: 'sync', data: DB.data })
-        });
-      } catch (err) {
-        console.warn('Network error synchronizing mutation with backend database:', err);
-      }
-
+      // Close modal immediately and show notification so UI is instantaneous
       closeModal(overlay);
-      if (window.location.hash === '#admin-dashboard' && typeof renderAdminDashboard === 'function') {
-        await renderAdminDashboard();
-      } else if ((window.location.hash === '#admin-payroll' || window.location.hash === '#payroll') && typeof renderAdminPayroll === 'function') {
-        renderAdminPayroll();
-      } else if (typeof renderAdminUsers === 'function') {
-        renderAdminUsers();
-      }
       if (typeof showToastNotification === 'function') {
         showToastNotification('✅ Employee details updated successfully.', 'success');
       } else {
         alert('Employee details updated successfully.');
       }
+      if (window.location.hash === '#admin-dashboard' && typeof renderAdminDashboard === 'function') {
+        renderAdminDashboard();
+      } else if ((window.location.hash === '#admin-payroll' || window.location.hash === '#payroll') && typeof renderAdminPayroll === 'function') {
+        renderAdminPayroll();
+      } else if (typeof renderAdminUsers === 'function') {
+        renderAdminUsers();
+      }
+
+      // Background non-blocking sync
+      (async () => {
+        try {
+          let sessionToken = '';
+          try {
+            const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+            if (sess) sessionToken = JSON.parse(sess).token || '';
+          } catch (e) {}
+          const syncData = { ...DB.data };
+          if (Array.isArray(syncData.attendanceLogs) && syncData.attendanceLogs.length > 100) {
+            syncData.attendanceLogs = syncData.attendanceLogs.slice(-100);
+          }
+          await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+            },
+            body: JSON.stringify({ action: 'sync', data: syncData })
+          });
+        } catch (err) {
+          console.warn('Background sync error (non-fatal):', err);
+        }
+      })();
     } else {
       let maxId = 99;
       DB.data.users.forEach(u => {
@@ -1838,36 +1936,20 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         workLocation, preferredLocation, preferredLocations,
         gender, department, designation, dateOfJoining, emergencyContact,
         resume: resumeObj, aadhar: aadharObj,
-        allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        allowanceHRA, allowanceTravel, allowanceCCA, allowancePerformance, allowanceOther,
+        deductionPF, deductionESI, deductionAdvance, deductionOther, deductionPT: 0, deductionTDS,
         managerId, assignedById, photo: editorPhotoDataUrl || null,
         city, state,
         branch, pincode, bloodGroup, bonus,
         totalAllowances, totalDeduction: totalDeductions, totalDeductions,
-        uanNo, uanNumber: uanNo, pfNo, pfNumber: pfNo,
+        uanNo, uanNumber: uanNo, pfNo, pfNumber: pfNo, esiNo, esiNumber: esiNo,
         bankName, accountNumber, ifscCode, bankBranchName
       });
       if (createdUser) {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee portal profile was registered by ${currentUser ? currentUser.name : 'HR/Manager'}.`, currentUser);
       }
 
-      try {
-        let sessionToken = '';
-        try {
-          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-          if (sess) sessionToken = JSON.parse(sess).token || '';
-        } catch (e) {}
-        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
-          },
-          body: JSON.stringify({ action: 'sync', data: DB.data })
-        });
-      } catch (err) {
-        console.warn('Network error synchronizing mutation with backend database:', err);
-      }
-
+      // Close modal immediately and present feedback
       closeModal(overlay);
       if (window.showAccountCreationSuccessModal && createdUser) {
         window.showAccountCreationSuccessModal(createdUser, rawPassword);
@@ -1878,6 +1960,31 @@ export function openUserModal(userId = null, initialTab = 'employee') {
           alert('Employee registered successfully.');
         }
       }
+
+      // Background non-blocking sync
+      (async () => {
+        try {
+          let sessionToken = '';
+          try {
+            const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+            if (sess) sessionToken = JSON.parse(sess).token || '';
+          } catch (e) {}
+          const syncData = { ...DB.data };
+          if (Array.isArray(syncData.attendanceLogs) && syncData.attendanceLogs.length > 100) {
+            syncData.attendanceLogs = syncData.attendanceLogs.slice(-100);
+          }
+          await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+            },
+            body: JSON.stringify({ action: 'sync', data: syncData })
+          });
+        } catch (err) {
+          console.warn('Background sync error (non-fatal):', err);
+        }
+      })();
     }
 
     if (window.location.hash === '#admin-dashboard') {
@@ -1959,14 +2066,21 @@ export function normalizeBulkRow(raw) {
     baseSalary: null,
     allowanceHRA: null,
     allowanceTravel: null,
+    allowanceCCA: null,
+    allowancePerformance: null,
+    allowanceOther: null,
     bonus: null,
     totalAllowances: null,
     deductionPF: null,
-    deductionPT: null,
+    deductionESI: null,
+    deductionAdvance: null,
+    deductionOther: null,
+    deductionPT: 0,
     deductionTDS: null,
     totalDeductions: null,
     uanNo: '',
     pfNo: '',
+    esiNo: '',
     bankName: '',
     accountNumber: '',
     ifscCode: '',
@@ -2026,14 +2140,26 @@ export function normalizeBulkRow(raw) {
       norm.allowanceHRA = parseUploadNumber(cleanVal);
     } else if (/^(allowancetravel|travel|travelallowance)$/.test(cleanKey)) {
       norm.allowanceTravel = parseUploadNumber(cleanVal);
+    } else if (/^(allowancecca|cca)$/.test(cleanKey)) {
+      norm.allowanceCCA = parseUploadNumber(cleanVal);
+    } else if (/^(allowanceperformance|performance|performanceamount|performanceallowance)$/.test(cleanKey)) {
+      norm.allowancePerformance = parseUploadNumber(cleanVal);
+    } else if (/^(allowanceother|otherallowance|otherallowances)$/.test(cleanKey)) {
+      norm.allowanceOther = parseUploadNumber(cleanVal);
     } else if (/^bonus$/.test(cleanKey)) {
       norm.bonus = parseUploadNumber(cleanVal);
     } else if (/^(totalallowances|allowances)$/.test(cleanKey)) {
       norm.totalAllowances = parseUploadNumber(cleanVal);
     } else if (/^(deductionpf|pf)$/.test(cleanKey)) {
       norm.deductionPF = parseUploadNumber(cleanVal);
+    } else if (/^(deductionesi|esi|esideduction)$/.test(cleanKey)) {
+      norm.deductionESI = parseUploadNumber(cleanVal);
+    } else if (/^(deductionadvance|advancesalary|advance|advancesalarydeduction)$/.test(cleanKey)) {
+      norm.deductionAdvance = parseUploadNumber(cleanVal);
+    } else if (/^(deductionother|otherdeduction|otherdeductions|othersdeduction)$/.test(cleanKey)) {
+      norm.deductionOther = parseUploadNumber(cleanVal);
     } else if (/^(deductionpt|pt)$/.test(cleanKey)) {
-      norm.deductionPT = parseUploadNumber(cleanVal);
+      norm.deductionPT = 0;
     } else if (/^(deductiontds|tds)$/.test(cleanKey)) {
       norm.deductionTDS = parseUploadNumber(cleanVal);
     } else if (/^(totaldeductions|deductions)$/.test(cleanKey)) {
@@ -2042,6 +2168,8 @@ export function normalizeBulkRow(raw) {
       norm.uanNo = String(cleanVal).trim();
     } else if (/^(pfno|pfnumber)$/.test(cleanKey)) {
       norm.pfNo = String(cleanVal).trim();
+    } else if (/^(esino|esinumber|esic|esicno|esicnumber)$/.test(cleanKey)) {
+      norm.esiNo = String(cleanVal).trim();
     } else if (/^bankname$/.test(cleanKey)) {
       norm.bankName = String(cleanVal).trim();
     } else if (/^(accountnumber|bankaccountnumber|accno)$/.test(cleanKey)) {
@@ -2467,10 +2595,16 @@ export async function processBulkEmployeeData(rawRows) {
       if (norm.baseSalary !== null && !isNaN(norm.baseSalary)) matchedUser.baseSalary = Number(norm.baseSalary);
       if (norm.allowanceHRA !== null && !isNaN(norm.allowanceHRA)) matchedUser.allowanceHRA = Number(norm.allowanceHRA);
       if (norm.allowanceTravel !== null && !isNaN(norm.allowanceTravel)) matchedUser.allowanceTravel = Number(norm.allowanceTravel);
+      if (norm.allowanceCCA !== null && !isNaN(norm.allowanceCCA)) matchedUser.allowanceCCA = Number(norm.allowanceCCA);
+      if (norm.allowancePerformance !== null && !isNaN(norm.allowancePerformance)) matchedUser.allowancePerformance = Number(norm.allowancePerformance);
+      if (norm.allowanceOther !== null && !isNaN(norm.allowanceOther)) matchedUser.allowanceOther = Number(norm.allowanceOther);
       if (norm.bonus !== null && !isNaN(norm.bonus)) matchedUser.bonus = Number(norm.bonus);
       if (norm.totalAllowances !== null && !isNaN(norm.totalAllowances)) matchedUser.totalAllowances = Number(norm.totalAllowances);
       if (norm.deductionPF !== null && !isNaN(norm.deductionPF)) matchedUser.deductionPF = Number(norm.deductionPF);
-      if (norm.deductionPT !== null && !isNaN(norm.deductionPT)) matchedUser.deductionPT = Number(norm.deductionPT);
+      if (norm.deductionESI !== null && !isNaN(norm.deductionESI)) matchedUser.deductionESI = Number(norm.deductionESI);
+      if (norm.deductionAdvance !== null && !isNaN(norm.deductionAdvance)) matchedUser.deductionAdvance = Number(norm.deductionAdvance);
+      if (norm.deductionOther !== null && !isNaN(norm.deductionOther)) matchedUser.deductionOther = Number(norm.deductionOther);
+      matchedUser.deductionPT = 0;
       if (norm.deductionTDS !== null && !isNaN(norm.deductionTDS)) matchedUser.deductionTDS = Number(norm.deductionTDS);
       if (norm.totalDeductions !== null && !isNaN(norm.totalDeductions)) {
         matchedUser.totalDeductions = Number(norm.totalDeductions);
@@ -2478,6 +2612,7 @@ export async function processBulkEmployeeData(rawRows) {
       }
       if (norm.uanNo) { matchedUser.uanNo = norm.uanNo; matchedUser.uanNumber = norm.uanNo; }
       if (norm.pfNo) { matchedUser.pfNo = norm.pfNo; matchedUser.pfNumber = norm.pfNo; }
+      if (norm.esiNo) { matchedUser.esiNo = norm.esiNo; matchedUser.esiNumber = norm.esiNo; }
       if (norm.bankName) matchedUser.bankName = norm.bankName;
       if (norm.accountNumber) matchedUser.accountNumber = norm.accountNumber;
       if (norm.ifscCode) matchedUser.ifscCode = norm.ifscCode.toUpperCase();
@@ -2574,10 +2709,16 @@ export async function processBulkEmployeeData(rawRows) {
         baseSalary: norm.baseSalary !== null && !isNaN(norm.baseSalary) ? Number(norm.baseSalary) : null,
         allowanceHRA: norm.allowanceHRA !== null && !isNaN(norm.allowanceHRA) ? Number(norm.allowanceHRA) : null,
         allowanceTravel: norm.allowanceTravel !== null && !isNaN(norm.allowanceTravel) ? Number(norm.allowanceTravel) : null,
+        allowanceCCA: norm.allowanceCCA !== null && !isNaN(norm.allowanceCCA) ? Number(norm.allowanceCCA) : null,
+        allowancePerformance: norm.allowancePerformance !== null && !isNaN(norm.allowancePerformance) ? Number(norm.allowancePerformance) : null,
+        allowanceOther: norm.allowanceOther !== null && !isNaN(norm.allowanceOther) ? Number(norm.allowanceOther) : null,
         bonus: norm.bonus !== null && !isNaN(norm.bonus) ? Number(norm.bonus) : null,
         totalAllowances: norm.totalAllowances !== null && !isNaN(norm.totalAllowances) ? Number(norm.totalAllowances) : null,
         deductionPF: norm.deductionPF !== null && !isNaN(norm.deductionPF) ? Number(norm.deductionPF) : null,
-        deductionPT: norm.deductionPT !== null && !isNaN(norm.deductionPT) ? Number(norm.deductionPT) : null,
+        deductionESI: norm.deductionESI !== null && !isNaN(norm.deductionESI) ? Number(norm.deductionESI) : null,
+        deductionAdvance: norm.deductionAdvance !== null && !isNaN(norm.deductionAdvance) ? Number(norm.deductionAdvance) : null,
+        deductionOther: norm.deductionOther !== null && !isNaN(norm.deductionOther) ? Number(norm.deductionOther) : null,
+        deductionPT: 0,
         deductionTDS: norm.deductionTDS !== null && !isNaN(norm.deductionTDS) ? Number(norm.deductionTDS) : null,
         totalDeductions: norm.totalDeductions !== null && !isNaN(norm.totalDeductions) ? Number(norm.totalDeductions) : null,
         totalDeduction: norm.totalDeductions !== null && !isNaN(norm.totalDeductions) ? Number(norm.totalDeductions) : null,
@@ -2585,6 +2726,8 @@ export async function processBulkEmployeeData(rawRows) {
         uanNumber: norm.uanNo || '',
         pfNo: norm.pfNo || '',
         pfNumber: norm.pfNo || '',
+        esiNo: norm.esiNo || '',
+        esiNumber: norm.esiNo || '',
         bankName: norm.bankName || '',
         accountNumber: norm.accountNumber || '',
         ifscCode: (norm.ifscCode || '').toUpperCase(),

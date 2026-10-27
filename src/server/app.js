@@ -297,13 +297,12 @@ app.post('/api/mutate', async (req, res) => {
           }
         }
 
-        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(existing, null, 2), 'utf-8');
+        fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(existing), 'utf-8');
         invalidateLocalDbCache();
 
         const online = await connectMongoose();
         const useLocal = getUseLocalFileDB();
         if (online && !useLocal && Array.isArray(data.users) && data.users.length > 0) {
-          const incomingIds = data.users.filter(u => u && u.id).map(u => u.id);
           const ops = data.users.filter(u => u && u.id).map(u => ({
             updateOne: {
               filter: { id: u.id },
@@ -314,7 +313,10 @@ app.post('/api/mutate', async (req, res) => {
           if (ops.length > 0) {
             await User.bulkWrite(ops).catch(e => console.warn('BulkWrite users non-fatal warning:', e.message));
           }
-          await User.deleteMany({ id: { $nin: incomingIds } }).catch(e => console.warn('Mongo delete stale users warning:', e.message));
+          if (data.isFullReset) {
+            const incomingIds = data.users.filter(u => u && u.id).map(u => u.id);
+            await User.deleteMany({ id: { $nin: incomingIds } }).catch(e => console.warn('Mongo delete stale users warning:', e.message));
+          }
         }
 
         if (online && !useLocal && Array.isArray(data.schedules) && data.schedules.length > 0) {

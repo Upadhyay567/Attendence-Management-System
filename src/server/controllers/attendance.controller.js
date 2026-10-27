@@ -1,6 +1,7 @@
 // src/server/controllers/attendance.controller.js - Attendance & Mutation Handlers
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const { 
   User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, BiometricDevice,
   connectMongoose, getUseLocalFileDB, LOCAL_DB_FILE 
@@ -123,6 +124,27 @@ function readLocalDbStateCached() {
   }
 }
 
+function sendGzipJson(req, res, data) {
+  const jsonStr = typeof data === 'string' ? data : JSON.stringify(data);
+  const acceptEncoding = (req.headers && req.headers['accept-encoding']) || '';
+
+  if (acceptEncoding.includes('gzip')) {
+    zlib.gzip(Buffer.from(jsonStr), (err, compressed) => {
+      if (err) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.send(jsonStr);
+      }
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Encoding', 'gzip');
+      res.setHeader('Content-Length', compressed.length);
+      return res.end(compressed);
+    });
+  } else {
+    res.setHeader('Content-Type', 'application/json');
+    return res.send(jsonStr);
+  }
+}
+
 async function getDbState(req, res) {
   try {
     const online = await connectMongoose();
@@ -130,8 +152,11 @@ async function getDbState(req, res) {
 
     if (online && !useLocal) {
       const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords, biometricDevices] = await Promise.all([
-        User.find({}).lean(),
-        AttendanceLog.find({}).lean(),
+        User.find({}, '-password').lean(),
+        AttendanceLog.find(
+          {},
+          'id userId employeeId biometricUserId employeeName date checkIn checkOut status shiftId location biometricUsed departureLocation lastBiometricPunchAt -_id'
+        ).sort({ date: -1 }).lean(),
         LeaveRequest.find({}).lean(),
         ShiftSwap.find({}).lean(),
         Schedule.find({}).lean(),
@@ -161,14 +186,22 @@ async function getDbState(req, res) {
             baseSalary: (u.baseSalary !== undefined && u.baseSalary !== null && u.baseSalary !== '') ? u.baseSalary : (localUser.baseSalary || null),
             allowanceHRA: (u.allowanceHRA !== undefined && u.allowanceHRA !== null) ? u.allowanceHRA : (localUser.allowanceHRA || 0),
             allowanceTravel: (u.allowanceTravel !== undefined && u.allowanceTravel !== null) ? u.allowanceTravel : (localUser.allowanceTravel || 0),
+            allowanceCCA: (u.allowanceCCA !== undefined && u.allowanceCCA !== null) ? u.allowanceCCA : (localUser.allowanceCCA || 0),
+            allowancePerformance: (u.allowancePerformance !== undefined && u.allowancePerformance !== null) ? u.allowancePerformance : (localUser.allowancePerformance || 0),
+            allowanceOther: (u.allowanceOther !== undefined && u.allowanceOther !== null) ? u.allowanceOther : (localUser.allowanceOther || 0),
             bonus: (u.bonus !== undefined && u.bonus !== null) ? u.bonus : (localUser.bonus || 0),
             totalAllowances: (u.totalAllowances !== undefined && u.totalAllowances !== null) ? u.totalAllowances : (localUser.totalAllowances || 0),
             deductionPF: (u.deductionPF !== undefined && u.deductionPF !== null) ? u.deductionPF : (localUser.deductionPF || 0),
-            deductionPT: (u.deductionPT !== undefined && u.deductionPT !== null) ? u.deductionPT : (localUser.deductionPT || 0),
+            deductionESI: (u.deductionESI !== undefined && u.deductionESI !== null) ? u.deductionESI : (localUser.deductionESI || 0),
+            deductionAdvance: (u.deductionAdvance !== undefined && u.deductionAdvance !== null) ? u.deductionAdvance : (localUser.deductionAdvance || 0),
+            deductionOther: (u.deductionOther !== undefined && u.deductionOther !== null) ? u.deductionOther : (localUser.deductionOther || 0),
+            deductionPT: 0,
             deductionTDS: (u.deductionTDS !== undefined && u.deductionTDS !== null) ? u.deductionTDS : (localUser.deductionTDS || 0),
             totalDeductions: (u.totalDeductions !== undefined && u.totalDeductions !== null) ? u.totalDeductions : (localUser.totalDeductions || 0),
             uanNo: u.uanNo || localUser.uanNo || u.uanNumber || localUser.uanNumber || '',
             pfNo: u.pfNo || localUser.pfNo || u.pfNumber || localUser.pfNumber || '',
+            esiNo: u.esiNo || localUser.esiNo || u.esiNumber || localUser.esiNumber || '',
+            esiNumber: u.esiNumber || localUser.esiNumber || u.esiNo || localUser.esiNo || '',
             bankName: u.bankName || localUser.bankName || '',
             accountNumber: u.accountNumber || localUser.accountNumber || '',
             ifscCode: u.ifscCode || localUser.ifscCode || '',
@@ -212,27 +245,15 @@ async function getDbState(req, res) {
         }
       }
 
-      // Robust Map-based merge for attendanceLogs: preserve non-empty checkOuts and latest punches
-      const logMap = new Map();
-      (attendanceLogs || []).forEach(l => {
-        if (l && l.id) logMap.set(l.id, l);
-      });
-      (localData?.attendanceLogs || []).forEach(localLog => {
-        if (!localLog || !localLog.id) return;
-        const existing = logMap.get(localLog.id);
-        if (!existing) {
-          logMap.set(localLog.id, localLog);
-        } else {
-          const localTime = new Date(localLog.updatedAt || localLog.lastBiometricPunchAt || localLog.checkOutTime || localLog.checkInTime || 0).getTime();
-          const existingTime = new Date(existing.updatedAt || existing.lastBiometricPunchAt || existing.checkOutTime || existing.checkInTime || 0).getTime();
-          const hasCheckOutLocal = localLog.checkOut && localLog.checkOut !== '--' && localLog.checkOut !== '--:--';
-          const hasCheckOutExisting = existing.checkOut && existing.checkOut !== '--' && existing.checkOut !== '--:--';
-          if ((!hasCheckOutExisting && hasCheckOutLocal) || localTime >= existingTime) {
-            logMap.set(localLog.id, { ...existing, ...localLog });
-          }
+      // Preserve all attendance logs without truncation, merging any pending local-only logs
+      let finalLogs = attendanceLogs || [];
+      if (localData && Array.isArray(localData.attendanceLogs) && localData.attendanceLogs.length > 0) {
+        const mongoLogIds = new Set(finalLogs.map(l => l.id));
+        const missingLocalLogs = localData.attendanceLogs.filter(l => l && l.id && !mongoLogIds.has(l.id));
+        if (missingLocalLogs.length > 0) {
+          finalLogs = [...finalLogs, ...missingLocalLogs];
         }
-      });
-      const finalLogs = Array.from(logMap.values());
+      }
 
       // Biometric devices merge
       let finalDevices = biometricDevices || [];
@@ -254,7 +275,7 @@ async function getDbState(req, res) {
       delete baseState.processedPunchIds;
       delete baseState.biometricVault;
 
-      return res.json({
+      return sendGzipJson(req, res, {
         ...baseState,
         users: finalUsers,
         attendanceLogs: finalLogs,
@@ -269,7 +290,7 @@ async function getDbState(req, res) {
       const localData = readLocalDbStateCached();
       if (localData) {
         const { activityLogs, processedPunchIds, biometricVault, ...clientData } = localData;
-        return res.json(clientData);
+        return sendGzipJson(req, res, clientData);
       }
       return res.status(404).json({ error: 'Seed database file missing.' });
     }

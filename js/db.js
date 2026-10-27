@@ -59,7 +59,7 @@ const defaultUsers = [
     "allowanceHRA": 14250,
     "allowanceTravel": 3000,
     "deductionPF": 7600,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543209",
     "email": "adminsurya.group@gmail.com",
@@ -93,7 +93,7 @@ const defaultUsers = [
     "allowanceHRA": 11250,
     "allowanceTravel": 3000,
     "deductionPF": 6000,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543211",
     "email": "hrsurya.group@gmail.com",
@@ -127,7 +127,7 @@ const defaultUsers = [
     "allowanceHRA": 12000,
     "allowanceTravel": 3000,
     "deductionPF": 6400,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543212",
     "email": "managersurya.group@gmail.com",
@@ -162,7 +162,7 @@ const defaultUsers = [
     "allowanceHRA": 8250,
     "allowanceTravel": 3000,
     "deductionPF": 4400,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 5,
     "phone": "+91 9999911111",
     "email": "john.doe345@gmail.com",
@@ -209,7 +209,7 @@ const defaultUsers = [
     "allowanceHRA": 9300,
     "allowanceTravel": 3000,
     "deductionPF": 4960,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9888822222",
     "email": "sarah.c@surya.group",
@@ -247,7 +247,7 @@ const defaultUsers = [
     "allowanceHRA": 7200,
     "allowanceTravel": 3000,
     "deductionPF": 3840,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 5,
     "phone": "+91 9777733333",
     "email": "david.l@surya.group",
@@ -340,7 +340,7 @@ const defaultUsers = [
     "allowanceHRA": 11700,
     "allowanceTravel": 3000,
     "deductionPF": 6240,
-    "deductionPT": 200,
+    "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543213",
     "email": "finance@surya.group",
@@ -899,8 +899,14 @@ export const DB = {
       }
       if (u.allowanceHRA === undefined) { u.allowanceHRA = null; modified = true; }
       if (u.allowanceTravel === undefined) { u.allowanceTravel = null; modified = true; }
+      if (u.allowanceCCA === undefined) { u.allowanceCCA = null; modified = true; }
+      if (u.allowancePerformance === undefined) { u.allowancePerformance = null; modified = true; }
+      if (u.allowanceOther === undefined) { u.allowanceOther = null; modified = true; }
       if (u.deductionPF === undefined) { u.deductionPF = null; modified = true; }
-      if (u.deductionPT === undefined) { u.deductionPT = null; modified = true; }
+      if (u.deductionESI === undefined) { u.deductionESI = null; modified = true; }
+      if (u.deductionAdvance === undefined) { u.deductionAdvance = null; modified = true; }
+      if (u.deductionOther === undefined) { u.deductionOther = null; modified = true; }
+      if (u.deductionPT !== 0) { u.deductionPT = 0; modified = true; }
       if (u.deductionTDS === undefined) { u.deductionTDS = null; modified = true; }
       if (u.assignedById === undefined && u.role === 'employee') {
         const hrIds = ['usr_hr', 'usr_7kek2wc', 'usr_6af1y3c'];
@@ -1535,7 +1541,7 @@ export const DB = {
     if (user) {
       Object.keys(details).forEach(key => {
         if (details[key] !== undefined) {
-          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'deductionPF', 'deductionPT', 'deductionTDS'].includes(key)) {
+          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'allowanceCCA', 'allowancePerformance', 'allowanceOther', 'totalAllowances', 'deductionPF', 'deductionESI', 'deductionAdvance', 'deductionOther', 'deductionPT', 'deductionTDS', 'totalDeductions', 'bonus'].includes(key)) {
             user[key] = details[key] === null ? null : Number(details[key]);
           } else {
             user[key] = details[key];
@@ -2625,10 +2631,15 @@ export const DB = {
     const baseSalary = user.baseSalary || 0;
     const allowanceHRA = user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : 0;
     const allowanceTravel = user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : 0;
+    const allowanceCCA = user.allowanceCCA !== undefined && user.allowanceCCA !== null ? user.allowanceCCA : 0;
+    const allowancePerformance = user.allowancePerformance !== undefined && user.allowancePerformance !== null ? user.allowancePerformance : 0;
+    const allowanceOther = user.allowanceOther !== undefined && user.allowanceOther !== null ? user.allowanceOther : 0;
     const deductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0;
-    const deductionPT = user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0;
+    const deductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : 0;
+    const deductionAdvance = user.deductionAdvance !== undefined && user.deductionAdvance !== null ? user.deductionAdvance : 0;
+    const deductionOther = user.deductionOther !== undefined && user.deductionOther !== null ? user.deductionOther : 0;
+    const deductionPT = 0; // Professional tax removed
     const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
-    const deductionESI = 0; // ESI criterion removed
 
     const totalDays = index.monthMeta.totalDays;
     const workingDays = totalDays;
@@ -2756,11 +2767,11 @@ export const DB = {
     const overtimePay = Math.round(overtimeHours * hourlyRate * 1.5);
 
     const attendanceDeductions = absentDeduction + sundayDeduction + halfDayDeduction;
-    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + bonus + overtimePay;
-    const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel) - attendanceDeductions;
+    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + allowanceOther + bonus + overtimePay;
+    const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + allowanceOther) - attendanceDeductions;
     const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
     const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
-    const statutoryDeductions = deductionPF + deductionPT + deductionTDSVal;
+    const statutoryDeductions = deductionPF + deductionESI + deductionAdvance + deductionOther + deductionTDSVal;
 
     const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
     const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;
@@ -2772,9 +2783,14 @@ export const DB = {
       baseSalary,
       allowanceHRA,
       allowanceTravel,
+      allowanceCCA,
+      allowancePerformance,
+      allowanceOther,
       deductionPF,
-      deductionPT,
       deductionESI,
+      deductionAdvance,
+      deductionOther,
+      deductionPT: 0,
       deductionTDS,
       deductionTDSVal,
       totalDays,
@@ -3040,8 +3056,13 @@ export const DB = {
       scheduleIds: 'Assigned Work Shifts',
       allowanceHRA: 'HRA Allowance',
       allowanceTravel: 'Travel Allowance',
+      allowanceCCA: 'City Compensatory Allowance (CCA)',
+      allowancePerformance: 'Performance Allowance',
+      allowanceOther: 'Other Allowances',
       deductionPF: 'PF Deduction',
-      deductionPT: 'PT Deduction',
+      deductionESI: 'ESI Deduction',
+      deductionAdvance: 'Advance Salary Deduction',
+      deductionOther: 'Others Deduction',
       deductionTDS: 'TDS Tax Rate (%)',
       managerId: 'Reporting Manager',
       status: 'Account Status'
@@ -3091,7 +3112,7 @@ export const DB = {
         const newValClean = (newVal === undefined || newVal === null || newVal === '') ? 'Not Set' : String(newVal).trim();
 
         if (oldValClean !== newValClean) {
-          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'deductionPF', 'deductionPT'].includes(key)) {
+          if (['baseSalary', 'allowanceHRA', 'allowanceTravel', 'allowanceCCA', 'allowancePerformance', 'allowanceOther', 'deductionPF', 'deductionESI', 'deductionAdvance', 'deductionOther'].includes(key)) {
             const oldNum = isNaN(Number(oldValClean)) ? oldValClean : `₹${Number(oldValClean).toLocaleString('en-IN')}`;
             const newNum = isNaN(Number(newValClean)) ? newValClean : `₹${Number(newValClean).toLocaleString('en-IN')}`;
             changes.push(`• ${label}: ${oldNum} ➔ ${newNum}`);

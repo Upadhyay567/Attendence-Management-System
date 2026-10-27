@@ -325,13 +325,13 @@ export function renderRegisterEmployeeView() {
               <div style="display:flex; align-items:center; gap:8px;">
                 <span>➕</span> Monthly Allowances (Earnings)
               </div>
-              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">Auto-calculates from HRA + Travel + Bonus</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">Auto-calculates from HRA + Travel + CCA + Performance + Other + Bonus</span>
             </div>
             <div class="form-group" style="margin-bottom:12px;">
               <label class="form-label" for="reg-total-allowances" style="font-weight:700; color:var(--success);">Total Allowances (INR/Month)</label>
               <input class="form-input" type="number" id="reg-total-allowances" placeholder="e.g. 15000" style="font-weight:700; border-color:rgba(16,185,129,0.3);">
             </div>
-            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
+            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
                 <label class="form-label" for="reg-hra" style="font-size:11.5px;">HRA (INR/Month)</label>
                 <input class="form-input" type="number" id="reg-hra" placeholder="e.g. 10000" min="0">
@@ -339,6 +339,20 @@ export function renderRegisterEmployeeView() {
               <div>
                 <label class="form-label" for="reg-travel" style="font-size:11.5px;">Travel Allowance (INR/Month)</label>
                 <input class="form-input" type="number" id="reg-travel" placeholder="e.g. 3000" min="0">
+              </div>
+              <div>
+                <label class="form-label" for="reg-cca" style="font-size:11.5px;">CCA (INR/Month)</label>
+                <input class="form-input" type="number" id="reg-cca" placeholder="e.g. 2000" min="0">
+              </div>
+            </div>
+            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
+              <div>
+                <label class="form-label" for="reg-performance" style="font-size:11.5px;">Performance Amount (INR)</label>
+                <input class="form-input" type="number" id="reg-performance" placeholder="e.g. 5000" min="0">
+              </div>
+              <div>
+                <label class="form-label" for="reg-other-allowances" style="font-size:11.5px;">Other Allowances (INR)</label>
+                <input class="form-input" type="number" id="reg-other-allowances" placeholder="e.g. 1500" min="0">
               </div>
             </div>
           </div>
@@ -349,20 +363,30 @@ export function renderRegisterEmployeeView() {
               <div style="display:flex; align-items:center; gap:8px;">
                 <span>➖</span> Monthly Deductions
               </div>
-              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">Auto-calculates from PF + PT + TDS</span>
+              <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">Auto-calculates from PF + ESI + Advance + Others + TDS</span>
             </div>
             <div class="form-group" style="margin-bottom:12px;">
               <label class="form-label" for="reg-total-deductions" style="font-weight:700; color:#ef4444;">Total Deduction (INR/Month)</label>
               <input class="form-input" type="number" id="reg-total-deductions" placeholder="e.g. 6200" style="font-weight:700; border-color:rgba(239,68,68,0.3);">
             </div>
-            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:0;">
+            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
                 <label class="form-label" for="reg-pf" style="font-size:11px;">PF (INR/Month)</label>
                 <input class="form-input" type="number" id="reg-pf" placeholder="e.g. 3000" min="0">
               </div>
               <div>
-                <label class="form-label" for="reg-pt" style="font-size:11px;">Prof. Tax (PT)</label>
-                <input class="form-input" type="number" id="reg-pt" placeholder="e.g. 200" min="0">
+                <label class="form-label" for="reg-esi" style="font-size:11px;">ESI Deduction (INR/Month)</label>
+                <input class="form-input" type="number" id="reg-esi" placeholder="e.g. 500" min="0">
+              </div>
+            </div>
+            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:0;">
+              <div>
+                <label class="form-label" for="reg-advance" style="font-size:11px;">Advance Salary (INR)</label>
+                <input class="form-input" type="number" id="reg-advance" placeholder="e.g. 2000" min="0">
+              </div>
+              <div>
+                <label class="form-label" for="reg-other-deductions" style="font-size:11px;">Others Deduction (INR)</label>
+                <input class="form-input" type="number" id="reg-other-deductions" placeholder="e.g. 500" min="0">
               </div>
               <div>
                 <label class="form-label" for="reg-tds" style="font-size:11px;">TDS Rate (%)</label>
@@ -374,9 +398,9 @@ export function renderRegisterEmployeeView() {
           <!-- Section 4: Statutory & Social Security -->
           <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:16px;">
             <div style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-              <span>🏛️</span> Statutory PF & UAN Numbers
+              <span>🏛️</span> Statutory PF, UAN & ESI Numbers
             </div>
-            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
+            <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:0;">
               <div>
                 <label class="form-label" for="reg-uan" style="font-size:11.5px;">UAN No. <span style="font-size:10px; color:var(--text-muted);">(Universal Account No)</span></label>
                 <input class="form-input" type="text" id="reg-uan" placeholder="e.g. 101234567890">
@@ -384,6 +408,10 @@ export function renderRegisterEmployeeView() {
               <div>
                 <label class="form-label" for="reg-pf-no" style="font-size:11.5px;">PF No. <span style="font-size:10px; color:var(--text-muted);">(Provident Fund No)</span></label>
                 <input class="form-input" type="text" id="reg-pf-no" placeholder="e.g. DL/CPM/0012345/000">
+              </div>
+              <div>
+                <label class="form-label" for="reg-esi-no" style="font-size:11.5px;">ESI No. <span style="font-size:10px; color:var(--text-muted);">(Employee State Insurance No)</span></label>
+                <input class="form-input" type="text" id="reg-esi-no" placeholder="e.g. 11000123456789001">
               </div>
             </div>
           </div>
@@ -542,9 +570,15 @@ export function renderRegisterEmployeeView() {
   const bonusInput = document.getElementById('reg-bonus');
   const hraInput = document.getElementById('reg-hra');
   const travelInput = document.getElementById('reg-travel');
+  const ccaInput = document.getElementById('reg-cca');
+  const performanceInput = document.getElementById('reg-performance');
+  const otherAllowancesInput = document.getElementById('reg-other-allowances');
   const totalAllowancesInput = document.getElementById('reg-total-allowances');
+
   const pfInput = document.getElementById('reg-pf');
-  const ptInput = document.getElementById('reg-pt');
+  const esiInput = document.getElementById('reg-esi');
+  const advanceInput = document.getElementById('reg-advance');
+  const otherDeductionsInput = document.getElementById('reg-other-deductions');
   const tdsInput = document.getElementById('reg-tds');
   const totalDeductionsInput = document.getElementById('reg-total-deductions');
 
@@ -566,47 +600,50 @@ export function renderRegisterEmployeeView() {
   }
 
   function recalcAllowances() {
-    if (!userManuallySetAllowances && totalAllowancesInput) {
+    if (totalAllowancesInput) {
       const hra = parseFloat(hraInput ? hraInput.value : 0) || 0;
       const travel = parseFloat(travelInput ? travelInput.value : 0) || 0;
+      const cca = parseFloat(ccaInput ? ccaInput.value : 0) || 0;
+      const performance = parseFloat(performanceInput ? performanceInput.value : 0) || 0;
+      const otherAllow = parseFloat(otherAllowancesInput ? otherAllowancesInput.value : 0) || 0;
       const bonus = parseFloat(bonusInput ? bonusInput.value : 0) || 0;
-      const sum = hra + travel + bonus;
-      totalAllowancesInput.value = sum > 0 ? sum : '';
+      const sum = hra + travel + cca + performance + otherAllow + bonus;
+      totalAllowancesInput.value = sum > 0 ? sum : 0;
     }
     updateCompensationSummary();
   }
 
   function recalcDeductions() {
-    if (!userManuallySetDeductions && totalDeductionsInput) {
+    if (totalDeductionsInput) {
       const pf = parseFloat(pfInput ? pfInput.value : 0) || 0;
-      const pt = parseFloat(ptInput ? ptInput.value : 0) || 0;
+      const esi = parseFloat(esiInput ? esiInput.value : 0) || 0;
+      const advance = parseFloat(advanceInput ? advanceInput.value : 0) || 0;
+      const otherDed = parseFloat(otherDeductionsInput ? otherDeductionsInput.value : 0) || 0;
       const tdsRate = parseFloat(tdsInput ? tdsInput.value : 0) || 0;
       const base = parseFloat(salaryInput ? salaryInput.value : 0) || 0;
       const tdsVal = Math.round(base * (tdsRate / 100));
-      const sum = pf + pt + tdsVal;
-      totalDeductionsInput.value = sum > 0 ? sum : '';
+      const sum = pf + esi + advance + otherDed + tdsVal;
+      totalDeductionsInput.value = sum > 0 ? sum : 0;
     }
     updateCompensationSummary();
   }
 
   if (totalAllowancesInput) {
     totalAllowancesInput.addEventListener('input', () => {
-      userManuallySetAllowances = true;
       updateCompensationSummary();
     });
   }
   if (totalDeductionsInput) {
     totalDeductionsInput.addEventListener('input', () => {
-      userManuallySetDeductions = true;
       updateCompensationSummary();
     });
   }
 
-  [salaryInput, bonusInput, hraInput, travelInput].forEach(inp => {
+  [salaryInput, bonusInput, hraInput, travelInput, ccaInput, performanceInput, otherAllowancesInput].forEach(inp => {
     if (inp) inp.addEventListener('input', recalcAllowances);
   });
 
-  [salaryInput, pfInput, ptInput, tdsInput].forEach(inp => {
+  [salaryInput, pfInput, esiInput, advanceInput, otherDeductionsInput, tdsInput].forEach(inp => {
     if (inp) inp.addEventListener('input', recalcDeductions);
   });
 
@@ -658,18 +695,30 @@ export function renderRegisterEmployeeView() {
       const allowanceHRA = hraVal === '' ? null : Number(hraVal);
       const travelVal = document.getElementById('reg-travel') ? document.getElementById('reg-travel').value.trim() : '';
       const allowanceTravel = travelVal === '' ? null : Number(travelVal);
+      const ccaVal = document.getElementById('reg-cca') ? document.getElementById('reg-cca').value.trim() : '';
+      const allowanceCCA = ccaVal === '' ? null : Number(ccaVal);
+      const perfVal = document.getElementById('reg-performance') ? document.getElementById('reg-performance').value.trim() : '';
+      const allowancePerformance = perfVal === '' ? null : Number(perfVal);
+      const otherAllowVal = document.getElementById('reg-other-allowances') ? document.getElementById('reg-other-allowances').value.trim() : '';
+      const allowanceOther = otherAllowVal === '' ? null : Number(otherAllowVal);
 
       const totalDeductionsVal = document.getElementById('reg-total-deductions') ? document.getElementById('reg-total-deductions').value.trim() : '';
       const totalDeductions = totalDeductionsVal === '' ? null : Number(totalDeductionsVal);
       const pfVal = document.getElementById('reg-pf') ? document.getElementById('reg-pf').value.trim() : '';
       const deductionPF = pfVal === '' ? null : Number(pfVal);
-      const ptVal = document.getElementById('reg-pt') ? document.getElementById('reg-pt').value.trim() : '';
-      const deductionPT = ptVal === '' ? null : Number(ptVal);
+      const esiVal = document.getElementById('reg-esi') ? document.getElementById('reg-esi').value.trim() : '';
+      const deductionESI = esiVal === '' ? null : Number(esiVal);
+      const advanceVal = document.getElementById('reg-advance') ? document.getElementById('reg-advance').value.trim() : '';
+      const deductionAdvance = advanceVal === '' ? null : Number(advanceVal);
+      const otherDedVal = document.getElementById('reg-other-deductions') ? document.getElementById('reg-other-deductions').value.trim() : '';
+      const deductionOther = otherDedVal === '' ? null : Number(otherDedVal);
+      const deductionPT = 0;
       const tdsVal = document.getElementById('reg-tds') ? document.getElementById('reg-tds').value.trim() : '';
       const deductionTDS = tdsVal === '' ? null : Number(tdsVal);
 
       const uanNo = document.getElementById('reg-uan') ? document.getElementById('reg-uan').value.trim() : '';
       const pfNo = document.getElementById('reg-pf-no') ? document.getElementById('reg-pf-no').value.trim() : '';
+      const esiNo = document.getElementById('reg-esi-no') ? document.getElementById('reg-esi-no').value.trim() : '';
       const bankName = document.getElementById('reg-bank-name') ? document.getElementById('reg-bank-name').value.trim() : '';
       const accountNumber = document.getElementById('reg-account-number') ? document.getElementById('reg-account-number').value.trim() : '';
       const ifscCode = document.getElementById('reg-ifsc') ? document.getElementById('reg-ifsc').value.trim().toUpperCase() : '';
@@ -783,15 +832,23 @@ export function renderRegisterEmployeeView() {
         totalAllowances,
         allowanceHRA,
         allowanceTravel,
+        allowanceCCA,
+        allowancePerformance,
+        allowanceOther,
         totalDeduction: totalDeductions,
         totalDeductions,
         deductionPF,
-        deductionPT,
+        deductionESI,
+        deductionAdvance,
+        deductionOther,
+        deductionPT: 0,
         deductionTDS,
         uanNo,
         uanNumber: uanNo,
         pfNo,
         pfNumber: pfNo,
+        esiNo,
+        esiNumber: esiNo,
         bankName,
         accountNumber,
         ifscCode,
@@ -804,26 +861,6 @@ export function renderRegisterEmployeeView() {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee profile was registered by ${currentUser.name}.`, currentUser);
       }
 
-      // Sync backend DB
-      try {
-        let sessionToken = '';
-        try {
-          const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
-          if (sess) sessionToken = JSON.parse(sess).token || '';
-        } catch (e) {}
-
-        await fetch((window.apiBaseUrl || '') + '/api/mutate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
-          },
-          body: JSON.stringify({ action: 'sync', data: DB.data })
-        });
-      } catch (err) {
-        console.warn('Network error synchronizing mutation with backend database:', err);
-      }
-
       if (window.showAccountCreationSuccessModal && createdUser) {
         window.showAccountCreationSuccessModal(createdUser, rawPassword);
       } else if (typeof showToastNotification === 'function') {
@@ -831,6 +868,33 @@ export function renderRegisterEmployeeView() {
       } else {
         alert(`Employee ${name} registered successfully!`);
       }
+
+      // Background non-blocking sync
+      (async () => {
+        try {
+          let sessionToken = '';
+          try {
+            const sess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+            if (sess) sessionToken = JSON.parse(sess).token || '';
+          } catch (e) {}
+
+          const syncData = { ...DB.data };
+          if (Array.isArray(syncData.attendanceLogs) && syncData.attendanceLogs.length > 100) {
+            syncData.attendanceLogs = syncData.attendanceLogs.slice(-100);
+          }
+
+          await fetch((window.apiBaseUrl || '') + '/api/mutate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {})
+            },
+            body: JSON.stringify({ action: 'sync', data: syncData })
+          });
+        } catch (err) {
+          console.warn('Network error synchronizing mutation with backend database:', err);
+        }
+      })();
 
       // Navigate to Employee Directory
       window.location.hash = '#admin-users';

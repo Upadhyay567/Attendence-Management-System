@@ -2743,14 +2743,35 @@ function renderEmployeePayslip(userId, month, year) {
           </tr>
           <tr>
             <td>House Rent Allowance (HRA)</td>
-            <td style="text-align:right">₹${payroll.allowanceHRA.toLocaleString()}</td>
+            <td style="text-align:right">₹${(payroll.allowanceHRA || 0).toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
           <tr>
             <td>Travel Allowance</td>
-            <td style="text-align:right">₹${payroll.allowanceTravel.toLocaleString()}</td>
+            <td style="text-align:right">₹${(payroll.allowanceTravel || 0).toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
+          ${(payroll.allowanceCCA || 0) > 0 ? `
+          <tr>
+            <td>City Compensatory Allowance (CCA)</td>
+            <td style="text-align:right">₹${payroll.allowanceCCA.toLocaleString()}</td>
+            <td style="text-align:right">-</td>
+          </tr>
+          ` : ''}
+          ${(payroll.allowancePerformance || 0) > 0 ? `
+          <tr>
+            <td>Performance Amount</td>
+            <td style="text-align:right">₹${payroll.allowancePerformance.toLocaleString()}</td>
+            <td style="text-align:right">-</td>
+          </tr>
+          ` : ''}
+          ${(payroll.allowanceOther || 0) > 0 ? `
+          <tr>
+            <td>Other Allowances</td>
+            <td style="text-align:right">₹${payroll.allowanceOther.toLocaleString()}</td>
+            <td style="text-align:right">-</td>
+          </tr>
+          ` : ''}
           <tr>
             <td>Overtime Allowance (${payroll.overtimeText})</td>
             <td style="text-align:right;color:var(--success)">₹${payroll.overtimePay.toLocaleString()}</td>
@@ -2776,17 +2797,33 @@ function renderEmployeePayslip(userId, month, year) {
           <tr>
             <td>Provident Fund (PF) Deduction</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionPF.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">₹${(payroll.deductionPF || 0).toLocaleString()}</td>
           </tr>
+          ${(payroll.deductionESI || 0) > 0 ? `
           <tr>
-            <td>Professional Tax (PT)</td>
+            <td>ESI Deduction</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionPT.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">₹${payroll.deductionESI.toLocaleString()}</td>
           </tr>
+          ` : ''}
+          ${(payroll.deductionAdvance || 0) > 0 ? `
           <tr>
-            <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS}%)</td>
+            <td>Advance Salary Deduction</td>
             <td style="text-align:right">-</td>
-            <td style="text-align:right;color:#ef4444">₹${payroll.deductionTDSVal.toLocaleString()}</td>
+            <td style="text-align:right;color:#ef4444">₹${payroll.deductionAdvance.toLocaleString()}</td>
+          </tr>
+          ` : ''}
+          ${(payroll.deductionOther || 0) > 0 ? `
+          <tr>
+            <td>Others Deduction</td>
+            <td style="text-align:right">-</td>
+            <td style="text-align:right;color:#ef4444">₹${payroll.deductionOther.toLocaleString()}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS || 0}%)</td>
+            <td style="text-align:right">-</td>
+            <td style="text-align:right;color:#ef4444">₹${(payroll.deductionTDSVal || 0).toLocaleString()}</td>
           </tr>
           ${payroll.bonus > 0 ? `
           <tr>
@@ -3415,16 +3452,68 @@ function renderEmployeeProfile() {
                 <input class="prof-input" type="number" id="prof-travel" value="${user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : ''}" disabled>
               </div>
               <div>
+                <label class="prof-label" for="prof-cca">CCA (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-cca" value="${user.allowanceCCA !== undefined && user.allowanceCCA !== null ? user.allowanceCCA : ''}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-performance">Performance Amount (INR)</label>
+                <input class="prof-input" type="number" id="prof-performance" value="${user.allowancePerformance !== undefined && user.allowancePerformance !== null ? user.allowancePerformance : ''}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-other-allowances">Other Allowances (INR)</label>
+                <input class="prof-input" type="number" id="prof-other-allowances" value="${user.allowanceOther !== undefined && user.allowanceOther !== null ? user.allowanceOther : ''}" disabled>
+              </div>
+              <div>
                 <label class="prof-label" for="prof-pf">PF Deduction (INR/Month)</label>
                 <input class="prof-input" type="number" id="prof-pf" value="${user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : ''}" disabled>
               </div>
               <div>
-                <label class="prof-label" for="prof-pt">Professional Tax (PT)</label>
-                <input class="prof-input" type="number" id="prof-pt" value="${user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : ''}" disabled>
+                <label class="prof-label" for="prof-esi">ESI Deduction (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-esi" value="${user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : ''}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-advance">Advance Salary Deduction (INR)</label>
+                <input class="prof-input" type="number" id="prof-advance" value="${user.deductionAdvance !== undefined && user.deductionAdvance !== null ? user.deductionAdvance : ''}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-other-deductions">Others Deduction (INR)</label>
+                <input class="prof-input" type="number" id="prof-other-deductions" value="${user.deductionOther !== undefined && user.deductionOther !== null ? user.deductionOther : ''}" disabled>
               </div>
               <div>
                 <label class="prof-label" for="prof-tds">TDS Rate (%)</label>
                 <input class="prof-input" type="number" id="prof-tds" value="${user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : ''}" min="0" max="100" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-total-allowances" style="color:var(--success); font-weight:700">Total Allowances (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-total-allowances" value="${(() => {
+                  const comp = (parseFloat(user.allowanceHRA) || 0) + (parseFloat(user.allowanceTravel) || 0) + (parseFloat(user.allowanceCCA) || 0) + (parseFloat(user.allowancePerformance) || 0) + (parseFloat(user.allowanceOther) || 0) + (parseFloat(user.bonus) || 0);
+                  if (user.totalAllowances !== undefined && user.totalAllowances !== null && Number(user.totalAllowances) > 0) return user.totalAllowances;
+                  return comp;
+                })()}" style="font-weight:700; color:var(--success);" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-total-deductions" style="color:var(--error); font-weight:700">Total Deduction (INR/Month)</label>
+                <input class="prof-input" type="number" id="prof-total-deductions" value="${(() => {
+                  const base = parseFloat(user.baseSalary) || 0;
+                  const tdsRate = parseFloat(user.deductionTDS) || 0;
+                  const tdsVal = Math.round(base * (tdsRate / 100));
+                  const comp = (parseFloat(user.deductionPF) || 0) + (parseFloat(user.deductionESI) || 0) + (parseFloat(user.deductionAdvance) || 0) + (parseFloat(user.deductionOther) || 0) + tdsVal;
+                  const saved = user.totalDeductions !== undefined && user.totalDeductions !== null ? user.totalDeductions : user.totalDeduction;
+                  if (saved !== undefined && saved !== null && Number(saved) > 0) return saved;
+                  return comp;
+                })()}" style="font-weight:700; color:var(--error);" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-uan">UAN No.</label>
+                <input class="prof-input" type="text" id="prof-uan" value="${Utils.escape(user.uanNo || user.uanNumber || '—')}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-pf-no">PF No.</label>
+                <input class="prof-input" type="text" id="prof-pf-no" value="${Utils.escape(user.pfNo || user.pfNumber || '—')}" disabled>
+              </div>
+              <div>
+                <label class="prof-label" for="prof-esi-no">ESI No.</label>
+                <input class="prof-input" type="text" id="prof-esi-no" value="${Utils.escape(user.esiNo || user.esiNumber || '—')}" disabled>
               </div>
             </div>
           </div>
@@ -3621,10 +3710,20 @@ function renderEmployeeProfile() {
     const allowanceHRA = allowanceHRAEl ? (allowanceHRAEl.value === '' ? null : Number(allowanceHRAEl.value)) : (user.allowanceHRA !== undefined ? user.allowanceHRA : null);
     const allowanceTravelEl = document.getElementById('prof-travel');
     const allowanceTravel = allowanceTravelEl ? (allowanceTravelEl.value === '' ? null : Number(allowanceTravelEl.value)) : (user.allowanceTravel !== undefined ? user.allowanceTravel : null);
+    const allowanceCCAEl = document.getElementById('prof-cca');
+    const allowanceCCA = allowanceCCAEl ? (allowanceCCAEl.value === '' ? null : Number(allowanceCCAEl.value)) : (user.allowanceCCA !== undefined ? user.allowanceCCA : null);
+    const allowancePerformanceEl = document.getElementById('prof-performance');
+    const allowancePerformance = allowancePerformanceEl ? (allowancePerformanceEl.value === '' ? null : Number(allowancePerformanceEl.value)) : (user.allowancePerformance !== undefined ? user.allowancePerformance : null);
+    const allowanceOtherEl = document.getElementById('prof-other-allowances');
+    const allowanceOther = allowanceOtherEl ? (allowanceOtherEl.value === '' ? null : Number(allowanceOtherEl.value)) : (user.allowanceOther !== undefined ? user.allowanceOther : null);
     const deductionPFEl = document.getElementById('prof-pf');
     const deductionPF = deductionPFEl ? (deductionPFEl.value === '' ? null : Number(deductionPFEl.value)) : (user.deductionPF !== undefined ? user.deductionPF : null);
-    const deductionPTEl = document.getElementById('prof-pt');
-    const deductionPT = deductionPTEl ? (deductionPTEl.value === '' ? null : Number(deductionPTEl.value)) : (user.deductionPT !== undefined ? user.deductionPT : null);
+    const deductionESIEl = document.getElementById('prof-esi');
+    const deductionESI = deductionESIEl ? (deductionESIEl.value === '' ? null : Number(deductionESIEl.value)) : (user.deductionESI !== undefined ? user.deductionESI : null);
+    const deductionAdvanceEl = document.getElementById('prof-advance');
+    const deductionAdvance = deductionAdvanceEl ? (deductionAdvanceEl.value === '' ? null : Number(deductionAdvanceEl.value)) : (user.deductionAdvance !== undefined ? user.deductionAdvance : null);
+    const deductionOtherEl = document.getElementById('prof-other-deductions');
+    const deductionOther = deductionOtherEl ? (deductionOtherEl.value === '' ? null : Number(deductionOtherEl.value)) : (user.deductionOther !== undefined ? user.deductionOther : null);
     const deductionTDSEl = document.getElementById('prof-tds');
     const deductionTDS = deductionTDSEl ? (deductionTDSEl.value === '' ? null : Number(deductionTDSEl.value)) : (user.deductionTDS !== undefined ? user.deductionTDS : null);
 
@@ -3664,7 +3763,8 @@ function renderEmployeeProfile() {
     setTimeout(async () => {
       const updates = { 
         name, employeeId, username, password, email, phone, dob, gender, emergencyContact, address, city, department, designation, dateOfJoining, verifiedStaffBatch,
-        baseSalary, allowanceHRA, allowanceTravel, deductionPF, deductionPT, deductionTDS,
+        baseSalary, allowanceHRA, allowanceTravel, allowanceCCA, allowancePerformance, allowanceOther,
+        deductionPF, deductionESI, deductionAdvance, deductionOther, deductionPT: 0, deductionTDS,
         profileVerificationStatus: 'Approved',
         profileVerificationComment: '',
         pendingProfileEdits: null
@@ -7199,9 +7299,30 @@ function compileReports(month, year) {
                 </tr>
                 <tr>
                   <td>Travel Allowance</td>
-                  <td style="text-align:right">₹${p.allowanceTravel.toLocaleString()}</td>
+                  <td style="text-align:right">₹${(p.allowanceTravel || 0).toLocaleString()}</td>
                   <td style="text-align:right">-</td>
                 </tr>
+                ${(p.allowanceCCA || 0) > 0 ? `
+                <tr>
+                  <td>City Compensatory Allowance (CCA)</td>
+                  <td style="text-align:right">₹${p.allowanceCCA.toLocaleString()}</td>
+                  <td style="text-align:right">-</td>
+                </tr>
+                ` : ''}
+                ${(p.allowancePerformance || 0) > 0 ? `
+                <tr>
+                  <td>Performance Amount</td>
+                  <td style="text-align:right">₹${p.allowancePerformance.toLocaleString()}</td>
+                  <td style="text-align:right">-</td>
+                </tr>
+                ` : ''}
+                ${(p.allowanceOther || 0) > 0 ? `
+                <tr>
+                  <td>Other Allowances</td>
+                  <td style="text-align:right">₹${p.allowanceOther.toLocaleString()}</td>
+                  <td style="text-align:right">-</td>
+                </tr>
+                ` : ''}
                 <tr>
                   <td>Overtime Allowance (${p.overtimeText})</td>
                   <td style="text-align:right;color:var(--success)">₹${p.overtimePay.toLocaleString()}</td>
@@ -7227,17 +7348,33 @@ function compileReports(month, year) {
                 <tr>
                   <td>Provident Fund (PF) Deduction</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionPF.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">₹${(p.deductionPF || 0).toLocaleString()}</td>
                 </tr>
+                ${(p.deductionESI || 0) > 0 ? `
                 <tr>
-                  <td>Professional Tax (PT)</td>
+                  <td>ESI Deduction</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionPT.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">₹${p.deductionESI.toLocaleString()}</td>
                 </tr>
+                ` : ''}
+                ${(p.deductionAdvance || 0) > 0 ? `
                 <tr>
-                  <td>Tax Deducted at Source (TDS) (${p.deductionTDS}%)</td>
+                  <td>Advance Salary Deduction</td>
                   <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionTDSVal.toLocaleString()}</td>
+                  <td style="text-align:right;color:#ef4444">₹${p.deductionAdvance.toLocaleString()}</td>
+                </tr>
+                ` : ''}
+                ${(p.deductionOther || 0) > 0 ? `
+                <tr>
+                  <td>Others Deduction</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right;color:#ef4444">₹${p.deductionOther.toLocaleString()}</td>
+                </tr>
+                ` : ''}
+                <tr>
+                  <td>Tax Deducted at Source (TDS) (${p.deductionTDS || 0}%)</td>
+                  <td style="text-align:right">-</td>
+                  <td style="text-align:right;color:#ef4444">₹${(p.deductionTDSVal || 0).toLocaleString()}</td>
                 </tr>
                 ${p.bonus > 0 ? `
                 <tr>
@@ -7369,10 +7506,33 @@ function exportReportCSV(month, year) {
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const locSuffix = (locVal && locVal !== 'all') ? `_${locVal.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
   const filename = `HS_Group_Payroll_Report_${monthNames[month]}_${year}${locSuffix}.csv`;
-  const headers = ['Employee Name', 'Base Salary', 'HRA', 'Travel Allowance', 'Working Days', 'Days Present', 'Absent Days', 'Half Days', 'Absent/Half-Day Deductions', 'PF Deduction', 'PT Deduction', 'TDS Deduction', 'Net Disbursed Payout'];
+  const headers = ['Employee Name', 'Base Salary', 'HRA', 'Travel Allowance', 'CCA', 'Performance Amount', 'Other Allowances', 'Total Allowances', 'Gross Earnings', 'Working Days', 'Days Present', 'Absent Days', 'Half Days', 'Absent/Half-Day Deductions', 'PF Deduction', 'ESI Deduction', 'Advance Salary Deduction', 'Others Deduction', 'TDS Deduction', 'Total Deductions', 'Net Disbursed Payout'];
   const userPayrollData = DB.calculateAllMonthlyPayrolls(users, month, year);
   const rows = userPayrollData.map(p => {
-    return [p.employeeName, p.baseSalary, p.allowanceHRA, p.allowanceTravel, p.workingDays, p.presentDays, p.absentDays, p.halfDays, p.attendanceDeductions, p.deductionPF, p.deductionPT, p.deductionTDSVal, p.netSalary];
+    const totalAllowances = (p.allowanceHRA || 0) + (p.allowanceTravel || 0) + (p.allowanceCCA || 0) + (p.allowancePerformance || 0) + (p.allowanceOther || 0);
+    return [
+      p.employeeName,
+      p.baseSalary,
+      p.allowanceHRA || 0,
+      p.allowanceTravel || 0,
+      p.allowanceCCA || 0,
+      p.allowancePerformance || 0,
+      p.allowanceOther || 0,
+      totalAllowances,
+      p.grossEarnings || 0,
+      p.workingDays,
+      p.presentDays,
+      p.absentDays,
+      p.halfDays,
+      p.attendanceDeductions,
+      p.deductionPF || 0,
+      p.deductionESI || 0,
+      p.deductionAdvance || 0,
+      p.deductionOther || 0,
+      p.deductionTDSVal || 0,
+      p.totalDeductions || 0,
+      p.netSalary
+    ];
   });
   Utils.exportToCSV(filename, headers, rows);
 }
@@ -7419,7 +7579,7 @@ function printMonthlyPayrollSheet(month, year) {
     grandHalfDays += (p.halfDays || 0);
     grandGrossSalary += (p.grossEarnings || 0);
     grandAttendanceDeductions += (p.attendanceDeductions || 0);
-    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0));
+    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionESI || 0) + (p.deductionAdvance || 0) + (p.deductionOther || 0) + (p.deductionTDSVal || 0));
     grandStatutoryDeductions += statutory;
     grandTotalDeductions += (p.totalDeductions || 0);
     grandNetPayout += (p.netSalary || 0);
@@ -7436,7 +7596,7 @@ function printMonthlyPayrollSheet(month, year) {
     const empId = u.employeeId || p.userId || 'N/A';
     const dept = u.department || 'General';
     const role = u.designation || u.role || 'Staff';
-    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionPT || 0) + (p.deductionTDSVal || 0));
+    const statutory = p.statutoryDeductions !== undefined ? p.statutoryDeductions : ((p.deductionPF || 0) + (p.deductionESI || 0) + (p.deductionAdvance || 0) + (p.deductionOther || 0) + (p.deductionTDSVal || 0));
 
     return `
       <tr>
@@ -9553,11 +9713,21 @@ function openStaffDetailModal(userId) {
             <h4 style="margin:0 0 12px 0; font-size:14px; color:var(--primary)">Corporate Payroll Settings</h4>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px; color:var(--text-secondary)">
               <div><strong>Base Salary:</strong> <span style="color:var(--text-primary)">₹${(user.baseSalary || 0).toLocaleString()}</span></div>
-              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : 0).toLocaleString()}</span></div>
-              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : 0).toLocaleString()}</span></div>
-              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">₹${(user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0).toLocaleString()}</span></div>
-              <div><strong>Professional Tax:</strong> <span style="color:var(--text-primary)">₹${(user.deductionPT !== undefined && user.deductionPT !== null ? user.deductionPT : 0).toLocaleString()}</span></div>
+              <div><strong>HRA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceHRA || 0).toLocaleString()}</span></div>
+              <div><strong>Travel Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceTravel || 0).toLocaleString()}</span></div>
+              <div><strong>CCA Allowance:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceCCA || 0).toLocaleString()}</span></div>
+              <div><strong>Performance Amount:</strong> <span style="color:var(--text-primary)">₹${(user.allowancePerformance || 0).toLocaleString()}</span></div>
+              <div><strong>Other Allowances:</strong> <span style="color:var(--text-primary)">₹${(user.allowanceOther || 0).toLocaleString()}</span></div>
+              <div><strong>Total Allowances:</strong> <span style="color:#16a34a; font-weight:700">₹${((user.allowanceHRA || 0) + (user.allowanceTravel || 0) + (user.allowanceCCA || 0) + (user.allowancePerformance || 0) + (user.allowanceOther || 0)).toLocaleString()}</span></div>
+              <div><strong>Provident Fund (PF):</strong> <span style="color:var(--text-primary)">₹${(user.deductionPF || 0).toLocaleString()}</span></div>
+              <div><strong>ESI Deduction:</strong> <span style="color:var(--text-primary)">₹${(user.deductionESI || 0).toLocaleString()}</span></div>
+              <div><strong>Advance Salary Ded.:</strong> <span style="color:var(--text-primary)">₹${(user.deductionAdvance || 0).toLocaleString()}</span></div>
+              <div><strong>Others Deduction:</strong> <span style="color:var(--text-primary)">₹${(user.deductionOther || 0).toLocaleString()}</span></div>
               <div><strong>TDS Tax Rate:</strong> <span style="color:var(--text-primary)">${user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0}%</span></div>
+              <div><strong>Total Deductions:</strong> <span style="color:#ef4444; font-weight:700">₹${((user.totalDeductions && user.totalDeductions > 0) ? user.totalDeductions : ((user.deductionPF || 0) + (user.deductionESI || 0) + (user.deductionAdvance || 0) + (user.deductionOther || 0) + Math.round(((user.baseSalary || 0) * (user.deductionTDS || 0)) / 100))).toLocaleString()}</span></div>
+              <div><strong>UAN No:</strong> <span style="color:var(--text-primary)">${Utils.escape(user.uanNo || user.uanNumber || '—')}</span></div>
+              <div><strong>PF No:</strong> <span style="color:var(--text-primary)">${Utils.escape(user.pfNo || user.pfNumber || '—')}</span></div>
+              <div><strong>ESI No:</strong> <span style="color:var(--text-primary)">${Utils.escape(user.esiNo || user.esiNumber || '—')}</span></div>
             </div>
           </div>
           ` : ''}
@@ -11479,6 +11649,21 @@ function printSinglePayslipPDF(userId, month, year) {
           <td style="text-align:right">-</td>
         </tr>
         <tr>
+          <td>City Compensatory Allowance (CCA)</td>
+          <td style="text-align:right" class="earning">₹${(payroll.allowanceCCA ?? 0).toLocaleString()}</td>
+          <td style="text-align:right">-</td>
+        </tr>
+        <tr>
+          <td>Performance Allowance</td>
+          <td style="text-align:right" class="earning">₹${(payroll.allowancePerformance ?? 0).toLocaleString()}</td>
+          <td style="text-align:right">-</td>
+        </tr>
+        <tr>
+          <td>Other Allowances</td>
+          <td style="text-align:right" class="earning">₹${(payroll.allowanceOther ?? 0).toLocaleString()}</td>
+          <td style="text-align:right">-</td>
+        </tr>
+        <tr>
           <td>Overtime Allowance (${payroll.overtimeText || '0h 0m'})</td>
           <td style="text-align:right" class="earning">₹${(payroll.overtimePay ?? 0).toLocaleString()}</td>
           <td style="text-align:right">-</td>
@@ -11513,9 +11698,19 @@ function printSinglePayslipPDF(userId, month, year) {
           <td style="text-align:right" class="deduction">₹${(payroll.deductionPF ?? 0).toLocaleString()}</td>
         </tr>
         <tr>
-          <td>Professional Tax (PT)</td>
+          <td>Employee State Insurance (ESI) Contribution</td>
           <td style="text-align:right">-</td>
-          <td style="text-align:right" class="deduction">₹${(payroll.deductionPT ?? 0).toLocaleString()}</td>
+          <td style="text-align:right" class="deduction">₹${(payroll.deductionESI ?? 0).toLocaleString()}</td>
+        </tr>
+        <tr>
+          <td>Advance Salary Deduction</td>
+          <td style="text-align:right">-</td>
+          <td style="text-align:right" class="deduction">₹${(payroll.deductionAdvance ?? 0).toLocaleString()}</td>
+        </tr>
+        <tr>
+          <td>Others Deduction</td>
+          <td style="text-align:right">-</td>
+          <td style="text-align:right" class="deduction">₹${(payroll.deductionOther ?? 0).toLocaleString()}</td>
         </tr>
         <tr>
           <td>Tax Deducted at Source (TDS) (${payroll.deductionTDS ?? 0}%)</td>
@@ -11604,6 +11799,9 @@ function downloadSinglePayslipExcel(userId, month, year) {
     { "Category": "Earnings", "Parameter": "Basic Salary (INR)", "Value": payroll.baseSalary ?? 0 },
     { "Category": "Earnings", "Parameter": "HRA Allowance (INR)", "Value": payroll.allowanceHRA ?? 0 },
     { "Category": "Earnings", "Parameter": "Travel Allowance (INR)", "Value": payroll.allowanceTravel ?? 0 },
+    { "Category": "Earnings", "Parameter": "CCA Allowance (INR)", "Value": payroll.allowanceCCA ?? 0 },
+    { "Category": "Earnings", "Parameter": "Performance Amount (INR)", "Value": payroll.allowancePerformance ?? 0 },
+    { "Category": "Earnings", "Parameter": "Other Allowances (INR)", "Value": payroll.allowanceOther ?? 0 },
     { "Category": "Earnings", "Parameter": "Overtime Pay (INR)", "Value": payroll.overtimePay ?? 0 },
     { "Category": "Earnings", "Parameter": "Overtime Duration", "Value": payroll.overtimeText || '0h 0m' },
     { "Category": "Earnings", "Parameter": "Bonus / Rewards (INR)", "Value": payroll.bonus ?? 0 },
@@ -11611,7 +11809,9 @@ function downloadSinglePayslipExcel(userId, month, year) {
     { "Category": "Deductions", "Parameter": "Sunday Leave Penalties (INR)", "Value": payroll.sundayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Half-day Deductions (INR)", "Value": payroll.halfDayDeduction ?? 0 },
     { "Category": "Deductions", "Parameter": "Provident Fund (PF) (INR)", "Value": payroll.deductionPF ?? 0 },
-    { "Category": "Deductions", "Parameter": "Professional Tax (PT) (INR)", "Value": payroll.deductionPT ?? 0 },
+    { "Category": "Deductions", "Parameter": "ESI Deduction (INR)", "Value": payroll.deductionESI ?? 0 },
+    { "Category": "Deductions", "Parameter": "Advance Salary Deduction (INR)", "Value": payroll.deductionAdvance ?? 0 },
+    { "Category": "Deductions", "Parameter": "Others Deduction (INR)", "Value": payroll.deductionOther ?? 0 },
     { "Category": "Deductions", "Parameter": "TDS Rate (%)", "Value": payroll.deductionTDS ?? 0 },
     { "Category": "Deductions", "Parameter": "TDS Amount (INR)", "Value": payroll.deductionTDSVal ?? 0 },
     { "Category": "Deductions", "Parameter": "Manager Ad-hoc Deductions (INR)", "Value": payroll.adhocDeduction ?? 0 },

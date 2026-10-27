@@ -72,12 +72,17 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
     const baseSalary = targetUser.baseSalary !== undefined && targetUser.baseSalary !== null ? Number(targetUser.baseSalary) : 0;
     const hra = targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? Number(targetUser.allowanceHRA) : 0;
     const travel = targetUser.allowanceTravel !== undefined && targetUser.allowanceTravel !== null ? Number(targetUser.allowanceTravel) : 0;
-    const grossSalary = baseSalary + hra + travel;
+    const cca = targetUser.allowanceCCA !== undefined && targetUser.allowanceCCA !== null ? Number(targetUser.allowanceCCA) : 0;
+    const performance = targetUser.allowancePerformance !== undefined && targetUser.allowancePerformance !== null ? Number(targetUser.allowancePerformance) : 0;
+    const otherAllowances = targetUser.allowanceOther !== undefined && targetUser.allowanceOther !== null ? Number(targetUser.allowanceOther) : 0;
+    const grossSalary = baseSalary + hra + travel + cca + performance + otherAllowances;
 
     const pf = targetUser.deductionPF !== undefined && targetUser.deductionPF !== null ? Number(targetUser.deductionPF) : 0;
-    const pt = targetUser.deductionPT !== undefined && targetUser.deductionPT !== null ? Number(targetUser.deductionPT) : 0;
+    const esi = targetUser.deductionESI !== undefined && targetUser.deductionESI !== null ? Number(targetUser.deductionESI) : 0;
+    const advance = targetUser.deductionAdvance !== undefined && targetUser.deductionAdvance !== null ? Number(targetUser.deductionAdvance) : 0;
+    const otherDeductions = targetUser.deductionOther !== undefined && targetUser.deductionOther !== null ? Number(targetUser.deductionOther) : 0;
     const tds = targetUser.deductionTDS !== undefined && targetUser.deductionTDS !== null ? Number(targetUser.deductionTDS) : 0;
-    const totalDeductions = pf + pt + tds;
+    const totalDeductions = pf + esi + advance + otherDeductions + tds;
 
     const netSalary = grossSalary - totalDeductions;
     const monthYear = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
@@ -137,6 +142,9 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
                   <tr><td>Basic Salary</td><td class="amount">₹<%= baseSalary.toLocaleString() %></td></tr>
                   <tr><td>House Rent Allowance (HRA)</td><td class="amount">₹<%= hra.toLocaleString() %></td></tr>
                   <tr><td>Special Travel Allowance</td><td class="amount">₹<%= travel.toLocaleString() %></td></tr>
+                  <tr><td>City Compensatory Allowance (CCA)</td><td class="amount">₹<%= cca.toLocaleString() %></td></tr>
+                  <tr><td>Performance Amount</td><td class="amount">₹<%= performance.toLocaleString() %></td></tr>
+                  <tr><td>Other Allowances</td><td class="amount">₹<%= otherAllowances.toLocaleString() %></td></tr>
                   <tr style="font-weight:700; background:#f8fafc"><td>Gross Earnings</td><td class="amount">₹<%= grossSalary.toLocaleString() %></td></tr>
                 </tbody>
               </table>
@@ -147,7 +155,9 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
                 <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
                 <tbody>
                   <tr><td>Provident Fund (PF)</td><td class="amount">₹<%= pf.toLocaleString() %></td></tr>
-                  <tr><td>Professional Tax (PT)</td><td class="amount">₹<%= pt.toLocaleString() %></td></tr>
+                  <tr><td>ESI Deduction</td><td class="amount">₹<%= esi.toLocaleString() %></td></tr>
+                  <tr><td>Advance Salary Deduction</td><td class="amount">₹<%= advance.toLocaleString() %></td></tr>
+                  <tr><td>Others Deduction</td><td class="amount">₹<%= otherDeductions.toLocaleString() %></td></tr>
                   <tr><td>Tax Deducted at Source (TDS)</td><td class="amount">₹<%= tds.toLocaleString() %></td></tr>
                   <tr style="font-weight:700; background:#f8fafc"><td>Total Deductions</td><td class="amount">₹<%= totalDeductions.toLocaleString() %></td></tr>
                 </tbody>
