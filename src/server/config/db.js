@@ -214,6 +214,18 @@ const AuditLog = mongoose.model('AuditLog', AuditLogSchema);
 const BiometricDevice = mongoose.model('BiometricDevice', BiometricDeviceSchema);
 const BiometricVault = mongoose.model('BiometricVault', BiometricVaultSchema);
 
+const PayrollAdjustmentSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String, required: true, index: true },
+  month: { type: Number, required: true },
+  year: { type: Number, required: true },
+  bonus: { type: Number, default: 0 },
+  deduction: { type: Number, default: 0 },
+  remarks: { type: String, default: '' }
+}, { timestamps: true });
+
+const PayrollAdjustment = mongoose.model('PayrollAdjustment', PayrollAdjustmentSchema);
+
 mongoose.set('bufferCommands', false);
 
 async function connectMongoose() {
@@ -281,6 +293,7 @@ async function syncLocalToMongo(seedData) {
     await safeInsert(OfficeCoordinate, officeDocs);
     await safeInsert(BiometricVault, seedData.biometricVault || []);
     await safeInsert(AttendanceLog, seedData.attendanceLogs || []);
+    await safeInsert(PayrollAdjustment, seedData.payrollAdjustments || []);
   } catch (err) {
     console.warn('⚠️ Non-fatal syncLocalToMongo warning:', err.message);
   } finally {
@@ -316,6 +329,7 @@ module.exports = {
   AuditLog,
   BiometricDevice,
   BiometricVault,
+  PayrollAdjustment,
   connectMongoose,
   syncLocalToMongo,
   syncLocalToMongoOnBoot,

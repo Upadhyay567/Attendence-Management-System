@@ -182,25 +182,52 @@ function readLocalDatabase() {
 
 function writeLocalDatabase(state) {
   try {
-    if (state) {
-      if (Array.isArray(state.activityLogs) && state.activityLogs.length > 500) {
-        state.activityLogs = state.activityLogs.slice(0, 500);
-      }
-      if (Array.isArray(state.processedPunchIds) && state.processedPunchIds.length > 5000) {
-        state.processedPunchIds = state.processedPunchIds.slice(-5000);
-      }
+    if (!state) return;
+    
+    // Read the freshest database state from disk so we NEVER overwrite concurrent updates to users, schedules, worksite locations, or payroll!
+    let latest = null;
+    try {
+      latest = readLocalDatabase();
+    } catch (_) {}
+
+    const targetState = latest || state;
+
+    // Apply biometric updates to targetState
+    targetState.attendanceLogs = state.attendanceLogs;
+    targetState.processedPunchIds = state.processedPunchIds;
+    targetState.biometricSync = state.biometricSync;
+    if (state.activityLogs) targetState.activityLogs = state.activityLogs;
+
+    // Merge any newly registered users into targetState.users WITHOUT overwriting existing user fields
+    if (Array.isArray(state.users) && Array.isArray(targetState.users)) {
+      const existingUserIds = new Set(targetState.users.map(u => String(u.id || u.employeeId || '')));
+      state.users.forEach(u => {
+        const key = String(u.id || u.employeeId || '');
+        if (key && !existingUserIds.has(key)) {
+          targetState.users.push(u);
+          existingUserIds.add(key);
+        }
+      });
     }
+
+    if (Array.isArray(targetState.activityLogs) && targetState.activityLogs.length > 500) {
+      targetState.activityLogs = targetState.activityLogs.slice(0, 500);
+    }
+    if (Array.isArray(targetState.processedPunchIds) && targetState.processedPunchIds.length > 5000) {
+      targetState.processedPunchIds = targetState.processedPunchIds.slice(-5000);
+    }
+
     const tmpFile = `${LOCAL_DB_FILE}.tmp.${Date.now()}`;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+        fs.writeFileSync(tmpFile, JSON.stringify(targetState, null, 2), 'utf8');
         fs.renameSync(tmpFile, LOCAL_DB_FILE);
         break;
       } catch (writeErr) {
         try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
         if (attempt === 2) {
           // Direct fallback
-          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(state, null, 2), 'utf8');
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(targetState, null, 2), 'utf8');
         } else {
           const waitMs = 50 * (attempt + 1);
           const start = Date.now();

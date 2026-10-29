@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active Rows', () => {
+describe('Enterprise Payslip All Columns & Data Persistence Verification', () => {
   let DB;
 
   beforeAll(() => {
@@ -25,8 +25,7 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
     DB.data = seed;
   });
 
-  test('Employee with no bank details shows N/A and does NOT show fake Kotak Mahindra Bank or fake A/c', () => {
-    // Hemant or Vipin Chandra without bank details
+  test('Employee with no bank details shows 0 or N/A and does NOT show fake Kotak Mahindra Bank or fake A/c', () => {
     const userWithoutBank = {
       id: 'usr_no_bank',
       employeeId: 'EMP_NO_BANK',
@@ -45,7 +44,6 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
     global.Utils = { escape: (s) => String(s || '') };
     global.Auth = { getCurrentUser: () => ({ role: 'admin' }) };
 
-    // Inject temporary user into DB
     DB.data.users.push(userWithoutBank);
 
     const appCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
@@ -64,10 +62,10 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
     expect(html).not.toContain('AHGPT5354F');
     expect(html).not.toContain('DL/CPM/29544/10241');
 
-    // Must show N/A for missing bank and PAN
-    expect(html).toContain('Bank Name</span><span class="ep-bank-val">: N/A');
-    expect(html).toContain('Account No.</span><span class="ep-bank-val">: N/A');
-    expect(html).toContain('PAN Number</span><span class="ep-bank-val">: N/A');
+    // Must show 0 (or N/A) for missing bank and PAN
+    expect(html).toMatch(/Bank Name<\/span><span class="ep-bank-val">:\s*(0|N\/A)/);
+    expect(html).toMatch(/Account No\.<\/span><span class="ep-bank-val">:\s*(0|N\/A)/);
+    expect(html).toMatch(/PAN Number<\/span><span class="ep-bank-val">:\s*(0|N\/A)/);
 
     // Must have House of Surya Logo
     expect(html).toContain('assets/surya_logo_transparent_hd.png');
@@ -83,7 +81,7 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
     DB.data.users = DB.data.users.filter(u => u.id !== 'usr_no_bank');
   });
 
-  test('Irrelevant 0.00 allowance and deduction rows are filtered out', () => {
+  test('All database columns are displayed on payslip showing 0 for empty values', () => {
     const userWithBasicOnly = {
       id: 'usr_basic_only',
       employeeId: 'EMP_BASIC',
@@ -113,13 +111,30 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
 
     const html = drawer.innerHTML;
 
-    // Irrelevant 0.00 items must NOT appear in the table
-    expect(html).not.toContain('V.P.F.');
-    expect(html).not.toContain('Leave Salary');
-    expect(html).not.toContain('Medical Allow.');
-    expect(html).not.toContain('Leave Encasment');
-    expect(html).not.toContain('Advance Sal. Deduction');
-    expect(html).not.toContain('L.w.f.');
+    // Verify all database earnings columns exist and display on payslip
+    expect(html).toContain('Basic Salary');
+    expect(html).toContain('Dearness Allowance (D.A.)');
+    expect(html).toContain('House Rent Allowance (H.R.A.)');
+    expect(html).toContain('Conveyance Allowance');
+    expect(html).toContain('City Compensatory (C.C.A.)');
+    expect(html).toContain('Performance Allowance');
+    expect(html).toContain('Other Allowances');
+    expect(html).toContain('Overtime Pay');
+    expect(html).toContain('Bonus / Rewards');
+    expect(html).toContain('Arrears');
+
+    // Verify all database deductions columns exist and display on payslip
+    expect(html).toContain('Provident Fund (P.F.)');
+    expect(html).toContain('Employee State Ins. (E.S.I.)');
+    expect(html).toContain('Advance Salary Deduction');
+    expect(html).toContain('Tax Deducted at Source (T.D.S.)');
+    expect(html).toContain('Other Deductions');
+    expect(html).toContain('Manager Ad-hoc Deduction');
+    expect(html).toContain('Loan Installment');
+
+    // Verify attendance columns exist (including Half Days and Approved Leaves)
+    expect(html).toContain('Half Days');
+    expect(html).toContain('Approved Leaves');
 
     // Clean up
     DB.data.users = DB.data.users.filter(u => u.id !== 'usr_basic_only');
@@ -128,5 +143,22 @@ describe('Enterprise Payslip Premium Redesign, DB Bank Details & Dynamic Active 
   test('handleLiveReRender ignores #admin-reports to prevent auto-closing drawer on punch sync', () => {
     const appCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'app.js'), 'utf8');
     expect(appCode).toContain("activeHash === '#admin-reports'");
+  });
+
+  test('DB methods for attendance, shifts, worksites, and payroll use granular mutations', () => {
+    const dbCode = fs.readFileSync(path.join(__dirname, '..', 'js', 'db.js'), 'utf8');
+    
+    // updateAttendanceLog must trigger granular mutation
+    expect(dbCode).toContain("key: 'attendanceLogs'");
+    expect(dbCode).toContain("type: 'delete',");
+    
+    // saveOfficeCoordinate must trigger set on officeCoordinates
+    expect(dbCode).toContain("key: 'officeCoordinates'");
+    
+    // savePayrollAdjustment must trigger update on payrollAdjustments
+    expect(dbCode).toContain("key: 'payrollAdjustments'");
+    
+    // updateSchedule must trigger update on schedules
+    expect(dbCode).toContain("key: 'schedules'");
   });
 });

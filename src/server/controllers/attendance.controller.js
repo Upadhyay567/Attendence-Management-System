@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const { 
-  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, BiometricDevice,
+  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, BiometricDevice, PayrollAdjustment,
   connectMongoose, getUseLocalFileDB, LOCAL_DB_FILE 
 } = require('../config/db');
 const { broadcastSSEEvent } = require('../routes/events.routes');
@@ -27,6 +27,23 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 function applyLocalUpdate(stateObj, type, key, payload, updates, query) {
   if (!stateObj) return;
   if (!stateObj[key]) stateObj[key] = Array.isArray(payload) ? [] : (type === 'push' ? [] : {});
+  if (key === 'payrollAdjustments') {
+    if (!Array.isArray(stateObj.payrollAdjustments)) stateObj.payrollAdjustments = [];
+    const item = payload || updates;
+    if (item && item.userId) {
+      const existingIdx = stateObj.payrollAdjustments.findIndex(a => 
+        String(a.userId) === String(item.userId) && 
+        Number(a.month) === Number(item.month) && 
+        Number(a.year) === Number(item.year)
+      );
+      if (existingIdx !== -1) {
+        stateObj.payrollAdjustments[existingIdx] = { ...stateObj.payrollAdjustments[existingIdx], ...item };
+      } else {
+        stateObj.payrollAdjustments.push(item);
+      }
+      return;
+    }
+  }
 
   if (type === 'push' && payload) {
     if (Array.isArray(stateObj[key])) {
@@ -150,8 +167,41 @@ async function getDbState(req, res) {
     const online = await connectMongoose();
     const useLocal = getUseLocalFileDB();
 
+    
     if (online && !useLocal) {
-      const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords, biometricDevices] = await Promise.all([
+      if (key === 'officeCoordinates') {
+        try {
+          const coordsObj = payload || updates || {};
+          const docs = Object.entries(coordsObj).map(([name, coords]) => ({
+            name,
+            lat: Number(coords.lat),
+            lng: Number(coords.lng)
+          }));
+          await OfficeCoordinate.deleteMany({});
+          if (docs.length > 0) {
+            await OfficeCoordinate.insertMany(docs);
+          }
+        } catch (coordErr) {
+          console.warn('⚠️ OfficeCoordinate sync warning:', coordErr.message);
+        }
+      }
+
+      if (key === 'payrollAdjustments') {
+        try {
+          const adjItem = payload || updates;
+          if (adjItem && adjItem.userId && adjItem.month !== undefined && adjItem.year !== undefined) {
+            await PayrollAdjustment.updateOne(
+              { userId: String(adjItem.userId), month: Number(adjItem.month), year: Number(adjItem.year) },
+              { $set: adjItem },
+              { upsert: true }
+            );
+          }
+        } catch (adjErr) {
+          console.warn('⚠️ PayrollAdjustment sync warning:', adjErr.message);
+        }
+      }
+
+      const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords, biometricDevices, payrollAdjustments] = await Promise.all([
         User.find({}, '-password').lean(),
         AttendanceLog.find(
           {},
@@ -162,7 +212,8 @@ async function getDbState(req, res) {
         Schedule.find({}).lean(),
         Notice.find({}).lean(),
         OfficeCoordinate.find({}).lean(),
-        BiometricDevice.find({}).lean()
+        BiometricDevice.find({}).lean(),
+        PayrollAdjustment.find({}).lean()
       ]);
 
       const localData = readLocalDbStateCached();
@@ -275,7 +326,19 @@ async function getDbState(req, res) {
       delete baseState.processedPunchIds;
       delete baseState.biometricVault;
 
-      return sendGzipJson(req, res, {
+      
+      // Merge payroll adjustments from Mongo and localData
+      let finalAdjustments = Array.isArray(payrollAdjustments) ? payrollAdjustments : [];
+      if (localData && Array.isArray(localData.payrollAdjustments)) {
+        const mongoAdjKeys = new Set(finalAdjustments.map(a => `${a.userId}_${a.month}_${a.year}`));
+        localData.payrollAdjustments.forEach(la => {
+          const k = `${la.userId}_${la.month}_${la.year}`;
+          if (!mongoAdjKeys.has(k)) {
+            finalAdjustments.push(la);
+          }
+        });
+      }
+return sendGzipJson(req, res, {
         ...baseState,
         users: finalUsers,
         attendanceLogs: finalLogs,
@@ -284,7 +347,8 @@ async function getDbState(req, res) {
         schedules,
         notices,
         officeCoordinates: officeCoordinatesObj,
-        biometricDevices: finalDevices
+        biometricDevices: finalDevices,
+        payrollAdjustments: finalAdjustments
       });
     } else {
       const localData = readLocalDbStateCached();

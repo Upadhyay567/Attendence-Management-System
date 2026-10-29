@@ -325,17 +325,24 @@ function readLocalDB() {
 
 function writeLocalDB(state) {
   if (!state) return;
+  let latest = null;
+  try { latest = readLocalDB(); } catch (_) {}
+  const targetState = latest || state;
+  if (state.biometricDevices) targetState.biometricDevices = state.biometricDevices;
+  if (state.biometricVault) targetState.biometricVault = state.biometricVault;
+  if (state.biometricSyncLogs) targetState.biometricSyncLogs = state.biometricSyncLogs;
+
   const tmpFile = `${LOCAL_DB_FILE}.tmp.${Date.now()}`;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
+      fs.writeFileSync(tmpFile, JSON.stringify(targetState, null, 2), 'utf8');
       fs.renameSync(tmpFile, LOCAL_DB_FILE);
       return;
     } catch (writeErr) {
       try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile); } catch (_) {}
       if (attempt === 2) {
         try {
-          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(state, null, 2), 'utf8');
+          fs.writeFileSync(LOCAL_DB_FILE, JSON.stringify(targetState, null, 2), 'utf8');
         } catch (finalErr) {
           // Non-blocking warning if file locked during git push
         }

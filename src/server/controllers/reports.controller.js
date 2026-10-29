@@ -421,20 +421,19 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
     const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // 3A. Days Worked (Attendance Items)
+    // 3A. Days Worked (Attendance Items - All Database Columns, 0 for empty)
     const holidays = Number(totalDays - periodDays);
     const daysList = [
       { label: 'Total Days', value: fNum(totalDays, 1) },
       { label: 'Days Worked', value: fNum(presentDays, 1) },
       { label: 'Weekly Off / Holidays', value: fNum(holidays, 1) },
-      { label: 'Absent', value: fNum(absentDays, 1) }
+      { label: 'Absent', value: fNum(absentDays, 1) },
+      { label: 'Half Days', value: fNum(halfDays, 1) },
+      { label: 'Approved Leaves', value: fNum(0, 1) },
+      { label: 'Days Payable', value: fNum(eligiblePaidDays, 1), isBold: true }
     ];
-    if (halfDays > 0) {
-      daysList.push({ label: 'Half Days', value: fNum(halfDays, 1) });
-    }
-    daysList.push({ label: 'Days Payable', value: fNum(eligiblePaidDays, 1), isBold: true });
 
-    // 3B. Earnings components (Only active from DB)
+    // 3B. Earnings components (All Database Columns - Showing 0 for empty values)
     const rateBasic = isPartialMonth ? periodNominalBase : baseSalary;
     const payableBasic = earnedBaseSalary;
     const rateHRA = Number(targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? targetUser.allowanceHRA : fullHRA);
@@ -452,53 +451,28 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
     const payableBonus = bonus;
 
     const earningsList = [
-      { label: isPartialMonth ? `Basic Salary (₹${rateBasic.toLocaleString('en-IN')})` : 'Basic Salary', rate: fNum(rateBasic, 2), payable: fNum(payableBasic, 2), rawRate: rateBasic, rawPayable: payableBasic }
+      { label: isPartialMonth ? `Basic Salary (₹${rateBasic.toLocaleString('en-IN')})` : 'Basic Salary', rate: fNum(rateBasic, 2), payable: fNum(payableBasic, 2), rawRate: rateBasic, rawPayable: payableBasic },
+      { label: 'Dearness Allowance (D.A.)', rate: fNum(rateDA, 2), payable: fNum(payableDA, 2), rawRate: rateDA, rawPayable: payableDA },
+      { label: 'House Rent Allowance (H.R.A.)', rate: fNum(rateHRA, 2), payable: fNum(payableHRA, 2), rawRate: rateHRA, rawPayable: payableHRA },
+      { label: 'Conveyance Allowance', rate: fNum(rateTravel, 2), payable: fNum(payableTravel, 2), rawRate: rateTravel, rawPayable: payableTravel },
+      { label: 'City Compensatory (C.C.A.)', rate: fNum(rateCCA, 2), payable: fNum(payableCCA, 2), rawRate: rateCCA, rawPayable: payableCCA },
+      { label: 'Performance Allowance', rate: fNum(ratePerf, 2), payable: fNum(payablePerf, 2), rawRate: ratePerf, rawPayable: payablePerf },
+      { label: 'Other Allowances', rate: fNum(rateOther, 2), payable: fNum(payableOther, 2), rawRate: rateOther, rawPayable: payableOther },
+      { label: 'Overtime Pay', rate: '0.00', payable: '0.00', rawRate: 0, rawPayable: 0 },
+      { label: 'Bonus / Rewards', rate: '0.00', payable: fNum(payableBonus, 2), rawRate: 0, rawPayable: payableBonus },
+      { label: 'Arrears', rate: '0.00', payable: '0.00', rawRate: 0, rawPayable: 0 }
     ];
-    if (rateHRA > 0 || payableHRA > 0) {
-      earningsList.push({ label: 'House Rent Allowance (H.R.A.)', rate: fNum(rateHRA, 2), payable: fNum(payableHRA, 2), rawRate: rateHRA, rawPayable: payableHRA });
-    }
-    if (rateTravel > 0 || payableTravel > 0) {
-      earningsList.push({ label: 'Conveyance Allowance', rate: fNum(rateTravel, 2), payable: fNum(payableTravel, 2), rawRate: rateTravel, rawPayable: payableTravel });
-    }
-    if (rateCCA > 0 || payableCCA > 0) {
-      earningsList.push({ label: 'City Compensatory (C.C.A.)', rate: fNum(rateCCA, 2), payable: fNum(payableCCA, 2), rawRate: rateCCA, rawPayable: payableCCA });
-    }
-    if (ratePerf > 0 || payablePerf > 0) {
-      earningsList.push({ label: 'Performance Allowance', rate: fNum(ratePerf, 2), payable: fNum(payablePerf, 2), rawRate: ratePerf, rawPayable: payablePerf });
-    }
-    if (rateDA > 0 || payableDA > 0) {
-      earningsList.push({ label: 'Dearness Allowance (D.A.)', rate: fNum(rateDA, 2), payable: fNum(payableDA, 2), rawRate: rateDA, rawPayable: payableDA });
-    }
-    if (rateOther > 0 || payableOther > 0) {
-      earningsList.push({ label: 'Other Allowances', rate: fNum(rateOther, 2), payable: fNum(payableOther, 2), rawRate: rateOther, rawPayable: payableOther });
-    }
-    if (payableBonus > 0) {
-      earningsList.push({ label: 'Bonus / Rewards', rate: '0.00', payable: fNum(payableBonus, 2), rawRate: 0, rawPayable: payableBonus });
-    }
 
-    // 3C. Deductions (Only active from DB)
-    const deductionsList = [];
-    if (pf > 0 || (isPFApplicable && baseSalary <= epfWageCeiling)) {
-      deductionsList.push({ label: 'Provident Fund (P.F.)', amount: fNum(pf, 2), rawAmount: pf });
-    }
-    if (esi > 0) {
-      deductionsList.push({ label: 'Employee State Ins. (E.S.I.)', amount: fNum(esi, 2), rawAmount: esi });
-    }
-    if (advance > 0) {
-      deductionsList.push({ label: 'Advance Salary Deduction', amount: fNum(advance, 2), rawAmount: advance });
-    }
-    if (tds > 0) {
-      deductionsList.push({ label: 'Tax Deducted at Source (T.D.S.)', amount: fNum(tds, 2), rawAmount: tds });
-    }
-    if (otherDeductions > 0) {
-      deductionsList.push({ label: 'Other Deductions', amount: fNum(otherDeductions, 2), rawAmount: otherDeductions });
-    }
-    if (adhocDeduction > 0) {
-      deductionsList.push({ label: 'Manager Ad-hoc Deduction', amount: fNum(adhocDeduction, 2), rawAmount: adhocDeduction });
-    }
-    if (deductionsList.length === 0) {
-      deductionsList.push({ label: 'No Deductions', amount: '0.00', rawAmount: 0 });
-    }
+    // 3C. Deductions (All Database Columns - Showing 0 for empty values)
+    const deductionsList = [
+      { label: 'Provident Fund (P.F.)', amount: fNum(pf, 2), rawAmount: pf },
+      { label: 'Employee State Ins. (E.S.I.)', amount: fNum(esi, 2), rawAmount: esi },
+      { label: 'Advance Salary Deduction', amount: fNum(advance, 2), rawAmount: advance },
+      { label: 'Tax Deducted at Source (T.D.S.)', amount: fNum(tds, 2), rawAmount: tds },
+      { label: 'Other Deductions', amount: fNum(otherDeductions, 2), rawAmount: otherDeductions },
+      { label: 'Manager Ad-hoc Deduction', amount: fNum(adhocDeduction, 2), rawAmount: adhocDeduction },
+      { label: 'Loan Installment', amount: '0.00', rawAmount: 0 }
+    ];
 
     // Totals
     const totalRates = earningsList.reduce((acc, it) => acc + (it.rawRate || 0), 0);
@@ -535,16 +509,15 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       `;
     }
 
-    // Database fields for Bank & Identity (Show 'N/A' if null/empty - NO hardcoded fake data!)
-    const bankName = (targetUser.bankName && targetUser.bankName.trim()) ? targetUser.bankName.trim() : 'N/A';
-    const acctNo = (targetUser.accountNumber || targetUser.accountNo || targetUser.bankAccount || '').trim() || 'N/A';
-    const panNo = (targetUser.pan || targetUser.panNo || '').trim() || 'N/A';
-    const pfNo = (targetUser.pfNo || targetUser.epfNo || '').trim() || 'N/A';
-    const uanNo = (targetUser.uanNo || targetUser.uan || '').trim() || 'N/A';
-    const paymentMode = (targetUser.paymentMode && targetUser.paymentMode.trim()) ? targetUser.paymentMode.trim() : (bankName !== 'N/A' ? 'Bank Transfer' : 'N/A');
-    const fatherName = (targetUser.fatherName && targetUser.fatherName.trim()) ? targetUser.fatherName.trim() : (targetUser.guardianName && targetUser.guardianName.trim() ? targetUser.guardianName.trim() : 'N/A');
-    const address = (targetUser.address && targetUser.address.trim()) ? targetUser.address.trim() : (targetUser.preferredLocation || targetUser.workLocation || 'N/A');
-
+    // Database fields for Bank & Identity (Showing 0 for empty values)
+    const bankName = (targetUser.bankName && targetUser.bankName.trim()) ? targetUser.bankName.trim() : '0';
+    const acctNo = (targetUser.accountNumber || targetUser.accountNo || targetUser.bankAccount || '').trim() || '0';
+    const panNo = (targetUser.pan || targetUser.panNo || '').trim() || '0';
+    const pfNo = (targetUser.pfNo || targetUser.epfNo || '').trim() || '0';
+    const uanNo = (targetUser.uanNo || targetUser.uan || '').trim() || '0';
+    const paymentMode = (targetUser.paymentMode && targetUser.paymentMode.trim()) ? targetUser.paymentMode.trim() : (bankName !== '0' ? 'Bank Transfer' : '0');
+    const fatherName = (targetUser.fatherName && targetUser.fatherName.trim()) ? targetUser.fatherName.trim() : (targetUser.guardianName && targetUser.guardianName.trim() ? targetUser.guardianName.trim() : '0');
+    const address = (targetUser.address && targetUser.address.trim()) ? targetUser.address.trim() : (targetUser.preferredLocation || targetUser.workLocation || '0');
     const htmlTemplate = `
       <!DOCTYPE html>
       <html>

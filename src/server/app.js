@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const { 
-  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog,
+  User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, PayrollAdjustment,
   connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE, mongoose 
 } = require('./config/db');
 
@@ -332,6 +332,44 @@ app.post('/api/mutate', async (req, res) => {
             await Schedule.bulkWrite(sOps).catch(e => console.warn('BulkWrite schedules non-fatal warning:', e.message));
           }
           await Schedule.deleteMany({ id: { $nin: incomingSchedIds } }).catch(e => console.warn('Mongo delete stale schedules warning:', e.message));
+        }
+
+        if (online && !useLocal && Array.isArray(data.attendanceLogs) && data.attendanceLogs.length > 0) {
+          const lOps = data.attendanceLogs.filter(l => l && l.id).map(l => ({
+            updateOne: {
+              filter: { id: l.id },
+              update: { $set: l },
+              upsert: true
+            }
+          }));
+          if (lOps.length > 0) {
+            await AttendanceLog.bulkWrite(lOps).catch(e => console.warn('BulkWrite attendanceLogs non-fatal warning:', e.message));
+          }
+        }
+
+        if (online && !useLocal && data.officeCoordinates && typeof data.officeCoordinates === 'object') {
+          const coordDocs = Object.entries(data.officeCoordinates).map(([name, coords]) => ({
+            name,
+            lat: Number(coords.lat),
+            lng: Number(coords.lng)
+          }));
+          await OfficeCoordinate.deleteMany({}).catch(() => {});
+          if (coordDocs.length > 0) {
+            await OfficeCoordinate.insertMany(coordDocs).catch(e => console.warn('OfficeCoordinate insertMany warning:', e.message));
+          }
+        }
+
+        if (online && !useLocal && Array.isArray(data.payrollAdjustments) && data.payrollAdjustments.length > 0) {
+          const adjOps = data.payrollAdjustments.filter(a => a && a.userId).map(a => ({
+            updateOne: {
+              filter: { userId: String(a.userId), month: Number(a.month), year: Number(a.year) },
+              update: { $set: a },
+              upsert: true
+            }
+          }));
+          if (adjOps.length > 0) {
+            await PayrollAdjustment.bulkWrite(adjOps).catch(e => console.warn('BulkWrite payrollAdjustments warning:', e.message));
+          }
         }
       }
       broadcastSSEEvent('db_updated', { action: 'sync', timestamp: Date.now() });

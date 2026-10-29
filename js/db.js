@@ -719,7 +719,7 @@ export const DB = {
     } catch (e) {}
 
     // Skip server fetch if a local write occurred recently (to prevent race conditions with async mutations)
-    const isRecentLocalWrite = this.lastLocalWrite && (Date.now() - this.lastLocalWrite < 2500);
+    const isRecentLocalWrite = this.lastLocalWrite && (Date.now() - this.lastLocalWrite < 5000);
     
     if (!isRecentLocalWrite) {
       try {
@@ -977,7 +977,11 @@ export const DB = {
           headers: headers,
           body: JSON.stringify(mutationMeta)
         }).then(res => {
-          if (!res.ok) console.warn('Failed to sync granular mutations to MongoDB.');
+          if (res.ok) {
+            this.lastFetchSuccess = Date.now();
+          } else {
+            console.warn('Failed to sync granular mutations to MongoDB.');
+          }
         }).catch(err => {
           console.warn('Network error syncing granular mutations:', err);
         });
@@ -993,7 +997,11 @@ export const DB = {
           headers: headers,
           body: JSON.stringify({ action: 'sync', data: syncData })
         }).then(res => {
-          if (!res.ok) console.warn('Failed to sync mutations to MongoDB.');
+          if (res.ok) {
+            this.lastFetchSuccess = Date.now();
+          } else {
+            console.warn('Failed to sync mutations to MongoDB.');
+          }
         }).catch(err => {
           console.warn('Network error syncing mutations to MongoDB:', err);
         });
@@ -2366,7 +2374,12 @@ export const DB = {
     const idx = this.data.attendanceLogs.findIndex(l => l.id === logId);
     if (idx !== -1) {
       this.data.attendanceLogs.splice(idx, 1);
-      this.save();
+      this.invalidateLogsCache();
+      this.save({
+        type: 'delete',
+        key: 'attendanceLogs',
+        query: { id: logId }
+      });
       return true;
     }
     return false;
@@ -2377,7 +2390,13 @@ export const DB = {
     const log = this.data.attendanceLogs.find(l => l.id === logId);
     if (log) {
       Object.assign(log, updatedFields);
-      this.save();
+      this.invalidateLogsCache();
+      this.save({
+        type: 'update',
+        key: 'attendanceLogs',
+        query: { id: logId },
+        updates: updatedFields
+      });
       return log;
     }
     return null;
@@ -2403,7 +2422,12 @@ export const DB = {
       facePhoto: null
     };
     this.data.attendanceLogs.unshift(newLog);
-    this.save();
+    this.invalidateLogsCache();
+    this.save({
+      type: 'push',
+      key: 'attendanceLogs',
+      payload: newLog
+    });
     return newLog;
   },
 
@@ -3082,7 +3106,14 @@ export const DB = {
     adj.bonus = Number(bonus) || 0;
     adj.deduction = Number(deduction) || 0;
     adj.remarks = remarks || '';
-    this.save();
+    this.invalidatePayrollCache();
+    this.save({
+      type: 'update',
+      key: 'payrollAdjustments',
+      query: { userId, month, year },
+      updates: { ...adj },
+      payload: adj
+    });
     return adj;
   },
 
