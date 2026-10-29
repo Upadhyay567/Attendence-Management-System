@@ -479,7 +479,7 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
                 <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
                 <tbody>
                   <tr>
-                    <td>Base Salary <%= isPartialMonth ? '(Prorated Period Base)' : '(Fixed Monthly)' %></td>
+                    <td>Basic Salary (₹<%= baseSalary.toLocaleString() %>)</td>
                     <td class="amount">₹<%= periodNominalBase.toLocaleString() %></td>
                   </tr>
                   <% if (isPartialMonth) { %>

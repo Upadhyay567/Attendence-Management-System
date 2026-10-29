@@ -2737,7 +2737,7 @@ function renderEmployeePayslip(userId, month, year) {
         </thead>
         <tbody>
           <tr>
-            <td>Base Fixed Monthly Salary</td>
+            <td>Basic Salary (₹${(payroll.fullBaseSalary || payroll.baseSalary).toLocaleString()})</td>
             <td style="text-align:right">₹${payroll.baseSalary.toLocaleString()}</td>
             <td style="text-align:right">-</td>
           </tr>
@@ -6982,9 +6982,16 @@ function renderAdminPayslipDrawer(uId, month, year) {
     <div class="card-panel">
       <div class="card-panel-header" id="employee-payslip-tab-header">
         <h3 class="card-panel-title">Employee Payslip Preview</h3>
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label class="form-label" style="margin:0;font-size:12px;color:var(--text-secondary)" for="admin-payslip-month-select">Period:</label>
+          <select id="admin-payslip-month-select" class="form-input" style="width:125px;padding:5px 8px;font-size:12px">
+            ${monthNames.map((m, idx) => `<option value="${idx}" ${idx === month ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+          <select id="admin-payslip-year-select" class="form-input" style="width:85px;padding:5px 8px;font-size:12px">
+            ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('')}
+          </select>
           ${editBtnHTML}
-          <select id="admin-payslip-format-select" class="form-input" style="width:160px;padding:6px;font-size:12px;background:rgba(255,255,255,0.02)">
+          <select id="admin-payslip-format-select" class="form-input" style="width:150px;padding:5px 8px;font-size:12px;background:rgba(255,255,255,0.02)">
             <option value="pdf">PDF Document (.pdf)</option>
             <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
           </select>
@@ -7055,7 +7062,7 @@ function renderAdminPayslipDrawer(uId, month, year) {
           </thead>
           <tbody>
             <tr>
-              <td>Base Salary</td>
+              <td>Basic Salary (₹${(p.fullBaseSalary || p.baseSalary).toLocaleString()})</td>
               <td style="text-align:right">₹${p.baseSalary.toLocaleString()}</td>
               <td style="text-align:right">-</td>
             </tr>
@@ -7184,6 +7191,30 @@ function renderAdminPayslipDrawer(uId, month, year) {
       openPayrollAdjustmentModal(uDetails.id, month, year);
     });
   }
+  document.getElementById('admin-payslip-month-select')?.addEventListener('change', (e) => {
+    const newMonth = Number(e.target.value);
+    const yrSelect = document.getElementById('admin-payslip-year-select');
+    const newYear = yrSelect ? Number(yrSelect.value) : year;
+    const reportMonthEl = document.getElementById('report-month');
+    if (reportMonthEl && Number(reportMonthEl.value) !== newMonth) {
+      reportMonthEl.value = newMonth;
+      reportMonthEl.dispatchEvent(new Event('change'));
+    } else {
+      renderAdminPayslipDrawer(uId, newMonth, newYear);
+    }
+  });
+  document.getElementById('admin-payslip-year-select')?.addEventListener('change', (e) => {
+    const newYear = Number(e.target.value);
+    const moSelect = document.getElementById('admin-payslip-month-select');
+    const newMonth = moSelect ? Number(moSelect.value) : month;
+    const reportYearEl = document.getElementById('report-year');
+    if (reportYearEl && Number(reportYearEl.value) !== newYear) {
+      reportYearEl.value = newYear;
+      reportYearEl.dispatchEvent(new Event('change'));
+    } else {
+      renderAdminPayslipDrawer(uId, newMonth, newYear);
+    }
+  });
   drawer.scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -7259,7 +7290,7 @@ function renderAdminReports() {
           <div class="card-panel-header"><h3 class="card-panel-title">Staff Salary & Leave Ledger</h3></div>
           <div class="table-container">
             <table class="custom-table">
-              <thead><tr><th>Employee</th><th>Base Salary</th><th>Present/Absent</th><th>Deductions</th><th>Net Disbursed</th><th>Statement</th></tr></thead>
+              <thead><tr><th>Employee</th><th>Basic Salary</th><th>Present / Absent (Half)</th><th>Deductions</th><th>Net Disbursed</th><th>Statement</th></tr></thead>
               <tbody id="report-table-body"></tbody>
             </table>
           </div>
@@ -7305,6 +7336,10 @@ function renderAdminReports() {
   const refreshReports = () => {
     adminReportPageState.currentPage = 1;
     compileReports(selectedMonth, selectedYear);
+    const drawer = document.getElementById('admin-payslip-preview-drawer');
+    if (drawer && drawer.style.display !== 'none' && drawer.dataset.activeUserId) {
+      renderAdminPayslipDrawer(drawer.dataset.activeUserId, selectedMonth, selectedYear);
+    }
   };
   const searchInputEl = document.getElementById('report-search-input');
   if (searchInputEl) searchInputEl.addEventListener('input', refreshReports);
@@ -7415,8 +7450,8 @@ function compileReports(month, year) {
         tbody.innerHTML = pagePayrollData.map(p => `
           <tr>
             <td style="font-weight:600">${Utils.escape(p.employeeName)}</td>
-            <td>₹${p.baseSalary.toLocaleString()}</td>
-            <td style="font-size:12px">Present: <strong>${p.presentDays}</strong>d<br>Absent: <span style="color:${p.absentDays > 0 ? 'var(--error)' : 'currentColor'}">${p.absentDays}</span>d</td>
+            <td>₹${(p.fullBaseSalary || p.baseSalary).toLocaleString()}</td>
+            <td style="font-size:12px">Present: <strong>${p.presentDays}</strong>d<br>Absent: <span style="color:${p.absentDays > 0 ? 'var(--error)' : 'currentColor'}">${p.absentDays}</span>d <span style="color:${p.halfDays > 0 ? '#f59e0b;font-weight:600' : 'var(--text-secondary)'}">(${p.halfDays} Half)</span></td>
             <td style="color:var(--error);font-weight:600">-₹${p.totalDeductions.toLocaleString()}</td>
             <td style="color:var(--success);font-weight:700">₹${p.netSalary.toLocaleString()}</td>
             <td><button class="btn btn-cyan btn-view-payslip-admin" data-id="${p.userId}" style="padding:6px 10px;width:auto;font-size:11px">Inspect</button></td>
@@ -7445,217 +7480,16 @@ function compileReports(month, year) {
     if (btnLast) btnLast.disabled = (adminReportPageState.currentPage >= totalPages);
   };
 
-  // Inspect Click Handler (Event Delegation on tbody)
+    // Inspect Click Handler (Event Delegation on tbody)
   if (tbody && !tbody._hasReportInspectListener) {
     tbody._hasReportInspectListener = true;
     tbody.addEventListener('click', (e) => {
       const inspectBtn = e.target.closest('.btn-view-payslip-admin');
       if (!inspectBtn) return;
       const uId = inspectBtn.dataset.id;
-      renderAdminPayslipDrawer(uId, month, year);
-      return;
-      const drawer = document.getElementById('admin-payslip-preview-drawer');
-      if (!drawer) return;
-      drawer.style.display = 'block';
-      drawer.dataset.activeUserId = uId;
-      
-      // Ensure we resolve user correctly via ID, employeeId, email, or username
-      const uDetails = DB.getUser(uId);
-      if (!uDetails) {
-        drawer.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">Employee record not found.</div>`;
-        return;
-      }
-
-      // Fetch latest payroll calculations dynamically on click
-      const p = DB.calculateMonthlyPayroll(uDetails.id, month, year);
-      if (!p) {
-        drawer.innerHTML = `<div class="card-panel" style="text-align:center;color:var(--text-secondary)">No payroll data recorded for this month.</div>`;
-        return;
-      }
-
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      const currentLoggedIn = Auth.getCurrentUser();
-      const editBtnHTML = currentLoggedIn && currentLoggedIn.role === 'manager'
-        ? `<button class="btn btn-warning" id="btn-admin-edit-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">✏️ Edit Adjustments</button>`
-        : '';
-
-      drawer.innerHTML = `
-        <div class="card-panel">
-          <div class="card-panel-header" id="employee-payslip-tab-header">
-            <h3 class="card-panel-title">Employee Payslip Preview</h3>
-            <div style="display:flex;gap:10px;align-items:center">
-              ${editBtnHTML}
-              <select id="admin-payslip-format-select" class="form-input" style="width:160px;padding:6px;font-size:12px;background:rgba(255,255,255,0.02)">
-                <option value="pdf">PDF Document (.pdf)</option>
-                <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
-              </select>
-              <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
-            </div>
-          </div>
-          <div class="payslip-wrapper">
-            <div class="payslip-header">
-              <div>
-                <div class="payslip-company-name">HS Group Delhi</div>
-                <div class="payslip-company-desc">House of Surya | Employee Salary Statement</div>
-              </div>
-              <div class="payslip-title">PAYSLIP RECEIPT</div>
-            </div>
-            <div class="payslip-grid">
-              <div class="payslip-meta-block">
-                <div><strong>Employee Name:</strong> ${Utils.escape(uDetails.name)}</div>
-                <div><strong>Employee ID:</strong> ${Utils.escape(uDetails.employeeId || uDetails.id)}</div>
-                <div><strong>Department:</strong> ${Utils.escape(uDetails.department || 'N/A')}</div>
-                <div><strong>Role / Designation:</strong> ${Utils.escape(uDetails.designation || 'Staff Associate')}</div>
-              </div>
-              <div class="payslip-meta-block">
-                <div><strong>Statement Period:</strong> ${monthNames[month]} ${year}</div>
-                <div><strong>Total Working Days:</strong> ${p.workingDays} days</div>
-                <div><strong>Actual Working Days:</strong> ${p.actualWorkingDays || p.presentDays} days</div>
-                <div><strong>Leave Days:</strong> ${p.approvedLeaveDays} days</div>
-              </div>
-            </div>
-
-            <table class="payslip-table">
-              <thead>
-                <tr>
-                  <th>Description of Allowances / Deductions</th>
-                  <th style="text-align:right">Earning Rate / Allowances</th>
-                  <th style="text-align:right">Deducted Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Base Fixed Monthly Salary</td>
-                  <td style="text-align:right">₹${p.baseSalary.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                <tr>
-                  <td>House Rent Allowance (HRA)</td>
-                  <td style="text-align:right">₹${p.allowanceHRA.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                <tr>
-                  <td>Travel Allowance</td>
-                  <td style="text-align:right">₹${(p.allowanceTravel || 0).toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                ${(p.allowanceCCA || 0) > 0 ? `
-                <tr>
-                  <td>City Compensatory Allowance (CCA)</td>
-                  <td style="text-align:right">₹${p.allowanceCCA.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                ` : ''}
-                ${(p.allowancePerformance || 0) > 0 ? `
-                <tr>
-                  <td>Performance Amount</td>
-                  <td style="text-align:right">₹${p.allowancePerformance.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                ` : ''}
-                ${(p.allowanceOther || 0) > 0 ? `
-                <tr>
-                  <td>Other Allowances</td>
-                  <td style="text-align:right">₹${p.allowanceOther.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                ` : ''}
-                <tr>
-                  <td>Overtime Allowance (${p.overtimeText})</td>
-                  <td style="text-align:right;color:var(--success)">₹${p.overtimePay.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                <tr>
-                  <td>Absent Penalties (${p.absentDays} days absent)</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.absentDeduction.toLocaleString()}</td>
-                </tr>
-                ${(p.unpaidSundayDays || 0) > 0 ? `
-                <tr>
-                  <td>Sunday Leave Penalties (${p.unpaidSundayDays} Sunday${p.unpaidSundayDays > 1 ? 's' : ''} deducted for ≥2 weekly leaves)</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.sundayDeduction.toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                <tr>
-                  <td>Half-day Salary Deductions (${p.halfDays} occurrences)</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.halfDayDeduction.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td>Provident Fund (PF) Deduction</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${(p.deductionPF || 0).toLocaleString()}</td>
-                </tr>
-                ${(p.deductionESI || 0) > 0 ? `
-                <tr>
-                  <td>ESI Deduction</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionESI.toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                ${(p.deductionAdvance || 0) > 0 ? `
-                <tr>
-                  <td>Advance Salary Deduction</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionAdvance.toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                ${(p.deductionOther || 0) > 0 ? `
-                <tr>
-                  <td>Others Deduction</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${p.deductionOther.toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                <tr>
-                  <td>Tax Deducted at Source (TDS) (${p.deductionTDS || 0}%)</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:#ef4444">₹${(p.deductionTDSVal || 0).toLocaleString()}</td>
-                </tr>
-                ${p.bonus > 0 ? `
-                <tr>
-                  <td>Manager Discretionary Bonus / Rewards</td>
-                  <td style="text-align:right;color:var(--success);font-weight:600">₹${p.bonus.toLocaleString()}</td>
-                  <td style="text-align:right">-</td>
-                </tr>
-                ` : ''}
-                ${p.adhocDeduction > 0 ? `
-                <tr>
-                  <td>Manager Ad-hoc Deduction / Adjustments</td>
-                  <td style="text-align:right">-</td>
-                  <td style="text-align:right;color:var(--error);font-weight:600">₹${p.adhocDeduction.toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                <tr class="total-row">
-                  <td>Net Salary Disbursed</td>
-                  <td style="text-align:right" colspan="2">₹${p.netSalary.toLocaleString()}</td>
-                </tr>
-              </tbody>
-            </table>
-            ${p.remarks ? `
-            <div style="margin-top:20px;padding:12px;background:rgba(255,255,255,0.01);border:1px dashed var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">
-              <strong>Remarks / Notes:</strong> ${Utils.escape(p.remarks)}
-            </div>
-            ` : ''}
-          </div>
-        </div>
-      `;
-      document.getElementById('btn-admin-print-single-payslip')?.addEventListener('click', () => {
-        const fmtSelect = document.getElementById('admin-payslip-format-select');
-        const fmt = fmtSelect ? fmtSelect.value : 'pdf';
-        if (fmt === 'xlsx') {
-          downloadSinglePayslipExcel(uDetails.id, month, year);
-        } else {
-          printSinglePayslipPDF(uDetails.id, month, year);
-        }
-      });
-      if (currentLoggedIn && currentLoggedIn.role === 'manager') {
-        document.getElementById('btn-admin-edit-single-payslip')?.addEventListener('click', () => {
-          openPayrollAdjustmentModal(uDetails.id, month, year);
-        });
-      }
-      drawer.scrollIntoView({ behavior: 'smooth' });
+      const curMonth = Number(document.getElementById('report-month')?.value ?? month);
+      const curYear = Number(document.getElementById('report-year')?.value ?? year);
+      renderAdminPayslipDrawer(uId, curMonth, curYear);
     });
   }
 
@@ -11871,7 +11705,7 @@ function printSinglePayslipPDF(userId, month, year) {
       </thead>
       <tbody>
         <tr>
-          <td>Base Fixed Monthly Salary</td>
+          <td>Basic Salary (₹${(payroll.fullBaseSalary || payroll.baseSalary).toLocaleString()})</td>
           <td style="text-align:right" class="earning">₹${(payroll.baseSalary ?? 0).toLocaleString()}</td>
           <td style="text-align:right">-</td>
         </tr>
