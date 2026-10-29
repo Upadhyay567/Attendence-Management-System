@@ -416,6 +416,135 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       ? `${monthNames[month]} 1 – ${monthNames[month]} ${periodDays}, ${year} (Partial Month: ${periodDays}/${totalDays} days)`
       : `${monthNames[month]} ${year}`;
 
+    // Formatting helpers
+    const fNum = (n, d = 2) => Number(n || 0).toFixed(d);
+    const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 3A. Days Worked (Attendance Items)
+    const holidays = Number(totalDays - periodDays);
+    const daysList = [
+      { label: 'Total Days', value: fNum(totalDays, 1) },
+      { label: 'Days Worked', value: fNum(presentDays, 1) },
+      { label: 'Weekly Off / Holidays', value: fNum(holidays, 1) },
+      { label: 'Absent', value: fNum(absentDays, 1) }
+    ];
+    if (halfDays > 0) {
+      daysList.push({ label: 'Half Days', value: fNum(halfDays, 1) });
+    }
+    daysList.push({ label: 'Days Payable', value: fNum(eligiblePaidDays, 1), isBold: true });
+
+    // 3B. Earnings components (Only active from DB)
+    const rateBasic = isPartialMonth ? periodNominalBase : baseSalary;
+    const payableBasic = earnedBaseSalary;
+    const rateHRA = Number(targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? targetUser.allowanceHRA : fullHRA);
+    const payableHRA = hra;
+    const rateTravel = Number(targetUser.allowanceTravel !== undefined && targetUser.allowanceTravel !== null ? targetUser.allowanceTravel : fullTravel);
+    const payableTravel = travel;
+    const rateCCA = Number(targetUser.allowanceCCA !== undefined && targetUser.allowanceCCA !== null ? targetUser.allowanceCCA : fullCCA);
+    const payableCCA = cca;
+    const ratePerf = Number(targetUser.allowancePerformance || fullPerformance);
+    const payablePerf = performance;
+    const rateDA = Number(targetUser.allowanceDA || 0);
+    const payableDA = daAmount;
+    const rateOther = Number(targetUser.allowanceOther || fullBaseOther);
+    const payableOther = otherAllowances;
+    const payableBonus = bonus;
+
+    const earningsList = [
+      { label: isPartialMonth ? `Basic Salary (₹${rateBasic.toLocaleString('en-IN')})` : 'Basic Salary', rate: fNum(rateBasic, 2), payable: fNum(payableBasic, 2), rawRate: rateBasic, rawPayable: payableBasic }
+    ];
+    if (rateHRA > 0 || payableHRA > 0) {
+      earningsList.push({ label: 'House Rent Allowance (H.R.A.)', rate: fNum(rateHRA, 2), payable: fNum(payableHRA, 2), rawRate: rateHRA, rawPayable: payableHRA });
+    }
+    if (rateTravel > 0 || payableTravel > 0) {
+      earningsList.push({ label: 'Conveyance Allowance', rate: fNum(rateTravel, 2), payable: fNum(payableTravel, 2), rawRate: rateTravel, rawPayable: payableTravel });
+    }
+    if (rateCCA > 0 || payableCCA > 0) {
+      earningsList.push({ label: 'City Compensatory (C.C.A.)', rate: fNum(rateCCA, 2), payable: fNum(payableCCA, 2), rawRate: rateCCA, rawPayable: payableCCA });
+    }
+    if (ratePerf > 0 || payablePerf > 0) {
+      earningsList.push({ label: 'Performance Allowance', rate: fNum(ratePerf, 2), payable: fNum(payablePerf, 2), rawRate: ratePerf, rawPayable: payablePerf });
+    }
+    if (rateDA > 0 || payableDA > 0) {
+      earningsList.push({ label: 'Dearness Allowance (D.A.)', rate: fNum(rateDA, 2), payable: fNum(payableDA, 2), rawRate: rateDA, rawPayable: payableDA });
+    }
+    if (rateOther > 0 || payableOther > 0) {
+      earningsList.push({ label: 'Other Allowances', rate: fNum(rateOther, 2), payable: fNum(payableOther, 2), rawRate: rateOther, rawPayable: payableOther });
+    }
+    if (payableBonus > 0) {
+      earningsList.push({ label: 'Bonus / Rewards', rate: '0.00', payable: fNum(payableBonus, 2), rawRate: 0, rawPayable: payableBonus });
+    }
+
+    // 3C. Deductions (Only active from DB)
+    const deductionsList = [];
+    if (pf > 0 || (isPFApplicable && baseSalary <= epfWageCeiling)) {
+      deductionsList.push({ label: 'Provident Fund (P.F.)', amount: fNum(pf, 2), rawAmount: pf });
+    }
+    if (esi > 0) {
+      deductionsList.push({ label: 'Employee State Ins. (E.S.I.)', amount: fNum(esi, 2), rawAmount: esi });
+    }
+    if (advance > 0) {
+      deductionsList.push({ label: 'Advance Salary Deduction', amount: fNum(advance, 2), rawAmount: advance });
+    }
+    if (tds > 0) {
+      deductionsList.push({ label: 'Tax Deducted at Source (T.D.S.)', amount: fNum(tds, 2), rawAmount: tds });
+    }
+    if (otherDeductions > 0) {
+      deductionsList.push({ label: 'Other Deductions', amount: fNum(otherDeductions, 2), rawAmount: otherDeductions });
+    }
+    if (adhocDeduction > 0) {
+      deductionsList.push({ label: 'Manager Ad-hoc Deduction', amount: fNum(adhocDeduction, 2), rawAmount: adhocDeduction });
+    }
+    if (deductionsList.length === 0) {
+      deductionsList.push({ label: 'No Deductions', amount: '0.00', rawAmount: 0 });
+    }
+
+    // Totals
+    const totalRates = earningsList.reduce((acc, it) => acc + (it.rawRate || 0), 0);
+    const totalPayable = earningsList.reduce((acc, it) => acc + (it.rawPayable || 0), 0);
+    const totalDeductionsCalc = deductionsList.reduce((acc, it) => acc + (it.rawAmount || 0), 0);
+    const netPayableCalc = Math.max(0, totalPayable - totalDeductionsCalc);
+
+    // Multi-column rows
+    const maxRows = Math.max(daysList.length, earningsList.length, deductionsList.length);
+    let rowsHTML = '';
+    for (let i = 0; i < maxRows; i++) {
+      const dItem = daysList[i];
+      const eItem = earningsList[i];
+      const dedItem = deductionsList[i];
+
+      const dLabel = dItem ? (dItem.isBold ? `<strong>${esc(dItem.label)}</strong>` : esc(dItem.label)) : '';
+      const dVal = dItem ? (dItem.isBold ? `<strong>${dItem.value}</strong>` : dItem.value) : '';
+      const eLabel = eItem ? esc(eItem.label) : '';
+      const eRate = eItem ? eItem.rate : '';
+      const ePay = eItem ? eItem.payable : '';
+      const dedLabel = dedItem ? esc(dedItem.label) : '';
+      const dedAmt = dedItem ? dedItem.amount : '';
+
+      rowsHTML += `
+        <tr>
+          <td style="width:14%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dLabel}</td>
+          <td class="ep-num" style="width:7%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dVal}</td>
+          <td style="width:25%;">${eLabel}</td>
+          <td class="ep-num" style="width:12%;">${eRate}</td>
+          <td class="ep-num" style="width:13%;font-weight:700;color:#0f172a;">${ePay}</td>
+          <td style="width:17%;">${dedLabel}</td>
+          <td class="ep-num" style="width:12%;color:${dedAmt && Number(dedAmt) > 0 ? '#dc2626' : '#64748b'};">${dedAmt}</td>
+        </tr>
+      `;
+    }
+
+    // Database fields for Bank & Identity (Show 'N/A' if null/empty - NO hardcoded fake data!)
+    const bankName = (targetUser.bankName && targetUser.bankName.trim()) ? targetUser.bankName.trim() : 'N/A';
+    const acctNo = (targetUser.accountNumber || targetUser.accountNo || targetUser.bankAccount || '').trim() || 'N/A';
+    const panNo = (targetUser.pan || targetUser.panNo || '').trim() || 'N/A';
+    const pfNo = (targetUser.pfNo || targetUser.epfNo || '').trim() || 'N/A';
+    const uanNo = (targetUser.uanNo || targetUser.uan || '').trim() || 'N/A';
+    const paymentMode = (targetUser.paymentMode && targetUser.paymentMode.trim()) ? targetUser.paymentMode.trim() : (bankName !== 'N/A' ? 'Bank Transfer' : 'N/A');
+    const fatherName = (targetUser.fatherName && targetUser.fatherName.trim()) ? targetUser.fatherName.trim() : (targetUser.guardianName && targetUser.guardianName.trim() ? targetUser.guardianName.trim() : 'N/A');
+    const address = (targetUser.address && targetUser.address.trim()) ? targetUser.address.trim() : (targetUser.preferredLocation || targetUser.workLocation || 'N/A');
+
     const htmlTemplate = `
       <!DOCTYPE html>
       <html>
@@ -433,9 +562,9 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
           * { box-sizing: border-box; }
           
           body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #ffffff;
-            color: #000000;
+            color: #0f172a;
             margin: 0;
             padding: 15px;
             -webkit-print-color-adjust: exact;
@@ -444,65 +573,95 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
 
           .enterprise-payslip {
             background: #ffffff !important;
-            color: #000000 !important;
-            border: 1.5px solid #000000;
+            color: #0f172a !important;
+            border: 2px solid #89201b;
+            border-radius: 12px;
             width: 100%;
-            max-width: 860px;
+            max-width: 960px;
             margin: 0 auto;
-            font-size: 11.5px;
-            line-height: 1.35;
-            box-sizing: border-box;
-          }
-
-          .ep-header {
-            text-align: center;
-            padding: 10px 14px 4px;
-            border-bottom: 1px solid #000000;
-          }
-
-          .ep-company-name {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #000000 !important;
-          }
-
-          .ep-company-address {
-            font-size: 10.5px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            color: #222222 !important;
-            margin-top: 2px;
-          }
-
-          .ep-period-bar {
-            padding: 5px 10px;
             font-size: 12px;
-            font-weight: 600;
-            border-bottom: 1.5px solid #000000;
-            color: #000000 !important;
-            background: #ffffff;
+            line-height: 1.4;
+            box-sizing: border-box;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
           }
 
-          .ep-period-bar em {
-            font-style: italic;
+          .ep-header-premium {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #fff9f9 100%);
+            border-bottom: 2px solid #89201b;
+          }
+
+          .ep-brand-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          }
+
+          .ep-brand-logo {
+            height: 52px;
+            width: auto;
+            object-fit: contain;
+          }
+
+          .ep-brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #89201b !important;
+            margin: 0;
+            line-height: 1.2;
+          }
+
+          .ep-brand-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-top: 4px;
+          }
+
+          .ep-period-badge {
+            text-align: right;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 8px 16px;
+            border-radius: 8px;
+          }
+
+          .ep-period-lbl {
+            font-size: 10.5px;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #991b1b;
+          }
+
+          .ep-period-val {
+            font-size: 15px;
+            font-weight: 800;
+            color: #89201b;
+            margin-top: 2px;
           }
 
           .ep-emp-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 1.5px solid #000000;
+            background: #f8fafc;
+            border-bottom: 1.5px solid #cbd5e1;
           }
 
           .ep-emp-table td {
-            padding: 3.5px 8px;
-            border-right: 1px solid #000000;
-            border-bottom: 1px solid #000000;
-            font-size: 11px;
-            color: #000000 !important;
+            padding: 6px 14px;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #1e293b !important;
             vertical-align: middle;
           }
 
@@ -511,15 +670,18 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
           }
 
           .ep-lbl {
-            font-weight: 600;
-            color: #111111 !important;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #64748b !important;
             display: inline-block;
-            min-width: 110px;
+            min-width: 125px;
           }
 
           .ep-val {
-            font-weight: 600;
-            color: #000000 !important;
+            font-weight: 700;
+            color: #0f172a !important;
           }
 
           .ep-main-table {
@@ -528,119 +690,138 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
           }
 
           .ep-main-table th {
-            background: #ffffff !important;
-            color: #000000 !important;
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
             font-weight: 800;
             font-size: 11px;
-            padding: 4px 6px;
-            border: 1px solid #000000;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
             text-align: left;
           }
 
           .ep-main-table td {
-            padding: 3px 6px;
-            border: 1px solid #000000;
-            font-size: 11px;
-            color: #000000 !important;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #1e293b !important;
             background: #ffffff;
+          }
+
+          .ep-main-table tr:nth-child(even) td {
+            background: #fafbfc;
           }
 
           .ep-main-table td.ep-num {
             text-align: right;
             font-variant-numeric: tabular-nums;
+            font-weight: 600;
           }
 
           .ep-main-table tfoot td {
-            border-top: 1.5px solid #000000;
-            border-bottom: 1.5px solid #000000;
+            border-top: 2px solid #0f172a;
+            border-bottom: 2px solid #0f172a;
             font-weight: 800;
-            background: #ffffff !important;
-            color: #000000 !important;
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+            padding: 8px 10px;
           }
 
           .ep-footer-table {
             width: 100%;
             border-collapse: collapse;
-            border-top: 1.5px solid #000000;
+            background: #ffffff;
+            border-top: 1.5px solid #cbd5e1;
           }
 
           .ep-footer-table td {
-            padding: 6px 10px;
-            font-size: 11px;
-            color: #000000 !important;
-            background: #ffffff;
+            padding: 14px 18px;
+            font-size: 12px;
+            color: #1e293b !important;
+            vertical-align: top;
           }
 
-          .ep-ftr-row {
-            margin-bottom: 3px;
+          .ep-bank-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
           }
 
-          .ep-ftr-lbl {
-            font-size: 10px;
-            color: #222222 !important;
-            margin-right: 6px;
-          }
-
-          .ep-ftr-val {
-            font-weight: 600;
-            color: #000000 !important;
-          }
-
-          .ep-net-row {
+          .ep-bank-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #000000;
-            padding-bottom: 4px;
-            margin-bottom: 4px;
+            font-size: 11.5px;
           }
 
-          .ep-net-lbl {
-            font-size: 12.5px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            color: #000000 !important;
-          }
-
-          .ep-net-val {
-            font-size: 14.5px;
-            font-weight: 900;
-            color: #000000 !important;
-          }
-
-          .ep-empr-pf-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-          }
-
-          .ep-empr-pf-lbl {
-            font-weight: 600;
-            color: #222222 !important;
-          }
-
-          .ep-empr-pf-val {
+          .ep-bank-lbl {
             font-weight: 700;
-            color: #000000 !important;
+            color: #64748b;
+            width: 110px;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+          }
+
+          .ep-bank-val {
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .ep-net-card-premium {
+            background: linear-gradient(135deg, #89201b 0%, #5b1310 100%);
+            color: #ffffff !important;
+            border-radius: 8px;
+            padding: 14px 18px;
+            box-shadow: 0 4px 12px rgba(137, 32, 27, 0.25);
+          }
+
+          .ep-net-card-premium .ep-net-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+          }
+
+          .ep-net-card-premium .ep-net-lbl {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #fca5a5 !important;
+          }
+
+          .ep-net-card-premium .ep-net-val {
+            font-size: 21px;
+            font-weight: 900;
+            color: #ffffff !important;
+          }
+
+          .ep-net-card-premium .ep-empr-pf-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11.5px;
+            color: #f8fafc;
           }
 
           .ep-statutory-notes {
             border-top: 1px dashed #cbd5e1;
-            padding: 6px 10px;
+            padding: 8px 18px;
             background: #f8fafc;
-            font-size: 10px;
+            font-size: 11px;
             color: #475569;
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 6px;
           }
 
           @media print {
             body { padding: 0; background: #fff; }
             .enterprise-payslip {
-              border: 1.5px solid #000 !important;
+              border: 1.5px solid #89201b !important;
               box-shadow: none !important;
               max-width: 100% !important;
             }
@@ -649,13 +830,19 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       </head>
       <body>
         <div class="enterprise-payslip">
-          <!-- 1. COMPANY HEADER & PAYSLIP PERIOD -->
-          <div class="ep-header">
-            <div class="ep-company-name">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</div>
-            <div class="ep-company-address">1421 1ST FLOOR GALI KISHAN DUTT MALIWARA CHANDNI CHOWK DELHI-110006</div>
-          </div>
-          <div class="ep-period-bar">
-            Payslip for Month-Year : <em><%= periodLabel %></em>
+          <!-- 1. PREMIUM HEADER WITH BRAND LOGO & PERIOD (NO COMPANY ADDRESS) -->
+          <div class="ep-header-premium">
+            <div class="ep-brand-left">
+              <img src="/assets/surya_logo_transparent_hd.png" alt="House of Surya" class="ep-brand-logo" onerror="this.src='/surya-logo.png'" />
+              <div>
+                <h1 class="ep-brand-title">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</h1>
+                <div class="ep-brand-subtitle">House of Surya | Employee Salary Statement</div>
+              </div>
+            </div>
+            <div class="ep-period-badge">
+              <div class="ep-period-lbl">Statement Period</div>
+              <div class="ep-period-val"><%= periodLabel %></div>
+            </div>
           </div>
 
           <!-- 2. EMPLOYEE INFORMATION GRID -->
@@ -668,11 +855,11 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
                 </td>
                 <td style="width:32%;">
                   <span class="ep-lbl">D.O.J</span>
-                  <span class="ep-val">: <%= user.dateOfJoining || '01-07-2021' %></span>
+                  <span class="ep-val">: <%= user.dateOfJoining || user.doj || 'N/A' %></span>
                 </td>
                 <td style="width:30%;">
                   <span class="ep-lbl">D.O.B</span>
-                  <span class="ep-val">: <%= user.dob || '14-07-1986' %></span>
+                  <span class="ep-val">: <%= user.dob || user.dateOfBirth || 'N/A' %></span>
                 </td>
               </tr>
               <tr>
@@ -682,207 +869,90 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
                 </td>
                 <td colspan="2">
                   <span class="ep-lbl">Father/Husband's Name</span>
-                  <span class="ep-val">: <%= user.fatherName || user.emergencyContact || 'SH. RAGHVENDRA TRIPATHI' %></span>
+                  <span class="ep-val">: <%= fatherName %></span>
                 </td>
               </tr>
               <tr>
                 <td>
                   <span class="ep-lbl">Designation</span>
-                  <span class="ep-val">: <%= user.designation || 'PRO' %></span>
+                  <span class="ep-val">: <%= user.designation || 'Staff Associate' %></span>
                 </td>
                 <td colspan="2">
                   <span class="ep-lbl">UAN No.</span>
-                  <span class="ep-val"><%= user.uanNo || user.uan || '100409137016' %></span>
+                  <span class="ep-val">: <%= uanNo %></span>
                 </td>
               </tr>
               <tr>
                 <td>
                   <span class="ep-lbl">Department</span>
-                  <span class="ep-val">: <%= user.department || 'FIRST FLOOR' %></span>
+                  <span class="ep-val">: <%= user.department || 'General' %></span>
                 </td>
-                <td colspan="2"></td>
+                <td colspan="2">
+                  <span class="ep-lbl">Location / Worksite</span>
+                  <span class="ep-val">: <%= user.preferredLocation || user.workLocation || 'HS Office' %></span>
+                </td>
               </tr>
               <tr>
                 <td colspan="3">
                   <span class="ep-lbl">Address</span>
-                  <span class="ep-val">: <%= user.address || user.preferredLocation || user.workLocation || '' %></span>
+                  <span class="ep-val">: <%= address %></span>
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <!-- 3. TRI-PANEL PAYROLL TABLE: DAYS WORKED | EARNINGS | DEDUCTIONS -->
+          <!-- 3. DYNAMIC TRI-PANEL PAYROLL TABLE -->
           <table class="ep-main-table">
             <thead>
               <tr class="ep-main-th-row">
-                <th colspan="2" class="ep-th ep-col-days-hd" style="width:21%;">Days Worked</th>
-                <th class="ep-th ep-col-earn-hd" style="width:25%;">E A R N I N G S</th>
-                <th class="ep-th ep-col-rates-hd" style="width:12%;text-align:right;">Rates</th>
-                <th class="ep-th ep-col-payable-hd" style="width:13%;text-align:right;">Payable</th>
-                <th class="ep-th ep-col-ded-hd" style="width:17%;">D E D U C T I O N S</th>
-                <th class="ep-th ep-col-amt-hd" style="width:12%;text-align:right;">Amount</th>
+                <th colspan="2" class="ep-th" style="width:21%;">Days Worked</th>
+                <th class="ep-th" style="width:25%;">E A R N I N G S</th>
+                <th class="ep-th" style="width:12%;text-align:right;">Rates</th>
+                <th class="ep-th" style="width:13%;text-align:right;">Payable</th>
+                <th class="ep-th" style="width:17%;">D E D U C T I O N S</th>
+                <th class="ep-th" style="width:12%;text-align:right;">Amount</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style="width:14%;">Total Days</td>
-                <td class="ep-num" style="width:7%;"><%= Number(totalDays).toFixed(1) %></td>
-                <td>Basic</td>
-                <td class="ep-num"><%= Number(baseSalary).toFixed(2) %></td>
-                <td class="ep-num"><%= Number(earnedBaseSalary).toFixed(2) %></td>
-                <td>P.F.</td>
-                <td class="ep-num"><%= Number(pf).toFixed(2) %></td>
-              </tr>
-              <tr>
-                <td>Days Worked</td>
-                <td class="ep-num"><%= Number(presentDays).toFixed(1) %></td>
-                <td>D.A.</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td>V.P.F.</td>
-                <td class="ep-num">0.00</td>
-              </tr>
-              <tr>
-                <td>Holidays</td>
-                <td class="ep-num"><%= Number(totalDays - periodDays).toFixed(1) %></td>
-                <td>H.R.A.</td>
-                <td class="ep-num"><%= Number(user.allowanceHRA || hra).toFixed(2) %></td>
-                <td class="ep-num"><%= Number(hra).toFixed(2) %></td>
-                <td>E.S.I.</td>
-                <td class="ep-num"><%= Number(esi).toFixed(2) %></td>
-              </tr>
-              <tr>
-                <td>Absent</td>
-                <td class="ep-num"><%= Number(absentDays).toFixed(1) %></td>
-                <td>C.C.A.</td>
-                <td class="ep-num"><%= Number(user.allowanceCCA || cca).toFixed(2) %></td>
-                <td class="ep-num"><%= Number(cca).toFixed(2) %></td>
-                <td>Advance</td>
-                <td class="ep-num"><%= Number(advance).toFixed(2) %></td>
-              </tr>
-              <tr>
-                <td>C.L.</td>
-                <td class="ep-num">0.0</td>
-                <td>Conveyance Allowance</td>
-                <td class="ep-num"><%= Number(user.allowanceTravel || travel).toFixed(2) %></td>
-                <td class="ep-num"><%= Number(travel).toFixed(2) %></td>
-                <td>Loan Installment</td>
-                <td class="ep-num">0.00</td>
-              </tr>
-              <tr>
-                <td>E.L.</td>
-                <td class="ep-num">0.0</td>
-                <td>Arrears</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td>Advance Sal. Deduction</td>
-                <td class="ep-num">0.00</td>
-              </tr>
-              <tr>
-                <td>S.L.</td>
-                <td class="ep-num">0.0</td>
-                <td>Advance Salary</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td>L.w.f.</td>
-                <td class="ep-num">0.00</td>
-              </tr>
-              <tr>
-                <td><strong>Days Payable</strong></td>
-                <td class="ep-num"><strong><%= Number(eligiblePaidDays).toFixed(1) %></strong></td>
-                <td>Leave Salary</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td>Other Dedu.</td>
-                <td class="ep-num"><%= Number(otherDeductions + adhocDeduction).toFixed(2) %></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td class="ep-num"></td>
-                <td>Overtime</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td>T.D.S.</td>
-                <td class="ep-num"><%= Number(tds).toFixed(2) %></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td class="ep-num"></td>
-                <td>Bonus</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num"><%= Number(bonus).toFixed(2) %></td>
-                <td></td>
-                <td class="ep-num"></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td class="ep-num"></td>
-                <td>Other Allow.</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num"><%= Number(otherAllowances).toFixed(2) %></td>
-                <td></td>
-                <td class="ep-num"></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td class="ep-num"></td>
-                <td>Medical Allow.</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td></td>
-                <td class="ep-num"></td>
-              </tr>
-              <tr>
-                <td></td>
-                <td class="ep-num"></td>
-                <td>Leave Encasment</td>
-                <td class="ep-num">0.00</td>
-                <td class="ep-num">0.00</td>
-                <td></td>
-                <td class="ep-num"></td>
-              </tr>
+              <%- rowsHTML %>
             </tbody>
             <!-- 4. TOTALS ROW -->
             <tfoot>
               <tr class="ep-totals-tr">
                 <td colspan="2" class="ep-tot-lbl"><strong>T O T A L S :</strong></td>
                 <td></td>
-                <td class="ep-num ep-tot-val"><strong><%= Number(baseSalary + Number(user.allowanceHRA || hra) + Number(user.allowanceTravel || travel) + Number(user.allowanceCCA || cca)).toFixed(2) %></strong></td>
-                <td class="ep-num ep-tot-val"><strong><%= Number(earnedBaseSalary + hra + travel + cca + otherAllowances + bonus).toFixed(2) %></strong></td>
+                <td class="ep-num ep-tot-val"><strong><%= fNum(totalRates, 2) %></strong></td>
+                <td class="ep-num ep-tot-val"><strong><%= fNum(totalPayable, 2) %></strong></td>
                 <td></td>
-                <td class="ep-num ep-tot-val"><strong><%= Number(pf + esi + advance + otherDeductions + adhocDeduction + tds).toFixed(2) %></strong></td>
+                <td class="ep-num ep-tot-val"><strong><%= fNum(totalDeductionsCalc, 2) %></strong></td>
               </tr>
             </tfoot>
           </table>
 
-          <!-- 5. BANKING & STATUTORY DETAILS & NET PAYABLE -->
+          <!-- 5. BANKING DETAILS & PREMIUM NET PAYABLE CARD -->
           <table class="ep-footer-table">
             <tbody>
               <tr>
-                <td style="width:58%;vertical-align:top;border-right:1.5px solid #000;border-bottom:none;">
-                  <div class="ep-ftr-row">
-                    <span class="ep-ftr-lbl">Other Details:</span>
-                    <span class="ep-ftr-val">Payment Mode : <%= user.paymentMode || 'Cheque' %></span>
-                  </div>
-                  <div class="ep-ftr-row">
-                    <span class="ep-ftr-val">EPF NO. <%= user.pfNo || user.epfNo || 'DL/CPM/29544/10241' %></span>
-                    <span class="ep-ftr-val" style="margin-left:24px;">Bank Name : <%= user.bankName || 'KOTAK MAHINDRA BANK' %></span>
-                  </div>
-                  <div class="ep-ftr-row" style="padding-left:145px;">
-                    <span class="ep-ftr-val">A/c No. : <%= user.accountNumber || user.accountNo || '01720030209123' %></span>
-                  </div>
-                  <div class="ep-ftr-row">
-                    <span class="ep-ftr-val">PAN NO. <%= user.pan || user.panNo || 'AHGPT5354F' %></span>
+                <td style="width:58%;">
+                  <div class="ep-bank-grid">
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">Payment Mode</span><span class="ep-bank-val">: <%= paymentMode %></span></div>
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">Bank Name</span><span class="ep-bank-val">: <%= bankName %></span></div>
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">Account No.</span><span class="ep-bank-val">: <%= acctNo %></span></div>
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">PAN Number</span><span class="ep-bank-val">: <%= panNo %></span></div>
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">EPF Number</span><span class="ep-bank-val">: <%= pfNo %></span></div>
+                    <div class="ep-bank-item"><span class="ep-bank-lbl">UAN Number</span><span class="ep-bank-val">: <%= uanNo %></span></div>
                   </div>
                 </td>
-                <td style="width:42%;vertical-align:top;border-bottom:none;">
-                  <div class="ep-net-row">
-                    <span class="ep-net-lbl">NET PAYABLE :</span>
-                    <span class="ep-net-val"><%= Number(netSalary).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
-                  </div>
-                  <div class="ep-empr-pf-row">
-                    <span class="ep-empr-pf-lbl">Empr.Cont.P.F. :</span>
-                    <span class="ep-empr-pf-val"><%= Number(pf).toFixed(2) %></span>
+                <td style="width:42%;">
+                  <div class="ep-net-card-premium">
+                    <div class="ep-net-row">
+                      <span class="ep-net-lbl">NET PAYABLE :</span>
+                      <span class="ep-net-val">₹<%= fCur(netPayableCalc) %></span>
+                    </div>
+                    <div class="ep-empr-pf-row">
+                      <span>Employer EPF Contribution (Empr.Cont.P.F.):</span>
+                      <strong>₹<%= fNum(pf, 2) %></strong>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -891,16 +961,16 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
 
           <!-- Statutory Notes Bar -->
           <div class="ep-statutory-notes">
-            <span><strong>Basic Salary Rate:</strong> ₹<%= Number(baseSalary).toLocaleString() %></span>
-            <span><strong>EPF (12%):</strong> Ceiling ₹<%= Number(epfWageCeiling).toLocaleString() %></span>
+            <span><strong>Basic Salary Rate:</strong> ₹<%= Number(baseSalary).toLocaleString('en-IN') %></span>
+            <span><strong>EPF (12%):</strong> Ceiling ₹<%= Number(epfWageCeiling).toLocaleString('en-IN') %></span>
             <span><strong>ESI (0.75%):</strong> <%= esi > 0 ? 'Covered' : 'Exempt (> ₹21k)' %></span>
-            <span><strong>Gratuity:</strong> 4.81% Provision (₹<%= Number(gratuityProvision).toLocaleString() %>)</span>
+            <span><strong>Gratuity:</strong> 4.81% Provision (₹<%= Number(gratuityProvision).toLocaleString('en-IN') %>)</span>
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;max-width:860px;margin:30px auto 0;font-size:10.5px;color:#64748b">
-          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:160px;text-align:center">Authorized Signatory</div>
-          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:160px;text-align:center">Employee Signature</div>
+        <div style="display:flex;justify-content:space-between;max-width:960px;margin:30px auto 0;font-size:11px;color:#64748b">
+          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:180px;text-align:center">Authorized Signatory</div>
+          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:180px;text-align:center">Employee Signature</div>
         </div>
 
         <script>
@@ -913,46 +983,26 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
     const renderedHTML = ejs.render(htmlTemplate, {
       user: targetUser,
       periodLabel,
-      totalDays,
-      periodDays,
-      isPartialMonth,
-      eligiblePaidDays,
-      presentDays,
-      sundayPresentDays,
-      absentDays,
-      halfDays,
-      baseSalary,
-      periodNominalBase,
-      earnedBaseSalary,
-      hra,
-      travel,
-      cca,
-      performance,
-      otherAllowances,
-      sundaySalary,
-      bonus,
-      periodGrossSalary,
-      absentDeduction,
-      sundayDeduction,
-      halfDayDeduction,
-      unpaidSundayDays,
+      fatherName,
+      uanNo,
+      address,
+      paymentMode,
+      bankName,
+      acctNo,
+      panNo,
+      pfNo,
+      rowsHTML,
+      totalRates,
+      totalPayable,
+      totalDeductionsCalc,
+      netPayableCalc,
       pf,
-      esi,
-      advance,
-      otherDeductions,
-      tdsRate,
-      tds,
-      adhocDeduction,
-      totalDeductions,
-      netSalary,
-      gratuityProvision,
-      gratuityRate,
-      isPFApplicable,
+      baseSalary,
       epfWageCeiling,
-      isESIEligible,
-      esiWageCeiling,
-      isBonusEligible,
-      statutoryBonus
+      esi,
+      gratuityProvision,
+      fNum,
+      fCur
     });
 
     res.setHeader('Content-Type', 'text/html');

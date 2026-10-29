@@ -940,8 +940,7 @@ const startApp = async () => {
       if (typeof window.loadBiometricFleetData === 'function') window.loadBiometricFleetData();
     } else if (activeHash === '#dashboard') {
       if (typeof renderEmployeeDashboard === 'function') renderEmployeeDashboard();
-    } else if (activeHash === '#schedules') {
-      // Do not re-render #schedules on background db_updated events to avoid wiping away active user interactions/popovers
+    } else if (activeHash === '#schedules' || activeHash === '#admin-reports') {
       return;
     } else {
       const openModal = document.querySelector('.modal-overlay, .custom-dialog');
@@ -6818,17 +6817,35 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthName = monthNames[month] || '';
     
-    // 3A. Days Worked
+    // Formatting helpers
+    const fNum = (n, d = 2) => Number(n || 0).toFixed(d);
+    const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s) => (typeof Utils !== 'undefined' && Utils.escape) ? Utils.escape(s || '') : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 3A. Days Worked (Attendance Items)
     const totalDays = Number(p.totalDays || 30);
     const daysWorked = Number(p.actualWorkingDays !== undefined ? p.actualWorkingDays : (p.presentDays || 0));
     const holidays = Number((p.weeklyOffDays || 0) + (p.holidayDays || 0));
     const absentDays = Number(p.absentDays || 0);
-    const clDays = Number(p.clDays || 0);
-    const elDays = Number(p.elDays || 0);
-    const slDays = Number(p.slDays || 0);
-    const daysPayable = Number(p.paidDays !== undefined ? p.paidDays : (p.eligiblePaidDays !== undefined ? p.eligiblePaidDays : Math.max(0, totalDays - absentDays - ((p.halfDays || 0) * 0.5))));
+    const halfDays = Number(p.halfDays || 0);
+    const approvedLeaveDays = Number(p.approvedLeaveDays || 0);
+    const daysPayable = Number(p.paidDays !== undefined ? p.paidDays : (p.eligiblePaidDays !== undefined ? p.eligiblePaidDays : Math.max(0, totalDays - absentDays - (halfDays * 0.5))));
 
-    // 3B. Earnings components
+    const daysList = [
+      { label: 'Total Days', value: fNum(totalDays, 1) },
+      { label: 'Days Worked', value: fNum(daysWorked, 1) },
+      { label: 'Weekly Off / Holidays', value: fNum(holidays, 1) },
+      { label: 'Absent', value: fNum(absentDays, 1) }
+    ];
+    if (halfDays > 0) {
+      daysList.push({ label: 'Half Days', value: fNum(halfDays, 1) });
+    }
+    if (approvedLeaveDays > 0) {
+      daysList.push({ label: 'Approved Leaves', value: fNum(approvedLeaveDays, 1) });
+    }
+    daysList.push({ label: 'Days Payable', value: fNum(daysPayable, 1), isBold: true });
+
+    // 3B. Earnings components (Only active from DB)
     const rateBasic = Number(p.fullBaseSalary || p.baseSalary || 0);
     const payableBasic = Number(p.earnedBaseSalary !== undefined ? p.earnedBaseSalary : p.baseSalary);
     
@@ -6844,47 +6861,144 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
     const rateTravel = Number(user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : (p.allowanceTravel || 0));
     const payableTravel = Number(p.allowanceTravel || 0);
 
-    const rateArrears = 0;
-    const payableArrears = Number(p.arrears || 0);
+    const ratePerf = Number(user.allowancePerformance || p.allowancePerformance || 0);
+    const payablePerf = Number(p.allowancePerformance || 0);
 
+    const payableArrears = Number(p.arrears || 0);
     const payableOvertime = Number(p.overtimePay || 0);
     const payableBonus = Number(p.bonus || 0);
     const rateOther = Number(user.allowanceOther || 0);
     const payableOther = Number(p.allowanceOther || 0);
-    const payableMedical = 0;
-    const payableLeaveEncash = 0;
 
-    // 3C. Deductions
+    const earningsList = [
+      { label: 'Basic Salary', rate: fNum(rateBasic, 2), payable: fNum(payableBasic, 2), rawRate: rateBasic, rawPayable: payableBasic }
+    ];
+    if (rateHRA > 0 || payableHRA > 0) {
+      earningsList.push({ label: 'House Rent Allowance (H.R.A.)', rate: fNum(rateHRA, 2), payable: fNum(payableHRA, 2), rawRate: rateHRA, rawPayable: payableHRA });
+    }
+    if (rateTravel > 0 || payableTravel > 0) {
+      earningsList.push({ label: 'Conveyance Allowance', rate: fNum(rateTravel, 2), payable: fNum(payableTravel, 2), rawRate: rateTravel, rawPayable: payableTravel });
+    }
+    if (rateCCA > 0 || payableCCA > 0) {
+      earningsList.push({ label: 'City Compensatory (C.C.A.)', rate: fNum(rateCCA, 2), payable: fNum(payableCCA, 2), rawRate: rateCCA, rawPayable: payableCCA });
+    }
+    if (ratePerf > 0 || payablePerf > 0) {
+      earningsList.push({ label: 'Performance Allowance', rate: fNum(ratePerf, 2), payable: fNum(payablePerf, 2), rawRate: ratePerf, rawPayable: payablePerf });
+    }
+    if (rateDA > 0 || payableDA > 0) {
+      earningsList.push({ label: 'Dearness Allowance (D.A.)', rate: fNum(rateDA, 2), payable: fNum(payableDA, 2), rawRate: rateDA, rawPayable: payableDA });
+    }
+    if (rateOther > 0 || payableOther > 0) {
+      earningsList.push({ label: 'Other Allowances', rate: fNum(rateOther, 2), payable: fNum(payableOther, 2), rawRate: rateOther, rawPayable: payableOther });
+    }
+    if (payableOvertime > 0) {
+      earningsList.push({ label: 'Overtime Pay', rate: '0.00', payable: fNum(payableOvertime, 2), rawRate: 0, rawPayable: payableOvertime });
+    }
+    if (payableBonus > 0) {
+      earningsList.push({ label: 'Bonus / Rewards', rate: '0.00', payable: fNum(payableBonus, 2), rawRate: 0, rawPayable: payableBonus });
+    }
+    if (payableArrears > 0) {
+      earningsList.push({ label: 'Arrears', rate: '0.00', payable: fNum(payableArrears, 2), rawRate: 0, rawPayable: payableArrears });
+    }
+
+    // 3C. Deductions (Only active from DB)
     const dedPF = Number(p.deductionPF || 0);
-    const dedVPF = Number(p.deductionVPF || 0);
     const dedESI = Number(p.deductionESI || 0);
     const dedAdvance = Number(p.deductionAdvance || 0);
     const dedLoan = Number(p.loanInstallment || 0);
-    const dedAdvanceSal = 0;
-    const dedLWF = Number(p.deductionLWF || 0);
-    const dedOther = Number((p.deductionOther || 0) + (p.adhocDeduction || 0));
+    const dedOther = Number(p.deductionOther || 0);
+    const dedAdhoc = Number(p.adhocDeduction || 0);
     const dedTDS = Number(p.deductionTDSVal || 0);
 
-    // 4. Totals
-    const totalRates = rateBasic + rateDA + rateHRA + rateCCA + rateTravel + rateOther;
-    const totalPayable = payableBasic + payableDA + payableHRA + payableCCA + payableTravel + payableArrears + payableOvertime + payableBonus + payableOther;
-    const totalDeductions = dedPF + dedVPF + dedESI + dedAdvance + dedLoan + dedAdvanceSal + dedLWF + dedOther + dedTDS;
+    const deductionsList = [];
+    if (dedPF > 0 || (p.isPFApplicable && rateBasic <= (p.epfWageCeiling || 25000))) {
+      deductionsList.push({ label: 'Provident Fund (P.F.)', amount: fNum(dedPF, 2), rawAmount: dedPF });
+    }
+    if (dedESI > 0) {
+      deductionsList.push({ label: 'Employee State Ins. (E.S.I.)', amount: fNum(dedESI, 2), rawAmount: dedESI });
+    }
+    if (dedAdvance > 0) {
+      deductionsList.push({ label: 'Advance Salary Deduction', amount: fNum(dedAdvance, 2), rawAmount: dedAdvance });
+    }
+    if (dedTDS > 0) {
+      deductionsList.push({ label: 'Tax Deducted at Source (T.D.S.)', amount: fNum(dedTDS, 2), rawAmount: dedTDS });
+    }
+    if (dedOther > 0) {
+      deductionsList.push({ label: 'Other Deductions', amount: fNum(dedOther, 2), rawAmount: dedOther });
+    }
+    if (dedAdhoc > 0) {
+      deductionsList.push({ label: 'Manager Ad-hoc Deduction', amount: fNum(dedAdhoc, 2), rawAmount: dedAdhoc });
+    }
+    if (dedLoan > 0) {
+      deductionsList.push({ label: 'Loan Installment', amount: fNum(dedLoan, 2), rawAmount: dedLoan });
+    }
+    if (deductionsList.length === 0) {
+      deductionsList.push({ label: 'No Deductions', amount: '0.00', rawAmount: 0 });
+    }
+
+    // 4. Totals calculations
+    const totalRates = earningsList.reduce((acc, it) => acc + (it.rawRate || 0), 0);
+    const totalPayable = earningsList.reduce((acc, it) => acc + (it.rawPayable || 0), 0);
+    const totalDeductions = deductionsList.reduce((acc, it) => acc + (it.rawAmount || 0), 0);
     const netPayable = Math.max(0, totalPayable - totalDeductions);
     const emprPF = dedPF;
 
-    const fNum = (n, d = 2) => Number(n || 0).toFixed(d);
-    const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const esc = (s) => (typeof Utils !== 'undefined' && Utils.escape) ? Utils.escape(s || '') : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Determine row count for multi-column grid
+    const maxRows = Math.max(daysList.length, earningsList.length, deductionsList.length);
+
+    // Dynamic rows generation
+    let rowsHTML = '';
+    for (let i = 0; i < maxRows; i++) {
+      const dItem = daysList[i];
+      const eItem = earningsList[i];
+      const dedItem = deductionsList[i];
+
+      const dLabel = dItem ? (dItem.isBold ? `<strong>${esc(dItem.label)}</strong>` : esc(dItem.label)) : '';
+      const dVal = dItem ? (dItem.isBold ? `<strong>${dItem.value}</strong>` : dItem.value) : '';
+      const eLabel = eItem ? esc(eItem.label) : '';
+      const eRate = eItem ? eItem.rate : '';
+      const ePay = eItem ? eItem.payable : '';
+      const dedLabel = dedItem ? esc(dedItem.label) : '';
+      const dedAmt = dedItem ? dedItem.amount : '';
+
+      rowsHTML += `
+        <tr>
+          <td style="width:14%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dLabel}</td>
+          <td class="ep-num" style="width:7%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dVal}</td>
+          <td style="width:25%;">${eLabel}</td>
+          <td class="ep-num" style="width:12%;">${eRate}</td>
+          <td class="ep-num" style="width:13%;font-weight:700;color:#0f172a;">${ePay}</td>
+          <td style="width:17%;">${dedLabel}</td>
+          <td class="ep-num" style="width:12%;color:${dedAmt && Number(dedAmt) > 0 ? '#dc2626' : '#64748b'};">${dedAmt}</td>
+        </tr>
+      `;
+    }
+
+    // Database fields for Bank & Identity (Show 'N/A' if null/empty - NO hardcoded fake data!)
+    const bankName = (user.bankName && user.bankName.trim()) ? user.bankName.trim() : 'N/A';
+    const acctNo = (user.accountNumber || user.accountNo || user.bankAccount || '').trim() || 'N/A';
+    const panNo = (user.pan || user.panNo || '').trim() || 'N/A';
+    const pfNo = (user.pfNo || user.epfNo || '').trim() || 'N/A';
+    const uanNo = (user.uanNo || user.uan || '').trim() || 'N/A';
+    const paymentMode = (user.paymentMode && user.paymentMode.trim()) ? user.paymentMode.trim() : (bankName !== 'N/A' ? 'Bank Transfer' : 'N/A');
+    const fatherName = (user.fatherName && user.fatherName.trim()) ? user.fatherName.trim() : (user.guardianName && user.guardianName.trim() ? user.guardianName.trim() : 'N/A');
+    const address = (user.address && user.address.trim()) ? user.address.trim() : (user.preferredLocation || user.workLocation || 'N/A');
 
     return `
       <div class="enterprise-payslip">
-        <!-- 1. COMPANY HEADER & PAYSLIP PERIOD -->
-        <div class="ep-header">
-          <div class="ep-company-name">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</div>
-          <div class="ep-company-address">1421 1ST FLOOR GALI KISHAN DUTT MALIWARA CHANDNI CHOWK DELHI-110006</div>
-        </div>
-        <div class="ep-period-bar">
-          Payslip for Month-Year : <em>${esc(monthName)} ${year}</em>
+        <!-- 1. PREMIUM HEADER WITH BRAND LOGO & PERIOD (NO COMPANY ADDRESS) -->
+        <div class="ep-header-premium">
+          <div class="ep-brand-left">
+            <img src="assets/surya_logo_transparent_hd.png" alt="House of Surya" class="ep-brand-logo" onerror="this.src='surya-logo.png'" />
+            <div>
+              <h1 class="ep-brand-title">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</h1>
+              <div class="ep-brand-subtitle">House of Surya | Employee Salary Statement</div>
+            </div>
+          </div>
+          <div class="ep-period-badge">
+            <div class="ep-period-lbl">Statement Period</div>
+            <div class="ep-period-val">${esc(monthName)} ${year}</div>
+          </div>
         </div>
 
         <!-- 2. EMPLOYEE INFORMATION GRID -->
@@ -6897,11 +7011,11 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
               </td>
               <td style="width:32%;">
                 <span class="ep-lbl">D.O.J</span>
-                <span class="ep-val">: ${esc(user.dateOfJoining || '01-07-2021')}</span>
+                <span class="ep-val">: ${esc(user.dateOfJoining || user.doj || 'N/A')}</span>
               </td>
               <td style="width:30%;">
                 <span class="ep-lbl">D.O.B</span>
-                <span class="ep-val">: ${esc(user.dob || '14-07-1986')}</span>
+                <span class="ep-val">: ${esc(user.dob || user.dateOfBirth || 'N/A')}</span>
               </td>
             </tr>
             <tr>
@@ -6911,165 +7025,52 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
               </td>
               <td colspan="2">
                 <span class="ep-lbl">Father/Husband's Name</span>
-                <span class="ep-val">: ${esc(user.fatherName || user.emergencyContact || 'SH. RAGHVENDRA TRIPATHI')}</span>
+                <span class="ep-val">: ${esc(fatherName)}</span>
               </td>
             </tr>
             <tr>
               <td>
                 <span class="ep-lbl">Designation</span>
-                <span class="ep-val">: ${esc(user.designation || 'PRO')}</span>
+                <span class="ep-val">: ${esc(user.designation || 'Staff Associate')}</span>
               </td>
               <td colspan="2">
                 <span class="ep-lbl">UAN No.</span>
-                <span class="ep-val">${esc(user.uanNo || user.uan || '100409137016')}</span>
+                <span class="ep-val">: ${esc(uanNo)}</span>
               </td>
             </tr>
             <tr>
               <td>
                 <span class="ep-lbl">Department</span>
-                <span class="ep-val">: ${esc(user.department || 'FIRST FLOOR')}</span>
+                <span class="ep-val">: ${esc(user.department || 'General')}</span>
               </td>
-              <td colspan="2"></td>
+              <td colspan="2">
+                <span class="ep-lbl">Location / Worksite</span>
+                <span class="ep-val">: ${esc(user.preferredLocation || user.workLocation || 'HS Office')}</span>
+              </td>
             </tr>
             <tr>
               <td colspan="3">
                 <span class="ep-lbl">Address</span>
-                <span class="ep-val">: ${esc(user.address || user.preferredLocation || user.workLocation || '')}</span>
+                <span class="ep-val">: ${esc(address)}</span>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- 3. TRI-PANEL PAYROLL TABLE: DAYS WORKED | EARNINGS | DEDUCTIONS -->
+        <!-- 3. DYNAMIC TRI-PANEL PAYROLL TABLE -->
         <table class="ep-main-table">
           <thead>
             <tr class="ep-main-th-row">
-              <th colspan="2" class="ep-th ep-col-days-hd" style="width:21%;">Days Worked</th>
-              <th class="ep-th ep-col-earn-hd" style="width:25%;">E A R N I N G S</th>
-              <th class="ep-th ep-col-rates-hd" style="width:12%;text-align:right;">Rates</th>
-              <th class="ep-th ep-col-payable-hd" style="width:13%;text-align:right;">Payable</th>
-              <th class="ep-th ep-col-ded-hd" style="width:17%;">D E D U C T I O N S</th>
-              <th class="ep-th ep-col-amt-hd" style="width:12%;text-align:right;">Amount</th>
+              <th colspan="2" class="ep-th" style="width:21%;">Days Worked</th>
+              <th class="ep-th" style="width:25%;">E A R N I N G S</th>
+              <th class="ep-th" style="width:12%;text-align:right;">Rates</th>
+              <th class="ep-th" style="width:13%;text-align:right;">Payable</th>
+              <th class="ep-th" style="width:17%;">D E D U C T I O N S</th>
+              <th class="ep-th" style="width:12%;text-align:right;">Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style="width:14%;">Total Days</td>
-              <td class="ep-num" style="width:7%;">${fNum(totalDays, 1)}</td>
-              <td>Basic</td>
-              <td class="ep-num">${fNum(rateBasic, 2)}</td>
-              <td class="ep-num">${fNum(payableBasic, 2)}</td>
-              <td>P.F.</td>
-              <td class="ep-num">${fNum(dedPF, 2)}</td>
-            </tr>
-            <tr>
-              <td>Days Worked</td>
-              <td class="ep-num">${fNum(daysWorked, 1)}</td>
-              <td>D.A.</td>
-              <td class="ep-num">${fNum(rateDA, 2)}</td>
-              <td class="ep-num">${fNum(payableDA, 2)}</td>
-              <td>V.P.F.</td>
-              <td class="ep-num">${fNum(dedVPF, 2)}</td>
-            </tr>
-            <tr>
-              <td>Holidays</td>
-              <td class="ep-num">${fNum(holidays, 1)}</td>
-              <td>H.R.A.</td>
-              <td class="ep-num">${fNum(rateHRA, 2)}</td>
-              <td class="ep-num">${fNum(payableHRA, 2)}</td>
-              <td>E.S.I.</td>
-              <td class="ep-num">${fNum(dedESI, 2)}</td>
-            </tr>
-            <tr>
-              <td>Absent</td>
-              <td class="ep-num">${fNum(absentDays, 1)}</td>
-              <td>C.C.A.</td>
-              <td class="ep-num">${fNum(rateCCA, 2)}</td>
-              <td class="ep-num">${fNum(payableCCA, 2)}</td>
-              <td>Advance</td>
-              <td class="ep-num">${fNum(dedAdvance, 2)}</td>
-            </tr>
-            <tr>
-              <td>C.L.</td>
-              <td class="ep-num">${fNum(clDays, 1)}</td>
-              <td>Conveyance Allowance</td>
-              <td class="ep-num">${fNum(rateTravel, 2)}</td>
-              <td class="ep-num">${fNum(payableTravel, 2)}</td>
-              <td>Loan Installment</td>
-              <td class="ep-num">${fNum(dedLoan, 2)}</td>
-            </tr>
-            <tr>
-              <td>E.L.</td>
-              <td class="ep-num">${fNum(elDays, 1)}</td>
-              <td>Arrears</td>
-              <td class="ep-num">${fNum(rateArrears, 2)}</td>
-              <td class="ep-num">${fNum(payableArrears, 2)}</td>
-              <td>Advance Sal. Deduction</td>
-              <td class="ep-num">${fNum(dedAdvanceSal, 2)}</td>
-            </tr>
-            <tr>
-              <td>S.L.</td>
-              <td class="ep-num">${fNum(slDays, 1)}</td>
-              <td>Advance Salary</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td>L.w.f.</td>
-              <td class="ep-num">${fNum(dedLWF, 2)}</td>
-            </tr>
-            <tr>
-              <td><strong>Days Payable</strong></td>
-              <td class="ep-num"><strong>${fNum(daysPayable, 1)}</strong></td>
-              <td>Leave Salary</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td>Other Dedu.</td>
-              <td class="ep-num">${fNum(dedOther, 2)}</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Overtime</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">${fNum(payableOvertime, 2)}</td>
-              <td>T.D.S.</td>
-              <td class="ep-num">${fNum(dedTDS, 2)}</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Bonus</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">${fNum(payableBonus, 2)}</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Other Allow.</td>
-              <td class="ep-num">${fNum(rateOther, 2)}</td>
-              <td class="ep-num">${fNum(payableOther, 2)}</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Medical Allow.</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Leave Encasment</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
+            ${rowsHTML}
           </tbody>
           <!-- 4. TOTALS ROW -->
           <tfoot>
@@ -7084,34 +7085,30 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
           </tfoot>
         </table>
 
-        <!-- 5. BANKING & STATUTORY DETAILS & NET PAYABLE -->
+        <!-- 5. BANKING DETAILS & PREMIUM NET PAYABLE CARD -->
         <table class="ep-footer-table">
           <tbody>
             <tr>
-              <td style="width:58%;vertical-align:top;border-right:1.5px solid #000;border-bottom:none;">
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-lbl">Other Details:</span>
-                  <span class="ep-ftr-val">Payment Mode : ${esc(user.paymentMode || 'Cheque')}</span>
-                </div>
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-val">EPF NO. ${esc(user.pfNo || user.epfNo || 'DL/CPM/29544/10241')}</span>
-                  <span class="ep-ftr-val" style="margin-left:24px;">Bank Name : ${esc(user.bankName || 'KOTAK MAHINDRA BANK')}</span>
-                </div>
-                <div class="ep-ftr-row" style="padding-left:145px;">
-                  <span class="ep-ftr-val">A/c No. : ${esc(user.accountNumber || user.accountNo || '01720030209123')}</span>
-                </div>
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-val">PAN NO. ${esc(user.pan || user.panNo || 'AHGPT5354F')}</span>
+              <td style="width:58%;">
+                <div class="ep-bank-grid">
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Payment Mode</span><span class="ep-bank-val">: ${esc(paymentMode)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Bank Name</span><span class="ep-bank-val">: ${esc(bankName)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Account No.</span><span class="ep-bank-val">: ${esc(acctNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">PAN Number</span><span class="ep-bank-val">: ${esc(panNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">EPF Number</span><span class="ep-bank-val">: ${esc(pfNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">UAN Number</span><span class="ep-bank-val">: ${esc(uanNo)}</span></div>
                 </div>
               </td>
-              <td style="width:42%;vertical-align:top;border-bottom:none;">
-                <div class="ep-net-row">
-                  <span class="ep-net-lbl">NET PAYABLE :</span>
-                  <span class="ep-net-val">${fCur(netPayable)}</span>
-                </div>
-                <div class="ep-empr-pf-row">
-                  <span class="ep-empr-pf-lbl">Empr.Cont.P.F. :</span>
-                  <span class="ep-empr-pf-val">${fNum(emprPF, 2)}</span>
+              <td style="width:42%;">
+                <div class="ep-net-card-premium">
+                  <div class="ep-net-row">
+                    <span class="ep-net-lbl">NET PAYABLE :</span>
+                    <span class="ep-net-val">₹${fCur(netPayable)}</span>
+                  </div>
+                  <div class="ep-empr-pf-row">
+                    <span>Employer EPF Contribution (Empr.Cont.P.F.):</span>
+                    <strong>₹${fNum(emprPF, 2)}</strong>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -7122,15 +7119,16 @@ function buildEnterprisePayslipHTML(user, p, month, year) {
         <div class="ep-statutory-notes">
           <span><strong>Basic Salary Rate:</strong> ₹${rateBasic.toLocaleString()}</span>
           <span><strong>EPF (12%):</strong> Ceiling ₹${(p.epfWageCeiling || 25000).toLocaleString()}</span>
-          <span><strong>ESI (0.75%):</strong> ${(p.deductionESI || 0) > 0 ? 'Covered' : 'Exempt (> ₹21k)'}</span>
+          <span><strong>ESI (0.75%):</strong> ${(p.deductionESI || 0) > 0 ? 'Covered @ 0.75%' : 'Exempt (> ₹21k)'}</span>
+          <span><strong>Bonus:</strong> ${p.isBonusEligible ? 'Eligible @ 8.33%' : 'Exempt'}</span>
           <span><strong>Gratuity:</strong> 4.81% Provision (₹${(p.gratuityProvision || Math.round((p.baseSalary || 0) * 0.0481)).toLocaleString()})</span>
         </div>
 
-        <!-- Test & Compatibility Metadata (Hidden) -->
+        <!-- Hidden Test & Accessibility Metadata -->
         <div class="payslip-attendance-bar" style="display:none;" aria-hidden="true">
           <div class="payslip-att-col"><span class="payslip-att-label">Present</span><span class="payslip-att-value">${daysWorked} days</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Weekly Off</span><span class="payslip-att-value">${holidays} days</span></div>
-          <div class="payslip-att-col"><span class="payslip-att-label">Absent / Half</span><span class="payslip-att-value">${absentDays} abs / ${p.halfDays || 0} half</span></div>
+          <div class="payslip-att-col"><span class="payslip-att-label">Absent / Half</span><span class="payslip-att-value">${absentDays} abs / ${halfDays} half</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Basic Salary</span><span class="payslip-att-value">Basic Salary (₹${rateBasic.toLocaleString()})</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Net Salary</span><span class="payslip-att-value">₹${p.netSalary.toLocaleString()}</span></div>
           <div class="payslip-att-col"><span class="payslip-field-label">Period</span><span class="payslip-field-value">${monthName} ${year}</span></div>
@@ -7146,17 +7144,35 @@ function renderAdminPayslipDrawer(uId, month, year) {
     const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const monthName = monthNames[month] || '';
     
-    // 3A. Days Worked
+    // Formatting helpers
+    const fNum = (n, d = 2) => Number(n || 0).toFixed(d);
+    const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s) => (typeof Utils !== 'undefined' && Utils.escape) ? Utils.escape(s || '') : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 3A. Days Worked (Attendance Items)
     const totalDays = Number(p.totalDays || 30);
     const daysWorked = Number(p.actualWorkingDays !== undefined ? p.actualWorkingDays : (p.presentDays || 0));
     const holidays = Number((p.weeklyOffDays || 0) + (p.holidayDays || 0));
     const absentDays = Number(p.absentDays || 0);
-    const clDays = Number(p.clDays || 0);
-    const elDays = Number(p.elDays || 0);
-    const slDays = Number(p.slDays || 0);
-    const daysPayable = Number(p.paidDays !== undefined ? p.paidDays : (p.eligiblePaidDays !== undefined ? p.eligiblePaidDays : Math.max(0, totalDays - absentDays - ((p.halfDays || 0) * 0.5))));
+    const halfDays = Number(p.halfDays || 0);
+    const approvedLeaveDays = Number(p.approvedLeaveDays || 0);
+    const daysPayable = Number(p.paidDays !== undefined ? p.paidDays : (p.eligiblePaidDays !== undefined ? p.eligiblePaidDays : Math.max(0, totalDays - absentDays - (halfDays * 0.5))));
 
-    // 3B. Earnings components
+    const daysList = [
+      { label: 'Total Days', value: fNum(totalDays, 1) },
+      { label: 'Days Worked', value: fNum(daysWorked, 1) },
+      { label: 'Weekly Off / Holidays', value: fNum(holidays, 1) },
+      { label: 'Absent', value: fNum(absentDays, 1) }
+    ];
+    if (halfDays > 0) {
+      daysList.push({ label: 'Half Days', value: fNum(halfDays, 1) });
+    }
+    if (approvedLeaveDays > 0) {
+      daysList.push({ label: 'Approved Leaves', value: fNum(approvedLeaveDays, 1) });
+    }
+    daysList.push({ label: 'Days Payable', value: fNum(daysPayable, 1), isBold: true });
+
+    // 3B. Earnings components (Only active from DB)
     const rateBasic = Number(p.fullBaseSalary || p.baseSalary || 0);
     const payableBasic = Number(p.earnedBaseSalary !== undefined ? p.earnedBaseSalary : p.baseSalary);
     
@@ -7172,47 +7188,144 @@ function renderAdminPayslipDrawer(uId, month, year) {
     const rateTravel = Number(user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : (p.allowanceTravel || 0));
     const payableTravel = Number(p.allowanceTravel || 0);
 
-    const rateArrears = 0;
-    const payableArrears = Number(p.arrears || 0);
+    const ratePerf = Number(user.allowancePerformance || p.allowancePerformance || 0);
+    const payablePerf = Number(p.allowancePerformance || 0);
 
+    const payableArrears = Number(p.arrears || 0);
     const payableOvertime = Number(p.overtimePay || 0);
     const payableBonus = Number(p.bonus || 0);
     const rateOther = Number(user.allowanceOther || 0);
     const payableOther = Number(p.allowanceOther || 0);
-    const payableMedical = 0;
-    const payableLeaveEncash = 0;
 
-    // 3C. Deductions
+    const earningsList = [
+      { label: 'Basic Salary', rate: fNum(rateBasic, 2), payable: fNum(payableBasic, 2), rawRate: rateBasic, rawPayable: payableBasic }
+    ];
+    if (rateHRA > 0 || payableHRA > 0) {
+      earningsList.push({ label: 'House Rent Allowance (H.R.A.)', rate: fNum(rateHRA, 2), payable: fNum(payableHRA, 2), rawRate: rateHRA, rawPayable: payableHRA });
+    }
+    if (rateTravel > 0 || payableTravel > 0) {
+      earningsList.push({ label: 'Conveyance Allowance', rate: fNum(rateTravel, 2), payable: fNum(payableTravel, 2), rawRate: rateTravel, rawPayable: payableTravel });
+    }
+    if (rateCCA > 0 || payableCCA > 0) {
+      earningsList.push({ label: 'City Compensatory (C.C.A.)', rate: fNum(rateCCA, 2), payable: fNum(payableCCA, 2), rawRate: rateCCA, rawPayable: payableCCA });
+    }
+    if (ratePerf > 0 || payablePerf > 0) {
+      earningsList.push({ label: 'Performance Allowance', rate: fNum(ratePerf, 2), payable: fNum(payablePerf, 2), rawRate: ratePerf, rawPayable: payablePerf });
+    }
+    if (rateDA > 0 || payableDA > 0) {
+      earningsList.push({ label: 'Dearness Allowance (D.A.)', rate: fNum(rateDA, 2), payable: fNum(payableDA, 2), rawRate: rateDA, rawPayable: payableDA });
+    }
+    if (rateOther > 0 || payableOther > 0) {
+      earningsList.push({ label: 'Other Allowances', rate: fNum(rateOther, 2), payable: fNum(payableOther, 2), rawRate: rateOther, rawPayable: payableOther });
+    }
+    if (payableOvertime > 0) {
+      earningsList.push({ label: 'Overtime Pay', rate: '0.00', payable: fNum(payableOvertime, 2), rawRate: 0, rawPayable: payableOvertime });
+    }
+    if (payableBonus > 0) {
+      earningsList.push({ label: 'Bonus / Rewards', rate: '0.00', payable: fNum(payableBonus, 2), rawRate: 0, rawPayable: payableBonus });
+    }
+    if (payableArrears > 0) {
+      earningsList.push({ label: 'Arrears', rate: '0.00', payable: fNum(payableArrears, 2), rawRate: 0, rawPayable: payableArrears });
+    }
+
+    // 3C. Deductions (Only active from DB)
     const dedPF = Number(p.deductionPF || 0);
-    const dedVPF = Number(p.deductionVPF || 0);
     const dedESI = Number(p.deductionESI || 0);
     const dedAdvance = Number(p.deductionAdvance || 0);
     const dedLoan = Number(p.loanInstallment || 0);
-    const dedAdvanceSal = 0;
-    const dedLWF = Number(p.deductionLWF || 0);
-    const dedOther = Number((p.deductionOther || 0) + (p.adhocDeduction || 0));
+    const dedOther = Number(p.deductionOther || 0);
+    const dedAdhoc = Number(p.adhocDeduction || 0);
     const dedTDS = Number(p.deductionTDSVal || 0);
 
-    // 4. Totals
-    const totalRates = rateBasic + rateDA + rateHRA + rateCCA + rateTravel + rateOther;
-    const totalPayable = payableBasic + payableDA + payableHRA + payableCCA + payableTravel + payableArrears + payableOvertime + payableBonus + payableOther;
-    const totalDeductions = dedPF + dedVPF + dedESI + dedAdvance + dedLoan + dedAdvanceSal + dedLWF + dedOther + dedTDS;
+    const deductionsList = [];
+    if (dedPF > 0 || (p.isPFApplicable && rateBasic <= (p.epfWageCeiling || 25000))) {
+      deductionsList.push({ label: 'Provident Fund (P.F.)', amount: fNum(dedPF, 2), rawAmount: dedPF });
+    }
+    if (dedESI > 0) {
+      deductionsList.push({ label: 'Employee State Ins. (E.S.I.)', amount: fNum(dedESI, 2), rawAmount: dedESI });
+    }
+    if (dedAdvance > 0) {
+      deductionsList.push({ label: 'Advance Salary Deduction', amount: fNum(dedAdvance, 2), rawAmount: dedAdvance });
+    }
+    if (dedTDS > 0) {
+      deductionsList.push({ label: 'Tax Deducted at Source (T.D.S.)', amount: fNum(dedTDS, 2), rawAmount: dedTDS });
+    }
+    if (dedOther > 0) {
+      deductionsList.push({ label: 'Other Deductions', amount: fNum(dedOther, 2), rawAmount: dedOther });
+    }
+    if (dedAdhoc > 0) {
+      deductionsList.push({ label: 'Manager Ad-hoc Deduction', amount: fNum(dedAdhoc, 2), rawAmount: dedAdhoc });
+    }
+    if (dedLoan > 0) {
+      deductionsList.push({ label: 'Loan Installment', amount: fNum(dedLoan, 2), rawAmount: dedLoan });
+    }
+    if (deductionsList.length === 0) {
+      deductionsList.push({ label: 'No Deductions', amount: '0.00', rawAmount: 0 });
+    }
+
+    // 4. Totals calculations
+    const totalRates = earningsList.reduce((acc, it) => acc + (it.rawRate || 0), 0);
+    const totalPayable = earningsList.reduce((acc, it) => acc + (it.rawPayable || 0), 0);
+    const totalDeductions = deductionsList.reduce((acc, it) => acc + (it.rawAmount || 0), 0);
     const netPayable = Math.max(0, totalPayable - totalDeductions);
     const emprPF = dedPF;
 
-    const fNum = (n, d = 2) => Number(n || 0).toFixed(d);
-    const fCur = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const esc = (s) => (typeof Utils !== 'undefined' && Utils.escape) ? Utils.escape(s || '') : String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Determine row count for multi-column grid
+    const maxRows = Math.max(daysList.length, earningsList.length, deductionsList.length);
+
+    // Dynamic rows generation
+    let rowsHTML = '';
+    for (let i = 0; i < maxRows; i++) {
+      const dItem = daysList[i];
+      const eItem = earningsList[i];
+      const dedItem = deductionsList[i];
+
+      const dLabel = dItem ? (dItem.isBold ? `<strong>${esc(dItem.label)}</strong>` : esc(dItem.label)) : '';
+      const dVal = dItem ? (dItem.isBold ? `<strong>${dItem.value}</strong>` : dItem.value) : '';
+      const eLabel = eItem ? esc(eItem.label) : '';
+      const eRate = eItem ? eItem.rate : '';
+      const ePay = eItem ? eItem.payable : '';
+      const dedLabel = dedItem ? esc(dedItem.label) : '';
+      const dedAmt = dedItem ? dedItem.amount : '';
+
+      rowsHTML += `
+        <tr>
+          <td style="width:14%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dLabel}</td>
+          <td class="ep-num" style="width:7%;${dItem && dItem.isBold ? 'background:#f8fafc;' : ''}">${dVal}</td>
+          <td style="width:25%;">${eLabel}</td>
+          <td class="ep-num" style="width:12%;">${eRate}</td>
+          <td class="ep-num" style="width:13%;font-weight:700;color:#0f172a;">${ePay}</td>
+          <td style="width:17%;">${dedLabel}</td>
+          <td class="ep-num" style="width:12%;color:${dedAmt && Number(dedAmt) > 0 ? '#dc2626' : '#64748b'};">${dedAmt}</td>
+        </tr>
+      `;
+    }
+
+    // Database fields for Bank & Identity (Show 'N/A' if null/empty - NO hardcoded fake data!)
+    const bankName = (user.bankName && user.bankName.trim()) ? user.bankName.trim() : 'N/A';
+    const acctNo = (user.accountNumber || user.accountNo || user.bankAccount || '').trim() || 'N/A';
+    const panNo = (user.pan || user.panNo || '').trim() || 'N/A';
+    const pfNo = (user.pfNo || user.epfNo || '').trim() || 'N/A';
+    const uanNo = (user.uanNo || user.uan || '').trim() || 'N/A';
+    const paymentMode = (user.paymentMode && user.paymentMode.trim()) ? user.paymentMode.trim() : (bankName !== 'N/A' ? 'Bank Transfer' : 'N/A');
+    const fatherName = (user.fatherName && user.fatherName.trim()) ? user.fatherName.trim() : (user.guardianName && user.guardianName.trim() ? user.guardianName.trim() : 'N/A');
+    const address = (user.address && user.address.trim()) ? user.address.trim() : (user.preferredLocation || user.workLocation || 'N/A');
 
     return `
       <div class="enterprise-payslip">
-        <!-- 1. COMPANY HEADER & PAYSLIP PERIOD -->
-        <div class="ep-header">
-          <div class="ep-company-name">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</div>
-          <div class="ep-company-address">1421 1ST FLOOR GALI KISHAN DUTT MALIWARA CHANDNI CHOWK DELHI-110006</div>
-        </div>
-        <div class="ep-period-bar">
-          Payslip for Month-Year : <em>${esc(monthName)} ${year}</em>
+        <!-- 1. PREMIUM HEADER WITH BRAND LOGO & PERIOD (NO COMPANY ADDRESS) -->
+        <div class="ep-header-premium">
+          <div class="ep-brand-left">
+            <img src="assets/surya_logo_transparent_hd.png" alt="House of Surya" class="ep-brand-logo" onerror="this.src='surya-logo.png'" />
+            <div>
+              <h1 class="ep-brand-title">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</h1>
+              <div class="ep-brand-subtitle">House of Surya | Employee Salary Statement</div>
+            </div>
+          </div>
+          <div class="ep-period-badge">
+            <div class="ep-period-lbl">Statement Period</div>
+            <div class="ep-period-val">${esc(monthName)} ${year}</div>
+          </div>
         </div>
 
         <!-- 2. EMPLOYEE INFORMATION GRID -->
@@ -7225,11 +7338,11 @@ function renderAdminPayslipDrawer(uId, month, year) {
               </td>
               <td style="width:32%;">
                 <span class="ep-lbl">D.O.J</span>
-                <span class="ep-val">: ${esc(user.dateOfJoining || '01-07-2021')}</span>
+                <span class="ep-val">: ${esc(user.dateOfJoining || user.doj || 'N/A')}</span>
               </td>
               <td style="width:30%;">
                 <span class="ep-lbl">D.O.B</span>
-                <span class="ep-val">: ${esc(user.dob || '14-07-1986')}</span>
+                <span class="ep-val">: ${esc(user.dob || user.dateOfBirth || 'N/A')}</span>
               </td>
             </tr>
             <tr>
@@ -7239,165 +7352,52 @@ function renderAdminPayslipDrawer(uId, month, year) {
               </td>
               <td colspan="2">
                 <span class="ep-lbl">Father/Husband's Name</span>
-                <span class="ep-val">: ${esc(user.fatherName || user.emergencyContact || 'SH. RAGHVENDRA TRIPATHI')}</span>
+                <span class="ep-val">: ${esc(fatherName)}</span>
               </td>
             </tr>
             <tr>
               <td>
                 <span class="ep-lbl">Designation</span>
-                <span class="ep-val">: ${esc(user.designation || 'PRO')}</span>
+                <span class="ep-val">: ${esc(user.designation || 'Staff Associate')}</span>
               </td>
               <td colspan="2">
                 <span class="ep-lbl">UAN No.</span>
-                <span class="ep-val">${esc(user.uanNo || user.uan || '100409137016')}</span>
+                <span class="ep-val">: ${esc(uanNo)}</span>
               </td>
             </tr>
             <tr>
               <td>
                 <span class="ep-lbl">Department</span>
-                <span class="ep-val">: ${esc(user.department || 'FIRST FLOOR')}</span>
+                <span class="ep-val">: ${esc(user.department || 'General')}</span>
               </td>
-              <td colspan="2"></td>
+              <td colspan="2">
+                <span class="ep-lbl">Location / Worksite</span>
+                <span class="ep-val">: ${esc(user.preferredLocation || user.workLocation || 'HS Office')}</span>
+              </td>
             </tr>
             <tr>
               <td colspan="3">
                 <span class="ep-lbl">Address</span>
-                <span class="ep-val">: ${esc(user.address || user.preferredLocation || user.workLocation || '')}</span>
+                <span class="ep-val">: ${esc(address)}</span>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- 3. TRI-PANEL PAYROLL TABLE: DAYS WORKED | EARNINGS | DEDUCTIONS -->
+        <!-- 3. DYNAMIC TRI-PANEL PAYROLL TABLE -->
         <table class="ep-main-table">
           <thead>
             <tr class="ep-main-th-row">
-              <th colspan="2" class="ep-th ep-col-days-hd" style="width:21%;">Days Worked</th>
-              <th class="ep-th ep-col-earn-hd" style="width:25%;">E A R N I N G S</th>
-              <th class="ep-th ep-col-rates-hd" style="width:12%;text-align:right;">Rates</th>
-              <th class="ep-th ep-col-payable-hd" style="width:13%;text-align:right;">Payable</th>
-              <th class="ep-th ep-col-ded-hd" style="width:17%;">D E D U C T I O N S</th>
-              <th class="ep-th ep-col-amt-hd" style="width:12%;text-align:right;">Amount</th>
+              <th colspan="2" class="ep-th" style="width:21%;">Days Worked</th>
+              <th class="ep-th" style="width:25%;">E A R N I N G S</th>
+              <th class="ep-th" style="width:12%;text-align:right;">Rates</th>
+              <th class="ep-th" style="width:13%;text-align:right;">Payable</th>
+              <th class="ep-th" style="width:17%;">D E D U C T I O N S</th>
+              <th class="ep-th" style="width:12%;text-align:right;">Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style="width:14%;">Total Days</td>
-              <td class="ep-num" style="width:7%;">${fNum(totalDays, 1)}</td>
-              <td>Basic</td>
-              <td class="ep-num">${fNum(rateBasic, 2)}</td>
-              <td class="ep-num">${fNum(payableBasic, 2)}</td>
-              <td>P.F.</td>
-              <td class="ep-num">${fNum(dedPF, 2)}</td>
-            </tr>
-            <tr>
-              <td>Days Worked</td>
-              <td class="ep-num">${fNum(daysWorked, 1)}</td>
-              <td>D.A.</td>
-              <td class="ep-num">${fNum(rateDA, 2)}</td>
-              <td class="ep-num">${fNum(payableDA, 2)}</td>
-              <td>V.P.F.</td>
-              <td class="ep-num">${fNum(dedVPF, 2)}</td>
-            </tr>
-            <tr>
-              <td>Holidays</td>
-              <td class="ep-num">${fNum(holidays, 1)}</td>
-              <td>H.R.A.</td>
-              <td class="ep-num">${fNum(rateHRA, 2)}</td>
-              <td class="ep-num">${fNum(payableHRA, 2)}</td>
-              <td>E.S.I.</td>
-              <td class="ep-num">${fNum(dedESI, 2)}</td>
-            </tr>
-            <tr>
-              <td>Absent</td>
-              <td class="ep-num">${fNum(absentDays, 1)}</td>
-              <td>C.C.A.</td>
-              <td class="ep-num">${fNum(rateCCA, 2)}</td>
-              <td class="ep-num">${fNum(payableCCA, 2)}</td>
-              <td>Advance</td>
-              <td class="ep-num">${fNum(dedAdvance, 2)}</td>
-            </tr>
-            <tr>
-              <td>C.L.</td>
-              <td class="ep-num">${fNum(clDays, 1)}</td>
-              <td>Conveyance Allowance</td>
-              <td class="ep-num">${fNum(rateTravel, 2)}</td>
-              <td class="ep-num">${fNum(payableTravel, 2)}</td>
-              <td>Loan Installment</td>
-              <td class="ep-num">${fNum(dedLoan, 2)}</td>
-            </tr>
-            <tr>
-              <td>E.L.</td>
-              <td class="ep-num">${fNum(elDays, 1)}</td>
-              <td>Arrears</td>
-              <td class="ep-num">${fNum(rateArrears, 2)}</td>
-              <td class="ep-num">${fNum(payableArrears, 2)}</td>
-              <td>Advance Sal. Deduction</td>
-              <td class="ep-num">${fNum(dedAdvanceSal, 2)}</td>
-            </tr>
-            <tr>
-              <td>S.L.</td>
-              <td class="ep-num">${fNum(slDays, 1)}</td>
-              <td>Advance Salary</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td>L.w.f.</td>
-              <td class="ep-num">${fNum(dedLWF, 2)}</td>
-            </tr>
-            <tr>
-              <td><strong>Days Payable</strong></td>
-              <td class="ep-num"><strong>${fNum(daysPayable, 1)}</strong></td>
-              <td>Leave Salary</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td>Other Dedu.</td>
-              <td class="ep-num">${fNum(dedOther, 2)}</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Overtime</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">${fNum(payableOvertime, 2)}</td>
-              <td>T.D.S.</td>
-              <td class="ep-num">${fNum(dedTDS, 2)}</td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Bonus</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">${fNum(payableBonus, 2)}</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Other Allow.</td>
-              <td class="ep-num">${fNum(rateOther, 2)}</td>
-              <td class="ep-num">${fNum(payableOther, 2)}</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Medical Allow.</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td class="ep-num"></td>
-              <td>Leave Encasment</td>
-              <td class="ep-num">0.00</td>
-              <td class="ep-num">0.00</td>
-              <td></td>
-              <td class="ep-num"></td>
-            </tr>
+            ${rowsHTML}
           </tbody>
           <!-- 4. TOTALS ROW -->
           <tfoot>
@@ -7412,34 +7412,30 @@ function renderAdminPayslipDrawer(uId, month, year) {
           </tfoot>
         </table>
 
-        <!-- 5. BANKING & STATUTORY DETAILS & NET PAYABLE -->
+        <!-- 5. BANKING DETAILS & PREMIUM NET PAYABLE CARD -->
         <table class="ep-footer-table">
           <tbody>
             <tr>
-              <td style="width:58%;vertical-align:top;border-right:1.5px solid #000;border-bottom:none;">
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-lbl">Other Details:</span>
-                  <span class="ep-ftr-val">Payment Mode : ${esc(user.paymentMode || 'Cheque')}</span>
-                </div>
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-val">EPF NO. ${esc(user.pfNo || user.epfNo || 'DL/CPM/29544/10241')}</span>
-                  <span class="ep-ftr-val" style="margin-left:24px;">Bank Name : ${esc(user.bankName || 'KOTAK MAHINDRA BANK')}</span>
-                </div>
-                <div class="ep-ftr-row" style="padding-left:145px;">
-                  <span class="ep-ftr-val">A/c No. : ${esc(user.accountNumber || user.accountNo || '01720030209123')}</span>
-                </div>
-                <div class="ep-ftr-row">
-                  <span class="ep-ftr-val">PAN NO. ${esc(user.pan || user.panNo || 'AHGPT5354F')}</span>
+              <td style="width:58%;">
+                <div class="ep-bank-grid">
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Payment Mode</span><span class="ep-bank-val">: ${esc(paymentMode)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Bank Name</span><span class="ep-bank-val">: ${esc(bankName)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">Account No.</span><span class="ep-bank-val">: ${esc(acctNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">PAN Number</span><span class="ep-bank-val">: ${esc(panNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">EPF Number</span><span class="ep-bank-val">: ${esc(pfNo)}</span></div>
+                  <div class="ep-bank-item"><span class="ep-bank-lbl">UAN Number</span><span class="ep-bank-val">: ${esc(uanNo)}</span></div>
                 </div>
               </td>
-              <td style="width:42%;vertical-align:top;border-bottom:none;">
-                <div class="ep-net-row">
-                  <span class="ep-net-lbl">NET PAYABLE :</span>
-                  <span class="ep-net-val">${fCur(netPayable)}</span>
-                </div>
-                <div class="ep-empr-pf-row">
-                  <span class="ep-empr-pf-lbl">Empr.Cont.P.F. :</span>
-                  <span class="ep-empr-pf-val">${fNum(emprPF, 2)}</span>
+              <td style="width:42%;">
+                <div class="ep-net-card-premium">
+                  <div class="ep-net-row">
+                    <span class="ep-net-lbl">NET PAYABLE :</span>
+                    <span class="ep-net-val">₹${fCur(netPayable)}</span>
+                  </div>
+                  <div class="ep-empr-pf-row">
+                    <span>Employer EPF Contribution (Empr.Cont.P.F.):</span>
+                    <strong>₹${fNum(emprPF, 2)}</strong>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -7450,15 +7446,16 @@ function renderAdminPayslipDrawer(uId, month, year) {
         <div class="ep-statutory-notes">
           <span><strong>Basic Salary Rate:</strong> ₹${rateBasic.toLocaleString()}</span>
           <span><strong>EPF (12%):</strong> Ceiling ₹${(p.epfWageCeiling || 25000).toLocaleString()}</span>
-          <span><strong>ESI (0.75%):</strong> ${(p.deductionESI || 0) > 0 ? 'Covered' : 'Exempt (> ₹21k)'}</span>
+          <span><strong>ESI (0.75%):</strong> ${(p.deductionESI || 0) > 0 ? 'Covered @ 0.75%' : 'Exempt (> ₹21k)'}</span>
+          <span><strong>Bonus:</strong> ${p.isBonusEligible ? 'Eligible @ 8.33%' : 'Exempt'}</span>
           <span><strong>Gratuity:</strong> 4.81% Provision (₹${(p.gratuityProvision || Math.round((p.baseSalary || 0) * 0.0481)).toLocaleString()})</span>
         </div>
 
-        <!-- Test & Compatibility Metadata (Hidden) -->
+        <!-- Hidden Test & Accessibility Metadata -->
         <div class="payslip-attendance-bar" style="display:none;" aria-hidden="true">
           <div class="payslip-att-col"><span class="payslip-att-label">Present</span><span class="payslip-att-value">${daysWorked} days</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Weekly Off</span><span class="payslip-att-value">${holidays} days</span></div>
-          <div class="payslip-att-col"><span class="payslip-att-label">Absent / Half</span><span class="payslip-att-value">${absentDays} abs / ${p.halfDays || 0} half</span></div>
+          <div class="payslip-att-col"><span class="payslip-att-label">Absent / Half</span><span class="payslip-att-value">${absentDays} abs / ${halfDays} half</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Basic Salary</span><span class="payslip-att-value">Basic Salary (₹${rateBasic.toLocaleString()})</span></div>
           <div class="payslip-att-col"><span class="payslip-att-label">Net Salary</span><span class="payslip-att-value">₹${p.netSalary.toLocaleString()}</span></div>
           <div class="payslip-att-col"><span class="payslip-field-label">Period</span><span class="payslip-field-value">${monthName} ${year}</span></div>
@@ -7493,9 +7490,12 @@ function renderAdminPayslipDrawer(uId, month, year) {
     : '';
 
   drawer.innerHTML = `
-    <div class="card-panel">
-      <div class="card-panel-header" id="employee-payslip-tab-header">
-        <h3 class="card-panel-title">Employee Payslip Preview</h3>
+    <div class="card-panel" style="border:1.5px solid #89201b;box-shadow:0 12px 30px rgba(0,0,0,0.12);">
+      <div class="card-panel-header" id="employee-payslip-tab-header" style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <h3 class="card-panel-title" style="margin:0;">Employee Payslip Preview</h3>
+          <span style="font-size:11px;background:#fef2f2;color:#89201b;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fecaca;">Official Statement</span>
+        </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <label class="form-label" style="margin:0;font-size:12px;color:var(--text-secondary)" for="admin-payslip-month-select">Period:</label>
           <select id="admin-payslip-month-select" class="form-input" style="width:125px;padding:5px 8px;font-size:12px">
@@ -7510,6 +7510,7 @@ function renderAdminPayslipDrawer(uId, month, year) {
             <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
           </select>
           <button class="btn btn-cyan" id="btn-admin-print-single-payslip" style="padding:6px 12px;width:auto;font-size:12px">🖨️ Print Statement</button>
+          <button class="btn btn-secondary" id="btn-admin-close-payslip-drawer" style="padding:6px 12px;width:auto;font-size:12px;background:rgba(0,0,0,0.05);border:1px solid var(--border);">✖ Close</button>
         </div>
       </div>
       <div class="payslip-wrapper" style="padding:15px;background:#ffffff;border-radius:var(--radius-md);">
@@ -7522,6 +7523,10 @@ function renderAdminPayslipDrawer(uId, month, year) {
       </div>
     </div>
   `;
+  document.getElementById('btn-admin-close-payslip-drawer')?.addEventListener('click', () => {
+    drawer.style.display = 'none';
+    delete drawer.dataset.activeUserId;
+  });
   document.getElementById('btn-admin-print-single-payslip')?.addEventListener('click', () => {
     const fmtSelect = document.getElementById('admin-payslip-format-select');
     const fmt = fmtSelect ? fmtSelect.value : 'pdf';
@@ -11782,9 +11787,9 @@ function printSinglePayslipPDF(userId, month, year) {
     * { box-sizing: border-box; }
     
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       background: #ffffff;
-      color: #000000;
+      color: #0f172a;
       margin: 0;
       padding: 15px;
       -webkit-print-color-adjust: exact;
@@ -11793,65 +11798,95 @@ function printSinglePayslipPDF(userId, month, year) {
 
     .enterprise-payslip {
       background: #ffffff !important;
-      color: #000000 !important;
-      border: 1.5px solid #000000;
+      color: #0f172a !important;
+      border: 2px solid #89201b;
+      border-radius: 12px;
       width: 100%;
-      max-width: 860px;
+      max-width: 960px;
       margin: 0 auto;
-      font-size: 11.5px;
-      line-height: 1.35;
-      box-sizing: border-box;
-    }
-
-    .ep-header {
-      text-align: center;
-      padding: 10px 14px 4px;
-      border-bottom: 1px solid #000000;
-    }
-
-    .ep-company-name {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: #000000 !important;
-    }
-
-    .ep-company-address {
-      font-size: 10.5px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-      color: #222222 !important;
-      margin-top: 2px;
-    }
-
-    .ep-period-bar {
-      padding: 5px 10px;
       font-size: 12px;
-      font-weight: 600;
-      border-bottom: 1.5px solid #000000;
-      color: #000000 !important;
-      background: #ffffff;
+      line-height: 1.4;
+      box-sizing: border-box;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
     }
 
-    .ep-period-bar em {
-      font-style: italic;
+    .ep-header-premium {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff9f9 100%);
+      border-bottom: 2px solid #89201b;
+    }
+
+    .ep-brand-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ep-brand-logo {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .ep-brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #89201b !important;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .ep-brand-subtitle {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .ep-period-badge {
+      text-align: right;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    .ep-period-lbl {
+      font-size: 10.5px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #991b1b;
+    }
+
+    .ep-period-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: #89201b;
+      margin-top: 2px;
     }
 
     .ep-emp-table {
       width: 100%;
       border-collapse: collapse;
-      border-bottom: 1.5px solid #000000;
+      background: #f8fafc;
+      border-bottom: 1.5px solid #cbd5e1;
     }
 
     .ep-emp-table td {
-      padding: 3.5px 8px;
-      border-right: 1px solid #000000;
-      border-bottom: 1px solid #000000;
-      font-size: 11px;
-      color: #000000 !important;
+      padding: 6px 14px;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #1e293b !important;
       vertical-align: middle;
     }
 
@@ -11860,15 +11895,18 @@ function printSinglePayslipPDF(userId, month, year) {
     }
 
     .ep-lbl {
-      font-weight: 600;
-      color: #111111 !important;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #64748b !important;
       display: inline-block;
-      min-width: 110px;
+      min-width: 125px;
     }
 
     .ep-val {
-      font-weight: 600;
-      color: #000000 !important;
+      font-weight: 700;
+      color: #0f172a !important;
     }
 
     .ep-main-table {
@@ -11877,119 +11915,138 @@ function printSinglePayslipPDF(userId, month, year) {
     }
 
     .ep-main-table th {
-      background: #ffffff !important;
-      color: #000000 !important;
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
       font-weight: 800;
       font-size: 11px;
-      padding: 4px 6px;
-      border: 1px solid #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
       text-align: left;
     }
 
     .ep-main-table td {
-      padding: 3px 6px;
-      border: 1px solid #000000;
-      font-size: 11px;
-      color: #000000 !important;
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #1e293b !important;
       background: #ffffff;
+    }
+
+    .ep-main-table tr:nth-child(even) td {
+      background: #fafbfc;
     }
 
     .ep-main-table td.ep-num {
       text-align: right;
       font-variant-numeric: tabular-nums;
+      font-weight: 600;
     }
 
     .ep-main-table tfoot td {
-      border-top: 1.5px solid #000000;
-      border-bottom: 1.5px solid #000000;
+      border-top: 2px solid #0f172a;
+      border-bottom: 2px solid #0f172a;
       font-weight: 800;
-      background: #ffffff !important;
-      color: #000000 !important;
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+      padding: 8px 10px;
     }
 
     .ep-footer-table {
       width: 100%;
       border-collapse: collapse;
-      border-top: 1.5px solid #000000;
+      background: #ffffff;
+      border-top: 1.5px solid #cbd5e1;
     }
 
     .ep-footer-table td {
-      padding: 6px 10px;
-      font-size: 11px;
-      color: #000000 !important;
-      background: #ffffff;
+      padding: 14px 18px;
+      font-size: 12px;
+      color: #1e293b !important;
+      vertical-align: top;
     }
 
-    .ep-ftr-row {
-      margin-bottom: 3px;
+    .ep-bank-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
     }
 
-    .ep-ftr-lbl {
-      font-size: 10px;
-      color: #222222 !important;
-      margin-right: 6px;
-    }
-
-    .ep-ftr-val {
-      font-weight: 600;
-      color: #000000 !important;
-    }
-
-    .ep-net-row {
+    .ep-bank-item {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #000000;
-      padding-bottom: 4px;
-      margin-bottom: 4px;
+      font-size: 11.5px;
     }
 
-    .ep-net-lbl {
-      font-size: 12.5px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #000000 !important;
-    }
-
-    .ep-net-val {
-      font-size: 14.5px;
-      font-weight: 900;
-      color: #000000 !important;
-    }
-
-    .ep-empr-pf-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-    }
-
-    .ep-empr-pf-lbl {
-      font-weight: 600;
-      color: #222222 !important;
-    }
-
-    .ep-empr-pf-val {
+    .ep-bank-lbl {
       font-weight: 700;
-      color: #000000 !important;
+      color: #64748b;
+      width: 110px;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+    }
+
+    .ep-bank-val {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .ep-net-card-premium {
+      background: linear-gradient(135deg, #89201b 0%, #5b1310 100%);
+      color: #ffffff !important;
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 12px rgba(137, 32, 27, 0.25);
+    }
+
+    .ep-net-card-premium .ep-net-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .ep-net-card-premium .ep-net-lbl {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #fca5a5 !important;
+    }
+
+    .ep-net-card-premium .ep-net-val {
+      font-size: 21px;
+      font-weight: 900;
+      color: #ffffff !important;
+    }
+
+    .ep-net-card-premium .ep-empr-pf-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: #f8fafc;
     }
 
     .ep-statutory-notes {
       border-top: 1px dashed #cbd5e1;
-      padding: 6px 10px;
+      padding: 8px 18px;
       background: #f8fafc;
-      font-size: 10px;
+      font-size: 11px;
       color: #475569;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
     }
 
     @media print {
       body { padding: 0; background: #fff; }
       .enterprise-payslip {
-        border: 1.5px solid #000 !important;
+        border: 1.5px solid #89201b !important;
         box-shadow: none !important;
         max-width: 100% !important;
       }
