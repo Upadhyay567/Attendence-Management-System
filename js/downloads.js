@@ -483,7 +483,9 @@ export function downloadProfileExcel(profiles, filename = 'Employee_Profiles.xls
     const cca = (u.allowanceCCA !== undefined && u.allowanceCCA !== null && !isNaN(u.allowanceCCA)) ? Number(u.allowanceCCA) : 0;
     const perf = (u.allowancePerformance !== undefined && u.allowancePerformance !== null && !isNaN(u.allowancePerformance)) ? Number(u.allowancePerformance) : 0;
     const otherAll = (u.allowanceOther !== undefined && u.allowanceOther !== null && !isNaN(u.allowanceOther)) ? Number(u.allowanceOther) : 0;
-    const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+    const isPFApplicable = (u.deductionPF !== 0) && (u.pfApplicable !== false) && (u.isPFExempt !== true);
+    const epfCeil = Number(u.epfWageCeiling) || 25000;
+    const pf = isPFApplicable ? Math.round(Math.min(base, epfCeil) * 0.12) : 0;
     const esi = (u.deductionESI !== undefined && u.deductionESI !== null && !isNaN(u.deductionESI)) ? Number(u.deductionESI) : 0;
     const advance = (u.deductionAdvance !== undefined && u.deductionAdvance !== null && !isNaN(u.deductionAdvance)) ? Number(u.deductionAdvance) : 0;
     const otherDed = (u.deductionOther !== undefined && u.deductionOther !== null && !isNaN(u.deductionOther)) ? Number(u.deductionOther) : 0;
@@ -717,7 +719,9 @@ export function downloadProfilePDF(profiles, dbInstance) {
     const cca = (u.allowanceCCA !== undefined && u.allowanceCCA !== null && !isNaN(u.allowanceCCA)) ? Number(u.allowanceCCA) : 0;
     const perf = (u.allowancePerformance !== undefined && u.allowancePerformance !== null && !isNaN(u.allowancePerformance)) ? Number(u.allowancePerformance) : 0;
     const otherAll = (u.allowanceOther !== undefined && u.allowanceOther !== null && !isNaN(u.allowanceOther)) ? Number(u.allowanceOther) : 0;
-    const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+    const isPFApplicable = (u.deductionPF !== 0) && (u.pfApplicable !== false) && (u.isPFExempt !== true);
+    const epfCeil = Number(u.epfWageCeiling) || 25000;
+    const pf = isPFApplicable ? Math.round(Math.min(base, epfCeil) * 0.12) : 0;
     const esi = (u.deductionESI !== undefined && u.deductionESI !== null && !isNaN(u.deductionESI)) ? Number(u.deductionESI) : 0;
     const advance = (u.deductionAdvance !== undefined && u.deductionAdvance !== null && !isNaN(u.deductionAdvance)) ? Number(u.deductionAdvance) : 0;
     const otherDed = (u.deductionOther !== undefined && u.deductionOther !== null && !isNaN(u.deductionOther)) ? Number(u.deductionOther) : 0;
@@ -1227,7 +1231,8 @@ function downloadReportPDF(reports, monthStr, year) {
               <th>Late Days</th>
               <th>Half Days</th>
               <th>Total Hours Logged</th>
-              <th>Overtime Hours</th>
+              <th>Weekly Offs</th>
+              <th>Sunday Worked</th>
             </tr>
           </thead>
           <tbody>
@@ -1238,7 +1243,8 @@ function downloadReportPDF(reports, monthStr, year) {
               <td>${p.lateDays || 0} days</td>
               <td>${p.halfDays || 0} days</td>
               <td>${r.totalHours}</td>
-              <td>${r.overtimeHours}</td>
+              <td>${p.weeklyOffDays || 0} days</td>
+              <td>${p.sundayPresentDays || 0} days</td>
             </tr>
           </tbody>
         </table>
@@ -1332,7 +1338,8 @@ function downloadReportExcel(reports, filename) {
       'Late Days': p.lateDays || 0,
       'Half Days': p.halfDays || 0,
       'Total Hours': r.totalHours,
-      'Overtime Hours': r.overtimeHours,
+      'Weekly Off Days': p.weeklyOffDays || 0,
+      'Sunday Working Days': p.sundayPresentDays || 0,
       'Base Salary (INR)': p.baseSalary || 0,
       'HRA (INR)': p.allowanceHRA || 0,
       'Travel Allowance (INR)': p.allowanceTravel || 0,
@@ -1356,7 +1363,7 @@ function downloadReportExcel(reports, filename) {
       const headers = [
         'Employee ID', 'Employee Name', 'Department', 'Designation',
         'Total Work Days', 'Actual Working Days', 'Present Days', 'Absent Days', 'Sunday Penalties', 'Late Days', 'Half Days',
-        'Total Hours', 'Overtime Hours',
+        'Total Hours', 'Weekly Off Days', 'Sunday Working Days',
         'Base Salary (INR)', 'HRA (INR)', 'Travel Allowance (INR)', 'CCA (INR)', 'Performance Amount (INR)', 'Other Allowances (INR)', 'Total Allowances (INR)',
         'PF Deduction (INR)', 'ESI Deduction (INR)', 'Advance Salary Deduction (INR)', 'Others Deduction (INR)', 'TDS Tax Deduction (INR)',
         'Attendance Deductions (INR)', 'Total Deductions (INR)', 'Net Payout (INR)'

@@ -1319,7 +1319,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               </div>
               <div>
                 <label class="form-label" for="editor-travel" style="font-size:11px">Travel Allowance (INR/Month)</label>
-                <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="e.g. 3000">
+                <input class="form-input" type="number" id="editor-travel" value="${isEdit ? (user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : '') : ''}" placeholder="12% (Max ₹1,800 on ₹15k ceiling)">
               </div>
               <div>
                 <label class="form-label" for="editor-cca" style="font-size:11px">CCA (INR/Month)</label>
@@ -1366,7 +1366,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
               </div>
               <div>
                 <label class="form-label" for="editor-esi" style="font-size:11px">ESI Deduction (INR/Month)</label>
-                <input class="form-input" type="number" id="editor-esi" value="${isEdit ? (user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : '') : ''}" placeholder="e.g. 500">
+                <input class="form-input" type="number" id="editor-esi" value="${isEdit ? (user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : '') : ''}" placeholder="0.75% if gross ≤ ₹21k, else ₹0">
               </div>
             </div>
             <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr 1fr;gap:12px; margin-bottom: 0;">

@@ -126,7 +126,7 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj) {
     const [startH, startM] = shiftObj.startTime.split(':').map(Number);
     const startMins = (startH || 0) * 60 + (startM || 0);
     const grace = shiftObj.gracePeriod !== undefined ? Number(shiftObj.gracePeriod) : 15;
-    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 120;
+    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 200;
 
     if (inMins > startMins + grace) {
       status = 'Late';
@@ -144,11 +144,18 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj) {
 
     const [schStartH, schStartM] = shiftObj.startTime.split(':').map(Number);
     const [schEndH, schEndM] = shiftObj.endTime.split(':').map(Number);
-    let expectedWorkMins = (schEndH * 60 + (schEndM || 0)) - (schStartH * 60 + (schStartM || 0));
+    const schEndMins = (schEndH * 60 + (schEndM || 0));
+    const schStartMins = (schStartH * 60 + (schStartM || 0));
+    let expectedWorkMins = schEndMins - schStartMins;
     if (expectedWorkMins < 0) expectedWorkMins += 24 * 60;
 
+    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 200;
+    if (schEndMins - outMins >= halfDayLimit) {
+      status = 'Half Day';
+    }
+
     const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
-    if (totalWorkMins < halfDayThreshold) {
+    if (totalWorkMins < halfDayThreshold || totalWorkMins < 240) {
       status = 'Half Day';
     }
   }

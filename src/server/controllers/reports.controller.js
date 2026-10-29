@@ -46,6 +46,10 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
   try {
     const { employeeId } = req.query;
     let targetUser = null;
+    let allLogs = [];
+    let allSchedules = [];
+    let allLeaves = [];
+    let allAdjustments = [];
 
     if (User && User.db && User.db.readyState === 1 && !useLocalFileDB) {
       if (employeeId) {
@@ -54,6 +58,15 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       if (!targetUser && req.user) {
         targetUser = await User.findOne({ id: req.user.id }).lean();
       }
+      const AttendanceLogModel = User.db.models.AttendanceLog;
+      const ScheduleModel = User.db.models.Schedule;
+      const LeaveRequestModel = User.db.models.LeaveRequest;
+      const AdjustmentModel = User.db.models.PayrollAdjustment;
+
+      if (AttendanceLogModel) allLogs = await AttendanceLogModel.find({}).lean();
+      if (ScheduleModel) allSchedules = await ScheduleModel.find({}).lean();
+      if (LeaveRequestModel) allLeaves = await LeaveRequestModel.find({}).lean();
+      if (AdjustmentModel) allAdjustments = await AdjustmentModel.find({}).lean();
     } else if (fs.existsSync(LOCAL_DB_FILE)) {
       const parsed = JSON.parse(fs.readFileSync(LOCAL_DB_FILE, 'utf-8'));
       const users = parsed.users || [];
@@ -63,54 +76,373 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       if (!targetUser && req.user) {
         targetUser = users.find(u => u.id === req.user.id);
       }
+      allLogs = parsed.attendanceLogs || [];
+      allSchedules = parsed.schedules || [];
+      allLeaves = parsed.leaves || parsed.leaveRequests || [];
+      allAdjustments = parsed.payrollAdjustments || [];
     }
 
     if (!targetUser) {
       return res.status(404).send('<h2>Employee record not found for payslip generation.</h2>');
     }
 
-    const baseSalary = targetUser.baseSalary !== undefined && targetUser.baseSalary !== null ? Number(targetUser.baseSalary) : 0;
-    const hra = targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? Number(targetUser.allowanceHRA) : 0;
-    const travel = targetUser.allowanceTravel !== undefined && targetUser.allowanceTravel !== null ? Number(targetUser.allowanceTravel) : 0;
-    const cca = targetUser.allowanceCCA !== undefined && targetUser.allowanceCCA !== null ? Number(targetUser.allowanceCCA) : 0;
-    const performance = targetUser.allowancePerformance !== undefined && targetUser.allowancePerformance !== null ? Number(targetUser.allowancePerformance) : 0;
-    const otherAllowances = targetUser.allowanceOther !== undefined && targetUser.allowanceOther !== null ? Number(targetUser.allowanceOther) : 0;
-    const grossSalary = baseSalary + hra + travel + cca + performance + otherAllowances;
+    const now = new Date();
+    let month = req.query.month !== undefined ? Number(req.query.month) : now.getMonth();
+    let year = req.query.year !== undefined ? Number(req.query.year) : now.getFullYear();
+    if (req.query.month !== undefined && month >= 1 && month <= 12 && req.query.isZeroIndexed !== 'true') {
+      month = month - 1;
+    }
 
-    const pf = targetUser.deductionPF !== undefined && targetUser.deductionPF !== null ? Number(targetUser.deductionPF) : 0;
-    const esi = targetUser.deductionESI !== undefined && targetUser.deductionESI !== null ? Number(targetUser.deductionESI) : 0;
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+    const baseSalary = targetUser.baseSalary !== undefined && targetUser.baseSalary !== null ? Number(targetUser.baseSalary) : 0;
+    const exactDailyRate = totalDays > 0 ? (baseSalary / totalDays) : 0;
+    const dailyRate = Math.round(exactDailyRate);
+
+    const sched = allSchedules.find(s => s.id === targetUser.scheduleId) || {
+      name: 'Standard Day Shift',
+      startTime: '09:00',
+      endTime: '17:00',
+      gracePeriod: 15,
+      halfDayLimit: 200,
+      workDays: [1, 2, 3, 4, 5]
+    };
+    const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays) && sched.workDays.length > 0)
+      ? sched.workDays
+      : [1, 2, 3, 4, 5];
+
+    // Filter logs for this user and month
+    const userLogs = allLogs.filter(l => {
+      if (!l.date || !l.date.startsWith(monthPrefix)) return false;
+      return (l.userId === targetUser.id || l.employeeId === targetUser.id || l.employeeId === targetUser.employeeId || (targetUser.biometricUserId && l.biometricUserId === targetUser.biometricUserId));
+    });
+
+    const logByDate = new Map();
+    userLogs.forEach(l => {
+      if (!logByDate.has(l.date) || (!logByDate.get(l.date).checkIn && l.checkIn)) {
+        logByDate.set(l.date, l);
+      }
+    });
+
+    const approvedLeaves = allLeaves.filter(lv => (lv.userId === targetUser.id || lv.employeeId === targetUser.employeeId) && lv.status === 'Approved');
+    const isDateOnApprovedLeave = (dateStr) => {
+      for (let i = 0; i < approvedLeaves.length; i++) {
+        const lv = approvedLeaves[i];
+        const start = (lv.startDate || '').substring(0, 10);
+        const end = (lv.endDate || '').substring(0, 10);
+        if (dateStr >= start && dateStr <= end) return true;
+      }
+      return false;
+    };
+
+    // 200-minute rule status evaluator
+    const evaluateLogStatus = (log, scheduleObj, dateStr, isPastDate) => {
+      if (!log) return 'Absent';
+      if (log.status === 'Half Day') return 'Half Day';
+      if (!log.checkIn && !log.checkOut) return log.status || 'Absent';
+      if (!log.checkIn && log.checkOut) return 'Half Day';
+      if (log.checkIn && !log.checkOut && isPastDate) return 'Half Day';
+
+      const [inH, inM] = log.checkIn.split(':').map(Number);
+      const inMins = (inH || 0) * 60 + (inM || 0);
+      const startH = (scheduleObj && scheduleObj.startTime) ? Number(scheduleObj.startTime.split(':')[0]) : 9;
+      const startM = (scheduleObj && scheduleObj.startTime) ? Number(scheduleObj.startTime.split(':')[1]) : 0;
+      const startMins = startH * 60 + startM;
+      const grace = (scheduleObj && scheduleObj.gracePeriod !== undefined) ? Number(scheduleObj.gracePeriod) : 15;
+      const halfDayLimit = (scheduleObj && scheduleObj.halfDayLimit !== undefined) ? Number(scheduleObj.halfDayLimit) : 200;
+
+      if (inMins >= startMins + halfDayLimit) return 'Half Day';
+
+      if (log.checkOut) {
+        const [outH, outM] = log.checkOut.split(':').map(Number);
+        const outMins = (outH || 0) * 60 + (outM || 0);
+        let workMins = outMins - inMins;
+        if (workMins < 0) workMins += 24 * 60;
+
+        let expectedMins = 8 * 60;
+        let endMins = 17 * 60;
+        if (scheduleObj && scheduleObj.startTime && scheduleObj.endTime) {
+          const [endH, endM] = scheduleObj.endTime.split(':').map(Number);
+          endMins = (endH * 60 + (endM || 0));
+          expectedMins = endMins - startMins;
+          if (expectedMins < 0) expectedMins += 24 * 60;
+        }
+
+        // 200-minute rule: early departure exceeding half-day limit cutoff (leaving >= 200m before shift end)
+        if (scheduleObj && scheduleObj.endTime) {
+          const earlyDepartureMins = endMins - outMins;
+          if (earlyDepartureMins >= halfDayLimit) return 'Half Day';
+        }
+
+        const halfDayThreshold = expectedMins > 0 ? (expectedMins / 2) : 240;
+        if (workMins < halfDayThreshold || workMins < 240) return 'Half Day';
+      }
+
+      if (inMins > startMins + grace) return 'Late';
+      return 'On Time';
+    };
+
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+    const isPastMonth = (year < currentYear) || (year === currentYear && month < currentMonth);
+    const isCurrentMonth = (year === currentYear && month === currentMonth);
+    const maxElapsedDay = isPastMonth ? totalDays : (isCurrentMonth ? Math.min(currentDay, totalDays) : 0);
+    const isPartialMonth = isCurrentMonth && (maxElapsedDay < totalDays);
+
+    let joinDay = 1;
+    if (targetUser.dateOfJoining) {
+      const [jY, jM, jD] = targetUser.dateOfJoining.split('-').map(Number);
+      if (jY === year && (jM - 1) === month) {
+        joinDay = Math.max(1, jD);
+      } else if (jY > year || (jY === year && (jM - 1) > month)) {
+        joinDay = totalDays + 1;
+      }
+    }
+
+    let scheduledWorkDays = 0;
+    let scheduledPresentDays = 0;
+    let weeklyOffPresentDays = 0;
+    let sundayPresentDays = 0;
+    let sundayPresentUnits = 0;
+    let weeklyOffDays = 0;
+    let absentDays = 0;
+    let lateDays = 0;
+    let halfDays = 0;
+    let approvedLeaveDays = 0;
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dt = new Date(year, month, d);
+      const dow = dt.getDay();
+      const dateStr = `${monthPrefix}-${String(d).padStart(2, '0')}`;
+      const isSched = scheduledWorkDaysList.includes(dow);
+      const isSun = (dow === 0);
+      const isElapsed = (d <= maxElapsedDay);
+      const isEmployed = (d >= joinDay);
+      const log = logByDate.get(dateStr);
+      const hasPunch = !!(log && (log.checkIn || log.checkOut));
+      const onLeave = isDateOnApprovedLeave(dateStr);
+      const isCompletedDay = (d < currentDay || isPastMonth);
+
+      if (isSched) {
+        scheduledWorkDays++;
+        if (isElapsed) {
+          if (hasPunch) {
+            scheduledPresentDays++;
+            const status = evaluateLogStatus(log, sched, dateStr, isCompletedDay);
+            if (status === 'Late') lateDays++;
+            if (status === 'Half Day') halfDays++;
+          } else if (onLeave) {
+            approvedLeaveDays++;
+          } else if (onLeave) {
+            approvedLeaveDays++;
+          } else if (isEmployed && isCompletedDay) {
+            absentDays++;
+          }
+        }
+      } else {
+        if (isElapsed) {
+          if (hasPunch) {
+            weeklyOffPresentDays++;
+            const status = evaluateLogStatus(log, sched, dateStr, isCompletedDay);
+            if (isSun) {
+              sundayPresentDays++;
+              sundayPresentUnits += (status === 'Half Day' ? 0.5 : 1.0);
+            }
+            if (status === 'Late') lateDays++;
+            if (status === 'Half Day') halfDays++;
+          } else {
+            weeklyOffDays++;
+          }
+        }
+      }
+    }
+
+    const presentDays = scheduledPresentDays + weeklyOffPresentDays;
+    const sundaySalary = (sundayPresentUnits > 0 && exactDailyRate > 0)
+      ? Math.round(sundayPresentUnits * exactDailyRate)
+      : 0;
+
+    // 2-Day Weekly Rule for elapsed Sundays
+    let unpaidSundayDays = 0;
+    for (let d = 1; d <= maxElapsedDay; d++) {
+      const dt = new Date(year, month, d);
+      if (dt.getDay() !== 0) continue;
+      const sunDateStr = `${monthPrefix}-${String(d).padStart(2, '0')}`;
+      const workedSun = logByDate.has(sunDateStr) && !!(logByDate.get(sunDateStr).checkIn || logByDate.get(sunDateStr).checkOut);
+      if (workedSun) continue;
+
+      let leavesInWeek = 0;
+      for (let offset = 6; offset >= 1; offset--) {
+        const prevDay = d - offset;
+        let checkDateStr;
+        let checkDow;
+
+        if (prevDay >= 1) {
+          const pDt = new Date(year, month, prevDay);
+          checkDow = pDt.getDay();
+          checkDateStr = `${monthPrefix}-${String(prevDay).padStart(2, '0')}`;
+        } else {
+          const pDt = new Date(year, month, prevDay);
+          checkDow = pDt.getDay();
+          const pY = pDt.getFullYear();
+          const pM = String(pDt.getMonth() + 1).padStart(2, '0');
+          const pD = String(pDt.getDate()).padStart(2, '0');
+          checkDateStr = `${pY}-${pM}-${pD}`;
+        }
+
+        if (scheduledWorkDaysList.includes(checkDow)) {
+          if (isDateOnApprovedLeave(checkDateStr)) {
+            leavesInWeek += 1.0;
+          } else {
+            const l = logByDate.get(checkDateStr) || allLogs.find(x => x.date === checkDateStr && (x.userId === targetUser.id || x.employeeId === targetUser.employeeId));
+            if (l && (l.checkIn || l.checkOut)) {
+              const st = evaluateLogStatus(l, sched, checkDateStr, true);
+              if (st === 'Half Day') leavesInWeek += 0.5;
+            } else if (userLogs.length > 0) {
+              leavesInWeek += 1.0;
+            }
+          }
+        }
+      }
+
+      if (leavesInWeek >= 2.0) {
+        unpaidSundayDays++;
+      }
+    }
+
+    const todayDateStr = `${monthPrefix}-${String(currentDay).padStart(2, '0')}`;
+    const todayLog = logByDate.get(todayDateStr);
+    const hasTodayPunch = Boolean(todayLog && (todayLog.checkIn || todayLog.checkOut));
+    const periodDays = isPastMonth ? totalDays : (isCurrentMonth ? (hasTodayPunch ? currentDay : Math.max(1, currentDay - 1)) : 0);
+    const eligiblePaidDays = Math.max(0, periodDays - absentDays - unpaidSundayDays - (halfDays * 0.5));
+
+    // Prorated Nominal Base Salary
+    const periodNominalBase = isPartialMonth ? Math.round(periodDays * exactDailyRate) : baseSalary;
+    const absentDeduction = Math.round(absentDays * exactDailyRate);
+    const sundayDeduction = Math.round(unpaidSundayDays * exactDailyRate);
+    const halfDayDeduction = Math.round(halfDays * 0.5 * exactDailyRate);
+    const attendanceDeductions = absentDeduction + sundayDeduction + halfDayDeduction;
+
+    const earnedBaseSalary = Math.max(0, periodNominalBase - attendanceDeductions);
+
+    const fullHRA = targetUser.allowanceHRA !== undefined && targetUser.allowanceHRA !== null ? Number(targetUser.allowanceHRA) : 0;
+    const fullTravel = targetUser.allowanceTravel !== undefined && targetUser.allowanceTravel !== null ? Number(targetUser.allowanceTravel) : 0;
+    const fullCCA = targetUser.allowanceCCA !== undefined && targetUser.allowanceCCA !== null ? Number(targetUser.allowanceCCA) : 0;
+    const fullPerformance = targetUser.allowancePerformance !== undefined && targetUser.allowancePerformance !== null ? Number(targetUser.allowancePerformance) : 0;
+    const fullBaseOther = targetUser.allowanceOther !== undefined && targetUser.allowanceOther !== null ? Number(targetUser.allowanceOther) : 0;
+
+    const hra = isPartialMonth ? Math.round((fullHRA / totalDays) * periodDays) : fullHRA;
+    const travel = isPartialMonth ? Math.round((fullTravel / totalDays) * periodDays) : fullTravel;
+    const cca = isPartialMonth ? Math.round((fullCCA / totalDays) * periodDays) : fullCCA;
+    const performance = isPartialMonth ? Math.round((fullPerformance / totalDays) * periodDays) : fullPerformance;
+    const baseOther = isPartialMonth ? Math.round((fullBaseOther / totalDays) * periodDays) : fullBaseOther;
+    const otherAllowances = baseOther + sundaySalary;
+
+    // Statutory Bonus Parameters (Payment of Bonus Act, 1965):
+    // - Bonus Eligibility Wage Ceiling: ₹21,000/month
+    // - Minimum Bonus Calculation Base: ₹7,000/month or applicable minimum wage, whichever is higher
+    // - Minimum Bonus Rate: 8.33% annually
+    // - Maximum Bonus Rate: 20% annually
+    const bonusEligibilityCeiling = 21000;
+    const isBonusEligible = baseSalary <= bonusEligibilityCeiling;
+    const applicableMinWage = Number(targetUser.applicableMinimumWage || 7000);
+    const minBonusBase = Math.max(7000, applicableMinWage);
+    const bonusCalculationBase = isBonusEligible ? Math.min(baseSalary, minBonusBase) : 0;
+    const minStatutoryBonusMonthly = isBonusEligible ? Math.round(bonusCalculationBase * 0.0833) : 0;
+    const maxStatutoryBonusMonthly = isBonusEligible ? Math.round(bonusCalculationBase * 0.20) : 0;
+    const statutoryBonus = minStatutoryBonusMonthly;
+
+    const adj = allAdjustments.find(a => a.userId === targetUser.id && a.month === month && a.year === year);
+    let bonus = 0;
+    if (adj && adj.bonus !== undefined && adj.bonus !== null) {
+      bonus = Number(adj.bonus) || 0;
+    } else if (targetUser.bonus !== undefined && targetUser.bonus !== null && Number(targetUser.bonus) > 0) {
+      bonus = Number(targetUser.bonus);
+    } else if (isBonusEligible) {
+      bonus = statutoryBonus;
+    }
+    if (isBonusEligible && bonus > 0 && bonus < statutoryBonus) {
+      bonus = statutoryBonus;
+    }
+
+    const adhocDeduction = adj ? (Number(adj.deduction) || 0) : 0;
+
+    const periodGrossSalary = periodNominalBase + hra + travel + cca + performance + otherAllowances + bonus;
+    const earnedGrossSalary = earnedBaseSalary + hra + travel + cca + performance + otherAllowances + bonus;
+    const fullMonthlyGross = baseSalary + fullHRA + fullTravel + fullCCA + fullPerformance + fullBaseOther + sundaySalary + bonus;
+
+    // Statutory EPF Contribution Parameters:
+    // - Employee EPF Contribution: 12% of applicable PF wages
+    // - EPF Wage Ceiling: ₹15,000/month (statutory EPFO) or ₹25,000/month (CTC tracker rules)
+    const epfWageCeiling = Number(targetUser.epfWageCeiling) || 25000;
+    const pfNominalWage = isPartialMonth ? periodNominalBase : baseSalary;
+    const applicablePFWage = Math.min(pfNominalWage, epfWageCeiling);
+    const isPFApplicable = (targetUser.pfApplicable !== false) && (targetUser.isPFExempt !== true) && (targetUser.pfExempt !== true);
+    const pf = isPFApplicable ? Math.round(applicablePFWage * 0.12) : 0;
+
+    // Statutory ESI Contribution Parameters:
+    // - Employee ESI Contribution: 0.75% of eligible ESI wages
+    // - ESI Wage Ceiling: ₹21,000/month
+    const esiWageCeiling = 21000;
+    const monthlyGrossForESI = baseSalary + fullHRA + fullTravel + fullCCA + fullPerformance + fullBaseOther + sundaySalary;
+    const isESIEligible = (monthlyGrossForESI <= esiWageCeiling) || (baseSalary <= esiWageCeiling);
+    let esi = 0;
+    if (isESIEligible) {
+      const eligibleESIWages = Math.max(0, periodGrossSalary - (bonus > 0 ? bonus : 0));
+      esi = Math.round(eligibleESIWages * 0.0075);
+    }
+
+    // Statutory Gratuity Provision Parameters:
+    // - Gratuity Provision Rate: 4.81% of Basic + DA (estimated)
+    const basicForGratuity = isPartialMonth ? periodNominalBase : baseSalary;
+    const daAmount = Number(targetUser.allowanceDA || 0);
+    const gratuityBasis = basicForGratuity + daAmount;
+    const gratuityProvision = Math.round(gratuityBasis * 0.0481);
+    const gratuityRate = '4.81%';
+
     const advance = targetUser.deductionAdvance !== undefined && targetUser.deductionAdvance !== null ? Number(targetUser.deductionAdvance) : 0;
     const otherDeductions = targetUser.deductionOther !== undefined && targetUser.deductionOther !== null ? Number(targetUser.deductionOther) : 0;
-    const tds = targetUser.deductionTDS !== undefined && targetUser.deductionTDS !== null ? Number(targetUser.deductionTDS) : 0;
-    const totalDeductions = pf + esi + advance + otherDeductions + tds;
+    const tdsRate = targetUser.deductionTDS !== undefined && targetUser.deductionTDS !== null ? Number(targetUser.deductionTDS) : 0;
+    const tds = Math.round(earnedGrossSalary * (tdsRate / 100));
 
-    const netSalary = grossSalary - totalDeductions;
-    const monthYear = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    const statutoryDeductions = pf + esi + advance + otherDeductions + tds;
+    const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
+    const netSalary = Math.max(0, periodGrossSalary - totalDeductions);
+
+    const periodLabel = isPartialMonth
+      ? `${monthNames[month]} 1 – ${monthNames[month]} ${periodDays}, ${year} (Partial Month: ${periodDays}/${totalDays} days)`
+      : `${monthNames[month]} ${year}`;
 
     const htmlTemplate = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Payslip - <%= user.name %></title>
+        <title>Payslip - <%= user.name %> (<%= periodLabel %>)</title>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; background: #f8fafc; }
-          .payslip-card { max-width: 800px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 40px; border: 1px solid #e2e8f0; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #89201B; padding-bottom: 20px; margin-bottom: 30px; }
+          .payslip-card { max-width: 820px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 40px; border: 1px solid #e2e8f0; }
+          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #89201B; padding-bottom: 20px; margin-bottom: 24px; }
           .company-title { font-size: 24px; font-weight: 800; color: #89201B; margin: 0; }
           .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
-          .payslip-badge { background: #fef3c7; color: #92400e; font-weight: 700; padding: 6px 16px; border-radius: 20px; font-size: 13px; }
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f1f5f9; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
-          .meta-item { font-size: 13.5px; }
+          .payslip-badge { background: #fef3c7; color: #92400e; font-weight: 700; padding: 6px 16px; border-radius: 20px; font-size: 12.5px; }
+          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: #f1f5f9; padding: 18px 20px; border-radius: 12px; margin-bottom: 20px; }
+          .meta-item { font-size: 13px; }
           .meta-item span { color: #64748b; }
           .meta-item strong { color: #0f172a; }
-          .table-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
-          table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-          th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; text-align: left; padding: 10px; color: #475569; }
-          td { border-bottom: 1px solid #e2e8f0; padding: 10px; }
+          .attendance-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; margin-bottom: 24px; text-align: center; }
+          .att-box span { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+          .att-box strong { font-size: 14px; color: #0f172a; }
+          .table-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; text-align: left; padding: 9px; color: #475569; }
+          td { border-bottom: 1px solid #e2e8f0; padding: 9px; }
           .amount { text-align: right; font-weight: 600; }
-          .net-salary-box { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 20px 30px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; margin-top: 20px; }
-          .footer-note { font-size: 11px; text-align: center; color: #94a3b8; margin-top: 40px; }
+          .net-salary-box { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 18px 26px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; margin-top: 10px; }
+          .footer-note { font-size: 11px; text-align: center; color: #94a3b8; margin-top: 32px; }
           @media print { body { background: none; padding: 0; } .payslip-card { box-shadow: none; border: none; } }
         </style>
       </head>
@@ -119,50 +451,83 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
           <div class="header">
             <div>
               <h1 class="company-title">SURYA GROUP / HS ENTERPRISES</h1>
-              <div class="subtitle">Official Monthly Salary Payslip & Tax Summary</div>
+              <div class="subtitle">Official Salary Statement & Statutory Tax Summary</div>
             </div>
-            <div class="payslip-badge">PAYSLIP FOR <%= monthYear %></div>
+            <div class="payslip-badge"><%= periodLabel %></div>
           </div>
           
           <div class="meta-grid">
             <div class="meta-item"><span>Employee Name:</span> <strong><%= user.name %></strong></div>
             <div class="meta-item"><span>Employee ID:</span> <strong><%= user.employeeId || 'N/A' %></strong></div>
             <div class="meta-item"><span>Department:</span> <strong><%= user.department || 'General' %></strong></div>
-            <div class="meta-item"><span>Designation:</span> <strong><%= user.designation || 'Staff' %></strong></div>
+            <div class="meta-item"><span>Designation:</span> <strong><%= user.designation || 'Staff Associate' %></strong></div>
             <div class="meta-item"><span>Joining Date:</span> <strong><%= user.dateOfJoining || 'N/A' %></strong></div>
-            <div class="meta-item"><span>Phone:</span> <strong><%= user.phone || 'N/A' %></strong></div>
+            <div class="meta-item"><span>Location / Branch:</span> <strong><%= user.preferredLocation || user.workLocation || 'HS Office' %></strong></div>
+          </div>
+
+          <div class="attendance-banner">
+            <div class="att-box"><span>Statement Period</span><strong><%= periodDays %> / <%= totalDays %> Days</strong></div>
+            <div class="att-box"><span>Eligible Paid Days</span><strong style="color:#0284c7"><%= eligiblePaidDays %> Days</strong></div>
+            <div class="att-box"><span>Present Days</span><strong style="color:#16a34a"><%= presentDays %> Days <%= sundayPresentDays > 0 ? '(+' + sundayPresentDays + ' Sun)' : '' %></strong></div>
+            <div class="att-box"><span>Absent / Half-Days</span><strong style="color:<%= absentDays > 0 ? '#dc2626' : '#0f172a' %>"><%= absentDays %> abs / <%= halfDays %> half</strong></div>
           </div>
 
           <div class="table-section">
             <div>
-              <h3 style="font-size:15px; color:#10b981; margin-bottom:12px">💵 EARNINGS</h3>
+              <h3 style="font-size:14px; color:#10b981; margin-bottom:10px">💵 EARNINGS</h3>
               <table>
                 <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
                 <tbody>
-                  <tr><td>Basic Salary</td><td class="amount">₹<%= baseSalary.toLocaleString() %></td></tr>
+                  <tr>
+                    <td>Base Salary <%= isPartialMonth ? '(Prorated Period Base)' : '(Fixed Monthly)' %></td>
+                    <td class="amount">₹<%= periodNominalBase.toLocaleString() %></td>
+                  </tr>
+                  <% if (isPartialMonth) { %>
+                  <tr style="font-size:11.5px; color:#64748b; background:#f8fafc">
+                    <td style="padding-left:14px">↳ Full Monthly Basic Rate</td>
+                    <td class="amount">₹<%= baseSalary.toLocaleString() %></td>
+                  </tr>
+                  <% } %>
                   <tr><td>House Rent Allowance (HRA)</td><td class="amount">₹<%= hra.toLocaleString() %></td></tr>
                   <tr><td>Special Travel Allowance</td><td class="amount">₹<%= travel.toLocaleString() %></td></tr>
-                  <tr><td>City Compensatory Allowance (CCA)</td><td class="amount">₹<%= cca.toLocaleString() %></td></tr>
-                  <tr><td>Performance Amount</td><td class="amount">₹<%= performance.toLocaleString() %></td></tr>
-                  <tr><td>Other Allowances</td><td class="amount">₹<%= otherAllowances.toLocaleString() %></td></tr>
-                  <tr style="font-weight:700; background:#f8fafc"><td>Gross Earnings</td><td class="amount">₹<%= grossSalary.toLocaleString() %></td></tr>
+                  <% if (cca > 0) { %><tr><td>City Compensatory Allowance (CCA)</td><td class="amount">₹<%= cca.toLocaleString() %></td></tr><% } %>
+                  <% if (performance > 0) { %><tr><td>Performance Amount</td><td class="amount">₹<%= performance.toLocaleString() %></td></tr><% } %>
+                  <% if (otherAllowances > 0) { %>
+                  <tr>
+                    <td>Other Allowances <%= sundaySalary > 0 ? '(incl. ₹' + sundaySalary.toLocaleString() + ' for ' + sundayPresentDays + ' Sun)' : '' %></td>
+                    <td class="amount">₹<%= otherAllowances.toLocaleString() %></td>
+                  </tr>
+                  <% } %>
+                  <% if (bonus > 0) { %><tr><td>Manager Bonus / Rewards</td><td class="amount" style="color:#10b981">₹<%= bonus.toLocaleString() %></td></tr><% } %>
+                  <tr style="font-weight:700; background:#f8fafc"><td>Period Gross Earnings</td><td class="amount">₹<%= periodGrossSalary.toLocaleString() %></td></tr>
                 </tbody>
               </table>
             </div>
             <div>
-              <h3 style="font-size:15px; color:#ef4444; margin-bottom:12px">📉 DEDUCTIONS</h3>
+              <h3 style="font-size:14px; color:#ef4444; margin-bottom:10px">📉 DEDUCTIONS</h3>
               <table>
                 <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
                 <tbody>
-                  <tr><td>Provident Fund (PF)</td><td class="amount">₹<%= pf.toLocaleString() %></td></tr>
-                  <tr><td>ESI Deduction</td><td class="amount">₹<%= esi.toLocaleString() %></td></tr>
-                  <tr><td>Advance Salary Deduction</td><td class="amount">₹<%= advance.toLocaleString() %></td></tr>
-                  <tr><td>Others Deduction</td><td class="amount">₹<%= otherDeductions.toLocaleString() %></td></tr>
-                  <tr><td>Tax Deducted at Source (TDS)</td><td class="amount">₹<%= tds.toLocaleString() %></td></tr>
+                  <tr><td>Absent Penalties (<%= absentDays %>d)</td><td class="amount" style="color:#ef4444">₹<%= absentDeduction.toLocaleString() %></td></tr>
+                  <% if (sundayDeduction > 0) { %><tr><td>Sunday Leave Penalties (<%= unpaidSundayDays %> Sun)</td><td class="amount" style="color:#ef4444">₹<%= sundayDeduction.toLocaleString() %></td></tr><% } %>
+                  <tr><td>Half-day Deductions (<%= halfDays %> occ)</td><td class="amount" style="color:#ef4444">₹<%= halfDayDeduction.toLocaleString() %></td></tr>
+                  <tr><td>Provident Fund (PF) Contribution (12% ceiling ₹<%= epfWageCeiling.toLocaleString() %>)</td><td class="amount">₹<%= pf.toLocaleString() %></td></tr>
+                  <tr><td>Employee State Insurance (ESI) (0.75% ceiling ₹21,000)</td><td class="amount" style="color:<%= esi > 0 ? '#ef4444' : '#64748b' %>"><%= esi > 0 ? '₹' + esi.toLocaleString() : '₹0 (Exempt: Gross > ₹21k)' %></td></tr>
+                  <% if (advance > 0) { %><tr><td>Advance Salary Deduction</td><td class="amount">₹<%= advance.toLocaleString() %></td></tr><% } %>
+                  <% if (otherDeductions > 0) { %><tr><td>Others Deduction</td><td class="amount">₹<%= otherDeductions.toLocaleString() %></td></tr><% } %>
+                  <tr><td>Tax Deducted at Source (TDS) (<%= tdsRate %>%)</td><td class="amount">₹<%= tds.toLocaleString() %></td></tr>
+                  <% if (adhocDeduction > 0) { %><tr><td>Manager Ad-hoc Deduction</td><td class="amount" style="color:#ef4444">₹<%= adhocDeduction.toLocaleString() %></td></tr><% } %>
                   <tr style="font-weight:700; background:#f8fafc"><td>Total Deductions</td><td class="amount">₹<%= totalDeductions.toLocaleString() %></td></tr>
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div style="margin-top:14px; margin-bottom:14px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; color:#475569; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div><strong>Statutory Gratuity Provision (4.81% of Basic+DA):</strong> ₹<%= gratuityProvision.toLocaleString() %></div>
+            <div><strong>EPF:</strong> 12% on applicable PF wages (Ceiling ₹<%= epfWageCeiling.toLocaleString() %>)</div>
+            <div><strong>ESI:</strong> <%= esi > 0 ? 'Covered (0.75%)' : 'Exempt (Wage > ₹21k ceiling)' %></div>
+            <div><strong>Bonus:</strong> <%= isBonusEligible ? 'Eligible (Base ₹7,000 @ 8.33%)' : 'Exempt (> ₹21k ceiling)' %></div>
           </div>
 
           <div class="net-salary-box">
@@ -171,7 +536,7 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
           </div>
 
           <div class="footer-note">
-            This is a computer-generated official document. No physical signature is required. Generated on <%= new Date().toLocaleDateString() %>.
+            Official computer-generated salary document issued by Surya Group / HS Enterprises. No signature required. Generated on <%= new Date().toLocaleDateString() %>.
           </div>
         </div>
         <script>
@@ -181,7 +546,51 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
       </html>
     `;
 
-    const renderedHTML = ejs.render(htmlTemplate, { user: targetUser, monthYear, baseSalary, hra, travel, grossSalary, pf, pt, tds, totalDeductions, netSalary });
+    const renderedHTML = ejs.render(htmlTemplate, {
+      user: targetUser,
+      periodLabel,
+      totalDays,
+      periodDays,
+      isPartialMonth,
+      eligiblePaidDays,
+      presentDays,
+      sundayPresentDays,
+      absentDays,
+      halfDays,
+      baseSalary,
+      periodNominalBase,
+      earnedBaseSalary,
+      hra,
+      travel,
+      cca,
+      performance,
+      otherAllowances,
+      sundaySalary,
+      bonus,
+      periodGrossSalary,
+      absentDeduction,
+      sundayDeduction,
+      halfDayDeduction,
+      unpaidSundayDays,
+      pf,
+      esi,
+      advance,
+      otherDeductions,
+      tdsRate,
+      tds,
+      adhocDeduction,
+      totalDeductions,
+      netSalary,
+      gratuityProvision,
+      gratuityRate,
+      isPFApplicable,
+      epfWageCeiling,
+      isESIEligible,
+      esiWageCeiling,
+      isBonusEligible,
+      statutoryBonus
+    });
+
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(renderedHTML);
   } catch (err) {
@@ -189,13 +598,6 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
   }
 }
 
-/**
- * Generate Excel Bulk Upload Data Template with native Data Validation Dropdowns for:
- * 1. Work Location (Column F) - From database officeCoordinates & schedules
- * 2. Assigned Shift (Column Q) - From database schedules
- * 3. Blood Group (Column L) - Predefined options
- * 4. Gender (Column K) - Predefined options
- */
 async function downloadBulkUploadTemplateExcel(req, res) {
   try {
     const ExcelJS = require('exceljs');
@@ -290,7 +692,6 @@ async function downloadBulkUploadTemplateExcel(req, res) {
       { header: 'HRA', key: 'hra', width: 12 },
       { header: 'Travel Allowance', key: 'ta', width: 18 },
       { header: 'PF', key: 'pf', width: 12 },
-      { header: 'PT', key: 'pt', width: 12 },
       { header: 'Bank Name', key: 'bank', width: 22 },
       { header: 'Account Number', key: 'account', width: 20 },
       { header: 'IFSC Code', key: 'ifsc', width: 16 },
@@ -330,7 +731,6 @@ async function downloadBulkUploadTemplateExcel(req, res) {
       hra: 6750,
       ta: 2000,
       pf: 1800,
-      pt: 200,
       bank: 'State Bank of India',
       account: '987654321012',
       ifsc: 'SBIN0001234',
@@ -359,7 +759,6 @@ async function downloadBulkUploadTemplateExcel(req, res) {
       hra: 5700,
       ta: 1500,
       pf: 1800,
-      pt: 200,
       bank: 'HDFC Bank',
       account: '50100234567891',
       ifsc: 'HDFC0000123',

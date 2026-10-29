@@ -372,11 +372,11 @@ export function renderRegisterEmployeeView() {
             <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
               <div>
                 <label class="form-label" for="reg-pf" style="font-size:11px;">PF (INR/Month)</label>
-                <input class="form-input" type="number" id="reg-pf" placeholder="e.g. 3000" min="0">
+                <input class="form-input" type="number" id="reg-pf" placeholder="12% (Max ₹1,800 on ₹15k ceiling)" min="0">
               </div>
               <div>
                 <label class="form-label" for="reg-esi" style="font-size:11px;">ESI Deduction (INR/Month)</label>
-                <input class="form-input" type="number" id="reg-esi" placeholder="e.g. 500" min="0">
+                <input class="form-input" type="number" id="reg-esi" placeholder="0.75% if gross ≤ ₹21k, else ₹0" min="0">
               </div>
             </div>
             <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:0;">

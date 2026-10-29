@@ -1137,7 +1137,7 @@ export function renderAdminAttendances() {
       let shiftStartMins = 9 * 60; // default 09:00 AM
       let shiftEndMins = 17 * 60;  // default 05:00 PM
       let grace = 15;
-      let halfDayCutoff = 120;
+      let halfDayCutoff = (shift && shift.halfDayLimit !== undefined && shift.halfDayLimit !== 120) ? Number(shift.halfDayLimit) : 200;
       if (shift && shift.startTime) {
         const [sH, sM] = shift.startTime.split(':').map(Number);
         shiftStartMins = sH * 60 + (sM || 0);
@@ -1146,7 +1146,7 @@ export function renderAdminAttendances() {
           shiftEndMins = eH * 60 + (eM || 0);
         }
         if (shift.gracePeriod !== undefined) grace = Number(shift.gracePeriod);
-        if (shift.halfDayLimit !== undefined) halfDayCutoff = Number(shift.halfDayLimit);
+        if (shift.halfDayLimit !== undefined && shift.halfDayLimit !== 120) halfDayCutoff = Number(shift.halfDayLimit);
       }
 
       // Standardize Work Status under Multiple Punches Algorithm on Workday:
@@ -1212,8 +1212,15 @@ export function renderAdminAttendances() {
       } else if (effectiveIn && effectiveOut) {
         const [iH, iM] = effectiveIn.split(':').map(Number);
         const iMins = (iH || 0) * 60 + (iM || 0);
+        const [oH, oM] = effectiveOut.split(':').map(Number);
+        const oMins = (oH || 0) * 60 + (oM || 0);
+
         if (iMins > shiftStartMins + grace) s = 'Late';
         if (iMins >= shiftStartMins + halfDayCutoff) s = 'Half Day';
+        // Early departure >= 200 minutes before shift end
+        if (shiftEndMins > 0 && shiftEndMins - oMins >= halfDayCutoff) {
+          s = 'Half Day';
+        }
         if (atWorkMins > 0 && atWorkMins < 240) {
           s = 'Half Day';
         }

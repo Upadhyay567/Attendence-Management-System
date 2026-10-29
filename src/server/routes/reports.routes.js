@@ -21,6 +21,24 @@ function createReportsRouter(User, AttendanceLog, getUseLocalFileDB) {
     downloadBulkUploadTemplateExcel(req, res);
   });
 
+  // Download Payroll Terms, Conditions & Tax Rules PDF
+  const sendPayrollTermsPdf = (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    const pdfPath = path.join(__dirname, '..', '..', '..', 'public', 'Payroll_Terms_Conditions_and_Tax_Rules.pdf');
+    if (fs.existsSync(pdfPath)) {
+      return res.download(pdfPath, 'Payroll_Terms_Conditions_and_Tax_Rules.pdf');
+    }
+    const altPath = path.join(__dirname, '..', '..', '..', 'uploads', 'Payroll_Terms_Conditions_and_Tax_Rules.pdf');
+    if (fs.existsSync(altPath)) {
+      return res.download(altPath, 'Payroll_Terms_Conditions_and_Tax_Rules.pdf');
+    }
+    return res.status(404).json({ error: 'Payroll Terms PDF document not found' });
+  };
+
+  router.get('/reports/payroll-terms-pdf', sendPayrollTermsPdf);
+  router.get('/payroll-terms-pdf', sendPayrollTermsPdf);
+
   // Profile download query route supporting userIds & location filtering
   router.post('/reports/profiles', async (req, res) => {
     try {

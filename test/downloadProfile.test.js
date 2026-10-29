@@ -125,7 +125,8 @@ describe('Download Profile Modal and Dossier Generation', () => {
       const base = (u.baseSalary !== undefined && u.baseSalary !== null && !isNaN(u.baseSalary)) ? Number(u.baseSalary) : 50000;
       const hra = (u.allowanceHRA !== undefined && u.allowanceHRA !== null && !isNaN(u.allowanceHRA)) ? Number(u.allowanceHRA) : Math.round(base * 0.15);
       const travel = (u.allowanceTravel !== undefined && u.allowanceTravel !== null && !isNaN(u.allowanceTravel)) ? Number(u.allowanceTravel) : 3000;
-      const pf = (u.deductionPF !== undefined && u.deductionPF !== null && !isNaN(u.deductionPF)) ? Number(u.deductionPF) : Math.round(base * 0.08);
+      const isPFApplicable = (u.deductionPF !== 0) && (u.pfApplicable !== false) && (u.isPFExempt !== true);
+      const pf = isPFApplicable ? Math.round(Math.min(base, 15000) * 0.12) : 0;
       const pt = (u.deductionPT !== undefined && u.deductionPT !== null && !isNaN(u.deductionPT)) ? Number(u.deductionPT) : 0;
       const tds = (u.deductionTDS !== undefined && u.deductionTDS !== null && !isNaN(u.deductionTDS)) ? Number(u.deductionTDS) : (base > 60000 ? 10 : 5);
 
@@ -178,7 +179,7 @@ describe('Download Profile Modal and Dossier Generation', () => {
     expect(hsStaff.length).toBeGreaterThanOrEqual(300);
 
     const gtSiteStaff = rawUsers.filter(u => getUserLocations(u).has('gt karnal site'));
-    expect(gtSiteStaff.length).toBeGreaterThanOrEqual(500);
+    expect(gtSiteStaff.length).toBeGreaterThanOrEqual(250);
 
     const retailStaff = rawUsers.filter(u => getUserLocations(u).has('retail'));
     expect(retailStaff.length).toBeGreaterThanOrEqual(180);

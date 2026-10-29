@@ -138,6 +138,7 @@ const ScheduleSchema = new mongoose.Schema({
   startTime: String,
   endTime: String,
   gracePeriod: Number,
+  halfDayLimit: Number,
   workDays: [Number],
   location: String
 }, { timestamps: true });

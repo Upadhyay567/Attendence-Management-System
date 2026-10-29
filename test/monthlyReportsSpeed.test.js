@@ -69,8 +69,9 @@ describe('Monthly Reports Performance & Payroll Calculation Test Suite', () => {
     expect(payroll).toBeDefined();
     expect(payroll.employeeName).toBe(hemant.name);
     expect(payroll.baseSalary).toBe(hemant.baseSalary);
-    expect(payroll.netSalary).toBe(69750);
-    expect(payroll.presentDays).toBe(34);
+    // Under ₹25,000 EPF ceiling: PF deduction is 12% of 25,000 = 3,000 (netSalary = 53,000 - 3,000 = 50,000)
+    expect(payroll.netSalary).toBe(50000);
+    expect(payroll.presentDays).toBe(28);
   });
 
   test('cache invalidation should clear _payrollIndexCache when data changes', () => {

@@ -543,7 +543,7 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj, dateStr = 
     const [startH, startM] = shiftObj.startTime.split(':').map(Number);
     const startMins = (startH || 0) * 60 + (startM || 0);
     const grace = shiftObj.gracePeriod !== undefined ? Number(shiftObj.gracePeriod) : 15;
-    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 120;
+    const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 200;
 
     // Check-in punctuality relative to grace period
     if (inMins > startMins + grace) {
@@ -555,9 +555,9 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj, dateStr = 
     }
   } else {
     // Standard work policy fallback: arrival at or after 12:30 PM is Half Day
-    if (inMins >= 12 * 60 + 30) {
+    if (inMins >= 12 * 60 + 20) { // Standard fallback: arrival after 200 mins (09:00 + 200m = 12:20 PM)
       status = 'Half Day';
-    } else if (inMins > 9 * 60 + 30) {
+    } else if (inMins > 9 * 60 + 15) {
       status = 'Late';
     }
   }
@@ -572,15 +572,23 @@ function computeAttendanceStatus(checkInTime, checkOutTime, shiftObj, dateStr = 
     if (shiftObj && shiftObj.startTime && shiftObj.endTime) {
       const [schStartH, schStartM] = shiftObj.startTime.split(':').map(Number);
       const [schEndH, schEndM] = shiftObj.endTime.split(':').map(Number);
-      let expectedWorkMins = (schEndH * 60 + (schEndM || 0)) - (schStartH * 60 + (schStartM || 0));
+      const schEndMins = schEndH * 60 + (schEndM || 0);
+      const schStartMins = schStartH * 60 + (schStartM || 0);
+      let expectedWorkMins = schEndMins - schStartMins;
       if (expectedWorkMins < 0) expectedWorkMins += 24 * 60;
 
-      const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
-      if (totalWorkMins < halfDayThreshold) {
+      const halfDayLimit = shiftObj.halfDayLimit !== undefined ? Number(shiftObj.halfDayLimit) : 200;
+      // Early departure exceeding half-day limit cutoff (leaving >= 200m before shift end)
+      if (schEndMins - outMins >= halfDayLimit) {
         status = 'Half Day';
       }
-    } else if (totalWorkMins > 0 && totalWorkMins < 300) {
-      // General fallback: less than 5 hours worked is Half Day
+
+      const halfDayThreshold = expectedWorkMins > 0 ? (expectedWorkMins / 2) : 240;
+      if (totalWorkMins < halfDayThreshold || totalWorkMins < 240) {
+        status = 'Half Day';
+      }
+    } else if (totalWorkMins > 0 && totalWorkMins < 240) {
+      // General fallback: less than 4 hours worked is Half Day
       status = 'Half Day';
     }
   }

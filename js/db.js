@@ -58,7 +58,7 @@ const defaultUsers = [
     "baseSalary": 95000,
     "allowanceHRA": 14250,
     "allowanceTravel": 3000,
-    "deductionPF": 7600,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543209",
@@ -92,7 +92,7 @@ const defaultUsers = [
     "baseSalary": 75000,
     "allowanceHRA": 11250,
     "allowanceTravel": 3000,
-    "deductionPF": 6000,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543211",
@@ -126,7 +126,7 @@ const defaultUsers = [
     "baseSalary": 80000,
     "allowanceHRA": 12000,
     "allowanceTravel": 3000,
-    "deductionPF": 6400,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543212",
@@ -161,7 +161,7 @@ const defaultUsers = [
     "baseSalary": 55000,
     "allowanceHRA": 8250,
     "allowanceTravel": 3000,
-    "deductionPF": 4400,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 5,
     "phone": "+91 9999911111",
@@ -208,7 +208,7 @@ const defaultUsers = [
     "baseSalary": 62000,
     "allowanceHRA": 9300,
     "allowanceTravel": 3000,
-    "deductionPF": 4960,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9888822222",
@@ -246,7 +246,7 @@ const defaultUsers = [
     "baseSalary": 48000,
     "allowanceHRA": 7200,
     "allowanceTravel": 3000,
-    "deductionPF": 3840,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 5,
     "phone": "+91 9777733333",
@@ -339,7 +339,7 @@ const defaultUsers = [
     "baseSalary": 78000,
     "allowanceHRA": 11700,
     "allowanceTravel": 3000,
-    "deductionPF": 6240,
+    "deductionPF": 1800,
     "deductionPT": 0,
     "deductionTDS": 10,
     "phone": "+91 9876543213",
@@ -930,7 +930,7 @@ export const DB = {
       if (!s.workDays) { s.workDays = [1, 2, 3, 4, 5]; modified = true; }
       if (!s.location) { s.location = ''; modified = true; }
       if (s.gracePeriod === undefined) { s.gracePeriod = 15; modified = true; }
-      if (s.halfDayLimit === undefined) { s.halfDayLimit = 120; modified = true; }
+      if (s.halfDayLimit === undefined || s.halfDayLimit === 120) { s.halfDayLimit = 200; modified = true; }
     });
 
     if (!this.data.customRoles) {
@@ -2629,36 +2629,37 @@ export const DB = {
     if (!user) return null;
 
     const baseSalary = user.baseSalary || 0;
-    const allowanceHRA = user.allowanceHRA !== undefined && user.allowanceHRA !== null ? user.allowanceHRA : 0;
-    const allowanceTravel = user.allowanceTravel !== undefined && user.allowanceTravel !== null ? user.allowanceTravel : 0;
-    const allowanceCCA = user.allowanceCCA !== undefined && user.allowanceCCA !== null ? user.allowanceCCA : 0;
-    const allowancePerformance = user.allowancePerformance !== undefined && user.allowancePerformance !== null ? user.allowancePerformance : 0;
-    const allowanceOther = user.allowanceOther !== undefined && user.allowanceOther !== null ? user.allowanceOther : 0;
-    const deductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? user.deductionPF : 0;
-    const deductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? user.deductionESI : 0;
-    const deductionAdvance = user.deductionAdvance !== undefined && user.deductionAdvance !== null ? user.deductionAdvance : 0;
-    const deductionOther = user.deductionOther !== undefined && user.deductionOther !== null ? user.deductionOther : 0;
+    const allowanceHRA = user.allowanceHRA !== undefined && user.allowanceHRA !== null ? Number(user.allowanceHRA) : 0;
+    const allowanceTravel = user.allowanceTravel !== undefined && user.allowanceTravel !== null ? Number(user.allowanceTravel) : 0;
+    const allowanceCCA = user.allowanceCCA !== undefined && user.allowanceCCA !== null ? Number(user.allowanceCCA) : 0;
+    const allowancePerformance = user.allowancePerformance !== undefined && user.allowancePerformance !== null ? Number(user.allowancePerformance) : 0;
+    const baseAllowanceOther = user.allowanceOther !== undefined && user.allowanceOther !== null ? Number(user.allowanceOther) : 0;
+    const rawDeductionPF = user.deductionPF !== undefined && user.deductionPF !== null ? Number(user.deductionPF) : null;
+    const rawDeductionESI = user.deductionESI !== undefined && user.deductionESI !== null ? Number(user.deductionESI) : null;
+    const deductionAdvance = user.deductionAdvance !== undefined && user.deductionAdvance !== null ? Number(user.deductionAdvance) : 0;
+    const deductionOther = user.deductionOther !== undefined && user.deductionOther !== null ? Number(user.deductionOther) : 0;
     const deductionPT = 0; // Professional tax removed
-    const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? user.deductionTDS : 0;
+    const deductionTDS = user.deductionTDS !== undefined && user.deductionTDS !== null ? Number(user.deductionTDS) : 0;
 
     const totalDays = index.monthMeta.totalDays;
-    const workingDays = totalDays;
     const exactDailyRate = baseSalary / totalDays;
     const dailyRate = Math.round(exactDailyRate);
 
     const sched = (user.scheduleId && index.schedMap.get(user.scheduleId)) || index.defaultSched;
-    const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays)) ? sched.workDays : [1, 2, 3, 4, 5];
+    const scheduledWorkDaysList = (sched.workDays && Array.isArray(sched.workDays) && sched.workDays.length > 0)
+      ? sched.workDays
+      : [1, 2, 3, 4, 5];
 
     const userLogs = index.logsByUser.get(user.id) || [];
     const monthPrefix = index.monthMeta.monthPrefix;
-    const monthlyLogs = [];
     const logByDate = new Map();
 
     for (let i = 0; i < userLogs.length; i++) {
       const l = userLogs[i];
       if (l.date && l.date.startsWith(monthPrefix)) {
-        monthlyLogs.push(l);
-        logByDate.set(l.date, l);
+        if (!logByDate.has(l.date) || (!logByDate.get(l.date).checkIn && l.checkIn)) {
+          logByDate.set(l.date, l);
+        }
       }
     }
 
@@ -2673,119 +2674,323 @@ export const DB = {
       return false;
     };
 
-    let approvedLeaveDays = 0;
+    // Helper: evaluate effective attendance status using the 200-minute rule
+    const evaluateLogStatus = (log, scheduleObj, dateStr, isPastDate) => {
+      if (!log) return 'Absent';
+      if (log.status === 'Half Day') return 'Half Day';
+      if (!log.checkIn && !log.checkOut) return log.status || 'Absent';
+      if (!log.checkIn && log.checkOut) return 'Half Day'; // Departed/worked, but missed morning punch
+      if (log.checkIn && !log.checkOut && isPastDate) return 'Half Day'; // Missed departure punch on past date
+
+      const [inH, inM] = log.checkIn.split(':').map(Number);
+      const inMins = (inH || 0) * 60 + (inM || 0);
+      const startH = (scheduleObj && scheduleObj.startTime) ? Number(scheduleObj.startTime.split(':')[0]) : 9;
+      const startM = (scheduleObj && scheduleObj.startTime) ? Number(scheduleObj.startTime.split(':')[1]) : 0;
+      const startMins = startH * 60 + startM;
+      const grace = (scheduleObj && scheduleObj.gracePeriod !== undefined) ? Number(scheduleObj.gracePeriod) : 15;
+      const halfDayLimit = (scheduleObj && scheduleObj.halfDayLimit !== undefined) ? Number(scheduleObj.halfDayLimit) : 200;
+
+      // 200-minute rule: arrival exceeding half-day limit cutoff (e.g. 09:00 + 200m = 12:20 PM)
+      if (inMins >= startMins + halfDayLimit) {
+        return 'Half Day';
+      }
+
+      // Check worked duration vs expected shift and early departure
+      if (log.checkOut) {
+        const [outH, outM] = log.checkOut.split(':').map(Number);
+        const outMins = (outH || 0) * 60 + (outM || 0);
+        let workMins = outMins - inMins;
+        if (workMins < 0) workMins += 24 * 60;
+
+        let expectedMins = 8 * 60;
+        let endMins = 17 * 60;
+        if (scheduleObj && scheduleObj.startTime && scheduleObj.endTime) {
+          const [endH, endM] = scheduleObj.endTime.split(':').map(Number);
+          endMins = (endH * 60 + (endM || 0));
+          expectedMins = endMins - startMins;
+          if (expectedMins < 0) expectedMins += 24 * 60;
+        }
+
+        // 200-minute rule: early departure exceeding half-day limit cutoff (leaving >= 200m before shift end)
+        if (scheduleObj && scheduleObj.endTime) {
+          const earlyDepartureMins = endMins - outMins;
+          if (earlyDepartureMins >= halfDayLimit) {
+            return 'Half Day';
+          }
+        }
+
+        const halfDayThreshold = expectedMins > 0 ? (expectedMins / 2) : 240;
+        if (workMins < halfDayThreshold || workMins < 240) {
+          return 'Half Day';
+        }
+      }
+
+      if (inMins > startMins + grace) {
+        return 'Late';
+      }
+      return 'On Time';
+    };
+
+    // Determine elapsed days boundary for accurate current vs past month reporting
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+    const isPastMonth = (year < currentYear) || (year === currentYear && month < currentMonth);
+    const isCurrentMonth = (year === currentYear && month === currentMonth);
+    const maxElapsedDay = isPastMonth ? totalDays : (isCurrentMonth ? Math.min(currentDay, totalDays) : 0);
+    const isPartialMonth = isCurrentMonth && (maxElapsedDay < totalDays);
+
+    // Mid-month joiner handling
+    let joinDay = 1;
+    if (user.dateOfJoining) {
+      const [jY, jM, jD] = user.dateOfJoining.split('-').map(Number);
+      if (jY === year && (jM - 1) === month) {
+        joinDay = Math.max(1, jD);
+      } else if (jY > year || (jY === year && (jM - 1) > month)) {
+        joinDay = totalDays + 1; // Not yet joined in this month
+      }
+    }
+
     let scheduledWorkDays = 0;
-    const scheduledDates = [];
-    const sundaysInMonth = index.monthMeta.sundays;
+    let elapsedScheduledWorkDays = 0;
+    let scheduledPresentDays = 0;
+    let weeklyOffPresentDays = 0;
+    let sundayPresentDays = 0;
+    let sundayPresentUnits = 0;
+    let weeklyOffDays = 0;
+    let totalWeeklyOffDays = 0;
+    let absentDays = 0;
+    let lateDays = 0;
+    let halfDays = 0;
+    let approvedLeaveDays = 0;
 
     for (let d = 1; d <= totalDays; d++) {
       const dow = index.monthMeta.dayOfWeekMap[d];
       const dateStr = index.monthMeta.dateStrMap[d];
-      if (scheduledWorkDaysList.includes(dow)) {
+      const isSched = scheduledWorkDaysList.includes(dow);
+      const isSun = (dow === 0);
+      const isElapsed = (d <= maxElapsedDay);
+      const isEmployed = (d >= joinDay);
+      const log = logByDate.get(dateStr);
+      const hasPunch = !!(log && (log.checkIn || log.checkOut));
+      const onLeave = isDateOnApprovedLeave(dateStr);
+      const isCompletedDay = (d < currentDay || isPastMonth);
+
+      if (isSched) {
         scheduledWorkDays++;
-        scheduledDates.push(dateStr);
-        if (isDateOnApprovedLeave(dateStr)) approvedLeaveDays++;
+        if (isElapsed) {
+          elapsedScheduledWorkDays++;
+          if (hasPunch) {
+            scheduledPresentDays++;
+            const status = evaluateLogStatus(log, sched, dateStr, isCompletedDay);
+            if (status === 'Late') lateDays++;
+            if (status === 'Half Day') halfDays++;
+          } else if (onLeave) {
+            approvedLeaveDays++;
+          } else if (isEmployed && isCompletedDay) {
+            absentDays++;
+          }
+        }
+      } else {
+        totalWeeklyOffDays++;
+        if (isElapsed) {
+          if (hasPunch) {
+            weeklyOffPresentDays++;
+            const status = evaluateLogStatus(log, sched, dateStr, isCompletedDay);
+            if (isSun) {
+              sundayPresentDays++;
+              sundayPresentUnits += (status === 'Half Day' ? 0.5 : 1.0);
+            }
+            if (status === 'Late') lateDays++;
+            if (status === 'Half Day') halfDays++;
+          } else {
+            weeklyOffDays++;
+          }
+        }
       }
     }
 
-    let presentDays = 0;
-    let lateDays = 0;
-    let halfDays = 0;
-    let totalOvertimeMins = 0;
-    const [sH, sM] = (sched.startTime || '09:00').split(':').map(Number);
-    const [eH, eM] = (sched.endTime || '17:00').split(':').map(Number);
-    const shiftMins = (eH * 60 + eM) - (sH * 60 + sM);
+    // Total actual present days (both scheduled and weekly off / Sunday attendance)
+    const presentDays = scheduledPresentDays + weeklyOffPresentDays;
 
-    for (let i = 0; i < monthlyLogs.length; i++) {
-      const l = monthlyLogs[i];
-      if (l.checkIn) presentDays++;
-      if (l.status === 'Late') lateDays++;
-      if (l.status === 'Half Day') halfDays++;
-      if (l.checkIn && l.checkOut) {
-        const [iH, iM] = l.checkIn.split(':').map(Number);
-        const [oH, oM] = l.checkOut.split(':').map(Number);
-        const workedMins = (oH * 60 + oM) - (iH * 60 + iM);
-        if (workedMins > shiftMins) totalOvertimeMins += (workedMins - shiftMins);
-      }
-    }
+    // Requirement 3: Add Sunday salary amount under Other Allowances without duplicate payments
+    const sundaySalary = (sundayPresentUnits > 0 && exactDailyRate > 0)
+      ? Math.round(sundayPresentUnits * exactDailyRate)
+      : 0;
 
-    let absentDays = scheduledWorkDays - presentDays - approvedLeaveDays;
-    if (absentDays < 0) absentDays = 0;
-
+    // Requirement 2: 2-Day Weekly Rule for elapsed Sundays
     let unpaidSundayDays = 0;
     const penalizedSundays = [];
+    const sundaysInMonth = index.monthMeta.sundays;
 
     for (let sIdx = 0; sIdx < sundaysInMonth.length; sIdx++) {
       const sObj = sundaysInMonth[sIdx];
-      let leavesInWeek = 0;
+      if (sObj.day > maxElapsedDay) continue;
 
+      const workedSunday = logByDate.has(sObj.dateStr) && !!(logByDate.get(sObj.dateStr).checkIn || logByDate.get(sObj.dateStr).checkOut);
+      if (workedSunday) continue;
+
+      let leavesInWeek = 0;
       for (let offset = 6; offset >= 1; offset--) {
+        const prevDay = sObj.day - offset;
         let checkDateStr;
         let checkDow;
-        const prevDay = sObj.day - offset;
+
         if (prevDay >= 1) {
           checkDow = index.monthMeta.dayOfWeekMap[prevDay];
           checkDateStr = index.monthMeta.dateStrMap[prevDay];
         } else {
           const dt = new Date(year, month, prevDay);
           checkDow = dt.getDay();
-          checkDateStr = dt.toISOString().split('T')[0];
+          const pY = dt.getFullYear();
+          const pM = String(dt.getMonth() + 1).padStart(2, '0');
+          const pD = String(dt.getDate()).padStart(2, '0');
+          checkDateStr = `${pY}-${pM}-${pD}`;
         }
 
         if (scheduledWorkDaysList.includes(checkDow)) {
           if (isDateOnApprovedLeave(checkDateStr)) {
-            leavesInWeek += 1;
+            leavesInWeek += 1.0;
           } else {
-            const log = logByDate.get(checkDateStr) || userLogs.find(l => l.date === checkDateStr);
-            if (log) {
-              if (log.status === 'Absent' || log.status === 'Leave' || log.status === 'On Leave') leavesInWeek += 1;
-              else if (log.status === 'Half Day') leavesInWeek += 0.5;
+            const l = logByDate.get(checkDateStr) || userLogs.find(x => x.date === checkDateStr);
+            if (l && (l.checkIn || l.checkOut)) {
+              const st = evaluateLogStatus(l, sched, checkDateStr, true);
+              if (st === 'Half Day') leavesInWeek += 0.5;
+            } else if (userLogs.length > 0) {
+              // Unpunched scheduled work day that has passed for an active employee = Absent!
+              leavesInWeek += 1.0;
             }
           }
         }
       }
 
-      if (leavesInWeek >= 2) {
+      if (leavesInWeek >= 2.0) {
         unpaidSundayDays++;
         penalizedSundays.push({ date: sObj.dateStr, leavesInWeek });
       }
     }
 
-    const adj = index.adjMap.get(user.id);
-    const bonus = adj ? (adj.bonus || 0) : 0;
-    const adhocDeduction = adj ? (adj.deduction || 0) : 0;
-    const remarks = adj ? (adj.remarks || '') : '';
+    const todayDateStr = `${monthPrefix}-${String(currentDay).padStart(2, '0')}`;
+    const todayLog = logByDate.get(todayDateStr);
+    const hasTodayPunch = Boolean(todayLog && (todayLog.checkIn || todayLog.checkOut));
+    const periodDays = isPastMonth ? totalDays : (isCurrentMonth ? (hasTodayPunch ? currentDay : Math.max(1, currentDay - 1)) : 0);
+    const eligiblePaidDays = Math.max(0, periodDays - absentDays - unpaidSundayDays - (halfDays * 0.5));
 
+    // Prorated Base Salary for partial month
+    const periodNominalBase = isPartialMonth ? Math.round(periodDays * exactDailyRate) : baseSalary;
     const absentDeduction = Math.round(absentDays * exactDailyRate);
     const sundayDeduction = Math.round(unpaidSundayDays * exactDailyRate);
     const halfDayDeduction = Math.round(halfDays * 0.5 * exactDailyRate);
-
-    const overtimeHours = Math.floor(totalOvertimeMins / 60);
-    const overtimeMins = totalOvertimeMins % 60;
-    const overtimeText = `${overtimeHours}h ${overtimeMins}m`;
-    const hourlyRate = (baseSalary / totalDays / 8);
-    const overtimePay = Math.round(overtimeHours * hourlyRate * 1.5);
-
     const attendanceDeductions = absentDeduction + sundayDeduction + halfDayDeduction;
-    const grossEarnings = baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + allowanceOther + bonus + overtimePay;
-    const taxableEarnings = (baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + allowanceOther) - attendanceDeductions;
-    const clampedTaxableEarnings = taxableEarnings < 0 ? 0 : taxableEarnings;
-    const deductionTDSVal = Math.round(clampedTaxableEarnings * (deductionTDS / 100));
+
+    // Actual earned base salary after attendance penalties
+    const earnedBaseSalary = Math.max(0, periodNominalBase - attendanceDeductions);
+
+    // Allowances: prorate fixed monthly allowances for partial months based on elapsed period
+    const earnedAllowanceHRA = isPartialMonth ? Math.round((allowanceHRA / totalDays) * periodDays) : allowanceHRA;
+    const earnedAllowanceTravel = isPartialMonth ? Math.round((allowanceTravel / totalDays) * periodDays) : allowanceTravel;
+    const earnedAllowanceCCA = isPartialMonth ? Math.round((allowanceCCA / totalDays) * periodDays) : allowanceCCA;
+    const earnedAllowancePerformance = isPartialMonth ? Math.round((allowancePerformance / totalDays) * periodDays) : allowancePerformance;
+    const earnedBaseAllowanceOther = isPartialMonth ? Math.round((baseAllowanceOther / totalDays) * periodDays) : baseAllowanceOther;
+    const allowanceOther = earnedBaseAllowanceOther + sundaySalary;
+
+    // Statutory Bonus Parameters (Payment of Bonus Act, 1965):
+    // - Bonus Eligibility Wage Ceiling: ₹21,000/month
+    // - Minimum Bonus Calculation Base: ₹7,000/month or applicable minimum wage, whichever is higher
+    // - Minimum Bonus Rate: 8.33% annually
+    // - Maximum Bonus Rate: 20% annually
+    const bonusEligibilityCeiling = 21000;
+    const isBonusEligible = baseSalary <= bonusEligibilityCeiling;
+    const applicableMinWage = Number(user.applicableMinimumWage || 7000);
+    const minBonusBase = Math.max(7000, applicableMinWage);
+    const bonusCalculationBase = isBonusEligible ? Math.min(baseSalary, minBonusBase) : 0;
+    const minStatutoryBonusMonthly = isBonusEligible ? Math.round(bonusCalculationBase * 0.0833) : 0;
+    const maxStatutoryBonusMonthly = isBonusEligible ? Math.round(bonusCalculationBase * 0.20) : 0;
+    const statutoryBonus = minStatutoryBonusMonthly;
+
+    const adj = index.adjMap.get(user.id);
+    let bonus = 0;
+    if (adj && adj.bonus !== undefined && adj.bonus !== null) {
+      bonus = Number(adj.bonus) || 0;
+    } else if (user.bonus !== undefined && user.bonus !== null && Number(user.bonus) > 0) {
+      bonus = Number(user.bonus);
+    } else if (isBonusEligible) {
+      bonus = statutoryBonus;
+    }
+    if (isBonusEligible && bonus > 0 && bonus < statutoryBonus) {
+      bonus = statutoryBonus;
+    }
+
+    const adhocDeduction = adj ? (adj.deduction || 0) : 0;
+    const remarks = adj ? (adj.remarks || '') : '';
+
+    // Nominal Gross and Earned Gross
+    const periodGrossEarnings = periodNominalBase + earnedAllowanceHRA + earnedAllowanceTravel + earnedAllowanceCCA + earnedAllowancePerformance + allowanceOther + bonus;
+    const earnedGrossSalary = earnedBaseSalary + earnedAllowanceHRA + earnedAllowanceTravel + earnedAllowanceCCA + earnedAllowancePerformance + allowanceOther + bonus;
+    const fullMonthlyGross = baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + (baseAllowanceOther + sundaySalary) + bonus;
+
+    // Statutory EPF Contribution Parameters:
+    // - Employee EPF Contribution: 12% of applicable PF wages
+    // - EPF Wage Ceiling: ₹25,000/month
+    const epfWageCeiling = Number(user.epfWageCeiling) || 25000;
+    const pfNominalWage = isPartialMonth ? periodNominalBase : baseSalary;
+    const applicablePFWage = Math.min(pfNominalWage, epfWageCeiling);
+    const isPFApplicable = (user.pfApplicable !== false) && (user.isPFExempt !== true) && (user.pfExempt !== true);
+    const deductionPF = isPFApplicable ? Math.round(applicablePFWage * 0.12) : 0;
+
+    // Statutory ESI Contribution Parameters:
+    // - Employee ESI Contribution: 0.75% of eligible ESI wages
+    // - ESI Wage Ceiling: ₹21,000/month
+    const esiWageCeiling = 21000;
+    const monthlyGrossForESI = baseSalary + allowanceHRA + allowanceTravel + allowanceCCA + allowancePerformance + (baseAllowanceOther + sundaySalary);
+    const isESIEligible = (monthlyGrossForESI <= esiWageCeiling) || (baseSalary <= esiWageCeiling);
+    let deductionESI = 0;
+    if (isESIEligible) {
+      const eligibleESIWages = Math.max(0, periodGrossEarnings - (bonus > 0 ? bonus : 0));
+      deductionESI = Math.round(eligibleESIWages * 0.0075);
+    }
+
+    // Statutory Gratuity Provision Parameters:
+    // - Gratuity Provision Rate: 4.81% of Basic + DA (estimated)
+    const basicForGratuity = isPartialMonth ? periodNominalBase : baseSalary;
+    const daAmount = Number(user.allowanceDA || 0);
+    const gratuityBasis = basicForGratuity + daAmount;
+    const gratuityProvision = Math.round(gratuityBasis * 0.0481);
+    const gratuityRate = '4.81%';
+
+    const taxableEarnings = Math.max(0, earnedGrossSalary);
+    const deductionTDSVal = Math.round(taxableEarnings * (deductionTDS / 100));
     const statutoryDeductions = deductionPF + deductionESI + deductionAdvance + deductionOther + deductionTDSVal;
 
+    // Net Salary = periodGrossEarnings - totalDeductions
     const totalDeductions = attendanceDeductions + statutoryDeductions + adhocDeduction;
-    const netSalary = grossEarnings - attendanceDeductions - statutoryDeductions - adhocDeduction;
-    const paidDays = Math.max(0, totalDays - absentDays - unpaidSundayDays - (halfDays * 0.5));
+    const totalAllDeductions = totalDeductions;
+    const netSalary = Math.max(0, periodGrossEarnings - totalDeductions);
+
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const payrollPeriodStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const payrollPeriodEnd = `${year}-${String(month + 1).padStart(2, '0')}-${String(periodDays).padStart(2, '0')}`;
+    const periodLabel = isPartialMonth
+      ? `${monthNames[month]} 1 – ${monthNames[month]} ${periodDays}, ${year} (Partial Month: ${periodDays}/${totalDays} days)`
+      : `${monthNames[month]} ${year}`;
 
     return {
       userId: user.id,
       employeeName: user.name,
-      baseSalary,
-      allowanceHRA,
-      allowanceTravel,
-      allowanceCCA,
-      allowancePerformance,
+      fullBaseSalary: baseSalary,
+      periodNominalBase,
+      earnedBaseSalary,
+      baseSalary: isPartialMonth ? periodNominalBase : baseSalary,
+      allowanceHRA: earnedAllowanceHRA,
+      allowanceTravel: earnedAllowanceTravel,
+      allowanceCCA: earnedAllowanceCCA,
+      allowancePerformance: earnedAllowancePerformance,
       allowanceOther,
+      baseAllowanceOther: earnedBaseAllowanceOther,
+      sundaySalary,
+      sundayPresentDays,
+      sundayPresentUnits,
       deductionPF,
       deductionESI,
       deductionAdvance,
@@ -2793,18 +2998,49 @@ export const DB = {
       deductionPT: 0,
       deductionTDS,
       deductionTDSVal,
+      epfWageCeiling,
+      epfRate: '12%',
+      applicablePFWage,
+      isPFApplicable,
+      esiWageCeiling,
+      esiRate: '0.75%',
+      isESIEligible,
+      bonusEligibilityCeiling,
+      isBonusEligible,
+      bonusCalculationBase,
+      minBonusRate: '8.33%',
+      maxBonusRate: '20%',
+      statutoryBonus,
+      minStatutoryBonusMonthly,
+      maxStatutoryBonusMonthly,
+      gratuityRate,
+      gratuityBasis,
+      gratuityProvision,
+      deductionTDSVal,
       totalDays,
       totalMonthDays: totalDays,
-      workingDays,
+      periodDays,
+      isPartialMonth,
+      payrollPeriodStart,
+      payrollPeriodEnd,
+      periodLabel,
+      workingDays: isPartialMonth ? periodDays : totalDays,
+      scheduledWorkDays,
+      elapsedScheduledWorkDays,
       actualWorkingDays: presentDays,
       presentDays,
+      scheduledPresentDays,
+      weeklyOffPresentDays,
+      weeklyOffDays,
+      totalWeeklyOffDays,
       lateDays,
       halfDays,
       approvedLeaveDays,
       absentDays,
       unpaidSundayDays,
       penalizedSundays,
-      paidDays,
+      eligiblePaidDays,
+      paidDays: eligiblePaidDays,
       dailyRate,
       exactDailyRate,
       absentDeduction,
@@ -2812,20 +3048,24 @@ export const DB = {
       halfDayDeduction,
       attendanceDeductions,
       statutoryDeductions,
-      grossEarnings,
+      grossEarnings: isPartialMonth ? earnedGrossSalary : periodGrossEarnings,
+      periodGrossEarnings,
+      earnedGrossSalary,
+      fullMonthlyGross,
       taxableEarnings,
       totalDeductions,
+      totalAllDeductions,
       bonus,
       adhocDeduction,
       remarks,
-      netSalary: netSalary < 0 ? 0 : netSalary,
-      overtimeHours,
-      overtimeText,
-      overtimePay
+      netSalary,
+      overtimeHours: 0,
+      overtimeText: '',
+      overtimePay: 0
     };
   },
 
-  savePayrollAdjustment(userId, month, year, bonus, deduction, remarks) {
+    savePayrollAdjustment(userId, month, year, bonus, deduction, remarks) {
     if (!this.data.payrollAdjustments) {
       this.data.payrollAdjustments = [];
     }

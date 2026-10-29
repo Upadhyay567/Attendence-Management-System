@@ -214,7 +214,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
         startTime: '09:00',
         endTime: '17:00',
         gracePeriod: 15,
-        halfDayLimit: 120
+        halfDayLimit: 200
       };
 
       // 1. Check in within grace period (09:10 <= 09:15) -> 'On Time'
@@ -227,7 +227,8 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(computeAttendanceStatus('09:20', '', standardShift)).toBe('Late');
 
       // 4. Check in after half-day cutoff (11:15 >= 09:00 + 120m) -> 'Half Day'
-      expect(computeAttendanceStatus('11:15', '', standardShift)).toBe('Half Day');
+      // 4. Check in after half-day cutoff (12:25 >= 09:00 + 200m) -> 'Half Day'
+      expect(computeAttendanceStatus('12:25', '', standardShift)).toBe('Half Day');
 
       // 5. Check out after working less than half day (09:00 to 11:30 = 2.5h < 4h) -> 'Half Day'
       expect(computeAttendanceStatus('09:00', '11:30', standardShift)).toBe('Half Day');
