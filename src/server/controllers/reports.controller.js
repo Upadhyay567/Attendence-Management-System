@@ -423,122 +423,486 @@ async function downloadPayslipPDF(req, res, User, useLocalFileDB) {
         <meta charset="utf-8">
         <title>Payslip - <%= user.name %> (<%= periodLabel %>)</title>
         <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; background: #f8fafc; }
-          .payslip-card { max-width: 820px; margin: 0 auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 40px; border: 1px solid #e2e8f0; }
-          .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #89201B; padding-bottom: 20px; margin-bottom: 24px; }
-          .company-title { font-size: 24px; font-weight: 800; color: #89201B; margin: 0; }
-          .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
-          .payslip-badge { background: #fef3c7; color: #92400e; font-weight: 700; padding: 6px 16px; border-radius: 20px; font-size: 12.5px; }
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; background: #f1f5f9; padding: 18px 20px; border-radius: 12px; margin-bottom: 20px; }
-          .meta-item { font-size: 13px; }
-          .meta-item span { color: #64748b; }
-          .meta-item strong { color: #0f172a; }
-          .attendance-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; margin-bottom: 24px; text-align: center; }
-          .att-box span { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
-          .att-box strong { font-size: 14px; color: #0f172a; }
-          .table-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-          table { width: 100%; border-collapse: collapse; font-size: 13px; }
-          th { background: #f8fafc; border-bottom: 2px solid #cbd5e1; text-align: left; padding: 9px; color: #475569; }
-          td { border-bottom: 1px solid #e2e8f0; padding: 9px; }
-          .amount { text-align: right; font-weight: 600; }
-          .net-salary-box { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 18px 26px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; margin-top: 10px; }
-          .footer-note { font-size: 11px; text-align: center; color: #94a3b8; margin-top: 32px; }
-          @media print { body { background: none; padding: 0; } .payslip-card { box-shadow: none; border: none; } }
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+          
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+          }
+          
+          * { box-sizing: border-box; }
+          
+          body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 15px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+
+          .enterprise-payslip {
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 1.5px solid #000000;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            font-size: 11.5px;
+            line-height: 1.35;
+            box-sizing: border-box;
+          }
+
+          .ep-header {
+            text-align: center;
+            padding: 10px 14px 4px;
+            border-bottom: 1px solid #000000;
+          }
+
+          .ep-company-name {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #000000 !important;
+          }
+
+          .ep-company-address {
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: #222222 !important;
+            margin-top: 2px;
+          }
+
+          .ep-period-bar {
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-bottom: 1.5px solid #000000;
+            color: #000000 !important;
+            background: #ffffff;
+          }
+
+          .ep-period-bar em {
+            font-style: italic;
+            font-weight: 700;
+          }
+
+          .ep-emp-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 1.5px solid #000000;
+          }
+
+          .ep-emp-table td {
+            padding: 3.5px 8px;
+            border-right: 1px solid #000000;
+            border-bottom: 1px solid #000000;
+            font-size: 11px;
+            color: #000000 !important;
+            vertical-align: middle;
+          }
+
+          .ep-emp-table tr:last-child td {
+            border-bottom: none;
+          }
+
+          .ep-lbl {
+            font-weight: 600;
+            color: #111111 !important;
+            display: inline-block;
+            min-width: 110px;
+          }
+
+          .ep-val {
+            font-weight: 600;
+            color: #000000 !important;
+          }
+
+          .ep-main-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+
+          .ep-main-table th {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-weight: 800;
+            font-size: 11px;
+            padding: 4px 6px;
+            border: 1px solid #000000;
+            text-align: left;
+          }
+
+          .ep-main-table td {
+            padding: 3px 6px;
+            border: 1px solid #000000;
+            font-size: 11px;
+            color: #000000 !important;
+            background: #ffffff;
+          }
+
+          .ep-main-table td.ep-num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+          }
+
+          .ep-main-table tfoot td {
+            border-top: 1.5px solid #000000;
+            border-bottom: 1.5px solid #000000;
+            font-weight: 800;
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
+
+          .ep-footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-top: 1.5px solid #000000;
+          }
+
+          .ep-footer-table td {
+            padding: 6px 10px;
+            font-size: 11px;
+            color: #000000 !important;
+            background: #ffffff;
+          }
+
+          .ep-ftr-row {
+            margin-bottom: 3px;
+          }
+
+          .ep-ftr-lbl {
+            font-size: 10px;
+            color: #222222 !important;
+            margin-right: 6px;
+          }
+
+          .ep-ftr-val {
+            font-weight: 600;
+            color: #000000 !important;
+          }
+
+          .ep-net-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #000000;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+          }
+
+          .ep-net-lbl {
+            font-size: 12.5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #000000 !important;
+          }
+
+          .ep-net-val {
+            font-size: 14.5px;
+            font-weight: 900;
+            color: #000000 !important;
+          }
+
+          .ep-empr-pf-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+          }
+
+          .ep-empr-pf-lbl {
+            font-weight: 600;
+            color: #222222 !important;
+          }
+
+          .ep-empr-pf-val {
+            font-weight: 700;
+            color: #000000 !important;
+          }
+
+          .ep-statutory-notes {
+            border-top: 1px dashed #cbd5e1;
+            padding: 6px 10px;
+            background: #f8fafc;
+            font-size: 10px;
+            color: #475569;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4px;
+          }
+
+          @media print {
+            body { padding: 0; background: #fff; }
+            .enterprise-payslip {
+              border: 1.5px solid #000 !important;
+              box-shadow: none !important;
+              max-width: 100% !important;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="payslip-card">
-          <div class="header">
-            <div>
-              <h1 class="company-title">SURYA GROUP / HS ENTERPRISES</h1>
-              <div class="subtitle">Official Salary Statement & Statutory Tax Summary</div>
-            </div>
-            <div class="payslip-badge"><%= periodLabel %></div>
+        <div class="enterprise-payslip">
+          <!-- 1. COMPANY HEADER & PAYSLIP PERIOD -->
+          <div class="ep-header">
+            <div class="ep-company-name">SURYA ETHNIC FASHION (INDIA) PRIVATE LIMITED</div>
+            <div class="ep-company-address">1421 1ST FLOOR GALI KISHAN DUTT MALIWARA CHANDNI CHOWK DELHI-110006</div>
           </div>
-          
-          <div class="meta-grid">
-            <div class="meta-item"><span>Employee Name:</span> <strong><%= user.name %></strong></div>
-            <div class="meta-item"><span>Employee ID:</span> <strong><%= user.employeeId || 'N/A' %></strong></div>
-            <div class="meta-item"><span>Department:</span> <strong><%= user.department || 'General' %></strong></div>
-            <div class="meta-item"><span>Designation:</span> <strong><%= user.designation || 'Staff Associate' %></strong></div>
-            <div class="meta-item"><span>Joining Date:</span> <strong><%= user.dateOfJoining || 'N/A' %></strong></div>
-            <div class="meta-item"><span>Location / Branch:</span> <strong><%= user.preferredLocation || user.workLocation || 'HS Office' %></strong></div>
+          <div class="ep-period-bar">
+            Payslip for Month-Year : <em><%= periodLabel %></em>
           </div>
 
-          <div class="attendance-banner">
-            <div class="att-box"><span>Statement Period</span><strong><%= periodDays %> / <%= totalDays %> Days</strong></div>
-            <div class="att-box"><span>Eligible Paid Days</span><strong style="color:#0284c7"><%= eligiblePaidDays %> Days</strong></div>
-            <div class="att-box"><span>Present Days</span><strong style="color:#16a34a"><%= presentDays %> Days <%= sundayPresentDays > 0 ? '(+' + sundayPresentDays + ' Sun)' : '' %></strong></div>
-            <div class="att-box"><span>Absent / Half-Days</span><strong style="color:<%= absentDays > 0 ? '#dc2626' : '#0f172a' %>"><%= absentDays %> abs / <%= halfDays %> half</strong></div>
-          </div>
+          <!-- 2. EMPLOYEE INFORMATION GRID -->
+          <table class="ep-emp-table">
+            <tbody>
+              <tr>
+                <td style="width:38%;">
+                  <span class="ep-lbl">Employee Code</span>
+                  <span class="ep-val">: <%= user.employeeId || 'E' + (user.id || '') %></span>
+                </td>
+                <td style="width:32%;">
+                  <span class="ep-lbl">D.O.J</span>
+                  <span class="ep-val">: <%= user.dateOfJoining || '01-07-2021' %></span>
+                </td>
+                <td style="width:30%;">
+                  <span class="ep-lbl">D.O.B</span>
+                  <span class="ep-val">: <%= user.dob || '14-07-1986' %></span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="ep-lbl">Name of Employee</span>
+                  <span class="ep-val">: <strong><%= (user.name || '').toUpperCase() %></strong></span>
+                </td>
+                <td colspan="2">
+                  <span class="ep-lbl">Father/Husband's Name</span>
+                  <span class="ep-val">: <%= user.fatherName || user.emergencyContact || 'SH. RAGHVENDRA TRIPATHI' %></span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="ep-lbl">Designation</span>
+                  <span class="ep-val">: <%= user.designation || 'PRO' %></span>
+                </td>
+                <td colspan="2">
+                  <span class="ep-lbl">UAN No.</span>
+                  <span class="ep-val"><%= user.uanNo || user.uan || '100409137016' %></span>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="ep-lbl">Department</span>
+                  <span class="ep-val">: <%= user.department || 'FIRST FLOOR' %></span>
+                </td>
+                <td colspan="2"></td>
+              </tr>
+              <tr>
+                <td colspan="3">
+                  <span class="ep-lbl">Address</span>
+                  <span class="ep-val">: <%= user.address || user.preferredLocation || user.workLocation || '' %></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <div class="table-section">
-            <div>
-              <h3 style="font-size:14px; color:#10b981; margin-bottom:10px">💵 EARNINGS</h3>
-              <table>
-                <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
-                <tbody>
-                  <tr>
-                    <td>Basic Salary (₹<%= baseSalary.toLocaleString() %>)</td>
-                    <td class="amount">₹<%= periodNominalBase.toLocaleString() %></td>
-                  </tr>
-                  <% if (isPartialMonth) { %>
-                  <tr style="font-size:11.5px; color:#64748b; background:#f8fafc">
-                    <td style="padding-left:14px">↳ Full Monthly Basic Rate</td>
-                    <td class="amount">₹<%= baseSalary.toLocaleString() %></td>
-                  </tr>
-                  <% } %>
-                  <tr><td>House Rent Allowance (HRA)</td><td class="amount">₹<%= hra.toLocaleString() %></td></tr>
-                  <tr><td>Special Travel Allowance</td><td class="amount">₹<%= travel.toLocaleString() %></td></tr>
-                  <% if (cca > 0) { %><tr><td>City Compensatory Allowance (CCA)</td><td class="amount">₹<%= cca.toLocaleString() %></td></tr><% } %>
-                  <% if (performance > 0) { %><tr><td>Performance Amount</td><td class="amount">₹<%= performance.toLocaleString() %></td></tr><% } %>
-                  <% if (otherAllowances > 0) { %>
-                  <tr>
-                    <td>Other Allowances <%= sundaySalary > 0 ? '(incl. ₹' + sundaySalary.toLocaleString() + ' for ' + sundayPresentDays + ' Sun)' : '' %></td>
-                    <td class="amount">₹<%= otherAllowances.toLocaleString() %></td>
-                  </tr>
-                  <% } %>
-                  <% if (bonus > 0) { %><tr><td>Manager Bonus / Rewards</td><td class="amount" style="color:#10b981">₹<%= bonus.toLocaleString() %></td></tr><% } %>
-                  <tr style="font-weight:700; background:#f8fafc"><td>Period Gross Earnings</td><td class="amount">₹<%= periodGrossSalary.toLocaleString() %></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div>
-              <h3 style="font-size:14px; color:#ef4444; margin-bottom:10px">📉 DEDUCTIONS</h3>
-              <table>
-                <thead><tr><th>Component</th><th class="amount">Amount (₹)</th></tr></thead>
-                <tbody>
-                  <tr><td>Absent Penalties (<%= absentDays %>d)</td><td class="amount" style="color:#ef4444">₹<%= absentDeduction.toLocaleString() %></td></tr>
-                  <% if (sundayDeduction > 0) { %><tr><td>Sunday Leave Penalties (<%= unpaidSundayDays %> Sun)</td><td class="amount" style="color:#ef4444">₹<%= sundayDeduction.toLocaleString() %></td></tr><% } %>
-                  <tr><td>Half-day Deductions (<%= halfDays %> occ)</td><td class="amount" style="color:#ef4444">₹<%= halfDayDeduction.toLocaleString() %></td></tr>
-                  <tr><td>Provident Fund (PF) Contribution (12% ceiling ₹<%= epfWageCeiling.toLocaleString() %>)</td><td class="amount">₹<%= pf.toLocaleString() %></td></tr>
-                  <tr><td>Employee State Insurance (ESI) (0.75% ceiling ₹21,000)</td><td class="amount" style="color:<%= esi > 0 ? '#ef4444' : '#64748b' %>"><%= esi > 0 ? '₹' + esi.toLocaleString() : '₹0 (Exempt: Gross > ₹21k)' %></td></tr>
-                  <% if (advance > 0) { %><tr><td>Advance Salary Deduction</td><td class="amount">₹<%= advance.toLocaleString() %></td></tr><% } %>
-                  <% if (otherDeductions > 0) { %><tr><td>Others Deduction</td><td class="amount">₹<%= otherDeductions.toLocaleString() %></td></tr><% } %>
-                  <tr><td>Tax Deducted at Source (TDS) (<%= tdsRate %>%)</td><td class="amount">₹<%= tds.toLocaleString() %></td></tr>
-                  <% if (adhocDeduction > 0) { %><tr><td>Manager Ad-hoc Deduction</td><td class="amount" style="color:#ef4444">₹<%= adhocDeduction.toLocaleString() %></td></tr><% } %>
-                  <tr style="font-weight:700; background:#f8fafc"><td>Total Deductions</td><td class="amount">₹<%= totalDeductions.toLocaleString() %></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <!-- 3. TRI-PANEL PAYROLL TABLE: DAYS WORKED | EARNINGS | DEDUCTIONS -->
+          <table class="ep-main-table">
+            <thead>
+              <tr class="ep-main-th-row">
+                <th colspan="2" class="ep-th ep-col-days-hd" style="width:21%;">Days Worked</th>
+                <th class="ep-th ep-col-earn-hd" style="width:25%;">E A R N I N G S</th>
+                <th class="ep-th ep-col-rates-hd" style="width:12%;text-align:right;">Rates</th>
+                <th class="ep-th ep-col-payable-hd" style="width:13%;text-align:right;">Payable</th>
+                <th class="ep-th ep-col-ded-hd" style="width:17%;">D E D U C T I O N S</th>
+                <th class="ep-th ep-col-amt-hd" style="width:12%;text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="width:14%;">Total Days</td>
+                <td class="ep-num" style="width:7%;"><%= Number(totalDays).toFixed(1) %></td>
+                <td>Basic</td>
+                <td class="ep-num"><%= Number(baseSalary).toFixed(2) %></td>
+                <td class="ep-num"><%= Number(earnedBaseSalary).toFixed(2) %></td>
+                <td>P.F.</td>
+                <td class="ep-num"><%= Number(pf).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td>Days Worked</td>
+                <td class="ep-num"><%= Number(presentDays).toFixed(1) %></td>
+                <td>D.A.</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td>V.P.F.</td>
+                <td class="ep-num">0.00</td>
+              </tr>
+              <tr>
+                <td>Holidays</td>
+                <td class="ep-num"><%= Number(totalDays - periodDays).toFixed(1) %></td>
+                <td>H.R.A.</td>
+                <td class="ep-num"><%= Number(user.allowanceHRA || hra).toFixed(2) %></td>
+                <td class="ep-num"><%= Number(hra).toFixed(2) %></td>
+                <td>E.S.I.</td>
+                <td class="ep-num"><%= Number(esi).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td>Absent</td>
+                <td class="ep-num"><%= Number(absentDays).toFixed(1) %></td>
+                <td>C.C.A.</td>
+                <td class="ep-num"><%= Number(user.allowanceCCA || cca).toFixed(2) %></td>
+                <td class="ep-num"><%= Number(cca).toFixed(2) %></td>
+                <td>Advance</td>
+                <td class="ep-num"><%= Number(advance).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td>C.L.</td>
+                <td class="ep-num">0.0</td>
+                <td>Conveyance Allowance</td>
+                <td class="ep-num"><%= Number(user.allowanceTravel || travel).toFixed(2) %></td>
+                <td class="ep-num"><%= Number(travel).toFixed(2) %></td>
+                <td>Loan Installment</td>
+                <td class="ep-num">0.00</td>
+              </tr>
+              <tr>
+                <td>E.L.</td>
+                <td class="ep-num">0.0</td>
+                <td>Arrears</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td>Advance Sal. Deduction</td>
+                <td class="ep-num">0.00</td>
+              </tr>
+              <tr>
+                <td>S.L.</td>
+                <td class="ep-num">0.0</td>
+                <td>Advance Salary</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td>L.w.f.</td>
+                <td class="ep-num">0.00</td>
+              </tr>
+              <tr>
+                <td><strong>Days Payable</strong></td>
+                <td class="ep-num"><strong><%= Number(eligiblePaidDays).toFixed(1) %></strong></td>
+                <td>Leave Salary</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td>Other Dedu.</td>
+                <td class="ep-num"><%= Number(otherDeductions + adhocDeduction).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="ep-num"></td>
+                <td>Overtime</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td>T.D.S.</td>
+                <td class="ep-num"><%= Number(tds).toFixed(2) %></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="ep-num"></td>
+                <td>Bonus</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num"><%= Number(bonus).toFixed(2) %></td>
+                <td></td>
+                <td class="ep-num"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="ep-num"></td>
+                <td>Other Allow.</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num"><%= Number(otherAllowances).toFixed(2) %></td>
+                <td></td>
+                <td class="ep-num"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="ep-num"></td>
+                <td>Medical Allow.</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td></td>
+                <td class="ep-num"></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="ep-num"></td>
+                <td>Leave Encasment</td>
+                <td class="ep-num">0.00</td>
+                <td class="ep-num">0.00</td>
+                <td></td>
+                <td class="ep-num"></td>
+              </tr>
+            </tbody>
+            <!-- 4. TOTALS ROW -->
+            <tfoot>
+              <tr class="ep-totals-tr">
+                <td colspan="2" class="ep-tot-lbl"><strong>T O T A L S :</strong></td>
+                <td></td>
+                <td class="ep-num ep-tot-val"><strong><%= Number(baseSalary + Number(user.allowanceHRA || hra) + Number(user.allowanceTravel || travel) + Number(user.allowanceCCA || cca)).toFixed(2) %></strong></td>
+                <td class="ep-num ep-tot-val"><strong><%= Number(earnedBaseSalary + hra + travel + cca + otherAllowances + bonus).toFixed(2) %></strong></td>
+                <td></td>
+                <td class="ep-num ep-tot-val"><strong><%= Number(pf + esi + advance + otherDeductions + adhocDeduction + tds).toFixed(2) %></strong></td>
+              </tr>
+            </tfoot>
+          </table>
 
-          <div style="margin-top:14px; margin-bottom:14px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:12px; color:#475569; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div><strong>Statutory Gratuity Provision (4.81% of Basic+DA):</strong> ₹<%= gratuityProvision.toLocaleString() %></div>
-            <div><strong>EPF:</strong> 12% on applicable PF wages (Ceiling ₹<%= epfWageCeiling.toLocaleString() %>)</div>
-            <div><strong>ESI:</strong> <%= esi > 0 ? 'Covered (0.75%)' : 'Exempt (Wage > ₹21k ceiling)' %></div>
-            <div><strong>Bonus:</strong> <%= isBonusEligible ? 'Eligible (Base ₹7,000 @ 8.33%)' : 'Exempt (> ₹21k ceiling)' %></div>
-          </div>
+          <!-- 5. BANKING & STATUTORY DETAILS & NET PAYABLE -->
+          <table class="ep-footer-table">
+            <tbody>
+              <tr>
+                <td style="width:58%;vertical-align:top;border-right:1.5px solid #000;border-bottom:none;">
+                  <div class="ep-ftr-row">
+                    <span class="ep-ftr-lbl">Other Details:</span>
+                    <span class="ep-ftr-val">Payment Mode : <%= user.paymentMode || 'Cheque' %></span>
+                  </div>
+                  <div class="ep-ftr-row">
+                    <span class="ep-ftr-val">EPF NO. <%= user.pfNo || user.epfNo || 'DL/CPM/29544/10241' %></span>
+                    <span class="ep-ftr-val" style="margin-left:24px;">Bank Name : <%= user.bankName || 'KOTAK MAHINDRA BANK' %></span>
+                  </div>
+                  <div class="ep-ftr-row" style="padding-left:145px;">
+                    <span class="ep-ftr-val">A/c No. : <%= user.accountNumber || user.accountNo || '01720030209123' %></span>
+                  </div>
+                  <div class="ep-ftr-row">
+                    <span class="ep-ftr-val">PAN NO. <%= user.pan || user.panNo || 'AHGPT5354F' %></span>
+                  </div>
+                </td>
+                <td style="width:42%;vertical-align:top;border-bottom:none;">
+                  <div class="ep-net-row">
+                    <span class="ep-net-lbl">NET PAYABLE :</span>
+                    <span class="ep-net-val"><%= Number(netSalary).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span>
+                  </div>
+                  <div class="ep-empr-pf-row">
+                    <span class="ep-empr-pf-lbl">Empr.Cont.P.F. :</span>
+                    <span class="ep-empr-pf-val"><%= Number(pf).toFixed(2) %></span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          <div class="net-salary-box">
-            <span>NET TAKE-HOME SALARY:</span>
-            <span>₹<%= netSalary.toLocaleString() %></span>
-          </div>
-
-          <div class="footer-note">
-            Official computer-generated salary document issued by Surya Group / HS Enterprises. No signature required. Generated on <%= new Date().toLocaleDateString() %>.
+          <!-- Statutory Notes Bar -->
+          <div class="ep-statutory-notes">
+            <span><strong>Basic Salary Rate:</strong> ₹<%= Number(baseSalary).toLocaleString() %></span>
+            <span><strong>EPF (12%):</strong> Ceiling ₹<%= Number(epfWageCeiling).toLocaleString() %></span>
+            <span><strong>ESI (0.75%):</strong> <%= esi > 0 ? 'Covered' : 'Exempt (> ₹21k)' %></span>
+            <span><strong>Gratuity:</strong> 4.81% Provision (₹<%= Number(gratuityProvision).toLocaleString() %>)</span>
           </div>
         </div>
+
+        <div style="display:flex;justify-content:space-between;max-width:860px;margin:30px auto 0;font-size:10.5px;color:#64748b">
+          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:160px;text-align:center">Authorized Signatory</div>
+          <div style="border-top:1.5px dashed #94a3b8;padding-top:4px;width:160px;text-align:center">Employee Signature</div>
+        </div>
+
         <script>
           window.onload = function() { window.print(); };
         </script>
