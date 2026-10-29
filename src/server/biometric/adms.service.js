@@ -374,7 +374,7 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
       }
     }
 
-    if (!pin) continue;
+    if (!pin || !/^[a-zA-Z0-9_\-]{1,32}$/.test(pin) || /[\x00-\x1F\x7F]/.test(pin) || pin === '30191') continue;
 
     // Check if user already exists in HRMS
     let existingUser = db.users.find(u => 

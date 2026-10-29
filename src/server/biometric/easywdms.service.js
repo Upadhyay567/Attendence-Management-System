@@ -496,7 +496,12 @@ async function syncFromWDMS(username, password, options = {}) {
     }
   }
 
-  const transactions = await fetchTransactions(cookie, { maxPages, page_size: pageSize }).catch(err => {
+  const transactions = await fetchTransactions(cookie, {
+    maxPages,
+    page_size: pageSize,
+    start_time: options.start_time || options.startDate,
+    end_time: options.end_time || options.endDate
+  }).catch(err => {
     console.warn('⚠️ [WDMS] Transactions fetch warning:', err.message);
     return [];
   });
@@ -544,7 +549,7 @@ async function syncFromWDMS(username, password, options = {}) {
   let newEmployeesAdded = 0;
   employees.forEach(emp => {
     const pin = String(emp.emp_code || emp.pin || '').trim();
-    if (!pin) return;
+    if (!pin || !/^[a-zA-Z0-9_\-]{1,32}$/.test(pin) || /[\x00-\x1F\x7F]/.test(pin)) return;
     const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.name || `Employee ${pin}`;
     const pinDigits = pin.replace(/\D/g, '');
 

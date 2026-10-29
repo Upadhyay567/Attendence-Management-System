@@ -218,6 +218,23 @@ function writeLocalDatabase(state) {
 }
 
 
+
+/* =========================================================
+   VALIDATE BIOMETRIC USER ID
+========================================================= */
+
+function isValidBiometricUserId(id) {
+  if (!id) return false;
+  const clean = String(id).trim();
+  if (!clean || clean.length > 32) return false;
+  // Disallow control characters (\x00-\x1F, \x7F) or non-printable characters
+  if (/[\x00-\x1F\x7F]/.test(clean)) return false;
+  // Disallow IDs containing spaces or non-standard characters (must be alphanumeric, hyphen, or underscore)
+  if (!/^[a-zA-Z0-9_\-]+$/.test(clean)) return false;
+  if (clean === '30191' || clean.toLowerCase() === 'admin') return false;
+  return true;
+}
+
 /* =========================================================
    FIND HRMS USER
 ========================================================= */
@@ -321,7 +338,7 @@ function findLocalEmployee(users, biometricUserId, deviceUserName = '', location
   }
 
   // Auto-register biometric user if missing from HRMS list
-  if (target && target !== '30191' && targetName.toLowerCase() !== 'admin') {
+  if (isValidBiometricUserId(biometricUserId) && targetName.toLowerCase() !== 'admin') {
     const cleanName = (targetName && targetName !== 'admin' && !targetName.startsWith('employee '))
       ? deviceUserName
       : ('Employee ' + biometricUserId);
@@ -376,7 +393,7 @@ async function findMongoEmployee(biometricUserId, deviceUserName = '') {
     }).lean();
   }
 
-  if (!employee && target) {
+  if (!employee && isValidBiometricUserId(target)) {
     const cleanName = (targetName && targetName.toLowerCase() !== 'admin' && !targetName.toLowerCase().startsWith('employee '))
       ? deviceUserName
       : ('Employee ' + target);
@@ -701,6 +718,12 @@ function processLocalPunch(
 
   const date = localParts.date;
   const time = localParts.time;
+
+  // Discard corrupted timestamps (e.g. CMOS battery reset to 2000-01-01 or invalid dates)
+  if (!date || date < '2024-01-01' || date > '2035-01-01') {
+    result.ignored++;
+    return;
+  }
   const punchId =
     createPunchId(punch);
 
