@@ -6,6 +6,9 @@
     "dev": "node server.js",
     "test": "jest --testTimeout=35000 --runInBand --forceExit"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",

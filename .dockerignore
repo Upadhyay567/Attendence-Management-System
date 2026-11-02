@@ -1,0 +1,14 @@
+node_modules
+.git
+.github
+.vscode
+.dist
+.env
+.env.local
+.env.*.local
+scratch
+test
+uploads/*
+!uploads/.gitkeep
+run-server.bat
+*.log

@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const { 
   User, AttendanceLog, LeaveRequest, ShiftSwap, Schedule, Notice, OfficeCoordinate, AuditLog, PayrollAdjustment,
-  connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE, mongoose 
+  connectMongoose, syncLocalToMongoOnBoot, getUseLocalFileDB, LOCAL_DB_FILE, mongoose, getIsMongoConnected 
 } = require('./config/db');
 
 const authRoutes = require('./routes/auth.routes');
@@ -233,6 +233,16 @@ const processUploadRequest = (req, res) => {
 
 app.post('/api/upload', authenticateToken, processUploadRequest);
 app.post('/api/upload-leave-doc', authenticateToken, processUploadRequest);
+
+// Production Health Check & Readiness Endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    database: (typeof getIsMongoConnected === 'function' && getIsMongoConnected()) ? 'connected' : (getUseLocalFileDB() ? 'local_fallback' : 'ready')
+  });
+});
 
 // Mount Modular Express API Routes
 app.use('/api/auth', authRoutes);
