@@ -2643,6 +2643,12 @@ function renderAdminUsers() {
     userCountsByLoc[loc] = users.filter(u => userMatchesLocation(u, loc)).length;
   });
 
+  // Derive distinct departments dynamically from users & DB (removing demo departments)
+  const isIgnoredDept = (d) => !d || ['department', 'staff', 'general', '—', '-', 'not assigned'].includes(String(d).trim().toLowerCase());
+  const distinctDepts = (DB.getDepartments ? DB.getDepartments() : Array.from(new Set(
+    users.map(u => (u.department || '').trim()).filter(d => !isIgnoredDept(d))
+  ))).sort((a, b) => a.localeCompare(b));
+
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager') ? `
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="btn-outline-equify" id="btn-download-profile-users" title="Download Staff Profiles">&#8681; Download Profile</button>
@@ -2702,11 +2708,7 @@ function renderAdminUsers() {
         <div class="equify-filter-pills">
           <select class="equify-filter-select" id="filter-dept-select">
             <option value="all">Department: All Departments</option>
-            <option value="Human Resources">Department: Human Resources</option>
-            <option value="Engineering">Department: Engineering</option>
-            <option value="Operations">Department: Operations</option>
-            <option value="Sales">Department: Sales & Marketing</option>
-            <option value="Finance">Department: Finance</option>
+            ${distinctDepts.map(d => `<option value="${Utils.escape(d)}">Department: ${Utils.escape(d)}</option>`).join('')}
           </select>
           <select class="equify-filter-select" id="filter-location-select" title="Filter by Worksite Location">
             <option value="all">Location: All Locations (${users.length})</option>

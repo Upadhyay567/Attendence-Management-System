@@ -158,10 +158,7 @@ export function renderAdminFinance() {
                 <label class="form-label" for="up-dept">Department</label>
                 <select class="form-input" id="up-dept" style="padding:6px; font-size:12px">
                   <option value="General">General / Administrative</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Human Resources">Human Resources</option>
-                  <option value="Finance">Finance</option>
+                  ${(DB.getDepartments ? DB.getDepartments() : depts).filter(d => d.toLowerCase() !== 'general').map(d => `<option value="${Utils.escape(d)}">${Utils.escape(d)}</option>`).join('')}
                 </select>
               </div>
               <div class="form-group">

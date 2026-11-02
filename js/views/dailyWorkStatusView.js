@@ -27,8 +27,7 @@ export function renderDailyWorkStatus() {
 
   const currentMonthName = monthNames[dailyWorkStatusSelectedMonth];
   const daysInMonth = new Date(dailyWorkStatusSelectedYear, dailyWorkStatusSelectedMonth + 1, 0).getDate();
-  const todayObj = new Date();
-  const todayStr = todayObj.toISOString().split('T')[0];
+  const todayStr = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
 
   const allLogs = DB.getLogs() || [];
   let distinctLocs = [];
@@ -478,7 +477,8 @@ export function renderDailyWorkStatus() {
         const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
                         logsMap.get(`${emp.employeeId}_${dateStr}`) || 
                         (emp.biometricUserId ? logsMap.get(`${emp.biometricUserId}_${dateStr}`) : null) || 
-                        (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || [];
+                        (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || 
+                        (emp.biometricId ? logsMap.get(`${emp.biometricId}_${dateStr}`) : null) || [];
         const empLeaves = leavesMap.get(emp.id) || [];
         const hasApprovedLeave = empLeaves.some(lv => dateStr >= lv.startDate && dateStr <= (lv.endDate || lv.startDate));
 
@@ -737,7 +737,7 @@ function exportDailyWorkStatusCSV(year, month) {
   ];
   const currentMonthName = monthNames[month];
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = (Utils && typeof Utils.getTodayString === 'function') ? Utils.getTodayString() : new Date().toLocaleDateString('en-CA');
 
   const allUsers = DB.getUsers();
   let employees = allUsers.filter(u => DB.getUserBaseRole(u.role) === 'employee');
@@ -936,7 +936,8 @@ function exportDailyWorkStatusCSV(year, month) {
       const empLogs = logsMap.get(`${emp.id}_${dateStr}`) || 
                       logsMap.get(`${emp.employeeId}_${dateStr}`) || 
                       (emp.biometricUserId ? logsMap.get(`${emp.biometricUserId}_${dateStr}`) : null) || 
-                      (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || [];
+                      (emp.biometricUserId ? logsMap.get(`bio_${emp.biometricUserId}_${dateStr}`) : null) || 
+                      (emp.biometricId ? logsMap.get(`${emp.biometricId}_${dateStr}`) : null) || [];
       const empLeaves = leavesMap.get(emp.id) || [];
       const hasApprovedLeave = empLeaves.some(lv => dateStr >= lv.startDate && dateStr <= (lv.endDate || lv.startDate));
 
@@ -967,7 +968,7 @@ function exportDailyWorkStatusCSV(year, month) {
     return [
       emp.name,
       emp.employeeId || emp.id,
-      emp.department || 'Operations',
+      emp.department || '-',
       ...dayStatuses,
       countP,
       countL,
@@ -982,7 +983,7 @@ function exportDailyWorkStatusCSV(year, month) {
 
 function showDailyWorkStatusFilterModal(onApply, distinctLocs = []) {
   const allUsers = DB.getUsers().filter(u => DB.getUserBaseRole(u.role) === 'employee');
-  const departments = [...new Set(allUsers.map(u => u.department || 'Operations').filter(Boolean))];
+  const departments = (DB.getDepartments ? DB.getDepartments() : [...new Set(allUsers.map(u => (u.department || '').trim()).filter(Boolean))]).sort((a, b) => a.localeCompare(b));
 
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'modal-overlay';

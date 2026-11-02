@@ -408,7 +408,7 @@ async function handleUserUpload(sn, clientIp, rawBody = '', query = {}) {
         username: `bio_${pin}`,
         role: (privilege === '14' || privilege === 14) ? 'hr' : 'employee',
         status: 'Active',
-        department: 'Operations',
+        department: '',
         designation: 'Staff',
         scheduleId: '',
         scheduleIds: [],

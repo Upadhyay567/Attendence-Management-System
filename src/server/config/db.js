@@ -94,6 +94,8 @@ const AttendanceLogSchema = new mongoose.Schema({
   lastBiometricPunchAt: String,
   id: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
+  employeeId: String,
+  employeeName: String,
   date: { type: String, required: true },
   shiftId: String,
   checkIn: String,
@@ -101,6 +103,10 @@ const AttendanceLogSchema = new mongoose.Schema({
   status: String,
   biometricUsed: String,
   location: String,
+  departureLocation: String,
+  departureDevice: String,
+  departureDeviceId: String,
+  isAbsent: Boolean,
   deviationFlag: Boolean,
   justification: String,
   coords: String,
@@ -108,7 +114,7 @@ const AttendanceLogSchema = new mongoose.Schema({
   facePhoto: String,
   latitude: Number,
   longitude: Number
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 const LeaveRequestSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -305,11 +311,16 @@ async function syncLocalToMongoOnBoot() {
   try {
     const online = await connectMongoose();
     if (online && !useLocalFileDB) {
-      if (fs.existsSync(LOCAL_DB_FILE)) {
-        const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
-        const seedData = JSON.parse(rawSeed);
-        await syncLocalToMongo(seedData);
-        console.log('🔄 Synced local seed.json database state to MongoDB successfully on startup.');
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        if (fs.existsSync(LOCAL_DB_FILE)) {
+          const rawSeed = fs.readFileSync(LOCAL_DB_FILE, 'utf-8');
+          const seedData = JSON.parse(rawSeed);
+          await syncLocalToMongo(seedData);
+          console.log('🔄 Initialized empty MongoDB from seed.json database state successfully on startup.');
+        }
+      } else {
+        console.log(`ℹ️ MongoDB already populated (${userCount} users). Skipping full database wipe/seed.`);
       }
     }
   } catch (err) {

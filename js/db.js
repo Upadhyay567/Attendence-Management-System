@@ -1132,6 +1132,50 @@ export const DB = {
     return this.data.users;
   },
 
+  getDepartments() {
+    const isIgnored = (d) => !d || ['department', 'staff', 'general', '—', '-', 'not assigned'].includes(String(d).trim().toLowerCase());
+    const deptMap = new Map();
+    const users = Array.isArray(this.data?.users) ? this.data.users : [];
+    users.forEach(u => {
+      const raw = (u.department || '').trim();
+      if (raw && !isIgnored(raw)) {
+        const lower = raw.toLowerCase();
+        if (!deptMap.has(lower)) {
+          deptMap.set(lower, raw);
+        }
+      }
+    });
+
+    if (Array.isArray(this.data?.departments)) {
+      this.data.departments.forEach(d => {
+        const raw = (typeof d === 'string' ? d : (d?.name || '')).trim();
+        if (raw && !isIgnored(raw)) {
+          const lower = raw.toLowerCase();
+          if (!deptMap.has(lower)) {
+            deptMap.set(lower, raw);
+          }
+        }
+      });
+    }
+
+    return Array.from(deptMap.values()).sort((a, b) => a.localeCompare(b));
+  },
+
+  addDepartment(deptName) {
+    if (!deptName || typeof deptName !== 'string') return;
+    const name = deptName.trim();
+    const isIgnored = ['department', 'staff', 'general', '—', '-', 'not assigned'].includes(name.toLowerCase());
+    if (!name || isIgnored) return;
+    if (!Array.isArray(this.data.departments)) {
+      this.data.departments = [];
+    }
+    const exists = this.data.departments.some(d => (typeof d === 'string' ? d : (d?.name || '')).toLowerCase() === name.toLowerCase());
+    if (!exists) {
+      this.data.departments.push(name);
+      this.save({ type: 'push', key: 'departments', payload: name });
+    }
+  },
+
   getFinanceData() {
     if (!this.data.financeData) {
       this.data.financeData = {
@@ -1350,8 +1394,8 @@ export const DB = {
       address: '',
       city: '',
       gender: 'Male',
-      department: 'Engineering',
-      designation: 'Software Developer',
+      department: user.department || '',
+      designation: user.designation || '',
       dateOfJoining: new Date().toISOString().split('T')[0],
       emergencyContact: '',
       documents: [],

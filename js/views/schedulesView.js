@@ -106,7 +106,7 @@ export function renderAdminSchedules(tab) {
               <input type="text" id="loc-assign-search" class="form-input" placeholder="🔍 Search employee name, ID or department..." style="min-width:260px; max-width:360px; padding:8px 12px; font-size:12.5px; border-radius:8px">
               <select id="loc-assign-dept-filter" class="form-input" style="width:auto; padding:8px 12px; font-size:12.5px; border-radius:8px">
                 <option value="">All Departments</option>
-                ${[...new Set(allUsers.map(u => u.department).filter(Boolean))].map(d => `<option value="${Utils.escape(d)}">${Utils.escape(d)}</option>`).join('')}
+                ${(DB.getDepartments ? DB.getDepartments() : [...new Set(allUsers.map(u => u.department).filter(Boolean))]).map(d => `<option value="${Utils.escape(d)}">${Utils.escape(d)}</option>`).join('')}
               </select>
               <select id="loc-assign-loc-filter" class="form-input" style="width:auto; padding:8px 12px; font-size:12.5px; border-radius:8px">
                 <option value="">All Worksite Locations</option>

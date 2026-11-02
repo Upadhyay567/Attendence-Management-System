@@ -192,7 +192,10 @@ export function renderRegisterEmployeeView() {
           <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:0;">
             <div>
               <label class="form-label" for="reg-dept" style="font-weight:700;">Department <span style="color:var(--danger);font-size:11px">*</span></label>
-              <input class="form-input" type="text" id="reg-dept" placeholder="e.g. Sales / Production" required>
+              <input class="form-input" type="text" id="reg-dept" list="reg-dept-list" placeholder="e.g. Sales / Production" required>
+              <datalist id="reg-dept-list">
+                ${(DB.getDepartments ? DB.getDepartments() : []).map(d => `<option value="${Utils.escape(d)}">`).join('')}
+              </datalist>
             </div>
             <div>
               <label class="form-label" for="reg-desg" style="font-weight:700;">Designation <span style="color:var(--danger);font-size:11px">*</span></label>
@@ -856,6 +859,9 @@ export function renderRegisterEmployeeView() {
         profileVerificationStatus: 'Approved'
       };
 
+      if (department && DB.addDepartment) {
+        DB.addDepartment(department);
+      }
       const createdUser = DB.addUser(newUserPayload);
       if (createdUser && DB.notifyEmployeeProfileChange) {
         DB.notifyEmployeeProfileChange(createdUser.id, 'created', `Welcome ${name}! Your employee profile was registered by ${currentUser.name}.`, currentUser);

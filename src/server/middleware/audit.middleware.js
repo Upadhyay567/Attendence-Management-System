@@ -6,6 +6,7 @@ const LOCAL_DB_FILE = path.join(__dirname, '..', '..', '..', 'seed.json');
 
 async function recordAuditLog(AuditLogModel, useLocalFileDB, logData) {
   const entry = {
+    id: logData.id || `audit_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     timestamp: new Date().toISOString(),
     action: logData.action || 'GENERAL_ACTION',
     userId: logData.userId || 'SYSTEM',

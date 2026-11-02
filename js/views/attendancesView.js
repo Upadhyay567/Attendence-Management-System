@@ -985,9 +985,13 @@ export function renderAdminAttendances() {
     const allUsers = DB.getUsers();
     const activeUsers = allUsers.filter(u => !isDummyUser(u));
     const userMap = new Map(activeUsers.map(u => [u.id, u]));
+    activeUsers.forEach(u => {
+      if (u.employeeId) userMap.set(u.employeeId, u);
+      if (u.biometricUserId) userMap.set(u.biometricUserId, u);
+    });
 
     const rawExistingLogs = DB.getLogs().filter(log => {
-      if (!userMap.has(log.userId)) return false;
+      if (!userMap.has(log.userId) && (!log.employeeId || !userMap.has(log.employeeId)) && (!log.biometricUserId || !userMap.has(log.biometricUserId))) return false;
       if (!log.date) return false;
 
       if (adminAttendancesFilterMode === 'manual') {
@@ -1102,7 +1106,7 @@ export function renderAdminAttendances() {
 
     // Map logs with rich display values
     const mappedLogs = rawLogs.map(log => {
-      const emp = userMap.get(log.userId) || DB.getUser(log.userId);
+      const emp = userMap.get(log.userId) || (log.employeeId && userMap.get(log.employeeId)) || (log.biometricUserId && userMap.get(log.biometricUserId)) || DB.getUser(log.userId);
       const empName = emp ? emp.name : 'Unknown User';
       const empId = emp ? (emp.employeeId || emp.id) : '';
       const userShiftIds = Array.isArray(emp?.scheduleIds) && emp.scheduleIds.length > 0

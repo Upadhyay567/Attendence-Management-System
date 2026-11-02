@@ -1,24 +1,24 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=125';
-import { renderAdminSchedules } from './views/schedulesView.js?v=125';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=125';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=125';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=125';
-import { renderAdminAttendances } from './views/attendancesView.js?v=125';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=125';
-import { renderAdminFinance } from './views/financeView.js?v=125';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=125';
-import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=125';
-import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=125';
-import { drawRadarMap } from './components/geofenceMap.js?v=125';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=125';
+import { renderLoginView } from './views/loginView.js?v=126';
+import { renderAdminSchedules } from './views/schedulesView.js?v=126';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=126';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=126';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=126';
+import { renderAdminAttendances } from './views/attendancesView.js?v=126';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=126';
+import { renderAdminFinance } from './views/financeView.js?v=126';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=126';
+import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=126';
+import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=126';
+import { drawRadarMap } from './components/geofenceMap.js?v=126';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=126';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=125';
-import { Auth } from './auth.js?v=125';
-import { Utils, html } from './utils.js?v=125';
-import { triggerBirthdayCelebration } from './celebration.js?v=125';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=125';
+import { DB } from './core/db.js?v=126';
+import { Auth } from './auth.js?v=126';
+import { Utils, html } from './utils.js?v=126';
+import { triggerBirthdayCelebration } from './celebration.js?v=126';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=126';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -3266,7 +3266,10 @@ function renderEmployeeProfile() {
             <div class="prof-field-row" style="margin-bottom:16px;">
               <div>
                 <label class="prof-label" for="prof-dept">Department</label>
-                <input class="prof-input" type="text" id="prof-dept" value="${Utils.escape((user.department && user.department !== 'Department' && user.department !== 'Staff' && user.department !== 'General') ? user.department : '')}" placeholder="Not Assigned" disabled>
+                <input class="prof-input" type="text" id="prof-dept" list="prof-dept-datalist" value="${Utils.escape((user.department && user.department !== 'Department' && user.department !== 'Staff' && user.department !== 'General') ? user.department : '')}" placeholder="Type or select department" disabled style="width:100%; box-sizing:border-box;">
+                <datalist id="prof-dept-datalist">
+                  ${(DB.getDepartments ? DB.getDepartments() : []).map(d => `<option value="${Utils.escape(d)}">`).join('')}
+                </datalist>
               </div>
               <div>
                 <label class="prof-label" for="prof-designation">Designation</label>
@@ -3530,6 +3533,20 @@ function renderEmployeeProfile() {
   }
 
   // Enable Save button upon form edits
+  const deptInput = document.getElementById('prof-dept');
+  if (deptInput) {
+    deptInput.addEventListener('click', () => {
+      deptInput.removeAttribute('disabled');
+      deptInput.focus();
+      const saveBtn = document.getElementById('btn-profile-save');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.boxShadow = '0 4px 12px rgba(137,32,27,0.2)';
+      }
+    });
+  }
+
   const detailsForm = document.getElementById('profile-details-form');
   const saveBtn = document.getElementById('btn-profile-save');
   const updateBtn = document.getElementById('btn-profile-update');
@@ -3629,6 +3646,22 @@ function renderEmployeeProfile() {
         pendingProfileEdits: null
       };
       updates.profileEditCount = (user.profileEditCount || 0) + 1;
+      if (department && DB.addDepartment) {
+        DB.addDepartment(department);
+      }
+      user.department = department;
+      if (Auth.currentUser && Auth.currentUser.id === user.id) {
+        Auth.currentUser.department = department;
+      }
+      try {
+        const rawSess = sessionStorage.getItem('attendance_current_session') || localStorage.getItem('attendance_current_session');
+        if (rawSess) {
+          const parsed = JSON.parse(rawSess);
+          parsed.department = department;
+          sessionStorage.setItem('attendance_current_session', JSON.stringify(parsed));
+          localStorage.setItem('attendance_current_session', JSON.stringify(parsed));
+        }
+      } catch (_) {}
       const updatePromise = DB.updateUserProfile(user.id, updates);
       
       // Await the save so in-memory data is up-to-date before re-rendering
@@ -4162,7 +4195,7 @@ function createCorporatePdfBlob(title, user, doc) {
     '0 -24 Td',
     '(' + sanitize('Designation / Role:    ' + (user.designation || 'Staff')) + ') Tj',
     '0 -24 Td',
-    '(' + sanitize('Department:            ' + (user.department || 'Operations')) + ') Tj',
+    '(' + sanitize('Department:            ' + (user.department || '-')) + ') Tj',
     '0 -24 Td',
     '(' + sanitize('Official Email:        ' + (user.email || 'N/A')) + ') Tj',
     '0 -24 Td',
@@ -5391,7 +5424,7 @@ function getBirthdayWidgetHTML() {
               ${isToday ? '<span style="font-size:12px;" title="Birthday Today!">🎂</span>' : ''}
             </div>
             <div style="font-size:11px; color:var(--text-secondary) !important; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-              ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
+              ${Utils.escape([u.designation, u.department].filter(Boolean).join(' | ') || 'Staff')}
             </div>
             <div style="font-size:10px; color:var(--text-muted) !important; margin-top:2px">
               ID: ${Utils.escape(u.employeeId)} • Date: <strong style="color:var(--text-primary) !important">${s.formattedDate}</strong>
@@ -5672,7 +5705,7 @@ function openAllBirthdaysModal() {
             <div style="min-width:0; flex:1">
               <strong style="font-size:13px; color:var(--text-primary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escape(u.name)}</strong>
               <span style="font-size:11px; color:var(--text-secondary); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">
-                ${Utils.escape(u.designation || 'Staff')} | ${Utils.escape(u.department || 'Operations')}
+                ${Utils.escape([u.designation, u.department].filter(Boolean).join(' | ') || 'Staff')}
               </span>
               <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:3px">
                 ID: ${Utils.escape(u.employeeId)} &nbsp;•&nbsp; DOB: <strong style="color:var(--text-primary)">${formattedDob}</strong>
@@ -7515,6 +7548,7 @@ function renderAdminReports() {
     }
   });
   const distinctLocs = Array.from(distinctLocsSet).sort((a, b) => a.localeCompare(b));
+  const distinctDepts = (DB.getDepartments ? DB.getDepartments() : []).sort((a, b) => a.localeCompare(b));
 
   main.innerHTML = `
     <div class="content-header" id="employee-payslip-tab-header">
@@ -7541,11 +7575,7 @@ function renderAdminReports() {
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <select class="form-input" id="report-dept-select" style="min-width:180px;padding:8px;font-size:13px">
             <option value="all">Department: All Departments</option>
-            <option value="Human Resources">Department: Human Resources</option>
-            <option value="Engineering">Department: Engineering</option>
-            <option value="Operations">Department: Operations</option>
-            <option value="Sales">Department: Sales & Marketing</option>
-            <option value="Finance">Department: Finance</option>
+            ${distinctDepts.map(d => `<option value="${Utils.escape(d)}">Department: ${Utils.escape(d)}</option>`).join('')}
           </select>
           <select class="form-input" id="report-location-select" style="min-width:180px;padding:8px;font-size:13px" title="Filter by Worksite Location">
             <option value="all">Location: All Locations (${emps.length})</option>

@@ -598,7 +598,7 @@ async function syncFromWDMS(username, password, options = {}) {
         preferredLocations: [resolvedLoc],
         workLocation: resolvedLoc,
         branch: resolvedLoc,
-        department: emp.department?.dept_name || 'Operations'
+        department: emp.department?.dept_name || ''
       });
       newEmployeesAdded++;
     }

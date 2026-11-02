@@ -66,6 +66,12 @@ export function renderAdminUsers() {
     userCountsByLoc[loc] = users.filter(u => userMatchesLocation(u, loc)).length;
   });
 
+  // Derive distinct departments dynamically from users & DB (removing demo departments)
+  const isIgnoredDept = (d) => !d || ['department', 'staff', 'general', '—', '-', 'not assigned'].includes(String(d).trim().toLowerCase());
+  const distinctDepts = (DB.getDepartments ? DB.getDepartments() : Array.from(new Set(
+    users.map(u => (u.department || '').trim()).filter(d => !isIgnoredDept(d))
+  ))).sort((a, b) => a.localeCompare(b));
+
   const addBtnHTML = (user.role === 'hr' || user.role === 'manager' || user.role === 'admin') ? `
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="btn-outline-equify" id="btn-download-profile-users" title="Download Staff Profiles">&#8681; Download Profile</button>
@@ -190,11 +196,7 @@ export function renderAdminUsers() {
         <div class="equify-filter-pills">
           <select class="equify-filter-select" id="filter-dept-select">
             <option value="all">Department: All Departments</option>
-            <option value="Human Resources">Department: Human Resources</option>
-            <option value="Engineering">Department: Engineering</option>
-            <option value="Operations">Department: Operations</option>
-            <option value="Sales">Department: Sales & Marketing</option>
-            <option value="Finance">Department: Finance</option>
+            ${distinctDepts.map(d => `<option value="${Utils.escape(d)}">Department: ${Utils.escape(d)}</option>`).join('')}
           </select>
           <select class="equify-filter-select" id="filter-location-select" title="Filter by Worksite Location">
             <option value="all">Location: All Locations (${users.length})</option>
@@ -615,6 +617,11 @@ export function renderAdminPayroll() {
     userCountsByLoc[loc] = users.filter(u => userMatchesLocation(u, loc)).length;
   });
 
+  const isIgnoredDept = (d) => !d || ['department', 'staff', 'general', '—', '-', 'not assigned'].includes(String(d).trim().toLowerCase());
+  const distinctDepts = (DB.getDepartments ? DB.getDepartments() : Array.from(new Set(
+    users.map(u => (u.department || '').trim()).filter(d => !isIgnoredDept(d))
+  ))).sort((a, b) => a.localeCompare(b));
+
   const addPayrollBtnHTML = (user && (user.role === 'hr' || user.role === 'manager' || user.role === 'admin' || user.role === 'finance_manager')) ? `
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <button class="btn-outline-equify" id="btn-download-payroll-users" title="Download Staff Profiles">&#8681; Download Profile</button>
@@ -710,11 +717,7 @@ export function renderAdminPayroll() {
         <div class="equify-filter-pills">
           <select class="equify-filter-select" id="payroll-filter-dept-select">
             <option value="all">Department: All Departments</option>
-            <option value="Human Resources">Department: Human Resources</option>
-            <option value="Engineering">Department: Engineering</option>
-            <option value="Operations">Department: Operations</option>
-            <option value="Sales">Department: Sales & Marketing</option>
-            <option value="Finance">Department: Finance</option>
+            ${distinctDepts.map(d => `<option value="${Utils.escape(d)}">Department: ${Utils.escape(d)}</option>`).join('')}
           </select>
           <select class="equify-filter-select" id="payroll-filter-location-select" title="Filter by Worksite Location">
             <option value="all">Location: All Locations (${users.length})</option>
@@ -1152,7 +1155,10 @@ export function openUserModal(userId = null, initialTab = 'employee') {
           <div class="form-group" style="display:grid;grid-template-columns: 1fr 1fr;gap:12px">
             <div>
               <label class="form-label" for="editor-dept">Department</label>
-              <input class="form-input" type="text" id="editor-dept" value="${isEdit ? Utils.escape(user.department || '') : ''}" placeholder="e.g. Engineering" required>
+              <input class="form-input" type="text" id="editor-dept" list="editor-dept-list" value="${isEdit ? Utils.escape(user.department || '') : ''}" placeholder="e.g. Operations, IT, Accounts, HR..." required>
+              <datalist id="editor-dept-list">
+                ${(DB.getDepartments ? DB.getDepartments() : []).map(d => `<option value="${Utils.escape(d)}">`).join('')}
+              </datalist>
             </div>
             <div>
               <label class="form-label" for="editor-desg">Designation</label>
@@ -1857,6 +1863,7 @@ export function openUserModal(userId = null, initialTab = 'employee') {
         updates.password = Utils.hashPassword(password);
       }
       const existingUserCloned = user ? JSON.parse(JSON.stringify(user)) : null;
+      if (department && DB.addDepartment) DB.addDepartment(department);
       DB.updateUser(userId, updates);
       const diffText = DB.generateProfileChangeDiff ? DB.generateProfileChangeDiff(existingUserCloned, updates, currentUser ? currentUser.name : 'HR/Manager') : `Your profile details (designation, salary, work shifts, or locations) have been updated by ${currentUser ? currentUser.name : 'HR/Manager'}.`;
       DB.notifyEmployeeProfileChange(userId, 'updated', diffText, currentUser);
@@ -2685,7 +2692,7 @@ export async function processBulkEmployeeData(rawRows) {
         password: finalPassword,
         role: norm.role || 'employee',
         status: norm.status || 'Active',
-        department: norm.department || 'Operations',
+        department: norm.department || '',
         designation: norm.designation || 'Staff',
         branch: norm.branch || '',
         pincode: norm.pincode || '',

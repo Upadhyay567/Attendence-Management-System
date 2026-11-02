@@ -167,45 +167,12 @@ async function getDbState(req, res) {
     const online = await connectMongoose();
     const useLocal = getUseLocalFileDB();
 
-    
     if (online && !useLocal) {
-      if (key === 'officeCoordinates') {
-        try {
-          const coordsObj = payload || updates || {};
-          const docs = Object.entries(coordsObj).map(([name, coords]) => ({
-            name,
-            lat: Number(coords.lat),
-            lng: Number(coords.lng)
-          }));
-          await OfficeCoordinate.deleteMany({});
-          if (docs.length > 0) {
-            await OfficeCoordinate.insertMany(docs);
-          }
-        } catch (coordErr) {
-          console.warn('⚠️ OfficeCoordinate sync warning:', coordErr.message);
-        }
-      }
-
-      if (key === 'payrollAdjustments') {
-        try {
-          const adjItem = payload || updates;
-          if (adjItem && adjItem.userId && adjItem.month !== undefined && adjItem.year !== undefined) {
-            await PayrollAdjustment.updateOne(
-              { userId: String(adjItem.userId), month: Number(adjItem.month), year: Number(adjItem.year) },
-              { $set: adjItem },
-              { upsert: true }
-            );
-          }
-        } catch (adjErr) {
-          console.warn('⚠️ PayrollAdjustment sync warning:', adjErr.message);
-        }
-      }
-
       const [users, attendanceLogs, leaveRequests, shiftSwaps, schedules, notices, officeCoords, biometricDevices, payrollAdjustments] = await Promise.all([
         User.find({}, '-password').lean(),
         AttendanceLog.find(
           {},
-          'id userId employeeId biometricUserId employeeName date checkIn checkOut status shiftId location biometricUsed departureLocation lastBiometricPunchAt -_id'
+          'id userId employeeId biometricUserId employeeName date checkIn checkOut status shiftId location biometricUsed departureLocation departureDevice departureDeviceId lastBiometricPunchAt deviationFlag justification coords distance latitude longitude isAbsent -_id'
         ).sort({ date: -1 }).lean(),
         LeaveRequest.find({}).lean(),
         ShiftSwap.find({}).lean(),
@@ -406,7 +373,35 @@ async function handleGranularMutation(req, res) {
     }
 
     if (online && !useLocal) {
-      if (type === 'push' && payload && payload.id) {
+      if (key === 'officeCoordinates') {
+        try {
+          const coordsObj = payload || updates || {};
+          const docs = Object.entries(coordsObj).map(([name, coords]) => ({
+            name,
+            lat: Number(coords.lat),
+            lng: Number(coords.lng)
+          }));
+          await OfficeCoordinate.deleteMany({});
+          if (docs.length > 0) {
+            await OfficeCoordinate.insertMany(docs);
+          }
+        } catch (coordErr) {
+          console.warn('⚠️ OfficeCoordinate sync warning:', coordErr.message);
+        }
+      } else if (key === 'payrollAdjustments') {
+        try {
+          const adjItem = payload || updates;
+          if (adjItem && adjItem.userId && adjItem.month !== undefined && adjItem.year !== undefined) {
+            await PayrollAdjustment.updateOne(
+              { userId: String(adjItem.userId), month: Number(adjItem.month), year: Number(adjItem.year) },
+              { $set: adjItem },
+              { upsert: true }
+            );
+          }
+        } catch (adjErr) {
+          console.warn('⚠️ PayrollAdjustment sync warning:', adjErr.message);
+        }
+      } else if (type === 'push' && payload && payload.id) {
         try {
           if (key === 'users') await User.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });
           else if (key === 'attendanceLogs') await AttendanceLog.updateOne({ id: payload.id }, { $set: payload }, { upsert: true });

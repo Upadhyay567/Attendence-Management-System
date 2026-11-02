@@ -180,12 +180,11 @@ async function loginUser(req, res) {
     foundUser.role = normalizeRole(foundUser.role);
     const foundUserBaseRole = getBaseRole(foundUser.role);
 
-    // If an HR / Admin account logs in through ANY portal, allow them through seamlessly.
-    // For non-admin roles (e.g. employee attempting to access HR / Manager portal), return clean role mismatch:
-    if (role && foundUserBaseRole !== 'hr') {
+    // Role portal isolation enforcement
+    if (role) {
       const reqBaseRole = getBaseRole(role);
       if (reqBaseRole && foundUserBaseRole && reqBaseRole !== foundUserBaseRole) {
-        return res.json({ 
+        return res.status(403).json({ 
           success: false,
           code: 'ROLE_MISMATCH',
           error: `Access Denied: Account '${key}' is assigned to the '${foundUser.role.toUpperCase()}' role and cannot log in through the '${role.toUpperCase()}' portal.`,

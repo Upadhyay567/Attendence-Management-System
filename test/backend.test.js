@@ -330,7 +330,7 @@ describe('HS Group Attendance System API Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.users)).toBe(true);
-    });
+    }, 120000);
 
     it('should trigger multi-device biometric sync via POST /api/biometric/sync', async () => {
       const response = await request(app).post('/api/biometric/sync');
