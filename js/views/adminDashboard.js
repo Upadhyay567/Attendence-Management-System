@@ -2443,11 +2443,16 @@ export async function renderAdminDashboard() {
       dropdownLiveFeed.style.display = dropdownLiveFeed.style.display === 'block' ? 'none' : 'block';
     });
 
-    document.addEventListener('click', (e) => {
-      if (!dropdownLiveFeed.contains(e.target) && e.target !== btnLiveFeedLocation && !btnLiveFeedLocation.contains(e.target)) {
-        dropdownLiveFeed.style.display = 'none';
-      }
-    });
+    if (!window._adminDashboardLiveFeedBound) {
+      window._adminDashboardLiveFeedBound = true;
+      document.addEventListener('click', (e) => {
+        const dlf = document.getElementById('dropdown-live-feed-locations');
+        const blf = document.getElementById('btn-live-feed-location-filter');
+        if (dlf && blf && !dlf.contains(e.target) && e.target !== blf && !blf.contains(e.target)) {
+          dlf.style.display = 'none';
+        }
+      });
+    }
   }
 
   const cbLiveFeedAll = document.getElementById('cb-live-feed-all-locations');
@@ -2887,10 +2892,13 @@ function renderAdminUsers() {
       const sm = document.getElementById('add-employee-sub-menu');
       if (sm) sm.style.display = (sm.style.display === 'block') ? 'none' : 'block';
     });
-    document.addEventListener('click', () => {
-      const sm = document.getElementById('add-employee-sub-menu');
-      if (sm) sm.style.display = 'none';
-    });
+    if (!window._adminDashboardSubMenuBound) {
+      window._adminDashboardSubMenuBound = true;
+      document.addEventListener('click', () => {
+        const sm = document.getElementById('add-employee-sub-menu');
+        if (sm) sm.style.display = 'none';
+      });
+    }
   }
 
   const legacyAddBtn = document.getElementById('btn-add-user-modal');

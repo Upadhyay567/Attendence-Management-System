@@ -349,9 +349,13 @@ export function renderAdminAttendances() {
       e.stopPropagation();
       actionsMenu.style.display = actionsMenu.style.display === 'block' ? 'none' : 'block';
     });
-    document.addEventListener('click', () => {
-      actionsMenu.style.display = 'none';
-    });
+    if (!window._adminAttActionsMenuBound) {
+      window._adminAttActionsMenuBound = true;
+      document.addEventListener('click', () => {
+        const menu = document.getElementById('admin-att-actions-menu');
+        if (menu) menu.style.display = 'none';
+      });
+    }
   }
 
   // Calendar / Manual Date Filter Popover Controller
@@ -552,11 +556,16 @@ export function renderAdminAttendances() {
       e.stopPropagation();
     });
 
-    document.addEventListener('click', (e) => {
-      if (calPopover && !calPopover.contains(e.target) && e.target !== calBtn && !calBtn.contains(e.target)) {
-        calPopover.style.display = 'none';
-      }
-    });
+    if (!window._adminAttCalPopoverBound) {
+      window._adminAttCalPopoverBound = true;
+      document.addEventListener('click', (e) => {
+        const cp = document.getElementById('admin-att-calendar-popover');
+        const cb = document.getElementById('admin-att-calendar-btn');
+        if (cp && cb && !cp.contains(e.target) && e.target !== cb && !cb.contains(e.target)) {
+          cp.style.display = 'none';
+        }
+      });
+    }
   }
 
   if (tabMonth) tabMonth.addEventListener('click', () => switchPickerTab('month'));

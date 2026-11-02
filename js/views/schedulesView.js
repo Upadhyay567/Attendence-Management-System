@@ -709,17 +709,27 @@ export function renderAdminSchedules(tab) {
       closeAllPopovers();
     });
 
-    // Close popovers on click outside or scroll
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.emp-multi-select-wrap') && !e.target.closest('.emp-multi-select-popover')) {
-        closeAllPopovers();
-      }
-    });
+    // Close popovers on click outside or scroll (idempotent listener)
+    if (!window._schedulesPopoversBound) {
+      window._schedulesPopoversBound = true;
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.emp-multi-select-wrap') && !e.target.closest('.emp-multi-select-popover')) {
+          if (typeof closeAllPopovers === 'function') closeAllPopovers();
+          else if (typeof window.closeAllSchedulePopovers === 'function') window.closeAllSchedulePopovers();
+        }
+      });
 
-    const mainContainer = document.getElementById('main-view');
-    if (mainContainer) mainContainer.addEventListener('scroll', closeAllPopovers, { passive: true });
-    window.addEventListener('scroll', closeAllPopovers, { passive: true });
-    window.addEventListener('resize', closeAllPopovers);
+      const mainContainer = document.getElementById('main-view');
+      if (mainContainer) mainContainer.addEventListener('scroll', () => {
+        if (typeof closeAllPopovers === 'function') closeAllPopovers();
+      }, { passive: true });
+      window.addEventListener('scroll', () => {
+        if (typeof closeAllPopovers === 'function') closeAllPopovers();
+      }, { passive: true });
+      window.addEventListener('resize', () => {
+        if (typeof closeAllPopovers === 'function') closeAllPopovers();
+      });
+    }
 
     // =========================================================================
     // TABLE RENDERING & EVENT DELEGATION

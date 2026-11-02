@@ -1,24 +1,24 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=126';
-import { renderAdminSchedules } from './views/schedulesView.js?v=126';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=126';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=126';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=126';
-import { renderAdminAttendances } from './views/attendancesView.js?v=126';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=126';
-import { renderAdminFinance } from './views/financeView.js?v=126';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=126';
-import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=126';
-import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=126';
-import { drawRadarMap } from './components/geofenceMap.js?v=126';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=126';
+import { renderLoginView } from './views/loginView.js?v=127';
+import { renderAdminSchedules } from './views/schedulesView.js?v=127';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=127';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=127';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=127';
+import { renderAdminAttendances } from './views/attendancesView.js?v=127';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=127';
+import { renderAdminFinance } from './views/financeView.js?v=127';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=127';
+import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=127';
+import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=127';
+import { drawRadarMap } from './components/geofenceMap.js?v=127';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=127';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=126';
-import { Auth } from './auth.js?v=126';
-import { Utils, html } from './utils.js?v=126';
-import { triggerBirthdayCelebration } from './celebration.js?v=126';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=126';
+import { DB } from './core/db.js?v=127';
+import { Auth } from './auth.js?v=127';
+import { Utils, html } from './utils.js?v=127';
+import { triggerBirthdayCelebration } from './celebration.js?v=127';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=127';
 
 if (typeof window !== 'undefined') {
   window.html = html;
@@ -1238,23 +1238,50 @@ function setupRouter() {
         updateNavbarVerificationBadge();
       }
       
-      // Set Active Link in Sidebar
+      // Set Active Link in Sidebar with comprehensive route mapping and error handling
+      const adminDashboardRoutes = ['#admin-dashboard', '#admin-checkin-log', '#admin-deviations', '#admin-time-policies'];
+      const adminReportsRoutes = ['#admin-reports', '#admin-hours-balance'];
+      const adminSupportRoutes = ['#admin-support', '#admin-tickets'];
+      const adminApprovalsRoutes = ['#admin-approvals', '#admin-requests', '#admin-leaves'];
+      const adminVerificationRoutes = ['#admin-verification', '#verification', '#verification-docs'];
+      const employeeVerificationRoutes = ['#employee-verification', '#verification', '#verification-docs'];
+
       document.querySelectorAll('.menu-item').forEach(li => {
+        if (!li) return;
         li.classList.remove('active');
-        const href = li.querySelector('a')?.getAttribute('href');
-        if (href === hash || ((hash === '#verification' || hash === '#verification-docs') && (href === '#admin-verification' || href === '#employee-verification'))) {
+        const link = li.querySelector('a');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href) return;
+
+        let isActive = (href === hash);
+        if (li.id === 'nav-admin-dashboard' && adminDashboardRoutes.includes(hash)) isActive = true;
+        else if (li.id === 'nav-admin-reports' && adminReportsRoutes.includes(hash)) isActive = true;
+        else if (li.id === 'nav-admin-support' && adminSupportRoutes.includes(hash)) isActive = true;
+        else if (li.id === 'nav-admin-approvals' && adminApprovalsRoutes.includes(hash)) isActive = true;
+        else if (li.id === 'nav-admin-verification' && adminVerificationRoutes.includes(hash)) isActive = true;
+        else if (li.id === 'nav-employee-verification' && employeeVerificationRoutes.includes(hash)) isActive = true;
+
+        if (isActive) {
           li.classList.add('active');
         }
       });
 
       // Highlight active submenu items and parent
       document.querySelectorAll('.submenu-item').forEach(subLi => {
+        if (!subLi) return;
         subLi.classList.remove('active');
-        const href = subLi.querySelector('a')?.getAttribute('href');
-        const matches = (href === hash) ||
+        const link = subLi.querySelector('a');
+        const href = link ? link.getAttribute('href') : null;
+        const matches = (href && href === hash) ||
           ((hash === '#admin-payroll' || hash === '#payroll') && href === '#admin-payroll') ||
           ((hash === '#admin-register-employee' || hash === '#register-employee') && (href === '#admin-register-employee' || subLi.id === 'sub-register-employee')) ||
-          ((hash === '#admin-users' || hash === '#users' || hash === '#admin-employees' || hash === '#employees') && href === '#admin-users');
+          ((hash === '#admin-users' || hash === '#users' || hash === '#admin-employees' || hash === '#employees') && href === '#admin-users') ||
+          (hash === '#admin-my-attendances' && href === '#admin-my-attendances') ||
+          ((hash === '#admin-attendances' || hash === '#admin-attendance') && href === '#admin-attendances') ||
+          ((hash === '#admin-work-status' || hash === '#work-status' || hash === '#daily-work-status') && href === '#admin-work-status') ||
+          (hash === '#leaves' && href === '#leaves');
+
         if (matches) {
           subLi.classList.add('active');
           const parentMenu = subLi.closest('.menu-item-has-submenu');
@@ -1843,13 +1870,31 @@ function renderAppShell() {
       });
     }
 
-    document.addEventListener('click', (e) => {
-      const wrapper = document.getElementById('user-profile-menu-wrapper');
-      if (wrapper && !wrapper.contains(e.target)) {
-        userDropdownMenu.style.display = 'none';
-        if (userChevron) userChevron.style.transform = 'rotate(0deg)';
-      }
-    });
+    // Prevent duplicate document click listeners for header dropdowns
+    if (!window._shellDropdownsDocClickBound) {
+      window._shellDropdownsDocClickBound = true;
+      document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('user-profile-menu-wrapper');
+        const userMenu = document.getElementById('top-user-dropdown-menu');
+        const userChev = document.getElementById('user-dropdown-chevron');
+        if (userMenu && wrapper && !wrapper.contains(e.target)) {
+          userMenu.style.display = 'none';
+          if (userChev) userChev.style.transform = 'rotate(0deg)';
+        }
+
+        const notifDropdown = document.getElementById('notifications-dropdown');
+        const notifBtn = document.getElementById('btn-notifications-toggle');
+        if (notifDropdown && notifBtn && !notifDropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+          notifDropdown.style.display = 'none';
+        }
+
+        const messageDropdown = document.getElementById('messages-dropdown');
+        const messageBtn = document.getElementById('btn-messages-toggle');
+        if (messageDropdown && messageBtn && !messageDropdown.contains(e.target) && !messageBtn.contains(e.target)) {
+          messageDropdown.style.display = 'none';
+        }
+      });
+    }
   }
 
   // Bind Notifications Dropdown toggle
@@ -1935,15 +1980,7 @@ function renderAppShell() {
     // Initial update of Messages inbox
     updateMessagesInbox();
 
-    // Close dropdown on click outside
-    document.addEventListener('click', (e) => {
-      if (!dropdown.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
-        dropdown.style.display = 'none';
-      }
-      if (msgDropdown && !msgDropdown.contains(e.target) && e.target !== msgToggleBtn && !msgToggleBtn.contains(e.target)) {
-        msgDropdown.style.display = 'none';
-      }
-    });
+    // Close dropdown on click outside handled by unified shell click listener
 
     // Delete all notifications click event
     if (clearBtn) {
