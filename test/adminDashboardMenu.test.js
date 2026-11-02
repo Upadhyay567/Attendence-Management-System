@@ -73,4 +73,15 @@ describe('Admin Dashboard Menu and Extension Error Shield Verification', () => {
   test('js/views/schedulesView.js prevents duplicate popover event listeners', () => {
     expect(schedulesJs).toContain('_schedulesPopoversBound');
   });
+
+  test('js/core/db.js imports db.js with cache-busting v=127', () => {
+    const coreDbJs = fs.readFileSync(path.join(__dirname, '../js/core/db.js'), 'utf8');
+    expect(coreDbJs).toContain("from '../db.js?v=127'");
+  });
+
+  test('src/server/app.js serves index.html with no-cache headers', () => {
+    const serverAppJs = fs.readFileSync(path.join(__dirname, '../src/server/app.js'), 'utf8');
+    expect(serverAppJs).toContain("filename === 'index.html'");
+    expect(serverAppJs).toContain("no-cache, no-store, must-revalidate");
+  });
 });

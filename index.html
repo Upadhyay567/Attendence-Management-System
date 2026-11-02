@@ -5,10 +5,53 @@
   <script>
     // Early shield against external browser extension errors (e.g. Chrome translation / save-page context menu rejections)
     (function() {
-      // 1. Safe contextMenus API shim
+      // 1. Extension error detection helper (multi-shape inspector)
+      var isExtensionError = function(val) {
+        if (!val) return false;
+        var s = '';
+        try {
+          if (typeof val === 'string') {
+            s = val;
+          } else {
+            var parts = [];
+            if (val.message) parts.push(String(val.message));
+            if (val.stack) parts.push(String(val.stack));
+            if (val.name) parts.push(String(val.name));
+            if (val.reason) {
+              if (typeof val.reason === 'string') parts.push(val.reason);
+              else if (val.reason && typeof val.reason === 'object') {
+                if (val.reason.message) parts.push(String(val.reason.message));
+                if (val.reason.stack) parts.push(String(val.reason.stack));
+              }
+            }
+            if (val.error) {
+              if (typeof val.error === 'string') parts.push(val.error);
+              else if (val.error && typeof val.error === 'object') {
+                if (val.error.message) parts.push(String(val.error.message));
+                if (val.error.stack) parts.push(String(val.error.stack));
+              }
+            }
+            if (val.detail) parts.push(String(val.detail));
+            try { parts.push(String(val)); } catch (_) {}
+            s = parts.join(' ');
+          }
+        } catch (_) {
+          s = String(val || '');
+        }
+        s = s.toLowerCase();
+        return s.indexOf('cannot find menu item') !== -1 ||
+               s.indexOf('translate-page') !== -1 ||
+               s.indexOf('save-page') !== -1 ||
+               s.indexOf('menu item with id') !== -1 ||
+               s.indexOf('chrome-extension://') !== -1 ||
+               s.indexOf('extension context invalidated') !== -1;
+      };
+
+      // 2. Safe contextMenus API shim
       try {
         if (typeof window !== 'undefined') {
           window.chrome = window.chrome || {};
+          window.browser = window.browser || window.chrome;
           var noopAsync = function(id, props, cb) {
             if (typeof props === 'function') cb = props;
             if (typeof cb === 'function') {
@@ -16,22 +59,28 @@
             }
             return Promise.resolve();
           };
-          if (!window.chrome.contextMenus) {
-            window.chrome.contextMenus = {
+          var makeShim = function() {
+            return {
               create: function(props, cb) { return noopAsync(null, props, cb); },
               update: function(id, props, cb) { return noopAsync(id, props, cb); },
               remove: function(id, cb) { return noopAsync(id, cb); },
               removeAll: function(cb) { return noopAsync(null, cb); },
               onClicked: { addListener: function() {}, removeListener: function() {} }
             };
-          } else if (window.chrome.contextMenus) {
+          };
+          if (!window.chrome.contextMenus) {
+            window.chrome.contextMenus = makeShim();
+          } else {
             var origUpdate = window.chrome.contextMenus.update;
             if (typeof origUpdate === 'function') {
               window.chrome.contextMenus.update = function(id, props, cb) {
                 try {
                   var res = origUpdate.apply(this, arguments);
                   if (res && typeof res.catch === 'function') {
-                    return res.catch(function() { return null; });
+                    return res.catch(function(err) {
+                      if (isExtensionError(err)) return null;
+                      throw err;
+                    });
                   }
                   return res;
                 } catch (e) {
@@ -45,7 +94,10 @@
                 try {
                   var res = origRemove.apply(this, arguments);
                   if (res && typeof res.catch === 'function') {
-                    return res.catch(function() { return null; });
+                    return res.catch(function(err) {
+                      if (isExtensionError(err)) return null;
+                      throw err;
+                    });
                   }
                   return res;
                 } catch (e) {
@@ -54,36 +106,32 @@
               };
             }
           }
-          if (!window.chrome.menus) {
-            window.chrome.menus = window.chrome.contextMenus;
-          }
+          if (!window.chrome.menus) window.chrome.menus = window.chrome.contextMenus;
+          if (!window.browser.contextMenus) window.browser.contextMenus = window.chrome.contextMenus;
+          if (!window.browser.menus) window.browser.menus = window.chrome.contextMenus;
         }
       } catch (_) {}
 
-      // 2. Extension error detection helper
-      var isExtensionError = function(val) {
-        if (!val) return false;
-        var s = '';
-        if (typeof val === 'string') {
-          s = val;
-        } else if (val && typeof val === 'object') {
-          s = (val.message || '') + ' ' + (val.stack || '') + ' ' + (val.reason ? (val.reason.message || val.reason.stack || val.reason) : '');
-        } else {
-          s = String(val);
+      // 3. Intercept Promise.reject directly so unhandled rejection is never emitted
+      try {
+        if (typeof Promise !== 'undefined' && Promise.reject) {
+          var origPromiseReject = Promise.reject;
+          Promise.reject = function(reason) {
+            var p = origPromiseReject.apply(this, arguments);
+            if (isExtensionError(reason)) {
+              p.catch(function() {}); // mark as handled
+            }
+            return p;
+          };
         }
-        s = s.toLowerCase();
-        return s.indexOf('cannot find menu item') !== -1 ||
-               s.indexOf('translate-page') !== -1 ||
-               s.indexOf('save-page') !== -1 ||
-               s.indexOf('chrome-extension://') !== -1 ||
-               s.indexOf('extension context invalidated') !== -1;
-      };
+      } catch (_) {}
 
-      // 3. Unhandled promise rejection suppression
+      // 4. Unhandled promise rejection suppression (capture + bubble + handler)
       var handleRejection = function(event) {
         try {
-          var val = (event && event.reason) ? event.reason : event;
-          if (isExtensionError(val)) {
+          if (!event) return;
+          var val = event.reason || event;
+          if (isExtensionError(val) || isExtensionError(event)) {
             if (event.preventDefault) event.preventDefault();
             if (event.stopImmediatePropagation) event.stopImmediatePropagation();
             if (event.stopPropagation) event.stopPropagation();
@@ -95,8 +143,9 @@
 
       window.onunhandledrejection = handleRejection;
       window.addEventListener('unhandledrejection', handleRejection, true);
+      window.addEventListener('unhandledrejection', handleRejection, false);
 
-      // 4. Global window error interception
+      // 5. Global window error interception
       window.onerror = function(msg, url, line, col, error) {
         if (isExtensionError(msg) || isExtensionError(error)) {
           return true; // suppresses console error
@@ -112,19 +161,32 @@
           return true;
         }
       }, true);
+      window.addEventListener('error', function(event) {
+        if (event && (isExtensionError(event.message) || (event.error && isExtensionError(event.error)))) {
+          if (event.preventDefault) event.preventDefault();
+          event.returnValue = false;
+          return true;
+        }
+      }, false);
 
-      // 5. Console.error filter
+      // 6. Console.error and console.warn filters
       var origConsoleError = console.error;
       console.error = function() {
         for (var i = 0; i < arguments.length; i++) {
-          var arg = arguments[i];
-          var str = arg && (arg.message || arg.stack || String(arg));
-          if (isExtensionError(str)) return;
+          if (isExtensionError(arguments[i])) return;
         }
         origConsoleError.apply(console, arguments);
       };
 
-      // 6. Global template literal helper
+      var origConsoleWarn = console.warn;
+      console.warn = function() {
+        for (var i = 0; i < arguments.length; i++) {
+          if (isExtensionError(arguments[i])) return;
+        }
+        origConsoleWarn.apply(console, arguments);
+      };
+
+      // 7. Global template literal helper
       window.html = function(strings) {
         var values = Array.prototype.slice.call(arguments, 1);
         return strings.reduce(function(result, str, i) {

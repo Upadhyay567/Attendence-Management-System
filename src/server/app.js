@@ -111,6 +111,11 @@ app.use(express.static(ROOT_DIR, {
       res.status(403);
       throw new Error('Access denied');
     }
+    if (filename === 'index.html') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
   }
 }));
 
