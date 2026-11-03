@@ -55,4 +55,18 @@ describe('Attendance Shift & Multiple Location Assignment', () => {
     expect(attendancesViewCode).toContain('badge');
     expect(attendancesViewCode).toContain('isExplicitNoShift');
   });
+
+  test('Toolbar filters have compact fixed widths and proper order with multi-location split', () => {
+    // Compact fixed widths & ellipsis
+    expect(attendancesViewCode).toContain('id="admin-att-location-filter"');
+    expect(attendancesViewCode).toContain('max-width: 130px');
+    expect(attendancesViewCode).toContain('max-width: 125px');
+    expect(attendancesViewCode).toContain('max-width: 120px');
+    expect(attendancesViewCode).toContain('text-overflow: ellipsis');
+
+    // Splitting multi-location strings so options never stretch
+    expect(attendancesViewCode).toContain("loc.split(',').map(s => s.trim())");
+    expect(attendancesViewCode).toContain('<option value="">All Locations</option>');
+    expect(attendancesViewCode).toContain('<option value="">All Shifts</option>');
+  });
 });

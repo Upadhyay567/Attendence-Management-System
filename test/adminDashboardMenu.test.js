@@ -36,17 +36,17 @@ describe('Admin Dashboard Menu and Extension Error Shield Verification', () => {
     expect(saveMatches).toHaveLength(1);
   });
 
-  test('index.html references app.js with updated cache-busting v=128', () => {
-    expect(indexHtml).toContain('src="js/app.js?v=128"');
+  test('index.html references app.js with updated cache-busting v=129', () => {
+    expect(indexHtml).toContain('src="js/app.js?v=129"');
   });
 
-  test('js/app.js imports views with cache-busting v=128', () => {
-    expect(appJs).toContain("from './views/loginView.js?v=128'");
-    expect(appJs).toContain("from './views/adminDashboard.js?v=128'");
-    expect(appJs).toContain("from './views/attendancesView.js?v=128'");
-    expect(appJs).toContain("from './views/userManagementView.js?v=128'");
-    expect(appJs).toContain("from './views/schedulesView.js?v=128'");
-    expect(appJs).toContain("from './core/db.js?v=128'");
+  test('js/app.js imports views with cache-busting v=129', () => {
+    expect(appJs).toContain("from './views/loginView.js?v=129'");
+    expect(appJs).toContain("from './views/adminDashboard.js?v=129'");
+    expect(appJs).toContain("from './views/attendancesView.js?v=129'");
+    expect(appJs).toContain("from './views/userManagementView.js?v=129'");
+    expect(appJs).toContain("from './views/schedulesView.js?v=129'");
+    expect(appJs).toContain("from './core/db.js?v=129'");
   });
 
   test('js/app.js router active link mapping includes all admin dashboard sub-routes', () => {
@@ -74,9 +74,9 @@ describe('Admin Dashboard Menu and Extension Error Shield Verification', () => {
     expect(schedulesJs).toContain('_schedulesPopoversBound');
   });
 
-  test('js/core/db.js imports db.js with cache-busting v=128', () => {
+  test('js/core/db.js imports db.js with cache-busting v=129', () => {
     const coreDbJs = fs.readFileSync(path.join(__dirname, '../js/core/db.js'), 'utf8');
-    expect(coreDbJs).toContain("from '../db.js?v=128'");
+    expect(coreDbJs).toContain("from '../db.js?v=129'");
   });
 
   test('src/server/app.js serves index.html with no-cache headers', () => {
