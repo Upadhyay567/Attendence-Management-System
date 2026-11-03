@@ -14,6 +14,7 @@ let adminAttendancesSelectedIds = new Set();
 let adminAttendancesSelectedMonth = new Date().getMonth();
 let adminAttendancesSelectedYear = new Date().getFullYear();
 let adminAttendancesLocationFilter = '';
+let adminAttendancesShiftFilter = '';
 let adminAttendancesPunchFilter = ''; // '', 'in_session', 'missing_out', 'missing_in', 'completed', 'half_day', 'late', 'absent'
 let adminAttendancesFilterMode = 'month'; // 'month' or 'manual'
 let adminAttendancesSingleDate = ''; // 'YYYY-MM-DD'
@@ -206,6 +207,14 @@ export function renderAdminAttendances() {
             </select>
           </div>
 
+          <!-- Shift Filter Dropdown -->
+          <div style="position: relative; flex-shrink: 0;">
+            <select id="admin-att-shift-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 10px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 140px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
+              <option value="">All Shifts</option>
+              <option value="__NONE__">-- No Shift Assigned --</option>
+            </select>
+          </div>
+
           <!-- Punch / Attendance Status Filter Dropdown -->
           <div style="position: relative; flex-shrink: 0;">
             <select id="admin-att-punch-filter" class="form-input" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; height: 34px; padding: 0 10px; font-size: 13.5px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); cursor: pointer; min-width: 155px; appearance: auto; -webkit-appearance: menulist; box-sizing: border-box; transition: all 0.2s ease;">
@@ -238,6 +247,9 @@ export function renderAdminAttendances() {
             <div id="admin-att-actions-menu" style="display: none; position: absolute; right: 0; top: calc(100% + 4px); background: #ffffff; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 1000; min-width: 150px; padding: 4px 0; overflow: hidden; animation: fadeIn 0.15s ease;">
               <button id="btn-admin-att-sync-dropdown" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; background: transparent; color: #2563eb; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(37,99,235,0.08)'" onmouseout="this.style.background='transparent'">
                 <span id="att-sync-menu-icon" style="display: inline-block;">🔄</span> Sync Biometric
+              </button>
+              <button id="btn-admin-att-bulk-assign" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 600; border: none; background: transparent; color: #0284c7; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(2,132,199,0.08)'" onmouseout="this.style.background='transparent'">
+                <span>📍</span> Assign Shift &amp; Locations
               </button>
               <button id="btn-admin-att-import" style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; display: block; width: 100%; padding: 8px 18px; font-size: 14px; font-weight: 500; border: none; background: transparent; color: #1e293b; cursor: pointer; text-align: left; transition: background 0.15s ease;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">
                 Import
@@ -729,6 +741,15 @@ export function renderAdminAttendances() {
     });
   }
 
+  const shiftSelectInput = document.getElementById('admin-att-shift-filter');
+  if (shiftSelectInput) {
+    shiftSelectInput.addEventListener('change', (e) => {
+      adminAttendancesShiftFilter = e.target.value.trim();
+      adminAttendancesCurrentPage = 1;
+      updateTable();
+    });
+  }
+
   // Punch Status Filter Dropdown Event
   const punchSelectInput = document.getElementById('admin-att-punch-filter');
   if (punchSelectInput) {
@@ -839,6 +860,19 @@ export function renderAdminAttendances() {
       const menu = document.getElementById('admin-att-actions-menu');
       if (menu) menu.style.display = 'none';
       handleBiometricSync(btnSyncDropdown);
+    });
+  }
+
+  const btnBulkAssign = document.getElementById('btn-admin-att-bulk-assign');
+  if (btnBulkAssign) {
+    btnBulkAssign.addEventListener('click', () => {
+      const menu = document.getElementById('admin-att-actions-menu');
+      if (menu) menu.style.display = 'none';
+      if (adminAttendancesSelectedIds.size === 0) {
+        CustomDialog.alert("Please select one or more attendance records using the checkboxes to assign shift or locations.", "No Records Selected");
+        return;
+      }
+      showBulkAssignShiftAndLocationsModal(Array.from(adminAttendancesSelectedIds));
     });
   }
 
@@ -1093,8 +1127,10 @@ export function renderAdminAttendances() {
             ? emp.scheduleIds.filter(Boolean)
             : (emp?.scheduleId ? [emp.scheduleId] : []);
           const shiftId = userShiftIds[0] || '';
-          const rawLoc = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
-            (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0]) || '-';
+          const empLocs = (Array.isArray(emp?.preferredLocations) && emp.preferredLocations.length > 0)
+            ? emp.preferredLocations
+            : ((emp?.preferredLocation && emp.preferredLocation.trim()) ? [emp.preferredLocation.trim()] : []);
+          const rawLoc = empLocs.join(', ') || '-';
 
           absentLogs.push({
             id: `absent_${emp.id}_${targetDate}`,
@@ -1104,6 +1140,7 @@ export function renderAdminAttendances() {
             checkOut: null,
             shiftId,
             location: rawLoc,
+            locations: empLocs,
             status: 'Absent',
             isAbsent: true
           });
@@ -1123,26 +1160,30 @@ export function renderAdminAttendances() {
         : (emp?.scheduleId ? [emp.scheduleId] : []);
 
       let shift = null;
-      if (log.shiftId) {
+      const isExplicitNoShift = log.shiftId === '' || log.shiftId === null || log.shiftId === '__NONE__' || log.shiftId === 'none';
+      if (log.shiftId && !isExplicitNoShift) {
         shift = DB.getSchedule(log.shiftId);
       }
-      if (!shift && userShiftIds.length > 0) {
+      if (!shift && !isExplicitNoShift && userShiftIds.length > 0) {
         shift = DB.getSchedule(userShiftIds[0]);
       }
-      const shiftName = shift ? shift.name : 'Not Assigned';
-      // Exact biometric punch location takes precedence over static profile preferredLocation
+      const shiftName = isExplicitNoShift ? 'No Shift Assigned' : (shift ? shift.name : 'No Shift Assigned');
+      
+      // Multi-location or exact biometric punch location
       let location = '-';
       const inLoc = (log.location && log.location.trim()) || (log.biometricUsed && log.biometricUsed.trim());
       const outLoc = (log.departureLocation && log.departureLocation.trim()) || (log.departureDevice && log.departureDevice.trim());
-      if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
+      if (Array.isArray(log.locations) && log.locations.length > 0) {
+        location = formatLocationTag(log.locations.join(', '));
+      } else if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
         location = `${formatLocationTag(inLoc)} (In) • ${formatLocationTag(outLoc)} (Out)`;
       } else if (inLoc) {
         location = formatLocationTag(inLoc);
       } else if (outLoc) {
         location = formatLocationTag(outLoc);
       } else {
-        const fallback = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
-          (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0] && emp.preferredLocations[0].trim()) || '-';
+        const fallback = (Array.isArray(emp?.preferredLocations) && emp.preferredLocations.length > 0 && emp.preferredLocations.join(', ')) ||
+          (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
         location = formatLocationTag(fallback);
       }
       
@@ -1243,7 +1284,7 @@ export function renderAdminAttendances() {
       }
 
       let isLateArrival = false;
-      if (effectiveIn) {
+      if (shift && effectiveIn) {
         const [iH, iM] = effectiveIn.split(':').map(Number);
         const iMins = (iH || 0) * 60 + (iM || 0);
         if (iMins > shiftStartMins + grace) {
@@ -1252,7 +1293,7 @@ export function renderAdminAttendances() {
       }
 
       let isEarlyDeparture = false;
-      if (effectiveOut) {
+      if (shift && effectiveOut) {
         const [oH, oM] = effectiveOut.split(':').map(Number);
         const oMins = (oH || 0) * 60 + (oM || 0);
         if (oMins < shiftEndMins) {
@@ -1329,10 +1370,10 @@ export function renderAdminAttendances() {
         const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '');
         const counted = new Set();
         if (inLoc && inLoc !== 'Not Assigned' && inLoc !== '-' && !inLoc.toLowerCase().includes('kohat') && !inLoc.toLowerCase().includes('close')) {
-          counted.add(inLoc);
+          inLoc.split(',').forEach(p => { const cleanP = p.trim(); if (cleanP && cleanP !== 'Not Assigned' && cleanP !== '-') counted.add(cleanP); });
         }
         if (outLoc && outLoc !== 'Not Assigned' && outLoc !== '-' && !outLoc.toLowerCase().includes('kohat') && !outLoc.toLowerCase().includes('close')) {
-          counted.add(outLoc);
+          outLoc.split(',').forEach(p => { const cleanP = p.trim(); if (cleanP && cleanP !== 'Not Assigned' && cleanP !== '-') counted.add(cleanP); });
         }
         counted.forEach(loc => {
           locationMap.set(loc, (locationMap.get(loc) || 0) + 1);
@@ -1361,6 +1402,23 @@ export function renderAdminAttendances() {
       }
     }
 
+    // Populate shift filter options dynamically
+    const shiftFilterSelect = document.getElementById('admin-att-shift-filter');
+    if (shiftFilterSelect) {
+      const currentShiftVal = adminAttendancesShiftFilter || '';
+      const schedules = DB.getSchedules() || [];
+      const noneCount = mappedLogs.filter(l => l.shiftName === 'No Shift Assigned').length;
+      const shiftOpts = `<option value="">All Shifts (${mappedLogs.length})</option>` +
+        `<option value="__NONE__" ${currentShiftVal === '__NONE__' ? 'selected' : ''}>-- No Shift Assigned -- (${noneCount})</option>` +
+        schedules.map(s => {
+          const count = mappedLogs.filter(l => l.shiftId === s.id || l.shiftName === s.name).length;
+          return `<option value="${s.id}" ${currentShiftVal === s.id ? 'selected' : ''}>${Utils.escape(s.name)} (${count})</option>`;
+        }).join('');
+      if (shiftFilterSelect.innerHTML !== shiftOpts) {
+        shiftFilterSelect.innerHTML = shiftOpts;
+      }
+    }
+
     // 2. Filter by location
     let filtered = mappedLogs;
     if (adminAttendancesLocationFilter) {
@@ -1369,8 +1427,18 @@ export function renderAdminAttendances() {
         const inLoc = formatLocationTag(l.location || l.biometricUsed || '').toLowerCase().trim();
         const outLoc = formatLocationTag(l.departureLocation || l.departureDevice || '').toLowerCase().trim();
         const fullLoc = (l.location || '').toLowerCase();
-        return inLoc === targetLoc || outLoc === targetLoc || fullLoc.includes(targetLoc);
+        return inLoc === targetLoc || outLoc === targetLoc || inLoc.includes(targetLoc) || outLoc.includes(targetLoc) || fullLoc.includes(targetLoc);
       });
+    }
+
+    // 2a. Filter by Shift
+    if (adminAttendancesShiftFilter) {
+      if (adminAttendancesShiftFilter === '__NONE__') {
+        filtered = filtered.filter(l => l.shiftName === 'No Shift Assigned');
+      } else {
+        const sched = DB.getSchedule(adminAttendancesShiftFilter);
+        filtered = filtered.filter(l => l.shiftId === adminAttendancesShiftFilter || (sched && l.shiftName === sched.name));
+      }
     }
 
     // 2b. Filter by punch / attendance status
@@ -1514,9 +1582,13 @@ export function renderAdminAttendances() {
               ${!log.isAbsent && isEarlyDeparture ? `<div style="font-size: 11px; color: #f97316; font-weight: 600; margin-top: 2px;">Early Departure</div>` : ''}
             </td>
             <td style="padding: 12px 14px; font-size: 14px; color: #334155; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">
-              <div style="font-weight: 500;">${log.shiftName && log.shiftName !== '-' && log.shiftName !== 'Not Assigned' ? Utils.escape(log.shiftName) : '<span style="color:var(--text-muted); font-style:italic">Not Assigned</span>'}</div>
-              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 4px;">
-                <span style="opacity: 0.85;">📍</span> <span>${Utils.escape(log.location)}</span>
+              <div style="font-weight: 500;">
+                ${log.shiftName && log.shiftName !== '-' && log.shiftName !== 'Not Assigned' && log.shiftName !== 'No Shift Assigned'
+                  ? Utils.escape(log.shiftName)
+                  : '<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #64748b; font-size: 11.5px; padding: 2px 8px; border-radius: 4px; font-weight: 600;">No Shift Assigned</span>'}
+              </div>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                <span style="opacity: 0.85;">📍</span> <span>${Utils.escape(log.location && log.location !== 'Not Assigned' ? log.location : 'No Location Assigned')}</span>
               </div>
             </td>
             <td style="padding: 12px 14px; font-size: 14px; font-weight: 700; color: #1e293b; font-family: Calibri, 'Segoe UI', Arial, sans-serif;">${log.workStatus}</td>
@@ -1670,10 +1742,25 @@ export function renderAdminAttendances() {
   window.addEventListener('biometric_sync_complete', window._adminAttBioSyncHandler);
 }
 
+// Helper to fetch all active clean worksite locations
+function getAllWorksiteLocations() {
+  const locs = (typeof DB.getWorkLocations === 'function' ? DB.getWorkLocations() : []) || [];
+  if (locs.length === 0) {
+    const officeCoords = (typeof DB.getOfficeCoordinates === 'function' ? DB.getOfficeCoordinates() : {}) || {};
+    Object.keys(officeCoords).forEach(l => {
+      if (l && !l.includes('28.6952') && l !== 'Office HQ' && l !== 'Mock Device') {
+        locs.push(l);
+      }
+    });
+  }
+  return [...new Set(locs)].filter(Boolean);
+}
+
 // Modal for Creating New Attendance Record
 function showCreateAttendanceModal() {
   const users = DB.getUsers().filter(u => u && u.status !== 'Inactive');
-  const schedules = DB.getSchedules();
+  const schedules = DB.getSchedules() || [];
+  const allLocations = getAllWorksiteLocations();
   const todayStr = new Date().toISOString().split('T')[0];
 
   const modalOverlay = document.createElement('div');
@@ -1681,7 +1768,7 @@ function showCreateAttendanceModal() {
   modalOverlay.style.zIndex = '9999';
 
   modalOverlay.innerHTML = html`
-    <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
+    <div class="modal-content" style="max-width: 520px; animation: fadeIn 0.2s ease;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
         <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Create Attendance Record</h3>
         <button class="modal-close" id="btn-close-create-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
@@ -1704,6 +1791,7 @@ function showCreateAttendanceModal() {
           <div class="form-group" style="margin: 0;">
             <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Shift *</label>
             <select id="modal-create-att-shift" class="form-input" style="width: 100%; font-size: 13px;">
+              <option value="">-- No Shift Assigned --</option>
               ${schedules.map(s => `
                 <option value="${s.id}">${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>
               `).join('')}
@@ -1722,7 +1810,7 @@ function showCreateAttendanceModal() {
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 20px;">
+        <div class="form-group" style="margin-bottom: 14px;">
           <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Attendance Status</label>
           <select id="modal-create-att-status" class="form-input" style="width: 100%; font-size: 13px;">
             <option value="On Time">On Time</option>
@@ -1730,6 +1818,35 @@ function showCreateAttendanceModal() {
             <option value="Half Day">Half Day</option>
             <option value="Absent">Absent</option>
           </select>
+        </div>
+
+        <!-- Assigned Worksite Location(s) (Multi-Select Checkboxes) -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0;">
+              Assigned Worksite Location(s)
+              <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(Select multiple)</span>
+            </label>
+            <div style="display: flex; gap: 8px; font-size: 11.5px;">
+              <button type="button" id="modal-create-att-loc-all" style="background: none; border: none; color: #2563eb; cursor: pointer; font-weight: 600; padding: 0;">Select All</button>
+              <span style="color: var(--border);">|</span>
+              <button type="button" id="modal-create-att-loc-clear" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 600; padding: 0;">Clear</button>
+            </div>
+          </div>
+          <div style="margin-bottom: 6px;">
+            <input type="text" id="modal-create-att-loc-filter" placeholder="🔍 Filter locations..." class="form-input" style="width: 100%; height: 28px; font-size: 12px; padding: 0 8px; border-radius: 4px; box-sizing: border-box;">
+          </div>
+          <div id="modal-create-att-loc-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 140px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box;">
+            ${allLocations.map(loc => `
+              <label class="modal-create-att-loc-item" data-loc-name="${Utils.escape(loc.toLowerCase())}" style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-primary); cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; transition: background 0.15s ease;">
+                <input type="checkbox" class="modal-create-att-loc-chk" value="${Utils.escape(loc)}" style="cursor: pointer; width: 14px; height: 14px; accent-color: #ef4444; flex-shrink: 0;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Utils.escape(loc)}">📍 ${Utils.escape(loc)}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Selected: <strong id="modal-create-att-loc-count" style="color: #ef4444;">0</strong> location(s)
+          </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
@@ -1749,6 +1866,89 @@ function showCreateAttendanceModal() {
   modalOverlay.querySelector('#btn-close-create-att-modal').addEventListener('click', closeModal);
   modalOverlay.querySelector('#btn-cancel-create-att').addEventListener('click', closeModal);
 
+  // Multi-checkbox location management in Create modal
+  const createLocCheckboxes = modalOverlay.querySelectorAll('.modal-create-att-loc-chk');
+  const createCountEl = modalOverlay.querySelector('#modal-create-att-loc-count');
+  const createFilterInput = modalOverlay.querySelector('#modal-create-att-loc-filter');
+  const createLocItems = modalOverlay.querySelectorAll('.modal-create-att-loc-item');
+
+  const updateCreateCount = () => {
+    const checkedCount = modalOverlay.querySelectorAll('.modal-create-att-loc-chk:checked').length;
+    if (createCountEl) createCountEl.textContent = checkedCount;
+  };
+
+  createLocCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const parent = cb.closest('.modal-create-att-loc-item');
+      if (parent) {
+        parent.style.background = cb.checked ? 'rgba(239,68,68,0.04)' : 'transparent';
+        parent.style.border = cb.checked ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent';
+      }
+      updateCreateCount();
+    });
+  });
+
+  if (createFilterInput) {
+    createFilterInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      createLocItems.forEach(item => {
+        const name = item.getAttribute('data-loc-name') || '';
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  modalOverlay.querySelector('#modal-create-att-loc-all').addEventListener('click', () => {
+    createLocCheckboxes.forEach(cb => {
+      cb.checked = true;
+      const parent = cb.closest('.modal-create-att-loc-item');
+      if (parent) {
+        parent.style.background = 'rgba(239,68,68,0.04)';
+        parent.style.border = '1px solid rgba(239,68,68,0.2)';
+      }
+    });
+    updateCreateCount();
+  });
+
+  modalOverlay.querySelector('#modal-create-att-loc-clear').addEventListener('click', () => {
+    createLocCheckboxes.forEach(cb => {
+      cb.checked = false;
+      const parent = cb.closest('.modal-create-att-loc-item');
+      if (parent) {
+        parent.style.background = 'transparent';
+        parent.style.border = '1px solid transparent';
+      }
+    });
+    updateCreateCount();
+  });
+
+  // Auto-fill user's shift and locations when selected user changes
+  const userSelect = modalOverlay.querySelector('#modal-create-att-user');
+  const shiftSelect = modalOverlay.querySelector('#modal-create-att-shift');
+  const syncUserLocationsAndShift = () => {
+    const selectedUid = userSelect.value;
+    const u = DB.getUser(selectedUid);
+    if (!u) return;
+    const userShiftIds = Array.isArray(u.scheduleIds) && u.scheduleIds.length > 0
+      ? u.scheduleIds.filter(Boolean)
+      : (u.scheduleId ? [u.scheduleId] : []);
+    shiftSelect.value = userShiftIds[0] || '';
+
+    const uLocs = new Set(Array.isArray(u.preferredLocations) ? u.preferredLocations : (u.preferredLocation ? [u.preferredLocation] : []));
+    createLocCheckboxes.forEach(cb => {
+      const match = uLocs.has(cb.value);
+      cb.checked = match;
+      const parent = cb.closest('.modal-create-att-loc-item');
+      if (parent) {
+        parent.style.background = match ? 'rgba(239,68,68,0.04)' : 'transparent';
+        parent.style.border = match ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent';
+      }
+    });
+    updateCreateCount();
+  };
+  userSelect.addEventListener('change', syncUserLocationsAndShift);
+  syncUserLocationsAndShift();
+
   modalOverlay.querySelector('#form-create-attendance').addEventListener('submit', (e) => {
     e.preventDefault();
     const userId = document.getElementById('modal-create-att-user').value;
@@ -1757,17 +1957,35 @@ function showCreateAttendanceModal() {
     const checkIn = document.getElementById('modal-create-att-checkin').value;
     const checkOut = document.getElementById('modal-create-att-checkout').value || null;
     const status = document.getElementById('modal-create-att-status').value;
+    const selectedLocs = Array.from(modalOverlay.querySelectorAll('.modal-create-att-loc-chk:checked')).map(cb => cb.value);
+    const locString = selectedLocs.length > 0 ? selectedLocs.join(', ') : '-';
 
     DB.createManualAttendanceLog({
       userId,
       date,
-      shiftId,
+      shiftId: shiftId || null,
       checkIn,
       checkOut,
-      status
+      status,
+      location: locString,
+      locations: selectedLocs
     });
 
-    requestsPushDBState();
+    const emp = DB.getUser(userId);
+    if (emp && selectedLocs.length > 0) {
+      emp.preferredLocations = selectedLocs;
+      emp.preferredLocation = selectedLocs[0] || '';
+      DB.updateUser(emp.id, {
+        preferredLocations: selectedLocs,
+        preferredLocation: selectedLocs[0] || ''
+      });
+    }
+
+    if (typeof requestsPushDBState === 'function') {
+      requestsPushDBState();
+    } else if (typeof window.requestsPushDBState === 'function') {
+      window.requestsPushDBState();
+    }
     closeModal();
     showToastNotification("Attendance record created successfully.", 'success');
     renderAdminAttendances();
@@ -1787,6 +2005,9 @@ function showEditAttendanceModal(logId) {
     const userShiftIds = Array.isArray(empUser?.scheduleIds) && empUser.scheduleIds.length > 0
       ? empUser.scheduleIds.filter(Boolean)
       : (empUser?.scheduleId ? [empUser.scheduleId] : []);
+    const empLocs = (Array.isArray(empUser?.preferredLocations) && empUser.preferredLocations.length > 0)
+      ? empUser.preferredLocations
+      : (empUser?.preferredLocation ? [empUser.preferredLocation] : []);
     log = {
       id: logId,
       userId,
@@ -1794,21 +2015,36 @@ function showEditAttendanceModal(logId) {
       shiftId: userShiftIds[0] || '',
       checkIn: '09:00',
       checkOut: '18:00',
-      status: 'On Time'
+      status: 'On Time',
+      locations: empLocs,
+      location: empLocs.join(', ') || '-'
     };
     isSynthesizedAbsent = true;
   }
   if (!log) return;
 
   const emp = DB.getUser(log.userId);
-  const schedules = DB.getSchedules();
+  const schedules = DB.getSchedules() || [];
+  const allLocations = getAllWorksiteLocations();
+
+  // Collect current active locations for pre-checking
+  const currentLocs = new Set();
+  if (Array.isArray(log.locations) && log.locations.length > 0) {
+    log.locations.forEach(l => l && currentLocs.add(l.trim()));
+  } else if (log.location && typeof log.location === 'string' && log.location !== '-' && log.location !== 'Not Assigned') {
+    log.location.split(',').forEach(l => l && currentLocs.add(l.trim()));
+  } else if (Array.isArray(emp?.preferredLocations) && emp.preferredLocations.length > 0) {
+    emp.preferredLocations.forEach(l => l && currentLocs.add(l.trim()));
+  } else if (emp?.preferredLocation && typeof emp.preferredLocation === 'string' && emp.preferredLocation !== '-' && emp.preferredLocation !== 'Not Assigned') {
+    currentLocs.add(emp.preferredLocation.trim());
+  }
 
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'modal-overlay';
   modalOverlay.style.zIndex = '9999';
 
   modalOverlay.innerHTML = html`
-    <div class="modal-content" style="max-width: 480px; animation: fadeIn 0.2s ease;">
+    <div class="modal-content" style="max-width: 520px; animation: fadeIn 0.2s ease;">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
         <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">${isSynthesizedAbsent ? 'Record Attendance' : 'Edit Attendance Record'}</h3>
         <button class="modal-close" id="btn-close-edit-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
@@ -1827,6 +2063,7 @@ function showEditAttendanceModal(logId) {
           <div class="form-group" style="margin: 0;">
             <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Shift *</label>
             <select id="modal-edit-att-shift" class="form-input" style="width: 100%; font-size: 13px;">
+              <option value="" ${(!log.shiftId || log.shiftId === '__NONE__' || log.shiftId === 'none') ? 'selected' : ''}>-- No Shift Assigned --</option>
               ${schedules.map(s => `
                 <option value="${s.id}" ${s.id === log.shiftId ? 'selected' : ''}>${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>
               `).join('')}
@@ -1845,7 +2082,7 @@ function showEditAttendanceModal(logId) {
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 20px;">
+        <div class="form-group" style="margin-bottom: 14px;">
           <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Attendance Status</label>
           <select id="modal-edit-att-status" class="form-input" style="width: 100%; font-size: 13px;">
             <option value="On Time" ${log.status === 'On Time' ? 'selected' : ''}>On Time</option>
@@ -1853,6 +2090,38 @@ function showEditAttendanceModal(logId) {
             <option value="Half Day" ${log.status === 'Half Day' ? 'selected' : ''}>Half Day</option>
             <option value="Absent" ${log.status === 'Absent' ? 'selected' : ''}>Absent</option>
           </select>
+        </div>
+
+        <!-- Assigned Worksite Location(s) (Multi-Select Checkboxes) -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0;">
+              Assigned Worksite Location(s)
+              <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(Select multiple)</span>
+            </label>
+            <div style="display: flex; gap: 8px; font-size: 11.5px;">
+              <button type="button" id="modal-edit-att-loc-all" style="background: none; border: none; color: #2563eb; cursor: pointer; font-weight: 600; padding: 0;">Select All</button>
+              <span style="color: var(--border);">|</span>
+              <button type="button" id="modal-edit-att-loc-clear" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 600; padding: 0;">Clear</button>
+            </div>
+          </div>
+          <div style="margin-bottom: 6px;">
+            <input type="text" id="modal-edit-att-loc-filter" placeholder="🔍 Filter locations..." class="form-input" style="width: 100%; height: 28px; font-size: 12px; padding: 0 8px; border-radius: 4px; box-sizing: border-box;">
+          </div>
+          <div id="modal-edit-att-loc-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 140px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box;">
+            ${allLocations.map(loc => {
+              const isChecked = currentLocs.has(loc) || Array.from(currentLocs).some(c => c && c.toLowerCase().trim() === loc.toLowerCase().trim());
+              return `
+                <label class="modal-edit-att-loc-item" data-loc-name="${Utils.escape(loc.toLowerCase())}" style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-primary); cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; transition: background 0.15s ease; border: 1px solid ${isChecked ? 'rgba(239,68,68,0.2)' : 'transparent'}; background: ${isChecked ? 'rgba(239,68,68,0.04)' : 'transparent'};">
+                  <input type="checkbox" class="modal-edit-att-loc-chk" value="${Utils.escape(loc)}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 14px; height: 14px; accent-color: #ef4444; flex-shrink: 0;">
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Utils.escape(loc)}">📍 ${Utils.escape(loc)}</span>
+                </label>
+              `;
+            }).join('')}
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Selected: <strong id="modal-edit-att-loc-count" style="color: #ef4444;">${currentLocs.size}</strong> location(s)
+          </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
@@ -1872,6 +2141,62 @@ function showEditAttendanceModal(logId) {
   modalOverlay.querySelector('#btn-close-edit-att-modal').addEventListener('click', closeModal);
   modalOverlay.querySelector('#btn-cancel-edit-att').addEventListener('click', closeModal);
 
+  // Multi-checkbox location management in Edit modal
+  const editLocCheckboxes = modalOverlay.querySelectorAll('.modal-edit-att-loc-chk');
+  const editCountEl = modalOverlay.querySelector('#modal-edit-att-loc-count');
+  const editFilterInput = modalOverlay.querySelector('#modal-edit-att-loc-filter');
+  const editLocItems = modalOverlay.querySelectorAll('.modal-edit-att-loc-item');
+
+  const updateEditCount = () => {
+    const checkedCount = modalOverlay.querySelectorAll('.modal-edit-att-loc-chk:checked').length;
+    if (editCountEl) editCountEl.textContent = checkedCount;
+  };
+
+  editLocCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const parent = cb.closest('.modal-edit-att-loc-item');
+      if (parent) {
+        parent.style.background = cb.checked ? 'rgba(239,68,68,0.04)' : 'transparent';
+        parent.style.border = cb.checked ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent';
+      }
+      updateEditCount();
+    });
+  });
+
+  if (editFilterInput) {
+    editFilterInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      editLocItems.forEach(item => {
+        const name = item.getAttribute('data-loc-name') || '';
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  modalOverlay.querySelector('#modal-edit-att-loc-all').addEventListener('click', () => {
+    editLocCheckboxes.forEach(cb => {
+      cb.checked = true;
+      const parent = cb.closest('.modal-edit-att-loc-item');
+      if (parent) {
+        parent.style.background = 'rgba(239,68,68,0.04)';
+        parent.style.border = '1px solid rgba(239,68,68,0.2)';
+      }
+    });
+    updateEditCount();
+  });
+
+  modalOverlay.querySelector('#modal-edit-att-loc-clear').addEventListener('click', () => {
+    editLocCheckboxes.forEach(cb => {
+      cb.checked = false;
+      const parent = cb.closest('.modal-edit-att-loc-item');
+      if (parent) {
+        parent.style.background = 'transparent';
+        parent.style.border = '1px solid transparent';
+      }
+    });
+    updateEditCount();
+  });
+
   modalOverlay.querySelector('#form-edit-attendance').addEventListener('submit', (e) => {
     e.preventDefault();
     const date = document.getElementById('modal-edit-att-date').value;
@@ -1879,29 +2204,239 @@ function showEditAttendanceModal(logId) {
     const checkIn = document.getElementById('modal-edit-att-checkin').value || null;
     const checkOut = document.getElementById('modal-edit-att-checkout').value || null;
     const status = document.getElementById('modal-edit-att-status').value;
+    const selectedLocs = Array.from(modalOverlay.querySelectorAll('.modal-edit-att-loc-chk:checked')).map(cb => cb.value);
+    const locString = selectedLocs.length > 0 ? selectedLocs.join(', ') : '-';
+
+    const payload = {
+      date,
+      shiftId: shiftId || null,
+      checkIn,
+      checkOut,
+      status,
+      location: locString,
+      locations: selectedLocs
+    };
 
     if (isSynthesizedAbsent) {
       DB.createManualAttendanceLog({
         userId: log.userId,
-        date,
-        shiftId,
-        checkIn,
-        checkOut,
-        status
+        ...payload
       });
     } else {
-      DB.updateAttendanceLog(logId, {
-        date,
-        shiftId,
-        checkIn,
-        checkOut,
-        status
+      DB.updateAttendanceLog(logId, payload);
+    }
+
+    if (emp && selectedLocs.length > 0) {
+      emp.preferredLocations = selectedLocs;
+      emp.preferredLocation = selectedLocs[0] || '';
+      DB.updateUser(emp.id, {
+        preferredLocations: selectedLocs,
+        preferredLocation: selectedLocs[0] || ''
       });
     }
 
-    requestsPushDBState();
+    if (typeof requestsPushDBState === 'function') {
+      requestsPushDBState();
+    } else if (typeof window.requestsPushDBState === 'function') {
+      window.requestsPushDBState();
+    }
     closeModal();
     showToastNotification(isSynthesizedAbsent ? "Attendance recorded successfully." : "Attendance record updated successfully.", 'success');
+    renderAdminAttendances();
+  });
+}
+
+// Modal for Bulk Assigning Shift & Worksite Locations
+function showBulkAssignShiftAndLocationsModal(selectedLogIds) {
+  if (!selectedLogIds || selectedLogIds.length === 0) return;
+  const schedules = DB.getSchedules() || [];
+  const allLocations = getAllWorksiteLocations();
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  modalOverlay.style.zIndex = '9999';
+
+  modalOverlay.innerHTML = html`
+    <div class="modal-content" style="max-width: 520px; animation: fadeIn 0.2s ease;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px;">
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: var(--text-primary);">Bulk Assign Shift &amp; Worksite Locations</h3>
+        <button class="modal-close" id="btn-close-bulk-att-modal" style="background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+      <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; background: rgba(37,99,235,0.06); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(37,99,235,0.15);">
+        Assign shift and worksite location(s) to <strong>${selectedLogIds.length}</strong> selected attendance record${selectedLogIds.length > 1 ? 's' : ''}.
+      </div>
+      <form id="form-bulk-attendance-assign">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Shift Assignment</label>
+          <select id="modal-bulk-att-shift" class="form-input" style="width: 100%; font-size: 13px;">
+            <option value="__KEEP__">-- Keep Current Shift (No Change) --</option>
+            <option value="__NONE__">-- No Shift Assigned --</option>
+            ${schedules.map(s => `
+              <option value="${s.id}">${Utils.escape(s.name)} (${s.startTime}-${s.endTime})</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0;">
+              Assigned Worksite Location(s)
+              <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">(Select multiple)</span>
+            </label>
+            <div style="display: flex; gap: 8px; font-size: 11.5px;">
+              <button type="button" id="modal-bulk-att-loc-all" style="background: none; border: none; color: #2563eb; cursor: pointer; font-weight: 600; padding: 0;">Select All</button>
+              <span style="color: var(--border);">|</span>
+              <button type="button" id="modal-bulk-att-loc-clear" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: 600; padding: 0;">Clear</button>
+            </div>
+          </div>
+          <div style="margin-bottom: 6px;">
+            <input type="text" id="modal-bulk-att-loc-filter" placeholder="🔍 Filter locations..." class="form-input" style="width: 100%; height: 28px; font-size: 12px; padding: 0 8px; border-radius: 4px; box-sizing: border-box;">
+          </div>
+          <div id="modal-bulk-att-loc-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 140px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.02); border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box;">
+            ${allLocations.map(loc => `
+              <label class="modal-bulk-att-loc-item" data-loc-name="${Utils.escape(loc.toLowerCase())}" style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-primary); cursor: pointer; padding: 4px 6px; border-radius: 4px; user-select: none; transition: background 0.15s ease;">
+                <input type="checkbox" class="modal-bulk-att-loc-chk" value="${Utils.escape(loc)}" style="cursor: pointer; width: 14px; height: 14px; accent-color: #ef4444; flex-shrink: 0;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${Utils.escape(loc)}">📍 ${Utils.escape(loc)}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+            Selected: <strong id="modal-bulk-att-loc-count" style="color: #ef4444;">0</strong> location(s)
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-bulk-att" style="padding: 8px 16px; font-size: 13px;">Cancel</button>
+          <button type="submit" class="btn" style="padding: 8px 20px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">Apply to ${selectedLogIds.length} Records</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+
+  const closeModal = () => modalOverlay.remove();
+  modalOverlay.querySelector('#btn-close-bulk-att-modal').addEventListener('click', closeModal);
+  modalOverlay.querySelector('#btn-cancel-bulk-att').addEventListener('click', closeModal);
+
+  const filterInput = modalOverlay.querySelector('#modal-bulk-att-loc-filter');
+  const locItems = modalOverlay.querySelectorAll('.modal-bulk-att-loc-item');
+  const countEl = modalOverlay.querySelector('#modal-bulk-att-loc-count');
+  const locCheckboxes = modalOverlay.querySelectorAll('.modal-bulk-att-loc-chk');
+
+  const updateBulkCount = () => {
+    const checkedCount = modalOverlay.querySelectorAll('.modal-bulk-att-loc-chk:checked').length;
+    if (countEl) countEl.textContent = checkedCount;
+  };
+
+  locCheckboxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const parentLabel = cb.closest('.modal-bulk-att-loc-item');
+      if (parentLabel) {
+        parentLabel.style.background = cb.checked ? 'rgba(239,68,68,0.04)' : 'transparent';
+        parentLabel.style.border = cb.checked ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent';
+      }
+      updateBulkCount();
+    });
+  });
+
+  if (filterInput) {
+    filterInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      locItems.forEach(item => {
+        const name = item.getAttribute('data-loc-name') || '';
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+      });
+    });
+  }
+
+  modalOverlay.querySelector('#modal-bulk-att-loc-all').addEventListener('click', () => {
+    locCheckboxes.forEach(cb => {
+      cb.checked = true;
+      const parentLabel = cb.closest('.modal-bulk-att-loc-item');
+      if (parentLabel) {
+        parentLabel.style.background = 'rgba(239,68,68,0.04)';
+        parentLabel.style.border = '1px solid rgba(239,68,68,0.2)';
+      }
+    });
+    updateBulkCount();
+  });
+
+  modalOverlay.querySelector('#modal-bulk-att-loc-clear').addEventListener('click', () => {
+    locCheckboxes.forEach(cb => {
+      cb.checked = false;
+      const parentLabel = cb.closest('.modal-bulk-att-loc-item');
+      if (parentLabel) {
+        parentLabel.style.background = 'transparent';
+        parentLabel.style.border = '1px solid transparent';
+      }
+    });
+    updateBulkCount();
+  });
+
+  modalOverlay.querySelector('#form-bulk-attendance-assign').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const shiftChoice = modalOverlay.querySelector('#modal-bulk-att-shift').value;
+    const selectedLocs = Array.from(modalOverlay.querySelectorAll('.modal-bulk-att-loc-chk:checked')).map(cb => cb.value);
+    const locString = selectedLocs.length > 0 ? selectedLocs.join(', ') : '';
+
+    const affectedUserIds = new Set();
+    selectedLogIds.forEach(logId => {
+      let log = DB.data.attendanceLogs.find(l => l.id === logId);
+      if (log) {
+        affectedUserIds.add(log.userId);
+        const updates = {};
+        if (shiftChoice !== '__KEEP__') {
+          updates.shiftId = shiftChoice === '__NONE__' ? '' : shiftChoice;
+        }
+        if (selectedLocs.length > 0) {
+          updates.locations = selectedLocs;
+          updates.location = locString;
+        }
+        DB.updateAttendanceLog(logId, updates);
+      } else if (logId.startsWith('absent_')) {
+        const parts = logId.replace('absent_', '').split('_');
+        const date = parts.pop();
+        const userId = parts.join('_');
+        affectedUserIds.add(userId);
+        const updates = {
+          userId,
+          date,
+          status: 'Absent',
+          isAbsent: true
+        };
+        if (shiftChoice !== '__KEEP__') {
+          updates.shiftId = shiftChoice === '__NONE__' ? '' : shiftChoice;
+        }
+        if (selectedLocs.length > 0) {
+          updates.locations = selectedLocs;
+          updates.location = locString;
+        }
+        DB.createManualAttendanceLog(updates);
+      }
+    });
+
+    if (selectedLocs.length > 0) {
+      affectedUserIds.forEach(uId => {
+        const u = DB.getUser(uId);
+        if (u) {
+          u.preferredLocations = selectedLocs;
+          u.preferredLocation = selectedLocs[0] || '';
+          DB.updateUser(u.id, {
+            preferredLocations: selectedLocs,
+            preferredLocation: selectedLocs[0] || ''
+          });
+        }
+      });
+    }
+
+    if (typeof requestsPushDBState === 'function') {
+      requestsPushDBState();
+    } else if (typeof window.requestsPushDBState === 'function') {
+      window.requestsPushDBState();
+    }
+    closeModal();
+    showToastNotification(`Successfully updated ${selectedLogIds.length} attendance record(s).`, 'success');
     renderAdminAttendances();
   });
 }
@@ -1953,25 +2488,28 @@ function exportEmployeeAttendancesCSV(specificLogIds = null) {
       : (emp?.scheduleId ? [emp.scheduleId] : []);
 
     let shift = null;
-    if (log.shiftId) {
+    const isExplicitNoShift = log.shiftId === '' || log.shiftId === null || log.shiftId === '__NONE__' || log.shiftId === 'none';
+    if (log.shiftId && !isExplicitNoShift) {
       shift = DB.getSchedule(log.shiftId);
     }
-    if (!shift && userShiftIds.length > 0) {
+    if (!shift && !isExplicitNoShift && userShiftIds.length > 0) {
       shift = DB.getSchedule(userShiftIds[0]);
     }
-    const shiftName = shift ? shift.name : 'Not Assigned';
+    const shiftName = isExplicitNoShift ? 'No Shift Assigned' : (shift ? shift.name : 'No Shift Assigned');
     let location = '-';
     const inLoc = (log.location && log.location.trim()) || (log.biometricUsed && log.biometricUsed.trim());
     const outLoc = (log.departureLocation && log.departureLocation.trim()) || (log.departureDevice && log.departureDevice.trim());
-    if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
+    if (Array.isArray(log.locations) && log.locations.length > 0) {
+      location = formatLocationTag(log.locations.join(', '));
+    } else if (inLoc && outLoc && formatLocationTag(inLoc) !== formatLocationTag(outLoc)) {
       location = `${formatLocationTag(inLoc)} (In) • ${formatLocationTag(outLoc)} (Out)`;
     } else if (inLoc) {
       location = formatLocationTag(inLoc);
     } else if (outLoc) {
       location = formatLocationTag(outLoc);
     } else {
-      const fallback = (emp?.preferredLocation && emp.preferredLocation.trim()) ||
-        (Array.isArray(emp?.preferredLocations) && emp.preferredLocations[0] && emp.preferredLocations[0].trim()) || '-';
+      const fallback = (Array.isArray(emp?.preferredLocations) && emp.preferredLocations.length > 0 && emp.preferredLocations.join(', ')) ||
+        (emp?.preferredLocation && emp.preferredLocation.trim()) || '-';
       location = formatLocationTag(fallback);
     }
     

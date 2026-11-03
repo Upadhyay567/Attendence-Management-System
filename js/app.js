@@ -1,24 +1,24 @@
 // Modular Views (Single Source of Truth - Imported from js/views/)
-import { renderLoginView } from './views/loginView.js?v=127';
-import { renderAdminSchedules } from './views/schedulesView.js?v=127';
-import { renderAdminDashboard } from './views/adminDashboard.js?v=127';
-import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=127';
-import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=127';
-import { renderAdminAttendances } from './views/attendancesView.js?v=127';
-import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=127';
-import { renderAdminFinance } from './views/financeView.js?v=127';
-import { renderEmployeeLeaves } from './views/leavesView.js?v=127';
-import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=127';
-import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=127';
-import { drawRadarMap } from './components/geofenceMap.js?v=127';
-import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=127';
+import { renderLoginView } from './views/loginView.js?v=128';
+import { renderAdminSchedules } from './views/schedulesView.js?v=128';
+import { renderAdminDashboard } from './views/adminDashboard.js?v=128';
+import { renderEmployeeDashboard, showForgotPasswordModal } from './views/employeeDashboard.js?v=128';
+import { showAccountModal, showAccountCreationSuccessModal } from './components/accountModal.js?v=128';
+import { renderAdminAttendances } from './views/attendancesView.js?v=128';
+import { renderDailyWorkStatus } from './views/dailyWorkStatusView.js?v=128';
+import { renderAdminFinance } from './views/financeView.js?v=128';
+import { renderEmployeeLeaves } from './views/leavesView.js?v=128';
+import { renderAdminUsers, renderAdminPayroll, openUserModal, openBulkUploadModal } from './views/userManagementView.js?v=128';
+import { renderRegisterEmployeeView } from './views/registerEmployeeView.js?v=128';
+import { drawRadarMap } from './components/geofenceMap.js?v=128';
+import { openProfileDownloadModal, openReportDownloadModal, loadSheetJS } from './downloads.js?v=128';
 
 // app.js - SPA Router & Controller
-import { DB } from './core/db.js?v=127';
-import { Auth } from './auth.js?v=127';
-import { Utils, html } from './utils.js?v=127';
-import { triggerBirthdayCelebration } from './celebration.js?v=127';
-import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=127';
+import { DB } from './core/db.js?v=128';
+import { Auth } from './auth.js?v=128';
+import { Utils, html } from './utils.js?v=128';
+import { triggerBirthdayCelebration } from './celebration.js?v=128';
+import { showNotificationDetailModal, closeModal, openFullScreenImageModal } from './components/modals.js?v=128';
 
 if (typeof window !== 'undefined') {
   window.html = html;

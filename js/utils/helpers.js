@@ -245,6 +245,10 @@ export function formatLocationTag(loc) {
   if (!clean || clean === '-' || clean === '--' || clean.toLowerCase() === 'none' || clean.toLowerCase() === 'not assigned' || clean.toLowerCase() === 'manual') {
     return 'Not Assigned';
   }
+  if (clean.includes(',')) {
+    const parts = clean.split(',').map(s => formatLocationTag(s.trim())).filter(s => s && s !== '-' && s !== 'Not Assigned');
+    return parts.length > 0 ? parts.join(', ') : 'Not Assigned';
+  }
   const upper = clean.toUpperCase();
   if (upper === 'WH-1340' || upper === 'WH-1340-CLOSE' || upper === 'WH 1340' || upper.startsWith('WH-1340')) return 'Warehouse 1340';
   if (upper === 'RETAIL' || upper === 'RETAIL STORE') return 'Retail Store';
